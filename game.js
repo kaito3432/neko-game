@@ -20,6 +20,7 @@
     recentTargets:[],
     thoughtText:""
   };
+  let cpuCatRoute=[];
 
   const $=id=>document.getElementById(id);
   const board=$("board");
@@ -90,6 +91,7 @@
       recentTargets:[],
       thoughtText:""
     };
+    cpuCatRoute=[];
     privacyOverlay.classList.remove("show");
     resultOverlay.classList.remove("show");
     settingsOverlay.classList.remove("show");
@@ -1490,6 +1492,7 @@
       game.catPos=start;
       game.catHistory.clear();
       game.catHistory.set(start,1);
+      cpuCatRoute=[{box:start,turn:1}];
       game.catVisible=false;
 
       game.turn=1;
@@ -1535,6 +1538,7 @@
       // これにより現在地・移動方向が漏れない。
       game.catPos=target;
       game.catHistory.set(target,game.turn);
+      cpuCatRoute.push({box:target,turn:game.turn});
       game.catVisible=false;
       game.phase="dogs";
       game.selectedDog=null;
@@ -1574,16 +1578,34 @@
 
     clearRouteReveal();
 
-    const ordered=[...game.catHistory.entries()]
-      .sort((a,b)=>a[1]-b[1])
-      .map(([box,turn])=>({box,turn}));
+    const ordered=cpuCatRoute.length
+      ? cpuCatRoute.slice().sort((a,b)=>a.turn-b.turn)
+      : [...game.catHistory.entries()]
+          .sort((a,b)=>a[1]-b[1])
+          .map(([box,turn])=>({box,turn}));
 
     if(!ordered.length)return;
 
+    // Force a fresh board render so the route badges have correct anchors.
+    renderBoard();
+
+    const boardRect=board.getBoundingClientRect();
+
+    const centerForBox=(boxIndex)=>{
+      const el=board.querySelector(`.box[data-box-index="${boxIndex}"]`);
+      if(!el)return boxCenterPercent(boxIndex);
+
+      const r=el.getBoundingClientRect();
+      return {
+        x:((r.left+r.width/2-boardRect.left)/boardRect.width)*100,
+        y:((r.top+r.height/2-boardRect.top)/boardRect.height)*100
+      };
+    };
+
     ordered.forEach((step,idx)=>{
       if(idx<ordered.length-1){
-        const a=boxCenterPercent(step.box);
-        const b=boxCenterPercent(ordered[idx+1].box);
+        const a=centerForBox(step.box);
+        const b=centerForBox(ordered[idx+1].box);
         const dx=b.x-a.x,dy=b.y-a.y;
         const length=Math.sqrt(dx*dx+dy*dy);
         const angle=Math.atan2(dy,dx)*180/Math.PI;
@@ -1599,7 +1621,7 @@
     });
 
     ordered.forEach((step,idx)=>{
-      const p=boxCenterPercent(step.box);
+      const p=centerForBox(step.box);
       const badge=document.createElement("div");
       badge.className="route-step";
       if(idx===0)badge.classList.add("start");
@@ -1613,11 +1635,12 @@
 
     if(routeRevealSub) routeRevealSub.textContent=`${ordered.length}地点を通過`;
     if(routeRevealPanel) routeRevealPanel.classList.add("show");
+
+    guideDisplay.textContent="🐾 ネコの逃走ルートを公開しました";
   }
 
   function endGame(winner,reason){
     game.gameOver=true;
-    if(playMode==="cpuCat") setTimeout(revealCpuCatRoute,250);
     game.phase="gameover";
     game.catVisible=true;
     game.selectedDog=null;
@@ -1679,6 +1702,12 @@
         "CPUネコと再戦します。柴犬警察3匹を配置してください。");
     }
     render();
+
+    if(playMode==="cpuCat"){
+      setTimeout(()=>{
+        revealCpuCatRoute();
+      },350);
+    }
   });
   bindPress(backToTitleBtn,()=>{
     settingsOverlay.classList.remove("show");

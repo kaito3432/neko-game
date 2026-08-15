@@ -1414,3 +1414,25 @@ body.turn-last .turn-pill{
 .board > .node{
   position:absolute!important;
 }
+
+
+/* ===== Ver1.9 Phase4-2d route reveal fix ===== */
+.route-step{
+  z-index:250!important;
+  min-width:26px!important;
+  height:26px!important;
+  font-size:9px!important;
+  background:#fff!important;
+}
+.route-step.start{background:#FFDCDC!important}
+.route-step.final{background:#FFE98D!important}
+.route-line{
+  z-index:240!important;
+  height:5px!important;
+  background:rgba(209,94,63,.88)!important;
+}
+.route-reveal-panel.show{
+  display:block!important;
+  position:relative;
+  z-index:260;
+}
