@@ -167,6 +167,15 @@
 
   function render(){
     renderBoard();
+
+    // A complete board has 25 boxes + 36 intersections.
+    // Rebuild once if Safari restored a stale/incomplete DOM snapshot.
+    if(board.querySelectorAll(".box").length!==E.BOX_COUNT ||
+       board.querySelectorAll(".node").length!==E.NODE_COUNT){
+      board.innerHTML="";
+      renderBoard();
+    }
+
     renderStatus();
     renderDogCards();
     renderControls();

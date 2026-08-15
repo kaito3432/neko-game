@@ -1383,3 +1383,18 @@ body.turn-last .turn-pill{
   background:rgba(201,116,77,.7);
   pointer-events:none;
 }
+
+
+/* ===== Ver1.9 Phase4-2a cache/layout hotfix ===== */
+.board > .box{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1;
+}
+.board > .node{
+  display:block!important;
+  visibility:visible!important;
+}
+.board > .node.inactive{
+  opacity:.45;
+}
