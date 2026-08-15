@@ -21,8 +21,8 @@
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
   const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon");
   const resultTitle=$("resultTitle"),resultText=$("resultText"),againBtn=$("againBtn");
-  const settingsOverlay=$("settingsOverlay"),sfxToggleBtn=$("sfxToggleBtn");
-  const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState");
+  const settingsOverlay=$("settingsOverlay"),sfxToggleBtn=$("sfxToggleBtn"),bgmToggleBtn=$("bgmToggleBtn");
+  const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState"),bgmState=$("bgmState");
   const vibrationState=$("vibrationState"),settingsCloseBtn=$("settingsCloseBtn");
   const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
   const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
@@ -31,6 +31,7 @@
     if(!el)return;
     el.addEventListener("click",e=>{
       if(el.disabled)return;
+      Audio.startBgm();
       fn(e);
     });
   }
@@ -376,6 +377,13 @@
 
   function renderStatus(){
     turnDisplay.textContent=`${game.turn} / ${E.MAX_TURNS}`;
+
+    if(game.turn>=9 && !game.gameOver){
+      Audio.setBgmMode("tension");
+    }else{
+      Audio.setBgmMode("normal");
+    }
+
     turnCard.className="card turn";
     turnExtra.textContent="";
 
@@ -474,8 +482,11 @@
 
   function updateSettingsUI(){
     sfxState.textContent=Audio.settings.sfx?"ON":"OFF";
+    bgmState.textContent=Audio.settings.bgm?"ON":"OFF";
     vibrationState.textContent=Audio.settings.vibration?"ON":"OFF";
+
     sfxState.style.background=Audio.settings.sfx?"var(--green)":"#E6E2DE";
+    bgmState.style.background=Audio.settings.bgm?"var(--green)":"#E6E2DE";
     vibrationState.style.background=Audio.settings.vibration?"var(--green)":"#E6E2DE";
   }
 
@@ -507,6 +518,7 @@
 
     resultOverlay.classList.add("show");
     resultOverlay.classList.add("resultOverlayCelebration");
+    Audio.duckBgm(1250);
     Audio.play("win");
     Audio.haptic([40,50,40,50,90]);
     A.confetti(confettiLayer);
@@ -519,6 +531,7 @@
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
   bindPress(sfxToggleBtn,()=>{Audio.toggleSfx();updateSettingsUI();});
+  bindPress(bgmToggleBtn,()=>{Audio.toggleBgm();updateSettingsUI();});
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
   bindPress(restartBtn,initGame);
