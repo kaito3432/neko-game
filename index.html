@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ネコ vs 柴犬警察</title>
+<title>にゃんチェイス</title>
 <style>
 :root{
   --ivory:#FDFBF7;--brown:#5D4037;--brown2:#8D6E63;--pink:#F8C8DC;--pink2:#FDEAF1;
@@ -177,14 +177,25 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-user-select:
 }
 .motion-status.show{opacity:1}
 
+
+/* ===== Ver1.5.2 設定 / 効果音 ===== */
+.settings-list{display:grid;gap:8px;margin:12px 0}
+.setting-row{
+  width:100%;min-height:52px;padding:9px 12px;border:2px solid var(--brown);
+  border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:space-between;
+  font-size:13px;font-weight:900
+}
+.setting-row strong{padding:4px 8px;border-radius:999px;background:var(--green)}
+.disabled-row{opacity:.55;background:#F1EFED}
+
 </style>
 </head>
 
 <body>
 <div class="app">
   <header class="hero">
-    <h1>🐱 ネコ vs 柴犬警察 🐕</h1>
-    <p>ダンボール街で、11ターン逃げ切れ！</p>
+    <h1>🐱 にゃんチェイス 🐕</h1>
+    <p>いたずらにゃんチェイス！11ターン逃げ切れ！</p>
   </header>
 
   <section class="status-row">
@@ -219,6 +230,7 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-user-select:
 
   <section class="controls">
     <button class="btn pink" id="catViewBtn">👀 ネコ位置を見る</button>
+    <button class="btn" id="settingsBtn">⚙️ 設定</button>
     <button class="btn yellow" id="finishDogTurnBtn">✅ 柴犬ターン終了</button>
     <button class="btn wide" id="restartBtn">🔄 最初から</button>
   </section>
@@ -239,6 +251,26 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-user-select:
     <h2 id="resultTitle">ゲーム終了</h2>
     <p id="resultText"></p>
     <button class="btn pink" id="againBtn">🔄 もう一度遊ぶ</button>
+  </div>
+</div>
+
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal settings-modal">
+    <div class="modal-icon">⚙️</div>
+    <h2>設定</h2>
+    <div class="settings-list">
+      <button class="setting-row" id="sfxToggleBtn" type="button">
+        <span>🔊 効果音</span><strong id="sfxState">ON</strong>
+      </button>
+      <button class="setting-row" id="vibrationToggleBtn" type="button">
+        <span>📳 バイブ</span><strong id="vibrationState">ON</strong>
+      </button>
+      <div class="setting-row disabled-row">
+        <span>🎵 BGM</span><strong>次回追加</strong>
+      </div>
+    </div>
+    <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
   </div>
 </div>
 
@@ -263,14 +295,115 @@ let game,toastTimer;
 const $=id=>document.getElementById(id);
 const board=$("board"),turnCard=$("turnCard"),turnDisplay=$("turnDisplay"),turnExtra=$("turnExtra"),phaseDisplay=$("phaseDisplay"),guideDisplay=$("guideDisplay");
 const dogCards=[$("dogCard0"),$("dogCard1"),$("dogCard2")],message=$("message");
-const catViewBtn=$("catViewBtn"),finishDogTurnBtn=$("finishDogTurnBtn"),restartBtn=$("restartBtn");
+const catViewBtn=$("catViewBtn"),settingsBtn=$("settingsBtn"),finishDogTurnBtn=$("finishDogTurnBtn"),restartBtn=$("restartBtn");
+const settingsOverlay=$("settingsOverlay"),sfxToggleBtn=$("sfxToggleBtn"),vibrationToggleBtn=$("vibrationToggleBtn"),
+      sfxState=$("sfxState"),vibrationState=$("vibrationState"),settingsCloseBtn=$("settingsCloseBtn");
 const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon"),privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
 const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon"),resultTitle=$("resultTitle"),resultText=$("resultText"),againBtn=$("againBtn");
 const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
 
+let audioCtx=null;
+let settings={
+  sfx: localStorage.getItem("nyanChaseSfx")!=="off",
+  vibration: localStorage.getItem("nyanChaseVibration")!=="off"
+};
+
+function ensureAudio(){
+  if(!settings.sfx) return null;
+  try{
+    if(!audioCtx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC) return null;
+      audioCtx=new AC();
+    }
+    if(audioCtx.state==="suspended") audioCtx.resume();
+    return audioCtx;
+  }catch(e){ return null; }
+}
+
+function tone(freq,duration=.08,type="sine",gain=.05,delay=0){
+  const ctx=ensureAudio(); if(!ctx) return;
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(0.0001,ctx.currentTime+delay);
+  g.gain.exponentialRampToValueAtTime(gain,ctx.currentTime+delay+.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+delay+duration);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(ctx.currentTime+delay); o.stop(ctx.currentTime+delay+duration+.02);
+}
+
+function playSfx(name){
+  if(!settings.sfx) return;
+  switch(name){
+    case "tap":
+      tone(520,.055,"sine",.035);
+      break;
+    case "box":
+      tone(250,.07,"triangle",.04);
+      tone(390,.08,"triangle",.035,.045);
+      break;
+    case "sniff":
+      tone(180,.09,"sine",.025);
+      tone(210,.09,"sine",.022,.17);
+      tone(185,.09,"sine",.022,.34);
+      break;
+    case "paw":
+      tone(660,.08,"sine",.045);
+      tone(880,.12,"sine",.04,.075);
+      break;
+    case "cat":
+      tone(720,.10,"sine",.04);
+      tone(960,.12,"sine",.035,.08);
+      tone(760,.12,"sine",.03,.18);
+      break;
+    case "win":
+      tone(523,.12,"sine",.04);
+      tone(659,.12,"sine",.04,.12);
+      tone(784,.18,"sine",.045,.24);
+      tone(1047,.28,"sine",.045,.38);
+      break;
+    case "empty":
+      tone(220,.09,"triangle",.025);
+      tone(170,.12,"triangle",.02,.08);
+      break;
+    case "start":
+      tone(440,.08,"square",.025);
+      tone(660,.10,"square",.025,.08);
+      tone(880,.16,"square",.025,.18);
+      break;
+  }
+}
+
+function updateSettingsUI(){
+  sfxState.textContent=settings.sfx?"ON":"OFF";
+  vibrationState.textContent=settings.vibration?"ON":"OFF";
+  sfxState.style.background=settings.sfx?"var(--green)":"#E6E2DE";
+  vibrationState.style.background=settings.vibration?"var(--green)":"#E6E2DE";
+}
+
+function openSettings(){
+  updateSettingsUI();
+  settingsOverlay.classList.add("show");
+  playSfx("tap");
+}
+function closeSettings(){ settingsOverlay.classList.remove("show"); }
+function toggleSfx(){
+  settings.sfx=!settings.sfx;
+  localStorage.setItem("nyanChaseSfx",settings.sfx?"on":"off");
+  updateSettingsUI();
+  if(settings.sfx) playSfx("tap");
+}
+function toggleVibration(){
+  settings.vibration=!settings.vibration;
+  localStorage.setItem("nyanChaseVibration",settings.vibration?"on":"off");
+  updateSettingsUI();
+}
+
+
 const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
 
 function haptic(pattern){
+  if(!settings.vibration) return;
   try{
     if(navigator.vibrate) navigator.vibrate(pattern);
   }catch(e){}
@@ -302,6 +435,7 @@ function tapPopBox(i){
   setTimeout(()=>p.el.classList.remove("tap-pop"),260);
 }
 function animateBoxOpen(i){
+  playSfx("box");
   const p=centerOfBox(i);
   if(!p)return;
   p.el.classList.remove("opening");
@@ -336,6 +470,7 @@ function animateCatMove(from,to,done){
   },380);
 }
 function animateSniff(di,bi,done){
+  playSfx("sniff");
   const n=centerOfNode(game.dogs[di]);
   if(!n){done&&done();return}
   const e=document.createElement("div");
@@ -451,6 +586,7 @@ function renderBoard(){
 
     if(game.phase!=="cat"&&game.revealedTracks.has(i)){
       b.classList.add("revealed");
+      if(game.catHistory.get(i)===0)b.classList.add("start-track");
     }
 
     b.innerHTML=`<span class="boxnum">${i+1}</span><span class="boxemoji">📦</span>
@@ -490,11 +626,15 @@ function renderBoard(){
 
 function privateHistoryHTML(i){
   if(game.phase!=="cat"||!game.catVisible||!game.catHistory.has(i))return"";
+  if(game.catHistory.get(i)===0)return '<span class="private-foot private-start">🚩</span>';
   return '<span class="private-foot">🐾</span>';
 }
 
 function publicTrackHTML(i){
   if(game.phase==="cat"||!game.revealedTracks.has(i))return"";
+  if(game.catHistory.get(i)===0){
+    return '<span class="track-badge"><span class="track-icon">🚩</span><span class="start-label">START</span></span>';
+  }
   return '<span class="track-badge"><span class="track-icon">🐾</span></span>';
 }
 
@@ -516,6 +656,7 @@ function handleBoxPress(i){
     const dead=isCatDeadEnd(i);
     const from=game.catPos;
     haptic(10);
+    playSfx("cat");
     animateCatMove(from,i,()=>{
       game.catPos=i;game.catHistory.set(i,game.turn);game.catVisible=false;
 
@@ -604,6 +745,7 @@ function selectDog(di){
 function performSearch(di,bi){
   animateSniff(di,bi,()=>{
     if(bi===game.catPos){
+      playSfx("cat");
       haptic([35,45,70]);
       burstAtBox(bi,"🐱✨");
       shakeBoxSoon(bi);
@@ -614,10 +756,19 @@ function performSearch(di,bi){
     if(game.catHistory.has(bi)){
       game.revealedTracks.add(bi);
       haptic([15,35,25]);
-      burstAtBox(bi,"🐾✨");
       shakeBoxSoon(bi);
-      showToast("🐕🐾","クンクン……！","ネコの足跡を発見！");
+
+      if(game.catHistory.get(bi)===0){
+        playSfx("start");
+        burstAtBox(bi,"🚩✨");
+        showToast("🚩","スタート地点を発見！","ここから逃げ始めたみたいだワン！");
+      }else{
+        playSfx("paw");
+        burstAtBox(bi,"🐾✨");
+        showToast("🐕🐾","クンクン……！","ネコの足跡を発見！");
+      }
     }else{
+      playSfx("empty");
       haptic(10);
       burstAtBox(bi,"💨");
       showToast("💨","クンクン……","何もないワン！");
@@ -762,6 +913,7 @@ function endGame(winner,reason){
 
   resultOverlay.classList.add("show");
   resultOverlay.classList.add("resultOverlayCelebration");
+  playSfx("win");
   haptic([40,50,40,50,90]);
   confetti();
   setTimeout(()=>resultOverlay.classList.remove("resultOverlayCelebration"),700);
@@ -770,6 +922,10 @@ function endGame(winner,reason){
 
 for(let i=0;i<3;i++)bindPress(dogCards[i],()=>selectDog(i));
 bindPress(catViewBtn,toggleCatView);
+bindPress(settingsBtn,openSettings);
+bindPress(settingsCloseBtn,closeSettings);
+bindPress(sfxToggleBtn,toggleSfx);
+bindPress(vibrationToggleBtn,toggleVibration);
 bindPress(finishDogTurnBtn,finishDogTurn);
 bindPress(restartBtn,initGame);
 bindPress(privacyBtn,closePrivacy);
