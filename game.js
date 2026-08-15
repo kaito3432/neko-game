@@ -18,6 +18,7 @@
   const turnCard=$("turnCard"),turnDisplay=$("turnDisplay"),turnExtra=$("turnExtra");
   const phaseDisplay=$("phaseDisplay"),guideDisplay=$("guideDisplay");
   const dogCards=[$("dogCard0"),$("dogCard1"),$("dogCard2")];
+  const cpuStats=$("cpuStats"),cpuTurnsLeft=$("cpuTurnsLeft"),cpuTracksFound=$("cpuTracksFound"),cpuSearchCount=$("cpuSearchCount");
   const message=$("message");
   const catViewBtn=$("catViewBtn"),settingsBtn=$("settingsBtn");
   const finishDogTurnBtn=$("finishDogTurnBtn"),restartBtn=$("restartBtn");
@@ -91,6 +92,7 @@
   function render(){
     renderBoard();
     renderStatus();
+    renderCpuStats();
     renderDogCards();
     renderControls();
   }
@@ -247,6 +249,7 @@
         game.phase="dogs";
         game.selectedDog=null;
         game.dogAction=[false,false,false];
+        game.cpuSearchesThisTurn=0;
         game.actionLocked=false;
 
         if(playMode==="cpuPolice"){
@@ -351,11 +354,17 @@
   }
 
   function performSearch(di,bi){
-    // ★ バグ修正の核心：
-    // 探索アニメーションが始まる「前」に行動済みにして入力をロックする。
+    // 探索開始時点で行動を確定し、演出中の二重行動を防ぐ。
     game.dogAction[di]="search";
     game.selectedDog=null;
     game.actionLocked=true;
+
+    if(playMode==="cpuPolice"){
+      game.cpuSearchedBoxes.add(bi);
+      game.cpuSearchCount++;
+      game.cpuSearchesThisTurn++;
+    }
+
     render();
 
     A.animateSniff(board,game.dogs[di],di,bi,motionStatus,()=>{
@@ -456,7 +465,7 @@
 
     if(game.turn===9&&!game.gameOver){turnCard.classList.add("t9");turnExtra.textContent="あと3ターン！";}
     if(game.turn===10&&!game.gameOver){turnCard.classList.add("t10");turnExtra.textContent="あと2ターン！";}
-    if(game.turn===11&&!game.gameOver){turnCard.classList.add("t11");turnExtra.textContent="LAST TURN";}
+    if(game.turn===11&&!game.gameOver){turnCard.classList.add("t11");turnExtra.textContent="ラスト！";}
 
     const p={
       catSetup:"🐱 ネコ初期配置",
@@ -485,6 +494,15 @@
     }
   }
 
+  function renderCpuStats(){
+    cpuStats.style.display=playMode==="cpuPolice"?"grid":"none";
+    if(playMode!=="cpuPolice") return;
+
+    cpuTurnsLeft.textContent=String(Math.max(0,E.MAX_TURNS-game.turn));
+    cpuTracksFound.textContent=String(game.revealedTracks.size);
+    cpuSearchCount.textContent=String(game.cpuSearchCount);
+  }
+
   function renderDogCards(){
     for(let i=0;i<3;i++){
       const c=dogCards[i];
@@ -505,7 +523,10 @@
       }
 
       const dogImg=["dog_red.png","dog_green.png","dog_blue.png"][i];
-      c.innerHTML=`<span class="dog-name"><img class="character-img" src="./assets/images/${dogImg}" alt="">${E.DOGS[i].name}</span>${status}`;
+      const role=playMode==="cpuPolice" ? ["探索に強い","バランス型","移動に強い"][i] : "";
+      c.innerHTML=`<span class="dog-name"><img class="character-img" src="./assets/images/${dogImg}" alt="">${E.DOGS[i].name}</span>
+        ${role?`<span class="dog-role">${role}</span>`:""}
+        <span class="dog-status">${status}</span>`;
       if(game.selectedDog===i)c.classList.add("selected");
 
       c.disabled=!(
@@ -610,83 +631,146 @@
     game.dogSetupCount=3;
   }
 
-  function cpuSearchScore(di,boxIndex){
-    let score=Math.random()*0.8;
+  function boxDistance(a,b){
+    return Math.abs(E.boxRow(a)-E.boxRow(b))+Math.abs(E.boxCol(a)-E.boxCol(b));
+  }
 
-    // Known track: investigate around discovered traces.
+  function cpuSearchScore(di,boxIndex){
+    let score=Math.random()*0.35;
+
+    // Never waste time repeatedly checking empty/known boxes.
+    if(game.cpuSearchedBoxes.has(boxIndex)) score-=8;
+
+    // Strongly prioritize boxes near discovered traces.
     if(game.revealedTracks.size){
       let nearest=99;
       game.revealedTracks.forEach((_,b)=>{
-        const d=Math.abs(E.boxRow(b)-E.boxRow(boxIndex))+Math.abs(E.boxCol(b)-E.boxCol(boxIndex));
-        nearest=Math.min(nearest,d);
+        nearest=Math.min(nearest,boxDistance(b,boxIndex));
       });
-      score+=Math.max(0,5-nearest)*1.8;
+      score+=Math.max(0,6-nearest)*2.7;
     }else{
-      // Early game: prefer central coverage.
+      // Before evidence appears, cover the board from the middle outward.
       const r=E.boxRow(boxIndex),c=E.boxCol(boxIndex);
-      score+=3-Math.abs(r-2)*.6-Math.abs(c-2)*.6;
+      score+=4.2-Math.abs(r-2)*.65-Math.abs(c-2)*.65;
     }
 
-    // Avoid repeating already revealed boxes.
-    if(game.revealedTracks.has(boxIndex)) score-=5;
+    // Different personalities.
+    if(di===0) score+=2.7;      // red: search specialist
+    if(di===1) score+=1.2;      // green: balanced
+    if(di===2) score+=0.2;      // blue: mobility
 
     return score;
   }
 
   function cpuMoveScore(di,node){
-    let score=Math.random()*0.8;
+    let score=Math.random()*0.45;
 
-    // Spread away from other dogs.
+    // Avoid bunching up.
     game.dogs.forEach((p,j)=>{
       if(j!==di && p!==null){
-        score+=Math.min(4,E.manhattanNodeDistance(node,p))*.7;
+        score+=Math.min(4,E.manhattanNodeDistance(node,p))*.85;
       }
     });
 
-    // If tracks are known, move toward them.
+    // Head toward known traces.
     if(game.revealedTracks.size){
       let nearest=99;
-      game.revealedTracks.forEach((_,b)=>{
-        E.getBoxesAroundNode(node).forEach(nb=>{
-          const d=Math.abs(E.boxRow(nb)-E.boxRow(b))+Math.abs(E.boxCol(nb)-E.boxCol(b));
-          nearest=Math.min(nearest,d);
+      game.revealedTracks.forEach((_,traceBox)=>{
+        E.getBoxesAroundNode(node).forEach(box=>{
+          nearest=Math.min(nearest,boxDistance(box,traceBox));
         });
       });
-      score+=Math.max(0,5-nearest)*1.2;
+      score+=Math.max(0,6-nearest)*1.8;
+    }else{
+      // Prefer nodes that expose unsearched boxes.
+      const fresh=E.getBoxesAroundNode(node).filter(b=>!game.cpuSearchedBoxes.has(b)).length;
+      score+=fresh*1.15;
     }
+
+    if(di===2) score+=2.1; // blue: movement specialist
+    if(di===1) score+=.7;
 
     return score;
   }
 
-  function chooseCpuAction(di){
-    const node=game.dogs[di];
-    const searchable=E.getBoxesAroundNode(node);
-    const moves=E.getDogLegalMoves(game,di);
+  function bestCpuSearch(di){
+    const searchable=E.getBoxesAroundNode(game.dogs[di]);
+    let best=null,bestScore=-Infinity;
 
-    let bestSearch=null,bestSearchScore=-Infinity;
     searchable.forEach(b=>{
       const s=cpuSearchScore(di,b);
-      if(s>bestSearchScore){bestSearchScore=s;bestSearch=b;}
+      if(s>bestScore){
+        bestScore=s;
+        best=b;
+      }
     });
 
-    let bestMove=null,bestMoveScore=-Infinity;
+    return {target:best,score:bestScore};
+  }
+
+  function bestCpuMove(di){
+    const moves=E.getDogLegalMoves(game,di);
+    let best=null,bestScore=-Infinity;
+
     moves.forEach(n=>{
       const s=cpuMoveScore(di,n);
-      if(s>bestMoveScore){bestMoveScore=s;bestMove=n;}
+      if(s>bestScore){
+        bestScore=s;
+        best=n;
+      }
     });
 
-    // Search more aggressively when a track is known, otherwise mix move/search.
-    const searchBias=game.revealedTracks.size ? 2.0 : 0.25;
+    return {target:best,score:bestScore};
+  }
 
-    if(bestSearch!==null && (bestSearchScore+searchBias >= bestMoveScore || bestMove===null)){
-      return {type:"search",target:bestSearch};
+  function chooseCpuAction(di){
+    const search=bestCpuSearch(di);
+    const move=bestCpuMove(di);
+
+    // Guarantee at least one search every CPU turn.
+    // Red Shiba is the dedicated investigator and will normally search.
+    if(game.cpuSearchesThisTurn===0 && di===0 && search.target!==null){
+      return {type:"search",target:search.target};
     }
 
-    return {type:"move",target:bestMove};
+    // If evidence exists, red and green become much more search-heavy.
+    if(game.revealedTracks.size && di!==2 && search.target!==null){
+      if(search.score+2.5>=move.score || move.target===null){
+        return {type:"search",target:search.target};
+      }
+    }
+
+    // Red searches most turns even before evidence appears.
+    if(di===0 && search.target!==null){
+      return {type:"search",target:search.target};
+    }
+
+    // Green alternates between coverage and investigation.
+    if(di===1 && search.target!==null){
+      const freshSearch=!game.cpuSearchedBoxes.has(search.target);
+      if(freshSearch && (game.turn%2===0 || game.revealedTracks.size>0)){
+        return {type:"search",target:search.target};
+      }
+    }
+
+    if(move.target!==null){
+      return {type:"move",target:move.target};
+    }
+
+    if(search.target!==null){
+      return {type:"search",target:search.target};
+    }
+
+    return null;
   }
 
   function runCpuPoliceTurn(){
     if(playMode!=="cpuPolice" || game.gameOver || game.phase!=="dogs") return;
+
+    // New turn begins before any dog has acted.
+    if(game.dogAction.every(a=>a===false) && !game.actionLocked){
+      game.cpuSearchesThisTurn=0;
+    }
 
     let di=game.dogAction.findIndex(a=>a===false);
 
@@ -757,6 +841,7 @@
       game.catVisible=false;
       game.selectedDog=null;
       game.dogAction=[false,false,false];
+      game.cpuSearchesThisTurn=0;
 
       let extra=game.turn===9?" あと3ターン！"
         :game.turn===10?" あと2ターン！"

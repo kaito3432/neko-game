@@ -29,6 +29,9 @@ window.NyanEngine = (() => {
       selectedDog:null,
       dogAction:[false,false,false],
       actionLocked:false,
+      cpuSearchedBoxes:new Set(),
+      cpuSearchCount:0,
+      cpuSearchesThisTurn:0,
       gameOver:false
     };
   }
