@@ -11,6 +11,14 @@
   let playMode="local"; // local | cpuPolice
   let cpuTimer=null;
 
+  let cpuMemory={
+    lastDogNodes:[null,null,null],
+    discoveredTrackBoxes:[],
+    emptyBoxes:new Set(),
+    recentTargets:[],
+    thoughtText:""
+  };
+
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
@@ -69,6 +77,13 @@
   function initGame(showMode=false){
     game=E.createState();
     clearTimeout(cpuTimer);
+    cpuMemory={
+      lastDogNodes:[null,null,null],
+      discoveredTrackBoxes:[],
+      emptyBoxes:new Set(),
+      recentTargets:[],
+      thoughtText:""
+    };
     privacyOverlay.classList.remove("show");
     resultOverlay.classList.remove("show");
     settingsOverlay.classList.remove("show");
@@ -416,6 +431,7 @@
 
       if(game.catHistory.has(bi)){
         game.revealedTracks.set(bi,game.catHistory.get(bi));
+        if(!cpuMemory.discoveredTrackBoxes.includes(bi)) cpuMemory.discoveredTrackBoxes.push(bi);
         Audio.haptic([15,35,25]);
         A.shakeBoxSoon(board,bi);
 
@@ -429,6 +445,7 @@
           showToast("🐕🐾","クンクン……！","ネコの足跡を発見！");
         }
       }else{
+        if(playMode==="cpuPolice") cpuMemory.emptyBoxes.add(bi);
         Audio.play("empty");
         Audio.haptic(10);
         A.burstAtBox(board,bi,"💨");
@@ -661,6 +678,252 @@
   function closeSettings(){settingsOverlay.classList.remove("show");}
 
 
+
+  function boxDistance(a,b){
+    return Math.abs(E.boxRow(a)-E.boxRow(b))+Math.abs(E.boxCol(a)-E.boxCol(b));
+  }
+
+  function nodeToBoxDistance(node,box){
+    let best=99;
+    E.getBoxesAroundNode(node).forEach(b=>{
+      best=Math.min(best,boxDistance(b,box));
+    });
+    return best;
+  }
+
+  function isEdgeBox(b){
+    const r=E.boxRow(b),c=E.boxCol(b);
+    return r===0||r===4||c===0||c===4;
+  }
+
+  function catEscapeDegree(boxIndex){
+    return E.getBoxNeighbors(boxIndex).filter(n=>!game.catHistory.has(n)).length;
+  }
+
+  function knownTrackBoxes(){
+    return [...game.revealedTracks.keys()];
+  }
+
+  function inferredHotBoxes(){
+    const tracks=knownTrackBoxes();
+    const scores=new Map();
+
+    if(!tracks.length){
+      for(let b=0;b<E.BOX_COUNT;b++){
+        let s=0;
+        const r=E.boxRow(b),c=E.boxCol(b);
+        s+=5-Math.abs(r-2)-Math.abs(c-2);
+        if(!game.cpuSearchedBoxes.has(b)) s+=2.5;
+        scores.set(b,s);
+      }
+      return scores;
+    }
+
+    for(let b=0;b<E.BOX_COUNT;b++){
+      let s=0;
+      let nearest=99;
+      tracks.forEach(t=>nearest=Math.min(nearest,boxDistance(t,b)));
+      s+=Math.max(0,7-nearest)*2.8;
+
+      // The cat cannot return to its own path, so boxes around discovered tracks
+      // but not already discovered become especially interesting.
+      if(!game.revealedTracks.has(b)) s+=2.2;
+
+      // Prefer escape corridors with multiple onward options.
+      s+=catEscapeDegree(b)*1.25;
+
+      if(game.cpuSearchedBoxes.has(b)) s-=5.5;
+      if(cpuMemory.emptyBoxes.has(b)) s-=6.5;
+
+      scores.set(b,s);
+    }
+    return scores;
+  }
+
+  function likelyEscapeBoxes(limit=6){
+    const hot=inferredHotBoxes();
+    return [...hot.entries()]
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,limit)
+      .map(([b])=>b);
+  }
+
+  function dogRole(di){
+    // Dynamic roles:
+    // 0 tracker, 1 searcher, 2 blocker.
+    // If one dog is much closer to tracks, it becomes tracker.
+    const tracks=knownTrackBoxes();
+    if(tracks.length){
+      let bestDog=0,bestDist=99;
+      for(let d=0;d<3;d++){
+        const node=game.dogs[d];
+        let dist=99;
+        tracks.forEach(t=>dist=Math.min(dist,nodeToBoxDistance(node,t)));
+        if(dist<bestDist){bestDist=dist;bestDog=d;}
+      }
+      if(di===bestDog) return "tracker";
+    }
+    return di===1 ? "searcher" : (di===2 ? "blocker" : "tracker");
+  }
+
+  function scoreSearch(di,boxIndex){
+    const role=dogRole(di);
+    const hot=inferredHotBoxes();
+
+    let score=(hot.get(boxIndex)||0);
+
+    // Always value fresh information.
+    if(!game.cpuSearchedBoxes.has(boxIndex)) score+=9;
+    if(game.cpuSearchedBoxes.has(boxIndex)) score-=12;
+    if(cpuMemory.emptyBoxes.has(boxIndex)) score-=10;
+
+    // Evidence discovered here previously is useful, but do not obsess forever.
+    if(game.revealedTracks.has(boxIndex)) score-=4;
+
+    // Role tendencies.
+    if(role==="searcher") score+=4.5;
+    if(role==="tracker" && knownTrackBoxes().length) score+=3.5;
+    if(role==="blocker") score-=1.5;
+
+    // Endgame: searching high-probability boxes matters more.
+    const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
+    if(remaining<=3) score+=4;
+
+    // Small randomness keeps behavior human.
+    score+=Math.random()*1.8;
+
+    return score;
+  }
+
+  function scoreMove(di,node){
+    const role=dogRole(di);
+    let score=0;
+
+    // Spread the dogs, but not too far.
+    game.dogs.forEach((other,j)=>{
+      if(j===di||other===null)return;
+      const d=E.manhattanNodeDistance(node,other);
+      if(d===0) score-=100;
+      else if(d===1) score-=4;
+      else score+=Math.min(d,4)*0.8;
+    });
+
+    // Avoid immediate backtracking.
+    if(cpuMemory.lastDogNodes[di]===node) score-=8;
+
+    // Move toward hot zones.
+    const hot=likelyEscapeBoxes(8);
+    let nearest=99;
+    hot.forEach(b=>nearest=Math.min(nearest,nodeToBoxDistance(node,b)));
+    score+=Math.max(0,7-nearest)*2.1;
+
+    // Nodes overlooking multiple fresh boxes are valuable.
+    const around=E.getBoxesAroundNode(node);
+    const fresh=around.filter(b=>!game.cpuSearchedBoxes.has(b)).length;
+    score+=fresh*2.3;
+
+    // Blocker values nodes adjacent to low-degree escape boxes.
+    if(role==="blocker"){
+      const choke=around.reduce((acc,b)=>{
+        const deg=catEscapeDegree(b);
+        return acc + (deg<=2 ? 2.2 : 0);
+      },0);
+      score+=choke;
+    }
+
+    // Tracker moves toward discovered tracks.
+    if(role==="tracker" && knownTrackBoxes().length){
+      let td=99;
+      knownTrackBoxes().forEach(b=>td=Math.min(td,nodeToBoxDistance(node,b)));
+      score+=Math.max(0,6-td)*1.6;
+    }
+
+    // Slight central preference early.
+    if(game.turn<=4){
+      const r=E.nodeRow(node),c=E.nodeCol(node);
+      score+=3-Math.abs(r-2.5)*.45-Math.abs(c-2.5)*.45;
+    }
+
+    // Endgame: prioritize blockade positions.
+    const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
+    if(remaining<=3){
+      const likely=likelyEscapeBoxes(5);
+      let block=0;
+      likely.forEach(b=>{
+        if(E.getBoxesAroundNode(node).includes(b)) block+=2.5;
+      });
+      score+=block;
+    }
+
+    score+=Math.random()*1.7;
+    return score;
+  }
+
+  function bestSearchAction(di){
+    const node=game.dogs[di];
+    const boxes=E.getBoxesAroundNode(node);
+
+    let target=null,score=-Infinity;
+    boxes.forEach(b=>{
+      const s=scoreSearch(di,b);
+      if(s>score){score=s;target=b;}
+    });
+    return {type:"search",target,score};
+  }
+
+  function bestMoveAction(di){
+    const moves=E.getDogLegalMoves(game,di);
+
+    let target=null,score=-Infinity;
+    moves.forEach(n=>{
+      const s=scoreMove(di,n);
+      if(s>score){score=s;target=n;}
+    });
+    return {type:"move",target,score};
+  }
+
+  function chooseCpuAction(di){
+    const search=bestSearchAction(di);
+    const move=bestMoveAction(di);
+    const role=dogRole(di);
+    const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
+
+    // Guarantee at least one investigation every police turn.
+    if(game.cpuSearchesThisTurn===0 && search.target!==null){
+      return search;
+    }
+
+    // Searchers and trackers investigate aggressively when evidence exists.
+    if(knownTrackBoxes().length && role!=="blocker" && search.target!==null){
+      if(search.score+3>=move.score || move.target===null) return search;
+    }
+
+    // In the final 3 turns, the blocker prefers movement if it improves containment.
+    if(remaining<=3 && role==="blocker" && move.target!==null){
+      if(move.score+1.5>=search.score) return move;
+    }
+
+    // Fresh high-value search beats mediocre movement.
+    if(search.target!==null && !game.cpuSearchedBoxes.has(search.target)){
+      if(search.score>=move.score+1.2 || move.target===null) return search;
+    }
+
+    if(move.target!==null) return move;
+    return search.target!==null ? search : null;
+  }
+
+  function cpuThoughtFor(di,action){
+    const role=dogRole(di);
+    if(!action) return "うーん…";
+    if(action.type==="search"){
+      if(knownTrackBoxes().length) return role==="tracker" ? "足跡の近くを追うワン…" : "ここが怪しいワン…";
+      return "まだ調べてない箱をクンクン…";
+    }
+    if(role==="blocker") return "逃げ道をふさぐワン…";
+    if(knownTrackBoxes().length) return "足跡の先へ回り込むワン…";
+    return "広く捜査するワン…";
+  }
+
   function cpuSetupDogs(){
     const active=[];
     for(let i=0;i<E.NODE_COUNT;i++){
@@ -703,135 +966,6 @@
     return Math.abs(E.boxRow(a)-E.boxRow(b))+Math.abs(E.boxCol(a)-E.boxCol(b));
   }
 
-  function cpuSearchScore(di,boxIndex){
-    let score=Math.random()*0.35;
-
-    // Never waste time repeatedly checking empty/known boxes.
-    if(game.cpuSearchedBoxes.has(boxIndex)) score-=8;
-
-    // Strongly prioritize boxes near discovered traces.
-    if(game.revealedTracks.size){
-      let nearest=99;
-      game.revealedTracks.forEach((_,b)=>{
-        nearest=Math.min(nearest,boxDistance(b,boxIndex));
-      });
-      score+=Math.max(0,6-nearest)*2.7;
-    }else{
-      // Before evidence appears, cover the board from the middle outward.
-      const r=E.boxRow(boxIndex),c=E.boxCol(boxIndex);
-      score+=4.2-Math.abs(r-2)*.65-Math.abs(c-2)*.65;
-    }
-
-    // Different personalities.
-    if(di===0) score+=2.7;      // red: search specialist
-    if(di===1) score+=1.2;      // green: balanced
-    if(di===2) score+=0.2;      // blue: mobility
-
-    return score;
-  }
-
-  function cpuMoveScore(di,node){
-    let score=Math.random()*0.45;
-
-    // Avoid bunching up.
-    game.dogs.forEach((p,j)=>{
-      if(j!==di && p!==null){
-        score+=Math.min(4,E.manhattanNodeDistance(node,p))*.85;
-      }
-    });
-
-    // Head toward known traces.
-    if(game.revealedTracks.size){
-      let nearest=99;
-      game.revealedTracks.forEach((_,traceBox)=>{
-        E.getBoxesAroundNode(node).forEach(box=>{
-          nearest=Math.min(nearest,boxDistance(box,traceBox));
-        });
-      });
-      score+=Math.max(0,6-nearest)*1.8;
-    }else{
-      // Prefer nodes that expose unsearched boxes.
-      const fresh=E.getBoxesAroundNode(node).filter(b=>!game.cpuSearchedBoxes.has(b)).length;
-      score+=fresh*1.15;
-    }
-
-    if(di===2) score+=2.1; // blue: movement specialist
-    if(di===1) score+=.7;
-
-    return score;
-  }
-
-  function bestCpuSearch(di){
-    const searchable=E.getBoxesAroundNode(game.dogs[di]);
-    let best=null,bestScore=-Infinity;
-
-    searchable.forEach(b=>{
-      const s=cpuSearchScore(di,b);
-      if(s>bestScore){
-        bestScore=s;
-        best=b;
-      }
-    });
-
-    return {target:best,score:bestScore};
-  }
-
-  function bestCpuMove(di){
-    const moves=E.getDogLegalMoves(game,di);
-    let best=null,bestScore=-Infinity;
-
-    moves.forEach(n=>{
-      const s=cpuMoveScore(di,n);
-      if(s>bestScore){
-        bestScore=s;
-        best=n;
-      }
-    });
-
-    return {target:best,score:bestScore};
-  }
-
-  function chooseCpuAction(di){
-    const search=bestCpuSearch(di);
-    const move=bestCpuMove(di);
-
-    // Guarantee at least one search every CPU turn.
-    // Red Shiba is the dedicated investigator and will normally search.
-    if(game.cpuSearchesThisTurn===0 && di===0 && search.target!==null){
-      return {type:"search",target:search.target};
-    }
-
-    // If evidence exists, red and green become much more search-heavy.
-    if(game.revealedTracks.size && di!==2 && search.target!==null){
-      if(search.score+2.5>=move.score || move.target===null){
-        return {type:"search",target:search.target};
-      }
-    }
-
-    // Red searches most turns even before evidence appears.
-    if(di===0 && search.target!==null){
-      return {type:"search",target:search.target};
-    }
-
-    // Green alternates between coverage and investigation.
-    if(di===1 && search.target!==null){
-      const freshSearch=!game.cpuSearchedBoxes.has(search.target);
-      if(freshSearch && (game.turn%2===0 || game.revealedTracks.size>0)){
-        return {type:"search",target:search.target};
-      }
-    }
-
-    if(move.target!==null){
-      return {type:"move",target:move.target};
-    }
-
-    if(search.target!==null){
-      return {type:"search",target:search.target};
-    }
-
-    return null;
-  }
-
   function runCpuPoliceTurn(){
     if(playMode!=="cpuPolice" || game.gameOver || game.phase!=="dogs") return;
 
@@ -850,46 +984,58 @@
     const action=chooseCpuAction(di);
     if(!action){
       game.dogAction[di]="move";
-      cpuTimer=setTimeout(runCpuPoliceTurn,350);
+      cpuTimer=setTimeout(runCpuPoliceTurn,300);
       return;
     }
 
-    if(action.type==="move"){
-      game.actionLocked=true;
-      game.dogs[di]=action.target;
-      game.dogAction[di]="move";
-      setMessage(`🤖 ${E.DOGS[di].name} が移動したワン！`);
-      Audio.play("tap");
-      render();
+    game.actionLocked=true;
+    const thought=cpuThoughtFor(di,action);
+    guideDisplay.textContent=`🐕💭 ${E.DOGS[di]} ${thought}`;
+    render();
 
-      cpuTimer=setTimeout(()=>{
+    cpuTimer=setTimeout(()=>{
+      if(game.gameOver) return;
+
+      if(action.type==="move"){
+        const previous=game.dogs[di];
+        cpuMemory.lastDogNodes[di]=previous;
+
+        game.dogs[di]=action.target;
+        game.dogAction[di]="move";
         game.actionLocked=false;
+
+        setMessage(`🤖 ${E.DOGS[di].name} が移動したワン！`);
+        Audio.play("tap");
         render();
-        runCpuPoliceTurn();
-      },520);
 
-    }else{
-      game.selectedDog=di;
-      performSearch(di,action.target);
+        cpuTimer=setTimeout(runCpuPoliceTurn,430);
 
-      // performSearch unlocks when animation ends.
-      const waitForSearch=()=>{
-        if(game.gameOver) return;
-        if(game.actionLocked){
-          cpuTimer=setTimeout(waitForSearch,120);
-          return;
-        }
-        cpuTimer=setTimeout(runCpuPoliceTurn,360);
-      };
-      cpuTimer=setTimeout(waitForSearch,180);
-    }
+      }else{
+        game.actionLocked=false;
+        game.selectedDog=di;
+        performSearch(di,action.target);
+
+        const waitForSearch=()=>{
+          if(game.gameOver) return;
+          if(game.actionLocked){
+            cpuTimer=setTimeout(waitForSearch,110);
+            return;
+          }
+          cpuTimer=setTimeout(runCpuPoliceTurn,320);
+        };
+        cpuTimer=setTimeout(waitForSearch,160);
+      }
+    },420);
   }
 
   function cpuFinishTurn(){
     if(game.gameOver)return;
 
     game.phase="waitingEnd";
-    setMessage("🤖 CPU柴犬警察の捜査が終了しました。");
+    const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
+    setMessage(remaining<=3
+      ?"🤖 CPU柴犬警察が包囲を強めています…"
+      :"🤖 CPU柴犬警察の捜査が終了しました。");
     render();
 
     cpuTimer=setTimeout(()=>{

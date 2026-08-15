@@ -1222,3 +1222,15 @@ body.final-three .turn-pill strong{
 @media(max-width:390px){
   .box.setup-cat-choice::before{display:none}
 }
+
+
+/* ===== Ver1.9 Phase3 CPU AI feedback ===== */
+body.phase-dogs .guide{
+  transition:background .18s ease,transform .18s ease;
+}
+body.phase-dogs .guide .main{
+  font-weight:900;
+}
+.dog-card.done{
+  filter:saturate(.7);
+}
