@@ -14,6 +14,7 @@
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
+  const titleSettingsBtn=$("titleSettingsBtn"),howToBtn=$("howToBtn"),soundQuickBtn=$("soundQuickBtn");
   const turnCard=$("turnCard"),turnDisplay=$("turnDisplay"),turnExtra=$("turnExtra");
   const phaseDisplay=$("phaseDisplay"),guideDisplay=$("guideDisplay");
   const dogCards=[$("dogCard0"),$("dogCard1"),$("dogCard2")];
@@ -33,11 +34,32 @@
 
   function bindPress(el,fn){
     if(!el)return;
-    el.addEventListener("click",e=>{
+
+    let lastFire=0;
+
+    const fire=(e)=>{
       if(el.disabled)return;
+
+      const now=Date.now();
+      if(now-lastFire<350)return;
+      lastFire=now;
+
+      if(e){
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
       Audio.unlockAudio().then(()=>Audio.startBgm());
       fn(e);
-    });
+    };
+
+    if(window.PointerEvent){
+      el.addEventListener("pointerup",fire,{passive:false});
+    }else{
+      el.addEventListener("touchend",fire,{passive:false});
+    }
+
+    el.addEventListener("click",fire,{passive:false});
   }
 
   function initGame(showMode=false){
@@ -747,6 +769,22 @@
     },650);
   }
 
+
+  function showHowTo(){
+    privacyIcon.textContent="📖";
+    privacyTitle.textContent="遊び方";
+    privacyText.textContent=
+      "ネコは一度通った箱には戻れません。柴犬は1匹ずつ、移動か探索のどちらかを行います。11ターン逃げ切ればネコの勝ち、現在地を探索されるか逃げ道がなくなると柴犬警察の勝ちです。";
+    privacyOverlay.classList.add("show");
+  }
+
+  function toggleQuickSound(){
+    Audio.toggleSfx();
+    Audio.toggleBgm();
+    updateSettingsUI();
+    soundQuickBtn.textContent=(Audio.settings.sfx||Audio.settings.bgm)?"🔊 サウンド":"🔇 サウンド";
+  }
+
   function endGame(winner,reason){
     game.gameOver=true;
     game.phase="gameover";
@@ -776,6 +814,9 @@
 
   bindPress(localModeBtn,startLocalMode);
   bindPress(cpuModeBtn,startCpuPoliceMode);
+  bindPress(titleSettingsBtn,openSettings);
+  bindPress(howToBtn,showHowTo);
+  bindPress(soundQuickBtn,toggleQuickSound);
 
   for(let i=0;i<3;i++) bindPress(dogCards[i],()=>selectDog(i));
   bindPress(catViewBtn,toggleCatView);

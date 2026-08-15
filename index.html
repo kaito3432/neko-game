@@ -53,29 +53,58 @@
 </div>
 
 
-<div class="overlay show" id="modeOverlay">
-  <div class="modal mode-modal">
-    <img class="mode-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
-    <p class="mode-sub">遊び方を選んでね</p>
+<div class="overlay show title-screen" id="modeOverlay">
+  <div class="title-menu">
+    <button class="title-gear" id="titleSettingsBtn" type="button" aria-label="設定">⚙️</button>
 
-    <div class="mode-grid">
-      <button class="mode-btn local" id="localModeBtn" type="button">
-        <span class="mode-icon">👥</span>
-        <span class="mode-title">対人戦</span>
-        <span class="mode-desc">同じスマホを交代しながら遊ぶ</span>
+    <img class="title-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
+    <div class="title-sub">🐾 遊び方を選んでね 🐾</div>
+
+    <div class="title-mode-list">
+      <button class="title-mode-card local" id="localModeBtn" type="button">
+        <div class="title-mode-text">
+          <strong>👥 対人戦</strong>
+          <span>同じスマホを交代しながら遊ぶ</span>
+        </div>
+        <div class="title-mode-art pair-art">
+          <img src="./assets/images/cat.png" alt="">
+          <img src="./assets/images/dog_red.png" alt="">
+        </div>
       </button>
 
-      <button class="mode-btn cpu" id="cpuModeBtn" type="button">
-        <span class="mode-icon">🤖</span>
-        <span class="mode-title">CPU対戦</span>
-        <span class="mode-desc">あなたはネコ / CPUは柴犬警察</span>
+      <button class="title-mode-card cpu" id="cpuModeBtn" type="button">
+        <div class="title-mode-text">
+          <strong>🤖 CPU対戦</strong>
+          <span>あなたはネコ / CPUは柴犬警察</span>
+        </div>
+        <div class="title-mode-art triple-art">
+          <img src="./assets/images/dog_red.png" alt="">
+          <img src="./assets/images/dog_green.png" alt="">
+          <img src="./assets/images/dog_blue.png" alt="">
+        </div>
       </button>
 
-      <button class="mode-btn online" type="button" disabled>
-        <span class="mode-icon">🌐</span>
-        <span class="mode-title">オンライン</span>
-        <span class="mode-desc">準備中</span>
+      <button class="title-mode-card online" type="button" disabled>
+        <div class="title-mode-text">
+          <strong>🌐 オンライン</strong>
+          <span>準備中</span>
+        </div>
+        <div class="online-lock">🔒</div>
       </button>
+    </div>
+
+    <div class="title-rule-card">
+      <img src="./assets/images/cat.png" alt="">
+      <div>
+        <strong>ゲームのルール</strong>
+        <p>いたずらネコになって、3匹の柴犬警察から11ターン逃げ切ろう！</p>
+      </div>
+    </div>
+
+    <div class="title-bottom-row">
+      <button class="mini-menu-btn" id="howToBtn" type="button">📖 遊び方</button>
+      <button class="mini-menu-btn" id="soundQuickBtn" type="button">🔊 サウンド</button>
+      <button class="mini-menu-btn" type="button" disabled>👑 ランキング<br><small>準備中</small></button>
     </div>
   </div>
 </div>
