@@ -10,6 +10,7 @@
   let toastTimer=null;
   let playMode="local"; // local | cpuPolice
   let cpuTimer=null;
+  let cpuDifficulty="normal"; // easy | normal | hard
 
   let cpuMemory={
     lastDogNodes:[null,null,null],
@@ -22,6 +23,8 @@
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
+  const difficultyOverlay=$("difficultyOverlay"),cpuEasyBtn=$("cpuEasyBtn"),cpuNormalBtn=$("cpuNormalBtn"),
+        cpuHardBtn=$("cpuHardBtn"),difficultyBackBtn=$("difficultyBackBtn");
   const titleSettingsBtn=$("titleSettingsBtn"),howToBtn=$("howToBtn"),soundQuickBtn=$("soundQuickBtn");
   const turnDisplay=$("turnDisplay");
   const phaseDisplay=$("phaseDisplay"),guideDisplay=$("guideDisplay");
@@ -105,16 +108,29 @@
   }
 
   function startCpuPoliceMode(){
-    playMode="cpuPolice";
     modeOverlay.classList.remove("show");
+    difficultyOverlay.classList.add("show");
+  }
+
+  function beginCpuPoliceGame(difficulty){
+    cpuDifficulty=difficulty;
+    playMode="cpuPolice";
+    difficultyOverlay.classList.remove("show");
     initGame(false);
     cpuSetupDogs();
     game.phase="catSetup";
     game.turn=1;
+
+    const label={easy:"やさしい",normal:"ふつう",hard:"つよい"}[cpuDifficulty];
     showPrivacy("🐱","逃走1ターン目・ネコの番",
-      "CPU柴犬警察の配置が完了しました。配置を見て、スタート地点にする箱を1つ選んでください。");
+      `CPU柴犬警察（${label}）の配置が完了しました。配置を見て、スタート地点にする箱を1つ選んでください。`);
     setMessage("🐱 柴犬の配置を見て、好きな箱に隠れよう。");
     render();
+  }
+
+  function closeDifficultyPicker(){
+    difficultyOverlay.classList.remove("show");
+    modeOverlay.classList.add("show");
   }
 
   function render(){
@@ -166,7 +182,22 @@
         ${publicTrackHTML(i)}
         ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}`;
 
-      bindPress(b,()=>handleBoxPress(i));
+      if(game.phase==="catSetup"){
+        b.addEventListener("pointerdown",e=>{
+          if(game.phase!=="catSetup"||game.actionLocked||game.gameOver)return;
+          e.preventDefault();
+          e.stopPropagation();
+          handleBoxPress(i);
+        },{passive:false});
+        b.addEventListener("touchstart",e=>{
+          if(game.phase!=="catSetup"||game.actionLocked||game.gameOver)return;
+          e.preventDefault();
+          e.stopPropagation();
+          handleBoxPress(i);
+        },{passive:false});
+      }else{
+        bindPress(b,()=>handleBoxPress(i));
+      }
       board.appendChild(b);
     }
 
@@ -230,7 +261,7 @@
       // The exact tapped cardboard is the starting position.
       // Nodes are disabled during this phase so mobile taps cannot be stolen.
       game.actionLocked=true;
-      const chosenStart=i;
+      const chosenStart=Number(i);
 
       A.tapPopBox(board,chosenStart);
       Audio.play("cat");
@@ -552,7 +583,7 @@
         :"「ネコ位置を見る」で現在地と逃げ道を確認";
     }else if(game.phase==="dogs"){
       guideDisplay.textContent=playMode==="cpuPolice"
-        ?"CPU柴犬警察が捜査中…"
+        ?`CPU柴犬警察（${{easy:"やさしい",normal:"ふつう",hard:"つよい"}[cpuDifficulty]}）が捜査中…`
         :(game.selectedDog===null
           ?"柴犬を選択して、交差点へ移動 or 箱を探索"
           :"緑の交差点＝移動 / 青い箱＝探索");
@@ -766,14 +797,29 @@
     return di===1 ? "searcher" : (di===2 ? "blocker" : "tracker");
   }
 
+  function cpuProfile(){
+    if(cpuDifficulty==="easy"){
+      return {fresh:5.5,track:1.35,spread:.45,backtrack:3,role:1.5,endgame:1.5,noise:7.5,forceSearch:.72,think:260};
+    }
+    if(cpuDifficulty==="hard"){
+      return {fresh:11.5,track:4.1,spread:1.15,backtrack:11,role:5.4,endgame:7,noise:.65,forceSearch:1,think:520};
+    }
+    return {fresh:9,track:2.8,spread:.8,backtrack:8,role:3.5,endgame:4,noise:1.8,forceSearch:1,think:390};
+  }
+
+  function cpuThinkDelay(){
+    return cpuProfile().think;
+  }
+
   function scoreSearch(di,boxIndex){
     const role=dogRole(di);
     const hot=inferredHotBoxes();
+    const profile=cpuProfile();
 
     let score=(hot.get(boxIndex)||0);
 
     // Always value fresh information.
-    if(!game.cpuSearchedBoxes.has(boxIndex)) score+=9;
+    if(!game.cpuSearchedBoxes.has(boxIndex)) score+=profile.fresh;
     if(game.cpuSearchedBoxes.has(boxIndex)) score-=12;
     if(cpuMemory.emptyBoxes.has(boxIndex)) score-=10;
 
@@ -781,22 +827,23 @@
     if(game.revealedTracks.has(boxIndex)) score-=4;
 
     // Role tendencies.
-    if(role==="searcher") score+=4.5;
-    if(role==="tracker" && knownTrackBoxes().length) score+=3.5;
+    if(role==="searcher") score+=profile.role;
+    if(role==="tracker" && knownTrackBoxes().length) score+=profile.role*.8;
     if(role==="blocker") score-=1.5;
 
     // Endgame: searching high-probability boxes matters more.
     const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
-    if(remaining<=3) score+=4;
+    if(remaining<=3) score+=profile.endgame;
 
     // Small randomness keeps behavior human.
-    score+=Math.random()*1.8;
+    score+=Math.random()*profile.noise;
 
     return score;
   }
 
   function scoreMove(di,node){
     const role=dogRole(di);
+    const profile=cpuProfile();
     let score=0;
 
     // Spread the dogs, but not too far.
@@ -805,11 +852,11 @@
       const d=E.manhattanNodeDistance(node,other);
       if(d===0) score-=100;
       else if(d===1) score-=4;
-      else score+=Math.min(d,4)*0.8;
+      else score+=Math.min(d,4)*profile.spread;
     });
 
     // Avoid immediate backtracking.
-    if(cpuMemory.lastDogNodes[di]===node) score-=8;
+    if(cpuMemory.lastDogNodes[di]===node) score-=profile.backtrack;
 
     // Move toward hot zones.
     const hot=likelyEscapeBoxes(8);
@@ -835,7 +882,7 @@
     if(role==="tracker" && knownTrackBoxes().length){
       let td=99;
       knownTrackBoxes().forEach(b=>td=Math.min(td,nodeToBoxDistance(node,b)));
-      score+=Math.max(0,6-td)*1.6;
+      score+=Math.max(0,6-td)*profile.track;
     }
 
     // Slight central preference early.
@@ -855,7 +902,7 @@
       score+=block;
     }
 
-    score+=Math.random()*1.7;
+    score+=Math.random()*profile.noise;
     return score;
   }
 
@@ -888,9 +935,10 @@
     const role=dogRole(di);
     const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
 
-    // Guarantee at least one investigation every police turn.
+    // Normal/Hard always open with at least one investigation.
+    // Easy can make a beginner-friendly mistake.
     if(game.cpuSearchesThisTurn===0 && search.target!==null){
-      return search;
+      if(Math.random()<=cpuProfile().forceSearch) return search;
     }
 
     // Searchers and trackers investigate aggressively when evidence exists.
@@ -900,12 +948,17 @@
 
     // In the final 3 turns, the blocker prefers movement if it improves containment.
     if(remaining<=3 && role==="blocker" && move.target!==null){
-      if(move.score+1.5>=search.score) return move;
+      const bonus=cpuDifficulty==="hard" ? 4 : (cpuDifficulty==="normal" ? 1.5 : 0);
+      if(move.score+bonus>=search.score) return move;
     }
 
     // Fresh high-value search beats mediocre movement.
     if(search.target!==null && !game.cpuSearchedBoxes.has(search.target)){
       if(search.score>=move.score+1.2 || move.target===null) return search;
+    }
+
+    if(cpuDifficulty==="easy" && Math.random()<0.18 && move.target!==null && search.target!==null){
+      return Math.random()<.5 ? move : search;
     }
 
     if(move.target!==null) return move;
@@ -1025,7 +1078,7 @@
         };
         cpuTimer=setTimeout(waitForSearch,160);
       }
-    },420);
+    },cpuThinkDelay());
   }
 
   function cpuFinishTurn(){
@@ -1113,6 +1166,10 @@
 
   bindPress(localModeBtn,startLocalMode);
   bindPress(cpuModeBtn,startCpuPoliceMode);
+  bindPress(cpuEasyBtn,()=>beginCpuPoliceGame("easy"));
+  bindPress(cpuNormalBtn,()=>beginCpuPoliceGame("normal"));
+  bindPress(cpuHardBtn,()=>beginCpuPoliceGame("hard"));
+  bindPress(difficultyBackBtn,closeDifficultyPicker);
   bindPress(titleSettingsBtn,openSettings);
   bindPress(howToBtn,showHowTo);
   bindPress(soundQuickBtn,toggleQuickSound);
