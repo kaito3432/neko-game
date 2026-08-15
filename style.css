@@ -308,3 +308,278 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-user-select:
   .game-logo{max-height:72px}
   .character-img{width:30px;height:30px}
 }
+
+
+/* ===== Ver1.7 : 1画面UI + 演出強化 ===== */
+
+html,body{
+  width:100%;
+  min-height:100%;
+}
+
+body{
+  overflow:hidden;
+}
+
+.app{
+  height:100dvh;
+  max-height:100dvh;
+  display:grid;
+  grid-template-rows:auto auto auto minmax(0,1fr) auto auto auto;
+  gap:clamp(3px,.65vh,7px);
+  padding:
+    max(4px,env(safe-area-inset-top))
+    6px
+    max(5px,env(safe-area-inset-bottom));
+  overflow:hidden;
+}
+
+.art-hero{
+  position:relative;
+  min-height:0;
+  margin:0;
+  padding:0 34px;
+  height:clamp(52px,9.5vh,78px);
+  justify-content:flex-start;
+}
+
+.game-logo{
+  width:min(100%,360px);
+  height:clamp(38px,7.2vh,62px);
+  max-height:none;
+  object-fit:contain;
+  object-position:center;
+  border-radius:0;
+  filter:drop-shadow(0 2px 0 rgba(93,64,55,.16));
+}
+
+.art-hero p{
+  margin:0;
+  font-size:clamp(8px,1.25vh,11px);
+  line-height:1.05;
+}
+
+.gear-btn{
+  position:absolute;
+  right:0;
+  top:0;
+  width:clamp(30px,5.2vh,40px);
+  height:clamp(30px,5.2vh,40px);
+  padding:0;
+  border:2px solid var(--brown);
+  border-radius:999px;
+  background:#fff;
+  box-shadow:0 2px 0 var(--shadow);
+  font-size:clamp(15px,2.5vh,20px);
+  z-index:20;
+}
+
+.status-row{
+  grid-template-columns:clamp(66px,18vw,88px) 1fr;
+  gap:5px;
+  margin:0;
+}
+
+.card{
+  min-height:0;
+  height:clamp(44px,7.3vh,58px);
+  padding:4px 7px;
+  border-radius:12px;
+  box-shadow:0 2px 0 var(--shadow);
+}
+
+.label{font-size:clamp(7px,1.05vh,9px)}
+.main{font-size:clamp(10px,1.8vh,14px)}
+.turn-extra{font-size:clamp(7px,1vh,9px)}
+
+.guide{
+  margin:0;
+  padding:4px 8px;
+  min-height:0;
+  height:clamp(42px,6.8vh,54px);
+  border-radius:12px;
+  box-shadow:0 2px 0 var(--shadow);
+}
+
+.board-shell{
+  min-height:0;
+  height:100%;
+  padding:clamp(4px,.7vh,7px);
+  border-radius:18px;
+  box-shadow:0 4px 0 var(--shadow);
+  display:flex;
+  flex-direction:column;
+}
+
+.board-title{
+  margin:0 0 3px;
+  font-size:clamp(9px,1.45vh,12px);
+  line-height:1.1;
+}
+
+.board{
+  width:100%;
+  height:auto;
+  max-height:100%;
+  flex:1 1 auto;
+  aspect-ratio:1/1;
+  align-self:center;
+}
+
+.dog-row{
+  gap:5px;
+  margin:0;
+}
+
+.dog-card{
+  min-height:0;
+  height:clamp(42px,6.8vh,54px);
+  padding:3px;
+  border-radius:11px;
+  box-shadow:0 2px 0 var(--shadow);
+  font-size:clamp(7px,1.15vh,9px);
+}
+
+.dog-name{
+  font-size:clamp(8px,1.35vh,11px)!important;
+  margin-bottom:1px;
+}
+
+.character-img{
+  width:clamp(24px,4.3vh,32px);
+  height:clamp(24px,4.3vh,32px);
+}
+
+.message{
+  min-height:0;
+  height:clamp(34px,5.6vh,44px);
+  margin:0;
+  padding:4px 7px;
+  border-radius:11px;
+  font-size:clamp(8px,1.25vh,10px);
+  line-height:1.25;
+  overflow:hidden;
+}
+
+.controls{
+  position:static;
+  margin:0;
+  padding:0;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  background:none;
+}
+
+.btn{
+  min-height:0;
+  height:clamp(40px,6.4vh,50px);
+  padding:5px;
+  border-radius:11px;
+  box-shadow:0 2px 0 var(--shadow);
+  font-size:clamp(9px,1.35vh,11px);
+}
+
+.btn.wide{
+  grid-column:1/-1;
+  height:clamp(38px,5.8vh,46px);
+}
+
+/* Compact settings modal */
+.settings-modal{
+  padding:14px;
+}
+.settings-modal .modal-icon{
+  font-size:32px;
+}
+.settings-modal h2{
+  margin:2px 0 8px;
+  font-size:19px;
+}
+.settings-list{
+  gap:6px;
+  margin:8px 0;
+}
+.setting-row,
+.volume-row{
+  min-height:44px;
+  padding:7px 9px;
+  font-size:12px;
+}
+
+/* More lively interactions */
+.dog-card.selected{
+  animation:selectedDogGlow .75s ease-in-out infinite alternate;
+}
+@keyframes selectedDogGlow{
+  from{box-shadow:0 2px 0 var(--shadow),0 0 0 0 rgba(232,126,165,.15)}
+  to{box-shadow:0 2px 0 var(--shadow),0 0 0 5px rgba(232,126,165,.18)}
+}
+
+.node.move{
+  animation:nodePulseV17 .8s ease-in-out infinite;
+}
+@keyframes nodePulseV17{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.16)}
+}
+
+.searchable{
+  animation:searchPulseV17 .8s ease-in-out infinite;
+}
+@keyframes searchPulseV17{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(.95)}
+}
+
+.track-badge{
+  animation:trackPop .28s cubic-bezier(.2,.9,.2,1.2);
+}
+@keyframes trackPop{
+  from{opacity:0;transform:scale(.45)}
+  to{opacity:1;transform:scale(1)}
+}
+
+.cat-art{
+  animation:catIdle 1.5s ease-in-out infinite;
+}
+@keyframes catIdle{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-2px)}
+}
+
+.box.opening{
+  animation:boxOpenV17 .5s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes boxOpenV17{
+  0%{transform:scale(1)}
+  25%{transform:translateY(-4px) scale(1.05) rotate(-2deg)}
+  55%{transform:translateY(-2px) scale(.97) rotate(2deg)}
+  75%{transform:scale(1.03)}
+  100%{transform:scale(1)}
+}
+
+/* Small-height phones: compress even further */
+@media(max-height:760px){
+  .app{
+    gap:3px;
+    padding-top:max(2px,env(safe-area-inset-top));
+    padding-bottom:max(3px,env(safe-area-inset-bottom));
+  }
+  .art-hero{height:48px}
+  .game-logo{height:35px}
+  .art-hero p{font-size:7px}
+  .card{height:40px}
+  .guide{height:38px}
+  .dog-card{height:38px}
+  .message{height:30px}
+  .btn{height:36px}
+  .btn.wide{height:34px}
+}
+
+/* Very small screens */
+@media(max-width:360px){
+  .app{padding-left:4px;padding-right:4px}
+  .art-hero{padding-left:28px;padding-right:28px}
+  .gear-btn{width:28px;height:28px;font-size:14px}
+  .board-shell{padding:4px}
+}

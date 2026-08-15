@@ -75,6 +75,7 @@ window.NyanAnimation = (() => {
     const e=document.createElement("div");
     e.className="dog-sniff";
     e.textContent=`🐕${di+1}`;
+    e.style.filter="drop-shadow(0 4px 4px rgba(93,64,55,.18))";
     e.style.left=n.x+"px";
     e.style.top=n.y+"px";
     document.body.appendChild(e);
@@ -89,6 +90,7 @@ window.NyanAnimation = (() => {
     setTimeout(()=>animateBoxOpen(board,bi),320);
 
     setTimeout(()=>{
+      burstAtBox(board,bi,"✨");
       e.remove();
       if(done)done();
     },820);

@@ -259,6 +259,7 @@
       }
 
       // 移動は即時確定。以後この犬は行動不可。
+      Audio.play("tap");
       game.dogs[di]=i;
       game.dogAction[di]="move";
       game.selectedDog=null;
@@ -284,6 +285,7 @@
     }
 
     game.selectedDog=di;
+    Audio.play("tap");
     setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} を選択。緑の交差点＝移動、青い箱＝探索です。`);
     render();
   }
@@ -407,7 +409,7 @@
     phaseDisplay.textContent=p[game.phase]||"";
 
     if(game.actionLocked){
-      guideDisplay.textContent=game.phase==="dogs"?"クンクン調査中…":"移動中…";
+      guideDisplay.textContent=game.phase==="dogs"?"🐕 クンクン調査中…":"🐱 逃走中…";
     }else if(game.phase==="catSetup"){
       guideDisplay.textContent="ネコのスタート箱を1つタップ";
     }else if(game.phase==="dogSetup"){
