@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FDFBF7">
+<title>にゃんチェイス</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app">
+  <header class="hero art-hero">
+    <button class="gear-btn" id="settingsBtn" type="button" aria-label="設定">⚙️</button>
+    <img class="game-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
+    <p>いたずらネコ vs 柴犬警察！11ターン逃げ切れ！</p>
+  </header>
+
+  <section class="status-row">
+    <div class="card turn" id="turnCard">
+      <div class="label">TURN</div>
+      <div class="main" id="turnDisplay">1 / 11</div>
+      <span class="turn-extra" id="turnExtra"></span>
+    </div>
+    <div class="card phase">
+      <div class="label">PHASE</div>
+      <div class="main" id="phaseDisplay">🐱 ネコ初期配置</div>
+    </div>
+  </section>
+
+  <section class="guide">
+    <div class="label">操作ガイド</div>
+    <div class="main" id="guideDisplay">ネコのスタート箱を1つ選ぼう</div>
+  </section>
+
+  <section class="board-shell">
+    <div class="board-title">🏠 ダンボール街</div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <section class="dog-row">
+    <button class="dog-card red" id="dogCard0"><span class="dog-name">🟥 あか柴</span>未配置</button>
+    <button class="dog-card blue" id="dogCard1"><span class="dog-name">🟦 あお柴</span>未配置</button>
+    <button class="dog-card cream" id="dogCard2"><span class="dog-name">🟨 しろ柴</span>未配置</button>
+  </section>
+
+  <div class="message" id="message">🐱 ネコのスタート地点を秘密に決めよう。</div>
+
+  <section class="controls">
+    <button class="btn pink" id="catViewBtn">👀 ネコ位置を見る</button>
+    <button class="btn yellow" id="finishDogTurnBtn">✅ 柴犬ターン終了</button>
+    <button class="btn wide" id="restartBtn">🔄 最初から</button>
+  </section>
+</div>
+
+
+<div class="overlay show" id="modeOverlay">
+  <div class="modal mode-modal">
+    <img class="mode-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
+    <p class="mode-sub">遊び方を選んでね</p>
+
+    <div class="mode-grid">
+      <button class="mode-btn local" id="localModeBtn" type="button">
+        <span class="mode-icon">👥</span>
+        <span class="mode-title">対人戦</span>
+        <span class="mode-desc">同じスマホを交代しながら遊ぶ</span>
+      </button>
+
+      <button class="mode-btn cpu" id="cpuModeBtn" type="button">
+        <span class="mode-icon">🤖</span>
+        <span class="mode-title">CPU対戦</span>
+        <span class="mode-desc">あなたはネコ / CPUは柴犬警察</span>
+      </button>
+
+      <button class="mode-btn online" type="button" disabled>
+        <span class="mode-icon">🌐</span>
+        <span class="mode-title">オンライン</span>
+        <span class="mode-desc">準備中</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="privacyOverlay">
+  <div class="modal">
+    <div class="modal-icon" id="privacyIcon">🐕</div>
+    <h2 id="privacyTitle">交代</h2>
+    <p id="privacyText"></p>
+    <button class="btn pink" id="privacyBtn">OK</button>
+  </div>
+</div>
+
+<div class="overlay" id="resultOverlay">
+  <div class="modal">
+    <div class="modal-icon" id="resultIcon">🎉</div>
+    <h2 id="resultTitle">ゲーム終了</h2>
+    <p id="resultText"></p>
+    <button class="btn pink" id="againBtn">🔄 もう一度遊ぶ</button>
+  </div>
+</div>
+
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal settings-modal">
+    <div class="modal-icon">⚙️</div>
+    <h2>設定</h2>
+    <div class="settings-list">
+      <button class="setting-row" id="sfxToggleBtn" type="button">
+        <span>🔊 効果音</span><strong id="sfxState">ON</strong>
+      </button>
+      <button class="setting-row" id="vibrationToggleBtn" type="button">
+        <span>📳 バイブ</span><strong id="vibrationState">ON</strong>
+      </button>
+      <button class="setting-row" id="bgmToggleBtn" type="button">
+        <span>🎵 BGM</span><strong id="bgmState">ON</strong>
+      </button>
+      <div class="volume-row">
+        <span>🔉 BGM音量</span>
+        <input id="bgmVolumeSlider" type="range" min="0" max="100" step="1" value="72" aria-label="BGM音量">
+        <strong id="bgmVolumeValue">72%</strong>
+      </div>
+    </div>
+    <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon">🐾</div>
+  <div class="toast-title" id="toastTitle">痕跡発見！</div>
+  <div class="toast-text" id="toastText"></div>
+</div>
+
+<div class="motion-status" id="motionStatus"></div>
+<div class="confetti-layer" id="confettiLayer"></div>
+<script src="./engine.js"></script>
+<script src="./audio.js"></script>
+<script src="./animation.js"></script>
+<script src="./game.js"></script>
+</body>
+</html>
