@@ -206,7 +206,7 @@
 
       b.innerHTML=`<span class="boxnum">${i+1}</span>
         <img class="box-art" src="./assets/images/box.png" alt="">
-        ${game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat.png" alt="ネコ"></span>':""}
+        ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat.png" alt="ネコ"></span>':""}
         ${privateHistoryHTML(i)}
         ${publicTrackHTML(i)}
         ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}`;
@@ -267,6 +267,7 @@
   }
 
   function privateHistoryHTML(i){
+    if(playMode==="cpuCat")return"";
     if(game.phase!=="cat"||!game.catVisible||!game.catHistory.has(i))return"";
     if(game.catHistory.get(i)===1){
       return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
@@ -1399,16 +1400,21 @@
   function cpuCatInitialHide(){
     if(playMode!=="cpuCat"||game.gameOver)return;
 
+    // 警察側にはネコの潜伏位置を絶対に見せない。
     game.actionLocked=true;
+    game.catVisible=false;
     document.body.classList.add("cpu-cat-thinking");
-    guideDisplay.textContent="🐱💭 CPUネコが隠れ場所を考え中…";
+    guideDisplay.textContent="🐱💭 CPUネコが隠れています…";
 
     cpuTimer=setTimeout(()=>{
       const start=cpuChooseStartBox();
+
+      // 内部状態だけ更新。盤面上では一切表示・演出しない。
       game.catPos=start;
       game.catHistory.clear();
       game.catHistory.set(start,1);
       game.catVisible=false;
+
       game.turn=1;
       game.phase="dogs";
       game.selectedDog=null;
@@ -1432,9 +1438,10 @@
 
     game.turn++;
     game.phase="cat";
+    game.catVisible=false;
     game.actionLocked=true;
     document.body.classList.add("cpu-cat-thinking");
-    guideDisplay.textContent="🐱💭 CPUネコが逃げ道を考え中…";
+    guideDisplay.textContent="🐱💭 CPUネコがこっそり移動中…";
     render();
 
     cpuTimer=setTimeout(()=>{
@@ -1447,28 +1454,26 @@
         return;
       }
 
-      const from=game.catPos;
-      Audio.play("cat");
+      // 警察側では移動アニメーションを出さず、内部位置だけ更新する。
+      // これにより現在地・移動方向が漏れない。
+      game.catPos=target;
+      game.catHistory.set(target,game.turn);
+      game.catVisible=false;
+      game.phase="dogs";
+      game.selectedDog=null;
+      game.dogAction=[false,false,false];
+      game.actionLocked=false;
+      document.body.classList.remove("cpu-cat-thinking");
 
-      A.animateCatMove(board,from,target,()=>{
-        game.catPos=target;
-        game.catHistory.set(target,game.turn);
-        game.catVisible=false;
-        game.phase="dogs";
-        game.selectedDog=null;
-        game.dogAction=[false,false,false];
-        game.actionLocked=false;
-        document.body.classList.remove("cpu-cat-thinking");
+      if(E.getCatLegalMoves(game).length===0 && game.turn<E.MAX_TURNS){
+        endGame("dogs","CPUネコの次の逃げ道がなくなりました！");
+        return;
+      }
 
-        if(E.getCatLegalMoves(game).length===0 && game.turn<E.MAX_TURNS){
-          endGame("dogs","CPUネコの次の逃げ道がなくなりました！");
-          return;
-        }
-
-        showPhaseCue("🐕","柴犬警察の捜査！");
-        setMessage("🐕 CPUネコが移動しました。柴犬3匹を行動させよう。");
-        render();
-      });
+      Audio.play("tap");
+      showPhaseCue("🐕","柴犬警察の捜査！");
+      setMessage("🐕 CPUネコが移動しました。柴犬3匹を行動させよう。");
+      render();
     },cpuDifficulty==="hard"?720:(cpuDifficulty==="normal"?520:340));
   }
 
