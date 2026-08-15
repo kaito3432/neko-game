@@ -1954,3 +1954,184 @@ body.turn-last .turn-pill{
   .visual-update1a .title-mode-art img{width:58px!important;height:58px!important}
   .visual-update1a .triple-art img{width:49px!important;height:49px!important}
 }
+
+
+/* ===== Ver1.9 Visual Update 1b : screenshot-like title ===== */
+.visual-update1b{
+  background:
+    linear-gradient(rgba(255,251,238,.55),rgba(255,247,224,.74)),
+    url("./assets/images/bg_day.png") center bottom/cover no-repeat!important;
+}
+.visual-update1b .premium-title{
+  width:min(100%,520px);
+  min-height:100%;
+  padding:max(8px,env(safe-area-inset-top)) 18px max(12px,env(safe-area-inset-bottom))!important;
+  gap:10px;
+  justify-content:flex-start!important;
+}
+.premium-hero{
+  height:clamp(320px,43vh,430px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  overflow:visible;
+}
+.premium-logo{
+  width:min(96%,430px);
+  height:auto;
+  max-height:150px;
+  object-fit:contain;
+  filter:drop-shadow(0 4px 2px rgba(93,64,55,.16));
+}
+.premium-cast{
+  margin-top:8px;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  gap:0;
+  overflow:visible;
+}
+.premium-cast img{
+  width:clamp(92px,21vw,122px);
+  height:clamp(92px,21vw,122px);
+  object-fit:contain;
+  flex:0 0 auto;
+  filter:drop-shadow(0 4px 2px rgba(93,64,55,.15));
+}
+.premium-cast .premium-cat{
+  width:clamp(130px,31vw,172px);
+  height:clamp(130px,31vw,172px);
+  margin-right:-10px;
+}
+.premium-cast img+img{margin-left:-20px}
+.premium-cast img:nth-child(3){transform:translateY(-7px)}
+
+.premium-sub{
+  min-height:50px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  font-size:clamp(20px,2.8vh,25px);
+  font-weight:900;
+  color:var(--brown);
+}
+.premium-paw{
+  font-size:20px;
+  color:#D88E78;
+  text-shadow:
+    -7px -6px 0 #D88E78,
+    0 -10px 0 #D88E78,
+    7px -6px 0 #D88E78;
+  transform:scale(.72);
+}
+
+.premium-modes{
+  display:grid;
+  gap:10px;
+}
+.premium-mode{
+  width:100%;
+  min-height:94px;
+  border:2.5px solid var(--brown);
+  border-radius:22px;
+  box-shadow:0 5px 0 rgba(93,64,55,.16);
+  display:grid;
+  grid-template-columns:1fr 170px;
+  align-items:center;
+  padding:10px 14px 10px 18px;
+  text-align:left;
+  overflow:visible;
+}
+.premium-mode.local{
+  background:linear-gradient(90deg,#FFF0F2,#FFF9F7);
+  border-color:#D87377;
+}
+.premium-mode.cpu{
+  background:linear-gradient(90deg,#F1F7DF,#FFFCEE);
+  border-color:#5F8D55;
+}
+.premium-mode.online{
+  background:linear-gradient(90deg,#F2F2EF,#FBFAF8);
+  border-color:#AAA49C;
+  color:#A5A09A;
+}
+.premium-copy strong{
+  display:block;
+  font-size:clamp(28px,4vh,36px);
+  line-height:1.05;
+  font-weight:900;
+}
+.premium-copy span{
+  display:block;
+  margin-top:8px;
+  font-size:clamp(12px,1.8vh,15px);
+  font-weight:800;
+}
+.premium-art{
+  height:78px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  overflow:visible;
+}
+.premium-art img{
+  width:78px;
+  height:78px;
+  object-fit:contain;
+  flex:0 0 auto;
+}
+.premium-art.pair img+img{margin-left:-24px}
+.premium-art.trio img{
+  width:66px;height:66px;
+}
+.premium-art.trio img+img{margin-left:-24px}
+.premium-lock{
+  width:54px;height:54px;
+  margin-left:auto;margin-right:12px;
+  fill:none;stroke:#A3A6A2;stroke-width:5;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+
+.premium-bottom{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:2px;
+}
+.premium-mini{
+  min-height:88px;
+  border:2px solid #C68B4F;
+  border-radius:18px;
+  background:linear-gradient(#FFF8DF,#FFE8B8);
+  box-shadow:0 4px 0 rgba(93,64,55,.14);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  font-weight:900;
+  color:var(--brown);
+}
+.premium-mini svg{
+  width:37px;height:37px;
+  fill:none;stroke:#6B4437;stroke-width:4;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.premium-mini span{font-size:13px}
+
+@media(max-height:780px){
+  .premium-hero{height:260px}
+  .premium-logo{max-height:115px}
+  .premium-cast .premium-cat{width:112px;height:112px}
+  .premium-cast img{width:78px;height:78px}
+  .premium-mode{min-height:76px}
+  .premium-copy strong{font-size:25px}
+  .premium-art{height:62px}
+  .premium-art img{width:60px;height:60px}
+  .premium-art.trio img{width:52px;height:52px}
+  .premium-bottom .premium-mini{min-height:66px}
+  .premium-mini svg{width:29px;height:29px}
+}
