@@ -18,8 +18,8 @@ window.NyanEngine = (() => {
 
   function createState(){
     return {
-      turn:1,
-      phase:"catSetup",
+      turn:0,
+      phase:"dogSetup",
       catPos:null,
       catVisible:false,
       catHistory:new Map(),

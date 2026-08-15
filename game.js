@@ -15,13 +15,13 @@
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
   const titleSettingsBtn=$("titleSettingsBtn"),howToBtn=$("howToBtn"),soundQuickBtn=$("soundQuickBtn");
-  const turnCard=$("turnCard"),turnDisplay=$("turnDisplay"),turnExtra=$("turnExtra");
+  const turnDisplay=$("turnDisplay");
   const phaseDisplay=$("phaseDisplay"),guideDisplay=$("guideDisplay");
   const dogCards=[$("dogCard0"),$("dogCard1"),$("dogCard2")];
-  const cpuStats=$("cpuStats"),cpuTurnsLeft=$("cpuTurnsLeft"),cpuTracksFound=$("cpuTracksFound"),cpuSearchCount=$("cpuSearchCount");
+  const dogRow=$("dogRow"),tracksSummary=$("tracksSummary"),tracksFoundCount=$("tracksFoundCount");
   const message=$("message");
   const catViewBtn=$("catViewBtn"),settingsBtn=$("settingsBtn");
-  const finishDogTurnBtn=$("finishDogTurnBtn"),restartBtn=$("restartBtn");
+  const finishDogTurnBtn=$("finishDogTurnBtn");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
   const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon");
@@ -30,6 +30,7 @@
   const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState"),bgmState=$("bgmState");
   const vibrationState=$("vibrationState"),settingsCloseBtn=$("settingsCloseBtn");
   const bgmVolumeSlider=$("bgmVolumeSlider"),bgmVolumeValue=$("bgmVolumeValue");
+  const restartFromSettingsBtn=$("restartFromSettingsBtn"),backToTitleBtn=$("backToTitleBtn");
   const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
   const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
 
@@ -70,7 +71,7 @@
     resultOverlay.classList.remove("show");
     settingsOverlay.classList.remove("show");
     hideToast();
-    setMessage("🐱 ネコのスタート地点を秘密に決めよう。好きな箱を1つタップしてください。");
+    setMessage("🐕 0ターン目。まず柴犬警察3匹を配置してください。");
     if(showMode){
       modeOverlay.classList.add("show");
     }
@@ -81,18 +82,27 @@
     playMode="local";
     modeOverlay.classList.remove("show");
     initGame(false);
+    showPrivacy("🐕","0ターン目・警察配置",
+      "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。");
+    render();
   }
 
   function startCpuPoliceMode(){
     playMode="cpuPolice";
     modeOverlay.classList.remove("show");
     initGame(false);
+    cpuSetupDogs();
+    game.phase="catSetup";
+    game.turn=1;
+    showPrivacy("🐱","逃走1ターン目・ネコの番",
+      "CPU柴犬警察の配置が完了しました。配置を見て、スタート地点にする箱を1つ選んでください。");
+    setMessage("🐱 柴犬の配置を見て、好きな箱に隠れよう。");
+    render();
   }
 
   function render(){
     renderBoard();
     renderStatus();
-    renderCpuStats();
     renderDogCards();
     renderControls();
   }
@@ -125,7 +135,7 @@
 
       if(game.phase!=="cat"&&game.revealedTracks.has(i)){
         b.classList.add("revealed");
-        if(game.catHistory.get(i)===0)b.classList.add("start-track");
+        if(game.catHistory.get(i)===1)b.classList.add("start-track");
       }
 
       b.innerHTML=`<span class="boxnum">${i+1}</span>
@@ -176,7 +186,7 @@
 
   function privateHistoryHTML(i){
     if(game.phase!=="cat"||!game.catVisible||!game.catHistory.has(i))return"";
-    if(game.catHistory.get(i)===0){
+    if(game.catHistory.get(i)===1){
       return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
     }
     return'<span class="private-foot"><img src="./assets/images/paw.png" alt="足跡"></span>';
@@ -184,7 +194,7 @@
 
   function publicTrackHTML(i){
     if(game.phase==="cat"||!game.revealedTracks.has(i))return"";
-    if(game.catHistory.get(i)===0){
+    if(game.catHistory.get(i)===1){
       return'<span class="track-badge"><img class="start-art" src="./assets/images/start.png" alt="START"></span>';
     }
     return'<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡"></span>';
@@ -196,23 +206,24 @@
 
     if(game.phase==="catSetup"){
       game.catPos=i;
-      game.catHistory.set(i,0);
+      game.catHistory.set(i,1);
       game.catVisible=false;
+      game.turn=1;
+      game.phase="dogs";
+      game.selectedDog=null;
+      game.dogAction=[false,false,false];
+      game.cpuSearchesThisTurn=0;
 
       if(playMode==="cpuPolice"){
-        cpuSetupDogs();
-        game.phase="cat";
-        showPrivacy("🐱","ターン1・ネコの番",
-          "CPU柴犬警察の配置が完了しました。ネコの現在地を確認して移動してください。");
-        setMessage("🐱 「ネコ位置を見る」を押して、自分の足跡と移動先を確認してください。");
+        setMessage("🤖 CPU柴犬警察が捜査中…");
+        render();
+        cpuTimer=setTimeout(runCpuPoliceTurn,550);
       }else{
-        game.phase="dogSetup";
-        showPrivacy("🐕","柴犬警察へ交代",
-          "ネコのスタート地点は秘密になりました。中央の16交差点から柴犬3匹のスタート位置を順番に選んでください。");
-        setMessage("🐕 中央16交差点から柴犬3匹を配置してください。");
+        showPrivacy("🐕","柴犬警察の番",
+          "ネコが隠れました。現在地は秘密です。柴犬警察が捜査を開始します。");
+        setMessage("🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。");
+        render();
       }
-
-      render();
       return;
     }
 
@@ -223,7 +234,7 @@
       }
 
       if(!E.getCatLegalMoves(game).includes(i)){
-        setMessage("グレーの箱には戻れません。緑の箱から1つ選んでください。");
+        setMessage("グレーの箱には戻れません。緑＝安全、赤⚠️＝次ターン行き止まりです。");
         return;
       }
 
@@ -293,13 +304,15 @@
       game.dogSetupCount++;
 
       if(game.dogSetupCount>=3){
-        game.phase="cat";
-        showPrivacy("🐱","ターン1・ネコの番",
-          "柴犬3匹の配置が完了しました。ネコさんだけ画面を見てください。");
-        setMessage("🐱 「ネコ位置を見る」を押して、自分の足跡と移動先を確認してください。");
+        game.phase="catSetup";
+        game.turn=1;
+        showPrivacy("🐱","逃走1ターン目・ネコの番",
+          "柴犬警察の配置を確認して、スタート地点にする箱を1つ選んでください。");
+        setMessage("🐱 柴犬の配置を見て、好きな箱に隠れよう。");
       }else{
-        setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} を配置しました。次の柴犬を選んでください。`);
+        setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} を配置しました。次の柴犬を配置してください。`);
       }
+
       render();
       return;
     }
@@ -383,7 +396,7 @@
         Audio.haptic([15,35,25]);
         A.shakeBoxSoon(board,bi);
 
-        if(game.catHistory.get(bi)===0){
+        if(game.catHistory.get(bi)===1){
           Audio.play("start");
           A.burstAtBox(board,bi,"🚩✨");
           showToast("🚩","スタート地点を発見！","ここから逃げ始めたみたいだワン！");
@@ -452,55 +465,45 @@
   }
 
   function renderStatus(){
-    turnDisplay.textContent=`${game.turn} / ${E.MAX_TURNS}`;
+    const remaining=game.turn===0 ? 11 : Math.max(0,E.MAX_TURNS-game.turn+1);
+    turnDisplay.textContent=String(remaining);
 
-    if(game.turn>=9 && !game.gameOver){
-      Audio.setBgmMode("tension");
-    }else{
-      Audio.setBgmMode("normal");
-    }
-
-    turnCard.className="card turn";
-    turnExtra.textContent="";
-
-    if(game.turn===9&&!game.gameOver){turnCard.classList.add("t9");turnExtra.textContent="あと3ターン！";}
-    if(game.turn===10&&!game.gameOver){turnCard.classList.add("t10");turnExtra.textContent="あと2ターン！";}
-    if(game.turn===11&&!game.gameOver){turnCard.classList.add("t11");turnExtra.textContent="ラスト！";}
-
-    const p={
-      catSetup:"🐱 ネコ初期配置",
-      dogSetup:"🐕 柴犬初期配置",
+    const phases={
+      dogSetup:"🐕 警察配置",
+      catSetup:"🐱 ネコ潜伏",
       cat:"🐱 ネコ移動",
-      dogs:"🐕 柴犬行動",
-      waitingEnd:"🌙 行動完了",
+      dogs:"🐕 柴犬捜査",
+      waitingEnd:"🐕 捜査完了",
       gameover:"🎉 ゲーム終了"
     };
-    phaseDisplay.textContent=p[game.phase]||"";
+    phaseDisplay.textContent=phases[game.phase]||"";
+
+    document.body.classList.remove("phase-cat","phase-dogs","phase-setup");
+    if(game.phase==="cat"||game.phase==="catSetup") document.body.classList.add("phase-cat");
+    else if(game.phase==="dogs"||game.phase==="waitingEnd") document.body.classList.add("phase-dogs");
+    else document.body.classList.add("phase-setup");
 
     if(game.actionLocked){
       guideDisplay.textContent=game.phase==="dogs"?"🐕 クンクン調査中…":"🐱 逃走中…";
-    }else if(game.phase==="catSetup"){
-      guideDisplay.textContent="ネコのスタート箱を1つタップ";
     }else if(game.phase==="dogSetup"){
-      guideDisplay.textContent=`中央16交差点から柴犬を配置 ${game.dogSetupCount}/3`;
+      guideDisplay.textContent=`0ターン目：中央16交差点に柴犬を配置 ${game.dogSetupCount}/3`;
+    }else if(game.phase==="catSetup"){
+      guideDisplay.textContent="逃走1ターン目：柴犬の配置を見てスタート地点を選ぼう";
     }else if(game.phase==="cat"){
-      guideDisplay.textContent=game.catVisible?"緑の箱へ移動。グレーには戻れません":"「ネコ位置を見る」をタップ";
+      guideDisplay.textContent=game.catVisible
+        ?"緑＝安全 / 赤⚠️＝危険 / グレー＝移動不可"
+        :"「ネコ位置を見る」で現在地と逃げ道を確認";
     }else if(game.phase==="dogs"){
-      guideDisplay.textContent=game.selectedDog===null?"盤面または下のカードから柴犬を選択":"緑の交差点＝移動 / 青い箱＝探索";
+      guideDisplay.textContent=playMode==="cpuPolice"
+        ?"CPU柴犬警察が捜査中…"
+        :(game.selectedDog===null
+          ?"柴犬を選択して、交差点へ移動 or 箱を探索"
+          :"緑の交差点＝移動 / 青い箱＝探索");
     }else if(game.phase==="waitingEnd"){
-      guideDisplay.textContent="柴犬ターン終了をタップ";
+      guideDisplay.textContent=playMode==="cpuPolice"?"CPUの捜査終了":"柴犬ターン終了をタップ";
     }else{
       guideDisplay.textContent="ゲーム終了";
     }
-  }
-
-  function renderCpuStats(){
-    cpuStats.style.display=playMode==="cpuPolice"?"grid":"none";
-    if(playMode!=="cpuPolice") return;
-
-    cpuTurnsLeft.textContent=String(Math.max(0,E.MAX_TURNS-game.turn));
-    cpuTracksFound.textContent=String(game.revealedTracks.size);
-    cpuSearchCount.textContent=String(game.cpuSearchCount);
   }
 
   function renderDogCards(){
@@ -540,9 +543,18 @@
   }
 
   function renderControls(){
+    const isCatPhase=(game.phase==="cat"||game.phase==="catSetup");
+
+    dogRow.classList.toggle("is-hidden",isCatPhase);
+
+    tracksSummary.style.display=(game.phase==="dogSetup"||game.phase==="catSetup")?"none":"flex";
+    tracksFoundCount.textContent=String(game.revealedTracks.size);
+
+    catViewBtn.classList.toggle("show",game.phase==="cat");
     catViewBtn.disabled=game.phase!=="cat"||game.gameOver||game.actionLocked;
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
-    finishDogTurnBtn.style.display=playMode==="cpuPolice"?"none":"";
+
+    finishDogTurnBtn.classList.toggle("show",playMode==="local"&&game.phase==="waitingEnd");
     finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
 
@@ -907,6 +919,25 @@
   bindPress(catViewBtn,toggleCatView);
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
+  bindPress(restartFromSettingsBtn,()=>{
+    settingsOverlay.classList.remove("show");
+    initGame(false);
+    if(playMode==="local"){
+      showPrivacy("🐕","0ターン目・警察配置",
+        "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。");
+    }else{
+      cpuSetupDogs();
+      game.phase="catSetup";
+      game.turn=1;
+      showPrivacy("🐱","逃走1ターン目・ネコの番",
+        "CPU柴犬警察の配置を確認して、スタート地点にする箱を選んでください。");
+    }
+    render();
+  });
+  bindPress(backToTitleBtn,()=>{
+    settingsOverlay.classList.remove("show");
+    initGame(true);
+  });
   bindPress(sfxToggleBtn,()=>{Audio.toggleSfx();updateSettingsUI();});
   bindPress(bgmToggleBtn,()=>{Audio.toggleBgm();updateSettingsUI();});
   bgmVolumeSlider.addEventListener("input",()=>{
@@ -916,7 +947,6 @@
   });
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
-  bindPress(restartBtn,()=>initGame(true));
   bindPress(privacyBtn,closePrivacy);
   bindPress(againBtn,initGame);
 

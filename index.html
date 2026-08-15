@@ -15,35 +15,31 @@
     <p>いたずらネコ vs 柴犬警察！11ターン逃げ切れ！</p>
   </header>
 
-  <section class="status-row">
-    <div class="card turn" id="turnCard">
-      <div class="label">TURN</div>
-      <div class="main" id="turnDisplay">1 / 11</div>
-      <span class="turn-extra" id="turnExtra"></span>
+  <section class="game-topbar">
+    <div class="top-pill turn-pill">
+      <span class="top-label">残りターン</span>
+      <strong id="turnDisplay">11</strong>
     </div>
-    <div class="card phase">
-      <div class="label">PHASE</div>
-      <div class="main" id="phaseDisplay">🐱 ネコ初期配置</div>
+    <div class="top-pill phase-pill">
+      <span class="top-label">フェーズ</span>
+      <strong id="phaseDisplay">🐕 警察配置</strong>
     </div>
   </section>
 
   <section class="guide">
-    <div class="label">操作ガイド</div>
-    <div class="main" id="guideDisplay">ネコのスタート箱を1つ選ぼう</div>
+    <div class="main" id="guideDisplay">0ターン目：柴犬警察を配置しよう</div>
   </section>
 
   <section class="board-shell">
     <div class="board-title">🏠 ダンボール街</div>
     <div class="board" id="board"></div>
   </section>
-
-  <section class="cpu-stats" id="cpuStats">
-    <div class="cpu-stat"><span>残りターン</span><strong id="cpuTurnsLeft">10</strong></div>
-    <div class="cpu-stat"><span>発見した足跡</span><strong id="cpuTracksFound">0</strong></div>
-    <div class="cpu-stat"><span>探索回数</span><strong id="cpuSearchCount">0</strong></div>
+<section class="tracks-summary" id="tracksSummary">
+    <span>🐾 発見した足跡</span>
+    <strong id="tracksFoundCount">0</strong>
   </section>
 
-  <section class="dog-row">
+  <section class="dog-row" id="dogRow">
     <button class="dog-card red" id="dogCard0"><span class="dog-name">🟥 あか柴</span>未配置</button>
     <button class="dog-card blue" id="dogCard1"><span class="dog-name">🟦 あお柴</span>未配置</button>
     <button class="dog-card cream" id="dogCard2"><span class="dog-name">🟨 しろ柴</span>未配置</button>
@@ -51,10 +47,9 @@
 
   <div class="message" id="message">🐱 ネコのスタート地点を秘密に決めよう。</div>
 
-  <section class="controls">
-    <button class="btn pink" id="catViewBtn">👀 ネコ位置を見る</button>
-    <button class="btn yellow" id="finishDogTurnBtn">✅ 柴犬ターン終了</button>
-    <button class="btn wide" id="restartBtn">🔄 最初から</button>
+  <section class="phase-controls">
+    <button class="btn pink cat-only" id="catViewBtn">👀 ネコ位置を見る</button>
+    <button class="btn yellow dog-end-only" id="finishDogTurnBtn">✅ 柴犬ターン終了</button>
   </section>
 </div>
 
@@ -153,6 +148,10 @@
         <input id="bgmVolumeSlider" type="range" min="0" max="100" step="1" value="72" aria-label="BGM音量">
         <strong id="bgmVolumeValue">72%</strong>
       </div>
+    </div>
+    <div class="settings-actions">
+      <button class="btn yellow" id="restartFromSettingsBtn" type="button">🔄 最初からやり直す</button>
+      <button class="btn" id="backToTitleBtn" type="button">🏠 タイトルへ戻る</button>
     </div>
     <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
   </div>
