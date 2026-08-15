@@ -31,7 +31,7 @@
     if(!el)return;
     el.addEventListener("click",e=>{
       if(el.disabled)return;
-      Audio.startBgm();
+      Audio.unlockAudio().then(()=>Audio.startBgm());
       fn(e);
     });
   }
