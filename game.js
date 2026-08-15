@@ -21,6 +21,7 @@
     thoughtText:""
   };
   let cpuCatRoute=[];
+    lastTurnStingerPlayed=false;
 
   const $=id=>document.getElementById(id);
   const board=$("board");
@@ -48,8 +49,9 @@
   const bgmVolumeSlider=$("bgmVolumeSlider"),bgmVolumeValue=$("bgmVolumeValue");
   const restartFromSettingsBtn=$("restartFromSettingsBtn"),backToTitleBtn=$("backToTitleBtn");
   const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
-  const phaseCue=$("phaseCue"),phaseCueIcon=$("phaseCueIcon"),phaseCueText=$("phaseCueText");
+  const lastTurnBanner=$("lastTurnBanner"),phaseCue=$("phaseCue"),phaseCueIcon=$("phaseCueIcon"),phaseCueText=$("phaseCueText");
   let lastRenderedPhase=null;
+  let lastTurnStingerPlayed=false;
   const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
 
   function bindPress(el,fn){
@@ -522,6 +524,13 @@
       if(game.catHistory.has(bi)){
         game.revealedTracks.set(bi,game.catHistory.get(bi));
         if(!cpuMemory.discoveredTrackBoxes.includes(bi)) cpuMemory.discoveredTrackBoxes.push(bi);
+
+        const foundBox=board.querySelector(`.box[data-box-index="${bi}"]`);
+        if(foundBox){
+          foundBox.classList.remove("found-track");
+          void foundBox.offsetWidth;
+          foundBox.classList.add("found-track");
+        }
         Audio.haptic([15,35,25]);
         A.shakeBoxSoon(board,bi);
 
@@ -536,6 +545,12 @@
         }
       }else{
         if(playMode==="cpuPolice") cpuMemory.emptyBoxes.add(bi);
+        const emptyBox=board.querySelector(`.box[data-box-index="${bi}"]`);
+        if(emptyBox){
+          emptyBox.classList.remove("empty-search");
+          void emptyBox.offsetWidth;
+          emptyBox.classList.add("empty-search");
+        }
         Audio.play("empty");
         Audio.haptic(10);
         A.burstAtBox(board,bi,"💨");
@@ -620,6 +635,15 @@
     if(currentTurn>=8 && currentTurn<=9) document.body.classList.add("turn-mid");
     if(currentTurn===10) document.body.classList.add("turn-late");
     if(currentTurn===11) document.body.classList.add("turn-last");
+
+    if(currentTurn===11 && !game.gameOver && !lastTurnStingerPlayed){
+      lastTurnStingerPlayed=true;
+      lastTurnBanner.classList.remove("show");
+      void lastTurnBanner.offsetWidth;
+      lastTurnBanner.classList.add("show");
+      Audio.play("lastturn");
+      Audio.haptic([30,35,30]);
+    }
 
     // BGM changes reliably for the final 3 escape turns.
     if(game.turn>0 && remaining<=3 && !game.gameOver){
@@ -1579,7 +1603,7 @@
 
 
   function renderResultCpuCatRoute(){
-    if(playMode!=="cpuCat")return;
+    if(playMode!=="cpuCat"&&playMode!=="local")return;
 
     const ordered=cpuCatRoute.length
       ? cpuCatRoute.slice().sort((a,b)=>a.turn-b.turn)
@@ -1704,6 +1728,12 @@
     resultRoute.classList.remove("show");
     resultRouteBoard.innerHTML="";
     resultRouteNote.textContent="";
+
+    const resultModalEl=resultOverlay.querySelector(".modal");
+    if(resultModalEl){
+      resultModalEl.classList.remove("win-cat","win-dogs","celebrate");
+      resultModalEl.classList.add(winner==="cat"?"win-cat":"win-dogs","celebrate");
+    }
     game.phase="gameover";
     game.catVisible=true;
     game.selectedDog=null;
@@ -1729,7 +1759,7 @@
     render();
 
     // Police-vs-CPU-cat: show the whole escape route immediately in the result modal.
-    if(playMode==="cpuCat"){
+    if(playMode==="cpuCat"||playMode==="local"){
       renderResultCpuCatRoute();
       // Also prepare the board overlay behind the modal for later inspection.
       setTimeout(revealCpuCatRoute,120);

@@ -119,6 +119,12 @@ window.NyanAudio = (() => {
         tone(660,.10,"square",.025,.08);
         tone(880,.16,"square",.025,.18);
         break;
+      case "lastturn":
+        tone(523,.10,"triangle",.035);
+        tone(659,.10,"triangle",.035,.08);
+        tone(784,.14,"triangle",.04,.16);
+        tone(988,.18,"triangle",.045,.27);
+        break;
     }
   }
 
