@@ -95,12 +95,27 @@ window.NyanEngine = (() => {
     return state.dogAction.every(a => a!==false);
   }
 
+  function manhattanNodeDistance(a,b){
+    return Math.abs(nodeRow(a)-nodeRow(b))+Math.abs(nodeCol(a)-nodeCol(b));
+  }
+
+  function boxesAroundDogs(state){
+    const set=new Set();
+    state.dogs.forEach(node=>{
+      if(node!==null){
+        getBoxesAroundNode(node).forEach(b=>set.add(b));
+      }
+    });
+    return [...set];
+  }
+
   return {
     BOX_ROWS, BOX_COLS, NODE_ROWS, NODE_COLS,
     BOX_COUNT, NODE_COUNT, MAX_TURNS, DOGS,
     createState, boxRow, boxCol, nodeRow, nodeCol,
     isActiveDogNode, getBoxNeighbors, getCatLegalMoves,
     isCatDeadEnd, getNodeNeighbors, getDogLegalMoves,
-    getBoxesAroundNode, allDogsDone
+    getBoxesAroundNode, allDogsDone,
+    manhattanNodeDistance, boxesAroundDogs
   };
 })();

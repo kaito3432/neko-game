@@ -8,9 +8,12 @@
   const Audio=NyanAudio;
   let game;
   let toastTimer=null;
+  let playMode="local"; // local | cpuPolice
+  let cpuTimer=null;
 
   const $=id=>document.getElementById(id);
   const board=$("board");
+  const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
   const turnCard=$("turnCard"),turnDisplay=$("turnDisplay"),turnExtra=$("turnExtra");
   const phaseDisplay=$("phaseDisplay"),guideDisplay=$("guideDisplay");
   const dogCards=[$("dogCard0"),$("dogCard1"),$("dogCard2")];
@@ -37,14 +40,30 @@
     });
   }
 
-  function initGame(){
+  function initGame(showMode=false){
     game=E.createState();
+    clearTimeout(cpuTimer);
     privacyOverlay.classList.remove("show");
     resultOverlay.classList.remove("show");
     settingsOverlay.classList.remove("show");
     hideToast();
     setMessage("🐱 ネコのスタート地点を秘密に決めよう。好きな箱を1つタップしてください。");
+    if(showMode){
+      modeOverlay.classList.add("show");
+    }
     render();
+  }
+
+  function startLocalMode(){
+    playMode="local";
+    modeOverlay.classList.remove("show");
+    initGame(false);
+  }
+
+  function startCpuPoliceMode(){
+    playMode="cpuPolice";
+    modeOverlay.classList.remove("show");
+    initGame(false);
   }
 
   function render(){
@@ -155,10 +174,20 @@
       game.catPos=i;
       game.catHistory.set(i,0);
       game.catVisible=false;
-      game.phase="dogSetup";
-      showPrivacy("🐕","柴犬警察へ交代",
-        "ネコのスタート地点は秘密になりました。中央の16交差点から柴犬3匹のスタート位置を順番に選んでください。");
-      setMessage("🐕 中央16交差点から柴犬3匹を配置してください。");
+
+      if(playMode==="cpuPolice"){
+        cpuSetupDogs();
+        game.phase="cat";
+        showPrivacy("🐱","ターン1・ネコの番",
+          "CPU柴犬警察の配置が完了しました。ネコの現在地を確認して移動してください。");
+        setMessage("🐱 「ネコ位置を見る」を押して、自分の足跡と移動先を確認してください。");
+      }else{
+        game.phase="dogSetup";
+        showPrivacy("🐕","柴犬警察へ交代",
+          "ネコのスタート地点は秘密になりました。中央の16交差点から柴犬3匹のスタート位置を順番に選んでください。");
+        setMessage("🐕 中央16交差点から柴犬3匹を配置してください。");
+      }
+
       render();
       return;
     }
@@ -198,10 +227,16 @@
         game.dogAction=[false,false,false];
         game.actionLocked=false;
 
-        showPrivacy("🐕","柴犬警察の番",
-          "ネコの移動が完了しました。現在地と未発見の足跡は隠れています。");
-        setMessage("🐕 柴犬を選択すると、緑の交差点へ移動・青い箱を探索できます。");
-        render();
+        if(playMode==="cpuPolice"){
+          setMessage("🤖 柴犬警察CPUが捜査中…");
+          render();
+          cpuTimer=setTimeout(runCpuPoliceTurn,550);
+        }else{
+          showPrivacy("🐕","柴犬警察の番",
+            "ネコの移動が完了しました。現在地と未発見の足跡は隠れています。");
+          setMessage("🐕 柴犬を選択すると、緑の交差点へ移動・青い箱を探索できます。");
+          render();
+        }
       });
       render();
       return;
@@ -221,6 +256,8 @@
     if(game.gameOver||game.actionLocked||!E.isActiveDogNode(i))return;
 
     if(game.phase==="dogSetup"){
+      if(playMode==="cpuPolice") return;
+
       if(game.dogs.includes(i)){
         setMessage("その交差点にはすでに柴犬がいます。");
         return;
@@ -270,6 +307,7 @@
   }
 
   function selectDog(di){
+    if(playMode!=="local")return;
     if(game.phase!=="dogs"||game.gameOver||game.actionLocked||game.dogs[di]===null)return;
 
     if(game.dogAction[di]){
@@ -449,6 +487,7 @@
       if(game.selectedDog===i)c.classList.add("selected");
 
       c.disabled=!(
+        playMode==="local" &&
         game.phase==="dogs" &&
         pos!==null &&
         !game.dogAction[i] &&
@@ -460,6 +499,7 @@
   function renderControls(){
     catViewBtn.disabled=game.phase!=="cat"||game.gameOver||game.actionLocked;
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
+    finishDogTurnBtn.style.display=playMode==="cpuPolice"?"none":"";
     finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
 
@@ -509,6 +549,204 @@
 
   function closeSettings(){settingsOverlay.classList.remove("show");}
 
+
+  function cpuSetupDogs(){
+    const active=[];
+    for(let i=0;i<E.NODE_COUNT;i++){
+      if(E.isActiveDogNode(i)) active.push(i);
+    }
+
+    // Spread the dogs across the inner 4x4 grid.
+    const preferred=[7,10,25,28].filter(E.isActiveDogNode);
+    const chosen=[];
+
+    while(chosen.length<3){
+      let best=null,bestScore=-Infinity;
+
+      active.forEach(n=>{
+        if(chosen.includes(n)) return;
+
+        let score=Math.random()*0.35;
+
+        // Prefer distance from already chosen dogs.
+        chosen.forEach(c=>{
+          score+=E.manhattanNodeDistance(n,c)*1.6;
+        });
+
+        if(preferred.includes(n)) score+=1.2;
+
+        if(score>bestScore){
+          bestScore=score;
+          best=n;
+        }
+      });
+
+      chosen.push(best);
+    }
+
+    game.dogs=[chosen[0],chosen[1],chosen[2]];
+    game.dogSetupCount=3;
+  }
+
+  function cpuSearchScore(di,boxIndex){
+    let score=Math.random()*0.8;
+
+    // Known track: investigate around discovered traces.
+    if(game.revealedTracks.size){
+      let nearest=99;
+      game.revealedTracks.forEach((_,b)=>{
+        const d=Math.abs(E.boxRow(b)-E.boxRow(boxIndex))+Math.abs(E.boxCol(b)-E.boxCol(boxIndex));
+        nearest=Math.min(nearest,d);
+      });
+      score+=Math.max(0,5-nearest)*1.8;
+    }else{
+      // Early game: prefer central coverage.
+      const r=E.boxRow(boxIndex),c=E.boxCol(boxIndex);
+      score+=3-Math.abs(r-2)*.6-Math.abs(c-2)*.6;
+    }
+
+    // Avoid repeating already revealed boxes.
+    if(game.revealedTracks.has(boxIndex)) score-=5;
+
+    return score;
+  }
+
+  function cpuMoveScore(di,node){
+    let score=Math.random()*0.8;
+
+    // Spread away from other dogs.
+    game.dogs.forEach((p,j)=>{
+      if(j!==di && p!==null){
+        score+=Math.min(4,E.manhattanNodeDistance(node,p))*.7;
+      }
+    });
+
+    // If tracks are known, move toward them.
+    if(game.revealedTracks.size){
+      let nearest=99;
+      game.revealedTracks.forEach((_,b)=>{
+        E.getBoxesAroundNode(node).forEach(nb=>{
+          const d=Math.abs(E.boxRow(nb)-E.boxRow(b))+Math.abs(E.boxCol(nb)-E.boxCol(b));
+          nearest=Math.min(nearest,d);
+        });
+      });
+      score+=Math.max(0,5-nearest)*1.2;
+    }
+
+    return score;
+  }
+
+  function chooseCpuAction(di){
+    const node=game.dogs[di];
+    const searchable=E.getBoxesAroundNode(node);
+    const moves=E.getDogLegalMoves(game,di);
+
+    let bestSearch=null,bestSearchScore=-Infinity;
+    searchable.forEach(b=>{
+      const s=cpuSearchScore(di,b);
+      if(s>bestSearchScore){bestSearchScore=s;bestSearch=b;}
+    });
+
+    let bestMove=null,bestMoveScore=-Infinity;
+    moves.forEach(n=>{
+      const s=cpuMoveScore(di,n);
+      if(s>bestMoveScore){bestMoveScore=s;bestMove=n;}
+    });
+
+    // Search more aggressively when a track is known, otherwise mix move/search.
+    const searchBias=game.revealedTracks.size ? 2.0 : 0.25;
+
+    if(bestSearch!==null && (bestSearchScore+searchBias >= bestMoveScore || bestMove===null)){
+      return {type:"search",target:bestSearch};
+    }
+
+    return {type:"move",target:bestMove};
+  }
+
+  function runCpuPoliceTurn(){
+    if(playMode!=="cpuPolice" || game.gameOver || game.phase!=="dogs") return;
+
+    let di=game.dogAction.findIndex(a=>a===false);
+
+    if(di===-1){
+      cpuFinishTurn();
+      return;
+    }
+
+    const action=chooseCpuAction(di);
+    if(!action){
+      game.dogAction[di]="move";
+      cpuTimer=setTimeout(runCpuPoliceTurn,350);
+      return;
+    }
+
+    if(action.type==="move"){
+      game.actionLocked=true;
+      game.dogs[di]=action.target;
+      game.dogAction[di]="move";
+      setMessage(`🤖 ${E.DOGS[di].name} が移動したワン！`);
+      Audio.play("tap");
+      render();
+
+      cpuTimer=setTimeout(()=>{
+        game.actionLocked=false;
+        render();
+        runCpuPoliceTurn();
+      },520);
+
+    }else{
+      game.selectedDog=di;
+      performSearch(di,action.target);
+
+      // performSearch unlocks when animation ends.
+      const waitForSearch=()=>{
+        if(game.gameOver) return;
+        if(game.actionLocked){
+          cpuTimer=setTimeout(waitForSearch,120);
+          return;
+        }
+        cpuTimer=setTimeout(runCpuPoliceTurn,360);
+      };
+      cpuTimer=setTimeout(waitForSearch,180);
+    }
+  }
+
+  function cpuFinishTurn(){
+    if(game.gameOver)return;
+
+    game.phase="waitingEnd";
+    setMessage("🤖 CPU柴犬警察の捜査が終了しました。");
+    render();
+
+    cpuTimer=setTimeout(()=>{
+      if(game.turn>=E.MAX_TURNS){
+        endGame("cat","11ターンすべて逃げ切りました！");
+        return;
+      }
+
+      game.turn++;
+
+      if(E.getCatLegalMoves(game).length===0){
+        endGame("dogs","ネコが次に移動できる箱がありません！");
+        return;
+      }
+
+      game.phase="cat";
+      game.catVisible=false;
+      game.selectedDog=null;
+      game.dogAction=[false,false,false];
+
+      let extra=game.turn===9?" あと3ターン！"
+        :game.turn===10?" あと2ターン！"
+        :game.turn===11?" LAST TURN！":"";
+
+      showPrivacy("🐱",`ターン${game.turn}・ネコの番`,
+        `CPU柴犬警察の捜査が終わりました。ネコの位置を確認して次の箱へ移動してください。${extra}`);
+      setMessage(`🐱 ターン${game.turn}。まだ通っていない隣の箱へ移動しよう。${extra}`);
+      render();
+    },650);
+  }
+
   function endGame(winner,reason){
     game.gameOver=true;
     game.phase="gameover";
@@ -536,6 +774,9 @@
     render();
   }
 
+  bindPress(localModeBtn,startLocalMode);
+  bindPress(cpuModeBtn,startCpuPoliceMode);
+
   for(let i=0;i<3;i++) bindPress(dogCards[i],()=>selectDog(i));
   bindPress(catViewBtn,toggleCatView);
   bindPress(settingsBtn,openSettings);
@@ -549,9 +790,9 @@
   });
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
-  bindPress(restartBtn,initGame);
+  bindPress(restartBtn,()=>initGame(true));
   bindPress(privacyBtn,closePrivacy);
   bindPress(againBtn,initGame);
 
-  initGame();
+  initGame(true);
 })();
