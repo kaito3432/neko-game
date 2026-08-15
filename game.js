@@ -238,7 +238,7 @@
 
       b.innerHTML=`<span class="boxnum">${i+1}</span>
         <img class="box-art" src="./assets/images/box.png" alt="">
-        ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat.png" alt="ネコ"></span>':""}
+        ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat_play_normal.png" alt="ネコ"></span>':""}
         ${privateHistoryHTML(i)}
         ${publicTrackHTML(i)}
         ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}`;

@@ -2135,3 +2135,27 @@ body.turn-last .turn-pill{
   .premium-bottom .premium-mini{min-height:66px}
   .premium-mini svg{width:29px;height:29px}
 }
+
+
+/* ===== Ver1.9 Visual Update 1c : dedicated gameplay icons ===== */
+.cat-art{
+  object-fit:contain!important;
+  border-radius:50%!important;
+  background:transparent!important;
+}
+.dog-token img,
+.dog-card img,
+.dog-avatar img{
+  object-fit:contain!important;
+  border-radius:50%!important;
+  background:transparent!important;
+}
+
+/* Keep dedicated circular assets crisp on small screens */
+.cat-art,
+.dog-token img,
+.dog-card img,
+.dog-avatar img{
+  image-rendering:auto;
+  filter:drop-shadow(0 2px 1px rgba(93,64,55,.14));
+}
