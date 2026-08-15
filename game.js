@@ -799,12 +799,24 @@
 
   function cpuProfile(){
     if(cpuDifficulty==="easy"){
-      return {fresh:5.5,track:1.35,spread:.45,backtrack:3,role:1.5,endgame:1.5,noise:7.5,forceSearch:.72,think:260};
+      return {
+        fresh:5.5, track:1.35, spread:.45, backtrack:3, role:1.5,
+        endgame:1.5, noise:7.5, forceSearch:.72, think:260,
+        targetSearches:1, searchBias:0
+      };
     }
     if(cpuDifficulty==="hard"){
-      return {fresh:11.5,track:4.1,spread:1.15,backtrack:11,role:5.4,endgame:7,noise:.65,forceSearch:1,think:520};
+      return {
+        fresh:13.5, track:5.2, spread:1.2, backtrack:12, role:6.2,
+        endgame:8.5, noise:.45, forceSearch:1, think:520,
+        targetSearches:2, searchBias:5.5
+      };
     }
-    return {fresh:9,track:2.8,spread:.8,backtrack:8,role:3.5,endgame:4,noise:1.8,forceSearch:1,think:390};
+    return {
+      fresh:11.5, track:3.6, spread:.72, backtrack:9, role:4.2,
+      endgame:5.5, noise:1.25, forceSearch:1, think:390,
+      targetSearches:2, searchBias:4.2
+    };
   }
 
   function cpuThinkDelay(){
@@ -820,16 +832,23 @@
 
     // Always value fresh information.
     if(!game.cpuSearchedBoxes.has(boxIndex)) score+=profile.fresh;
-    if(game.cpuSearchedBoxes.has(boxIndex)) score-=12;
-    if(cpuMemory.emptyBoxes.has(boxIndex)) score-=10;
+    if(game.cpuSearchedBoxes.has(boxIndex)) score-=16;
+    if(cpuMemory.emptyBoxes.has(boxIndex)) score-=18;
 
     // Evidence discovered here previously is useful, but do not obsess forever.
     if(game.revealedTracks.has(boxIndex)) score-=4;
 
     // Role tendencies.
     if(role==="searcher") score+=profile.role;
-    if(role==="tracker" && knownTrackBoxes().length) score+=profile.role*.8;
-    if(role==="blocker") score-=1.5;
+    if(role==="tracker" && knownTrackBoxes().length) score+=profile.role*.95;
+    if(role==="blocker") score-=1.2;
+
+    if(knownTrackBoxes().length){
+      let nearest=99;
+      knownTrackBoxes().forEach(t=>nearest=Math.min(nearest,boxDistance(t,boxIndex)));
+      if(nearest===1) score+=6.5;
+      else if(nearest===2) score+=3.5;
+    }
 
     // Endgame: searching high-probability boxes matters more.
     const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
@@ -867,7 +886,8 @@
     // Nodes overlooking multiple fresh boxes are valuable.
     const around=E.getBoxesAroundNode(node);
     const fresh=around.filter(b=>!game.cpuSearchedBoxes.has(b)).length;
-    score+=fresh*2.3;
+    score+=fresh*1.35;
+    if(fresh===0) score-=5.5;
 
     // Blocker values nodes adjacent to low-degree escape boxes.
     if(role==="blocker"){
@@ -906,6 +926,86 @@
     return score;
   }
 
+  function hardProbabilityMap(){
+    const probs=new Map();
+    const tracks=knownTrackBoxes();
+
+    for(let b=0;b<E.BOX_COUNT;b++){
+      let p=1;
+
+      if(game.cpuSearchedBoxes.has(b)) p*=0.08;
+      if(cpuMemory.emptyBoxes.has(b)) p*=0.03;
+      if(game.revealedTracks.has(b)) p*=0.25;
+
+      if(tracks.length){
+        let nearest=99;
+        tracks.forEach(t=>nearest=Math.min(nearest,boxDistance(t,b)));
+        if(nearest===1) p*=7.5;
+        else if(nearest===2) p*=4.2;
+        else if(nearest===3) p*=2.1;
+        else p*=0.7;
+      }else{
+        const r=E.boxRow(b),c=E.boxCol(b);
+        p*=1.2+(2.2-Math.abs(r-2)*.25-Math.abs(c-2)*.25);
+      }
+
+      p*=1+(catEscapeDegree(b)*.28);
+      probs.set(b,p);
+    }
+
+    const total=[...probs.values()].reduce((a,b)=>a+b,0)||1;
+    probs.forEach((v,k)=>probs.set(k,v/total));
+    return probs;
+  }
+
+  function hardBestProbabilitySearch(di){
+    const boxes=E.getBoxesAroundNode(game.dogs[di]);
+    if(!boxes.length)return null;
+    const probs=hardProbabilityMap();
+    let best=null,bestScore=-Infinity;
+
+    boxes.forEach(b=>{
+      let s=(probs.get(b)||0)*160;
+      if(!game.cpuSearchedBoxes.has(b)) s+=18;
+      if(cpuMemory.emptyBoxes.has(b)) s-=25;
+      if(s>bestScore){bestScore=s;best=b;}
+    });
+
+    return best===null?null:{type:"search",target:best,score:bestScore};
+  }
+
+  function hardBestContainmentMove(di){
+    const moves=E.getDogLegalMoves(game,di);
+    if(!moves.length)return null;
+    const probs=hardProbabilityMap();
+    let best=null,bestScore=-Infinity;
+
+    moves.forEach(node=>{
+      let score=0;
+      const around=E.getBoxesAroundNode(node);
+
+      around.forEach(b=>{
+        const p=probs.get(b)||0;
+        score+=p*120;
+        if(catEscapeDegree(b)<=2) score+=p*55;
+      });
+
+      game.dogs.forEach((other,j)=>{
+        if(j===di||other===null)return;
+        const d=E.manhattanNodeDistance(node,other);
+        if(d===0) score-=100;
+        else if(d===1) score-=9;
+        else score+=Math.min(d,4)*1.8;
+      });
+
+      if(cpuMemory.lastDogNodes[di]===node) score-=15;
+
+      if(score>bestScore){bestScore=score;best=node;}
+    });
+
+    return best===null?null:{type:"move",target:best,score:bestScore};
+  }
+
   function bestSearchAction(di){
     const node=game.dogs[di];
     const boxes=E.getBoxesAroundNode(node);
@@ -930,47 +1030,56 @@
   }
 
   function chooseCpuAction(di){
-    const search=bestSearchAction(di);
-    const move=bestMoveAction(di);
+    const profile=cpuProfile();
+    let search=bestSearchAction(di);
+    let move=bestMoveAction(di);
     const role=dogRole(di);
     const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
 
-    // Normal/Hard always open with at least one investigation.
-    // Easy can make a beginner-friendly mistake.
-    if(game.cpuSearchesThisTurn===0 && search.target!==null){
-      if(Math.random()<=cpuProfile().forceSearch) return search;
+    if(cpuDifficulty==="hard"){
+      const ps=hardBestProbabilitySearch(di);
+      const cm=hardBestContainmentMove(di);
+      if(ps && (!search || ps.score>search.score)) search=ps;
+      if(cm && (!move || cm.score>move.score)) move=cm;
     }
 
-    // Searchers and trackers investigate aggressively when evidence exists.
-    if(knownTrackBoxes().length && role!=="blocker" && search.target!==null){
-      if(search.score+3>=move.score || move.target===null) return search;
+    // Normal and Hard: aim for two searches every police turn.
+    if(game.cpuSearchesThisTurn<profile.targetSearches && search && search.target!==null){
+      if(!game.cpuSearchedBoxes.has(search.target)) return search;
     }
 
-    // In the final 3 turns, the blocker prefers movement if it improves containment.
-    if(remaining<=3 && role==="blocker" && move.target!==null){
-      const bonus=cpuDifficulty==="hard" ? 4 : (cpuDifficulty==="normal" ? 1.5 : 0);
-      if(move.score+bonus>=search.score) return move;
+    if(knownTrackBoxes().length && search && search.target!==null){
+      const evidenceBonus=cpuDifficulty==="hard" ? 8 : (cpuDifficulty==="normal" ? 6 : 2);
+      if(!move || search.score+evidenceBonus>=move.score) return search;
     }
 
-    // Fresh high-value search beats mediocre movement.
-    if(search.target!==null && !game.cpuSearchedBoxes.has(search.target)){
-      if(search.score>=move.score+1.2 || move.target===null) return search;
+    if(role==="searcher" && search && search.target!==null && !game.cpuSearchedBoxes.has(search.target)){
+      if(cpuDifficulty!=="easy") return search;
     }
 
-    if(cpuDifficulty==="easy" && Math.random()<0.18 && move.target!==null && search.target!==null){
-      return Math.random()<.5 ? move : search;
+    if(remaining<=3 && role==="blocker" && move && move.target!==null){
+      const bonus=cpuDifficulty==="hard" ? 7 : (cpuDifficulty==="normal" ? 2.5 : 0);
+      if(!search || move.score+bonus>=search.score+profile.searchBias) return move;
     }
 
-    if(move.target!==null) return move;
-    return search.target!==null ? search : null;
+    if(search && search.target!==null){
+      if(!move || search.score+profile.searchBias>=move.score) return search;
+    }
+
+    if(cpuDifficulty==="easy" && Math.random()<0.2 && search && move){
+      return Math.random()<.5 ? search : move;
+    }
+
+    if(move && move.target!==null) return move;
+    return search && search.target!==null ? search : null;
   }
 
   function cpuThoughtFor(di,action){
     const role=dogRole(di);
     if(!action) return "うーん…";
     if(action.type==="search"){
-      if(knownTrackBoxes().length) return role==="tracker" ? "足跡の近くを追うワン…" : "ここが怪しいワン…";
-      return "まだ調べてない箱をクンクン…";
+      if(knownTrackBoxes().length) return role==="tracker" ? "足跡の先をクンクンするワン…" : "この辺りを重点捜査するワン…";
+      return "未探索の箱を調べるワン…";
     }
     if(role==="blocker") return "逃げ道をふさぐワン…";
     if(knownTrackBoxes().length) return "足跡の先へ回り込むワン…";
@@ -1034,7 +1143,20 @@
       return;
     }
 
-    const action=chooseCpuAction(di);
+    let action=chooseCpuAction(di);
+
+    if(cpuDifficulty!=="easy" && game.cpuSearchesThisTurn<cpuProfile().targetSearches){
+      const remainingDogs=game.dogAction.filter(a=>a===false).length;
+      const searchesNeeded=cpuProfile().targetSearches-game.cpuSearchesThisTurn;
+
+      if(remainingDogs<=searchesNeeded){
+        const forced=bestSearchAction(di);
+        if(forced && forced.target!==null && !game.cpuSearchedBoxes.has(forced.target)){
+          action=forced;
+        }
+      }
+    }
+
     if(!action){
       game.dogAction[di]="move";
       cpuTimer=setTimeout(runCpuPoliceTurn,300);
