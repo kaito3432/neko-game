@@ -1398,3 +1398,19 @@ body.turn-last .turn-pill{
 .board > .node.inactive{
   opacity:.45;
 }
+
+
+/* ===== Ver1.9 Phase4-2b iPhone board positioning fix ===== */
+.board{
+  /* Cell geometry is positioned by JS percentages for Safari compatibility. */
+  --road-size:5%;
+  position:relative!important;
+}
+.board > .box{
+  position:absolute!important;
+  min-width:0!important;
+  min-height:0!important;
+}
+.board > .node{
+  position:absolute!important;
+}

@@ -189,10 +189,12 @@
       b.type="button";
       b.className="box";
       b.dataset.boxIndex=String(i);
-      b.style.left=`calc(var(--road) + ${c} * (var(--road) + var(--boxs)))`;
-      b.style.top=`calc(var(--road) + ${r} * (var(--road) + var(--boxs)))`;
-      b.style.width="var(--boxs)";
-      b.style.height="var(--boxs)";
+      // iPhone Safari compatibility:
+      // avoid CSS calc() multiplication/division and place cells with simple percentages.
+      b.style.left=`${5 + c*19}%`;
+      b.style.top=`${5 + r*19}%`;
+      b.style.width="14%";
+      b.style.height="14%";
 
       if(game.phase==="catSetup"){
         b.classList.add("setup-cat-choice");
@@ -246,8 +248,8 @@
       const r=E.nodeRow(i),c=E.nodeCol(i),n=document.createElement("button");
       n.type="button";
       n.className="node";
-      n.style.left=`calc(${c} * (var(--road) + var(--boxs)) + var(--road)/2)`;
-      n.style.top=`calc(${r} * (var(--road) + var(--boxs)) + var(--road)/2)`;
+      n.style.left=`${2.5 + c*19}%`;
+      n.style.top=`${2.5 + r*19}%`;
 
       if(!E.isActiveDogNode(i)){n.classList.add("inactive");n.disabled=true;}
       if(game.phase==="catSetup"){n.disabled=true;}
