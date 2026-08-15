@@ -97,9 +97,9 @@
     cpuCatRoute=[];
     privacyOverlay.classList.remove("show");
     resultOverlay.classList.remove("show");
-    resultRoute.classList.remove("show");
-    resultRouteBoard.innerHTML="";
-    resultRouteNote.textContent="";
+    if(resultRoute) resultRoute.classList.remove("show");
+    if(resultRouteBoard) if(resultRouteBoard) resultRouteBoard.innerHTML="";
+    if(resultRouteNote) resultRouteNote.textContent="";
     settingsOverlay.classList.remove("show");
     hideToast();
     if(routeRevealPanel) routeRevealPanel.classList.remove("show");
@@ -638,9 +638,9 @@
 
     if(currentTurn===11 && !game.gameOver && !lastTurnStingerPlayed){
       lastTurnStingerPlayed=true;
-      lastTurnBanner.classList.remove("show");
-      void lastTurnBanner.offsetWidth;
-      lastTurnBanner.classList.add("show");
+      if(lastTurnBanner) lastTurnBanner.classList.remove("show");
+      if(lastTurnBanner) void lastTurnBanner.offsetWidth;
+      if(lastTurnBanner) lastTurnBanner.classList.add("show");
       Audio.play("lastturn");
       Audio.haptic([30,35,30]);
     }
@@ -1613,7 +1613,7 @@
 
     if(!ordered.length)return;
 
-    resultRouteBoard.innerHTML="";
+    if(resultRouteBoard) if(resultRouteBoard) resultRouteBoard.innerHTML="";
 
     // Draw all 25 cardboard cells.
     for(let b=0;b<E.BOX_COUNT;b++){
@@ -1623,7 +1623,7 @@
       cell.style.left=`${10+c*20}%`;
       cell.style.top=`${10+r*20}%`;
       cell.textContent=b+1;
-      resultRouteBoard.appendChild(cell);
+      if(resultRouteBoard) resultRouteBoard.appendChild(cell);
     }
 
     // SVG route line.
@@ -1639,7 +1639,7 @@
     }).join(" ");
     polyline.setAttribute("points",points);
     svg.appendChild(polyline);
-    resultRouteBoard.appendChild(svg);
+    if(resultRouteBoard) resultRouteBoard.appendChild(svg);
 
     ordered.forEach((step,idx)=>{
       const r=E.boxRow(step.box),c=E.boxCol(step.box);
@@ -1650,11 +1650,11 @@
       badge.style.left=`${10+c*20}%`;
       badge.style.top=`${10+r*20}%`;
       badge.textContent=idx===0?"S":String(step.turn);
-      resultRouteBoard.appendChild(badge);
+      if(resultRouteBoard) resultRouteBoard.appendChild(badge);
     });
 
-    resultRouteNote.textContent=`STARTから最終地点まで ${ordered.length}地点`;
-    resultRoute.classList.add("show");
+    if(resultRouteNote) resultRouteNote.textContent=`STARTから最終地点まで ${ordered.length}地点`;
+    if(resultRoute) resultRoute.classList.add("show");
   }
 
   function revealCpuCatRoute(){
@@ -1725,9 +1725,9 @@
 
   function endGame(winner,reason){
     game.gameOver=true;
-    resultRoute.classList.remove("show");
-    resultRouteBoard.innerHTML="";
-    resultRouteNote.textContent="";
+    if(resultRoute) resultRoute.classList.remove("show");
+    if(resultRouteBoard) if(resultRouteBoard) resultRouteBoard.innerHTML="";
+    if(resultRouteNote) resultRouteNote.textContent="";
 
     const resultModalEl=resultOverlay.querySelector(".modal");
     if(resultModalEl){
