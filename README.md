@@ -289,3 +289,13 @@ CPU対戦を選ぶと、開始前に3段階から選択。
 - 柴犬カードの登場アニメーションを微調整。
 - 勝敗結果モーダルの背景・祝福演出を強化。
 - 終盤BGM切り替え、BGM音量設定、CPU両陣営、難易度選択など既存機能は維持。
+
+
+## Ver1.9 Phase5b ホーム画面操作不能バグ修正
+
+- 原因を特定：`lastTurnStingerPlayed=false` が `let lastTurnStingerPlayed` の宣言より前に実行されていた。
+- JavaScript読み込み直後に TDZ（Temporal Dead Zone）の `ReferenceError` が発生し、
+  ホーム画面のボタンイベントが登録される前に `game.js` が停止していた。
+- 宣言前の代入を削除し、`initGame()` 内でのみリセットするよう修正。
+- 音声アンロック処理が失敗してもボタン操作を止めないよう `bindPress()` を防御化。
+- キャッシュバージョンを `1.9.5b` に更新。

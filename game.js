@@ -21,7 +21,6 @@
     thoughtText:""
   };
   let cpuCatRoute=[];
-    lastTurnStingerPlayed=false;
 
   const $=id=>document.getElementById(id);
   const board=$("board");
@@ -71,7 +70,17 @@
         e.stopPropagation();
       }
 
-      Audio.unlockAudio().then(()=>Audio.startBgm());
+      try{
+        const unlock=Audio.unlockAudio();
+        if(unlock && typeof unlock.then==="function"){
+          unlock.then(()=>Audio.startBgm()).catch(()=>{});
+        }else{
+          Audio.startBgm();
+        }
+      }catch(err){
+        // Audio must never block UI navigation.
+      }
+
       fn(e);
     };
 
@@ -95,6 +104,7 @@
       thoughtText:""
     };
     cpuCatRoute=[];
+    lastTurnStingerPlayed=false;
     privacyOverlay.classList.remove("show");
     resultOverlay.classList.remove("show");
     if(resultRoute) resultRoute.classList.remove("show");
