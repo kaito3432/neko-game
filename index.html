@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FDFBF7">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=1.9.visual2">
+<link rel="stylesheet" href="./style.css?v=1.9.visual1c">
 </head>
 <body>
 <div class="app">
@@ -59,62 +59,31 @@
 </div>
 
 
-<div class="overlay show title-screen visual-update2" id="modeOverlay">
-  <div class="title-menu visual2-menu">
-    <section class="visual2-hero">
-      <img class="visual2-logo" src="./assets/images/home_logo.png" alt="にゃんチェイス">
-      <img class="visual2-cast" src="./assets/images/home_hero.png" alt="">
+<div class="overlay show title-screen visual-update3" id="modeOverlay">
+  <div class="vu3-home">
+    <section class="vu3-brand">
+      <img class="vu3-logo" src="./assets/images/home_logo.png" alt="にゃんチェイス">
+      <img class="vu3-hero" src="./assets/images/home_hero.png" alt="ネコと柴犬警察">
     </section>
-
-    <div class="visual2-sub">遊び方を選んでね</div>
-
-    <div class="visual2-modes">
-      <button class="visual2-mode local" id="localModeBtn" type="button">
-        <div>
-          <strong>対人戦</strong>
-          <span>同じスマホを交代しながら遊ぶ</span>
-        </div>
-        <div class="visual2-pair">
-          <img src="./assets/images/cat_play_normal.png" alt="">
-          <img src="./assets/images/dog_card_red.png" alt="">
-        </div>
+    <div class="vu3-sub">遊び方を選んでね</div>
+    <div class="vu3-modes">
+      <button class="vu3-mode vu3-vs" id="localModeBtn" type="button">
+        <div class="vu3-copy"><strong>対人戦</strong><span>同じスマホを交代しながら遊ぶ</span></div>
+        <img class="vu3-mode-art" src="./assets/images/home_vs.png" alt="">
       </button>
-
-      <button class="visual2-mode cpu" id="cpuModeBtn" type="button">
-        <div>
-          <strong>CPU対戦</strong>
-          <span>ネコ / 警察 どちらでも遊べる</span>
-        </div>
-        <div class="visual2-trio">
-          <img src="./assets/images/dog_card_red.png" alt="">
-          <img src="./assets/images/dog_card_green.png" alt="">
-          <img src="./assets/images/dog_card_blue.png" alt="">
-        </div>
+      <button class="vu3-mode vu3-cpu" id="cpuModeBtn" type="button">
+        <div class="vu3-copy"><strong>CPU対戦</strong><span>ネコ / 警察 どちらでも遊べる</span></div>
+        <img class="vu3-mode-art" src="./assets/images/home_cpu.png" alt="">
       </button>
-
-      <button class="visual2-mode online" type="button" disabled>
-        <div>
-          <strong>オンライン</strong>
-          <span>近日追加予定</span>
-        </div>
-        <svg class="visual2-lock" viewBox="0 0 64 64" aria-hidden="true">
-          <rect x="15" y="29" width="34" height="27" rx="6"></rect>
-          <path d="M22 29v-9c0-8 4-13 10-13s10 5 10 13v9"></path>
-          <circle cx="32" cy="42" r="3"></circle>
-        </svg>
+      <button class="vu3-mode vu3-online" type="button" disabled>
+        <div class="vu3-copy"><strong>オンライン</strong><span>近日追加予定</span></div>
+        <svg class="vu3-lock" viewBox="0 0 64 64" aria-hidden="true"><rect x="15" y="29" width="34" height="27" rx="6"></rect><path d="M22 29v-9c0-8 4-13 10-13s10 5 10 13v9"></path><circle cx="32" cy="42" r="3"></circle></svg>
       </button>
     </div>
-
-    <div class="visual2-bottom">
-      <button class="visual2-mini" id="howToBtn" type="button">
-        <span class="visual2-icon">?</span><span>遊び方</span>
-      </button>
-      <button class="visual2-mini" id="soundQuickBtn" type="button">
-        <span class="visual2-icon">♪</span><span>サウンド</span>
-      </button>
-      <button class="visual2-mini" id="titleSettingsBtn" type="button">
-        <span class="visual2-gear" aria-hidden="true"></span><span>設定</span>
-      </button>
+    <div class="vu3-bottom">
+      <button class="vu3-mini" id="howToBtn" type="button"><span class="vu3-book"></span><span>遊び方</span></button>
+      <button class="vu3-mini" id="soundQuickBtn" type="button"><span class="vu3-sound"></span><span>サウンド</span></button>
+      <button class="vu3-mini" id="titleSettingsBtn" type="button"><span class="vu3-gear"></span><span>設定</span></button>
     </div>
   </div>
 </div>
@@ -127,15 +96,15 @@
     <p>CPU対戦の役割を選んでね</p>
 
     <div class="cpu-side-grid">
-      <button class="cpu-side-btn cat-side visual2-side" id="playCatSideBtn" type="button">
-        <img class="visual2-side-art" src="./assets/images/cpu_select_cat.png" alt="">
-        <div><strong>ネコで遊ぶ</strong><span>CPUが柴犬警察</span></div>
-      </button>
+      <button class="cpu-side-btn cat-side vu3-side-btn" id="playCatSideBtn" type="button">
+<img src="./assets/images/cpu_select_cat.png" alt="">
+<div class="vu3-side-copy"><strong>ネコで遊ぶ</strong><span>CPUは柴犬警察</span></div>
+</button>
 
-      <button class="cpu-side-btn dog-side visual2-side" id="playPoliceSideBtn" type="button">
-        <img class="visual2-side-art dogs" src="./assets/images/cpu_select_dogs.png" alt="">
-        <div><strong>警察で遊ぶ</strong><span>CPUがネコ</span></div>
-      </button>
+      <button class="cpu-side-btn dog-side vu3-side-btn" id="playPoliceSideBtn" type="button">
+<img src="./assets/images/cpu_select_dogs.png" alt="">
+<div class="vu3-side-copy"><strong>警察で遊ぶ</strong><span>CPUはネコ</span></div>
+</button>
     </div>
 
     <button class="btn" id="cpuSideBackBtn" type="button">← 戻る</button>
@@ -237,9 +206,9 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./engine.js?v=1.9.visual2"></script>
-<script src="./audio.js?v=1.9.visual2"></script>
-<script src="./animation.js?v=1.9.visual2"></script>
-<script src="./game.js?v=1.9.visual2"></script>
+<script src="./engine.js?v=1.9.visual1c"></script>
+<script src="./audio.js?v=1.9.visual1c"></script>
+<script src="./animation.js?v=1.9.visual1c"></script>
+<script src="./game.js?v=1.9.visual1c"></script>
 </body>
 </html>
