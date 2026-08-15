@@ -32,6 +32,8 @@
   const bgmVolumeSlider=$("bgmVolumeSlider"),bgmVolumeValue=$("bgmVolumeValue");
   const restartFromSettingsBtn=$("restartFromSettingsBtn"),backToTitleBtn=$("backToTitleBtn");
   const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
+  const phaseCue=$("phaseCue"),phaseCueIcon=$("phaseCueIcon"),phaseCueText=$("phaseCueText");
+  let lastRenderedPhase=null;
   const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
 
   function bindPress(el,fn){
@@ -120,6 +122,10 @@
       b.style.width="var(--boxs)";
       b.style.height="var(--boxs)";
 
+      if(game.phase==="catSetup"){
+        b.classList.add("setup-cat-choice");
+      }
+
       if(game.phase==="cat"&&game.catVisible){
         if(game.catHistory.has(i)&&i!==game.catPos)b.classList.add("cat-visited");
         if(i===game.catPos)b.classList.add("cat-current");
@@ -157,6 +163,7 @@
       n.style.top=`calc(${r} * (var(--road) + var(--boxs)) + var(--road)/2)`;
 
       if(!E.isActiveDogNode(i)){n.classList.add("inactive");n.disabled=true;}
+      if(game.phase==="catSetup"){n.disabled=true;}
       if(game.phase==="dogSetup"&&E.isActiveDogNode(i))n.classList.add("setup");
       if(game.selectedDog!==null&&game.dogs[game.selectedDog]===i)n.classList.add("selected");
 
@@ -205,25 +212,41 @@
     A.tapPopBox(board,i);
 
     if(game.phase==="catSetup"){
-      game.catPos=i;
-      game.catHistory.set(i,1);
-      game.catVisible=false;
-      game.turn=1;
-      game.phase="dogs";
-      game.selectedDog=null;
-      game.dogAction=[false,false,false];
-      game.cpuSearchesThisTurn=0;
+      // The exact tapped cardboard is the starting position.
+      // Nodes are disabled during this phase so mobile taps cannot be stolen.
+      game.actionLocked=true;
+      const chosenStart=i;
 
-      if(playMode==="cpuPolice"){
-        setMessage("🤖 CPU柴犬警察が捜査中…");
-        render();
-        cpuTimer=setTimeout(runCpuPoliceTurn,550);
-      }else{
-        showPrivacy("🐕","柴犬警察の番",
-          "ネコが隠れました。現在地は秘密です。柴犬警察が捜査を開始します。");
-        setMessage("🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。");
-        render();
-      }
+      A.tapPopBox(board,chosenStart);
+      Audio.play("cat");
+      Audio.haptic(16);
+
+      cpuTimer=setTimeout(()=>{
+        game.catPos=chosenStart;
+        game.catHistory.clear();
+        game.catHistory.set(chosenStart,1);
+        game.catVisible=false;
+        game.turn=1;
+        game.phase="dogs";
+        game.selectedDog=null;
+        game.dogAction=[false,false,false];
+        game.cpuSearchesThisTurn=0;
+        game.actionLocked=false;
+
+        showPhaseCue("🐕","柴犬警察の捜査！");
+
+        if(playMode==="cpuPolice"){
+          setMessage("🤖 CPU柴犬警察が捜査中…");
+          render();
+          cpuTimer=setTimeout(runCpuPoliceTurn,650);
+        }else{
+          showPrivacy("🐕","柴犬警察の番",
+            "ネコが隠れました。現在地は秘密です。柴犬警察が捜査を開始します。");
+          setMessage("🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。");
+          render();
+        }
+      },180);
+
       return;
     }
 
@@ -468,6 +491,15 @@
     const remaining=game.turn===0 ? 11 : Math.max(0,E.MAX_TURNS-game.turn+1);
     turnDisplay.textContent=String(remaining);
 
+    // BGM changes reliably for the final 3 escape turns.
+    if(game.turn>0 && remaining<=3 && !game.gameOver){
+      Audio.setBgmMode("tension");
+      document.body.classList.add("final-three");
+    }else{
+      Audio.setBgmMode("normal");
+      document.body.classList.remove("final-three");
+    }
+
     const phases={
       dogSetup:"🐕 警察配置",
       catSetup:"🐱 ネコ潜伏",
@@ -478,10 +510,18 @@
     };
     phaseDisplay.textContent=phases[game.phase]||"";
 
-    document.body.classList.remove("phase-cat","phase-dogs","phase-setup");
+    document.body.classList.remove("phase-cat","phase-dogs","phase-setup","phase-cat-setup");
     if(game.phase==="cat"||game.phase==="catSetup") document.body.classList.add("phase-cat");
     else if(game.phase==="dogs"||game.phase==="waitingEnd") document.body.classList.add("phase-dogs");
     else document.body.classList.add("phase-setup");
+    if(game.phase==="catSetup") document.body.classList.add("phase-cat-setup");
+
+    if(lastRenderedPhase!==game.phase){
+      if(game.phase==="catSetup") showPhaseCue("🐱","好きな箱に隠れよう！");
+      else if(game.phase==="cat") showPhaseCue("🐱","ネコの逃走！");
+      else if(game.phase==="dogs") showPhaseCue("🐕","柴犬警察の捜査！");
+      lastRenderedPhase=game.phase;
+    }
 
     if(game.actionLocked){
       guideDisplay.textContent=game.phase==="dogs"?"🐕 クンクン調査中…":"🐱 逃走中…";
@@ -545,7 +585,15 @@
   function renderControls(){
     const isCatPhase=(game.phase==="cat"||game.phase==="catSetup");
 
-    dogRow.classList.toggle("is-hidden",isCatPhase);
+    const shouldHideDogs=isCatPhase;
+    const wasHidden=dogRow.classList.contains("is-hidden");
+    dogRow.classList.toggle("is-hidden",shouldHideDogs);
+
+    if(!shouldHideDogs && wasHidden){
+      dogRow.classList.remove("phase-enter");
+      void dogRow.offsetWidth;
+      dogRow.classList.add("phase-enter");
+    }
 
     tracksSummary.style.display=(game.phase==="dogSetup"||game.phase==="catSetup")?"none":"flex";
     tracksFoundCount.textContent=String(game.revealedTracks.size);
@@ -556,6 +604,14 @@
 
     finishDogTurnBtn.classList.toggle("show",playMode==="local"&&game.phase==="waitingEnd");
     finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
+  }
+
+  function showPhaseCue(icon,text){
+    phaseCueIcon.textContent=icon;
+    phaseCueText.textContent=text;
+    phaseCue.classList.remove("show");
+    void phaseCue.offsetWidth;
+    phaseCue.classList.add("show");
   }
 
   function setMessage(t){message.textContent=t;}

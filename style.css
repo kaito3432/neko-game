@@ -1119,3 +1119,106 @@ body.phase-setup .phase-pill{background:#FFF5D6}
   .character-img{width:30px!important;height:30px!important}
   .tracks-summary{min-height:27px}
 }
+
+
+/* ===== Ver1.9 Phase2 ===== */
+
+/* Cat initial hiding: make every cardboard clearly tappable */
+.box.setup-cat-choice{
+  outline:3px solid rgba(232,126,165,.72);
+  outline-offset:-2px;
+  animation:catChoicePulse 1.15s ease-in-out infinite;
+  z-index:30;
+}
+.box.setup-cat-choice::before{
+  content:"ここに隠れる";
+  position:absolute;
+  left:50%;
+  bottom:3px;
+  transform:translateX(-50%);
+  z-index:35;
+  padding:1px 4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(93,64,55,.3);
+  color:var(--brown);
+  font-size:6px;
+  font-weight:900;
+  white-space:nowrap;
+}
+@keyframes catChoicePulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(.965)}
+}
+body.phase-cat-setup .node{
+  pointer-events:none!important;
+  opacity:.72;
+}
+body.phase-cat-setup .box{
+  pointer-events:auto!important;
+}
+
+/* Phase cue */
+.phase-cue{
+  position:fixed;
+  left:50%;
+  top:42%;
+  z-index:3800;
+  width:min(78vw,300px);
+  transform:translate(-50%,-50%) scale(.85);
+  padding:14px 16px;
+  border:3px solid var(--brown);
+  border-radius:22px;
+  background:rgba(255,253,249,.97);
+  box-shadow:0 8px 0 rgba(93,64,55,.18);
+  text-align:center;
+  opacity:0;
+  pointer-events:none;
+}
+.phase-cue.show{
+  animation:phaseCuePop .85s ease forwards;
+}
+.phase-cue-icon{font-size:38px}
+.phase-cue-text{margin-top:3px;font-size:17px;font-weight:900}
+@keyframes phaseCuePop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}
+  18%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}
+  75%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-56%) scale(.96)}
+}
+
+/* Dog cards slide in only when relevant */
+.dog-row{
+  transform-origin:center bottom;
+}
+.dog-row.phase-enter{
+  animation:dogCardsIn .36s cubic-bezier(.2,.85,.25,1.15);
+}
+@keyframes dogCardsIn{
+  from{opacity:0;transform:translateY(18px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* Cat controls appear softly */
+.cat-only.show{
+  animation:catButtonIn .28s ease;
+}
+@keyframes catButtonIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* Final 3 turns visual tension */
+body.final-three .turn-pill{
+  background:#FFE0D7!important;
+  border-color:#D86B61!important;
+  box-shadow:0 2px 0 var(--shadow),0 0 0 3px rgba(216,107,97,.12);
+}
+body.final-three .turn-pill strong{
+  color:#C84F49;
+}
+
+/* Safer box tap targets on small phones */
+@media(max-width:390px){
+  .box.setup-cat-choice::before{display:none}
+}
