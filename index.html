@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FDFBF7">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=1.9.visual1">
+<link rel="stylesheet" href="./style.css?v=1.9.visual1a">
 </head>
 <body>
 <div class="app">
@@ -59,14 +59,11 @@
 </div>
 
 
-<div class="overlay show title-screen visual-update1" id="modeOverlay">
+<div class="overlay show title-screen visual-update1 visual-update1a" id="modeOverlay">
   <div class="title-menu">
-    <button class="title-gear" id="titleSettingsBtn" type="button" aria-label="設定">
-      <span class="css-gear" aria-hidden="true"></span>
-    </button>
-
     <section class="title-hero" aria-label="にゃんチェイス">
       <img class="title-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
+
       <div class="title-chase-scene" aria-hidden="true">
         <img class="hero-cat" src="./assets/images/cat.png" alt="">
         <div class="hero-dogs">
@@ -77,7 +74,11 @@
       </div>
     </section>
 
-    <div class="title-sub">遊び方を選んでね</div>
+    <div class="title-sub">
+      <span class="paw-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>
+      <span>遊び方を選んでね</span>
+      <span class="paw-mark mirror" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></span>
+    </div>
 
     <div class="title-mode-list">
       <button class="title-mode-card local" id="localModeBtn" type="button">
@@ -108,7 +109,12 @@
           <strong>オンライン</strong>
           <span>準備中</span>
         </div>
-        <div class="css-lock" aria-hidden="true"></div>
+        <svg class="menu-svg lock-svg" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="14" y="28" width="36" height="28" rx="7"></rect>
+          <path d="M22 28v-8c0-8 4-13 10-13s10 5 10 13v8"></path>
+          <circle cx="32" cy="41" r="3"></circle>
+          <path d="M32 44v6"></path>
+        </svg>
       </button>
     </div>
 
@@ -120,10 +126,31 @@
       </div>
     </div>
 
-    <div class="title-bottom-row">
-      <button class="mini-menu-btn" id="howToBtn" type="button"><span class="menu-mark book-mark" aria-hidden="true"></span><span>遊び方</span></button>
-      <button class="mini-menu-btn" id="soundQuickBtn" type="button"><span class="menu-mark sound-mark" aria-hidden="true"></span><span>サウンド</span></button>
-      <button class="mini-menu-btn" type="button" disabled><span class="menu-mark crown-mark" aria-hidden="true"></span><span>ランキング<small>準備中</small></span></button>
+    <div class="title-bottom-row title-bottom-three">
+      <button class="mini-menu-btn" id="howToBtn" type="button">
+        <svg class="menu-svg" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M8 14c10-3 18-2 24 4v34c-7-6-15-7-24-4z"></path>
+          <path d="M56 14c-10-3-18-2-24 4v34c7-6 15-7 24-4z"></path>
+        </svg>
+        <span>遊び方</span>
+      </button>
+
+      <button class="mini-menu-btn" id="soundQuickBtn" type="button">
+        <svg class="menu-svg" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M10 25h12l14-11v36L22 39H10z"></path>
+          <path d="M43 23c5 5 5 13 0 18"></path>
+          <path d="M49 16c10 10 10 22 0 32"></path>
+        </svg>
+        <span>サウンド</span>
+      </button>
+
+      <button class="mini-menu-btn" id="titleSettingsBtn" type="button">
+        <svg class="menu-svg gear-svg" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M27 6h10l2 8 7 4 8-2 5 9-6 6v8l6 6-5 9-8-2-7 4-2 8H27l-2-8-7-4-8 2-5-9 6-6v-8l-6-6 5-9 8 2 7-4z"></path>
+          <circle cx="32" cy="35" r="9"></circle>
+        </svg>
+        <span>設定</span>
+      </button>
     </div>
   </div>
 </div>
@@ -256,9 +283,9 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./engine.js?v=1.9.visual1"></script>
-<script src="./audio.js?v=1.9.visual1"></script>
-<script src="./animation.js?v=1.9.visual1"></script>
-<script src="./game.js?v=1.9.visual1"></script>
+<script src="./engine.js?v=1.9.visual1a"></script>
+<script src="./audio.js?v=1.9.visual1a"></script>
+<script src="./animation.js?v=1.9.visual1a"></script>
+<script src="./game.js?v=1.9.visual1a"></script>
 </body>
 </html>

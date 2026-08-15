@@ -1790,3 +1790,167 @@ body.turn-last .turn-pill{
   .visual-update1 .title-rule-card{display:none}
   .visual-update1 .mini-menu-btn{min-height:44px}
 }
+
+
+/* ===== Ver1.9 Visual Update 1a : title UI refinement ===== */
+
+.visual-update1a .title-menu{
+  overflow:hidden;
+}
+
+/* Hero: show full artwork, no accidental clipping */
+.visual-update1a .title-hero{
+  height:clamp(245px,35vh,315px);
+  overflow:visible;
+  margin:0;
+  border-radius:0;
+}
+.visual-update1a .title-logo{
+  width:min(86vw,390px)!important;
+  max-height:128px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  display:block;
+  margin:0 auto;
+}
+.visual-update1a .title-chase-scene{
+  inset:92px 0 0;
+  overflow:visible;
+  padding:0 18px;
+}
+.visual-update1a .hero-cat{
+  width:clamp(118px,30vw,160px);
+  height:clamp(118px,30vw,160px);
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:translate(6px,2px) rotate(-4deg);
+}
+.visual-update1a .hero-dogs{
+  margin-left:-6px;
+  overflow:visible;
+}
+.visual-update1a .hero-dogs img{
+  width:clamp(80px,20vw,108px);
+  height:clamp(80px,20vw,108px);
+  object-fit:contain!important;
+  object-position:center!important;
+  flex:0 0 auto;
+}
+.visual-update1a .hero-dogs img+img{
+  margin-left:-18px;
+}
+
+/* Replace the clipped paw image with pure CSS paw marks */
+.visual-update1a .title-sub{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin-top:0;
+}
+.visual-update1a .title-sub::before,
+.visual-update1a .title-sub::after{
+  display:none!important;
+}
+.paw-mark{
+  position:relative;
+  width:30px;
+  height:28px;
+  display:inline-block;
+  flex:0 0 auto;
+}
+.paw-mark i,
+.paw-mark b{
+  position:absolute;
+  display:block;
+  background:#C88967;
+}
+.paw-mark b{
+  width:14px;height:12px;border-radius:55% 55% 45% 45%;
+  left:8px;top:13px;transform:rotate(-8deg);
+}
+.paw-mark i{width:7px;height:9px;border-radius:50%}
+.paw-mark i:nth-child(1){left:2px;top:5px;transform:rotate(-28deg)}
+.paw-mark i:nth-child(2){left:9px;top:0}
+.paw-mark i:nth-child(3){left:18px;top:1px;transform:rotate(12deg)}
+.paw-mark i:nth-child(4){left:24px;top:7px;transform:rotate(28deg)}
+.paw-mark.mirror{transform:scaleX(-1)}
+
+/* Mode character artwork: full image always visible */
+.visual-update1a .title-mode-card{
+  overflow:visible;
+  grid-template-columns:1fr 148px;
+}
+.visual-update1a .title-mode-art{
+  width:148px;
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  overflow:visible;
+  padding-right:2px;
+}
+.visual-update1a .title-mode-art img{
+  width:72px!important;
+  height:72px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  border-radius:0!important;
+  overflow:visible!important;
+  background:transparent!important;
+  flex:0 0 auto;
+}
+.visual-update1a .pair-art img+img{margin-left:-18px}
+.visual-update1a .triple-art img{
+  width:60px!important;
+  height:60px!important;
+}
+.visual-update1a .triple-art img+img{margin-left:-20px}
+
+/* SVG icons: consistent, readable, no broken glyphs */
+.menu-svg{
+  width:28px;
+  height:28px;
+  flex:0 0 auto;
+  fill:none;
+  stroke:var(--brown);
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.lock-svg{
+  width:42px;
+  height:42px;
+  margin-right:12px;
+  stroke:#8C9AA3;
+}
+.gear-svg{
+  width:30px;
+  height:30px;
+}
+.visual-update1a .title-bottom-three{
+  grid-template-columns:repeat(3,1fr)!important;
+}
+.visual-update1a .mini-menu-btn{
+  min-height:58px;
+  padding:7px 5px;
+  gap:6px;
+}
+
+/* Remove obsolete icon hacks from the previous title version */
+.visual-update1a .menu-mark,
+.visual-update1a .css-lock,
+.visual-update1a .title-gear{
+  display:none!important;
+}
+
+@media(max-height:760px){
+  .visual-update1a .title-hero{height:205px}
+  .visual-update1a .title-chase-scene{inset:72px 0 0}
+  .visual-update1a .hero-cat{width:100px;height:100px}
+  .visual-update1a .hero-dogs img{width:68px;height:68px}
+  .visual-update1a .title-mode-card{grid-template-columns:1fr 120px}
+  .visual-update1a .title-mode-art{width:120px;height:60px}
+  .visual-update1a .title-mode-art img{width:58px!important;height:58px!important}
+  .visual-update1a .triple-art img{width:49px!important;height:49px!important}
+}
