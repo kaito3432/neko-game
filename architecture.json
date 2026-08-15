@@ -1,0 +1,24 @@
+{
+  "version": "1.9-phase1",
+  "layers": {
+    "state": "js/state.js",
+    "boardView": "js/board.js",
+    "turnPresentation": "js/turn-ui.js",
+    "settingsPresentation": "js/settings.js",
+    "bootstrap": "js/main.js"
+  },
+  "future": {
+    "phase2": [
+      "game-engine.js",
+      "rules.js",
+      "turn-controller.js"
+    ],
+    "cpu": [
+      "players/cpu-player.js"
+    ],
+    "online": [
+      "players/remote-player.js",
+      "network/adapter.js"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+button,input{font:inherit}
+button{border:0}
+button:focus-visible,input:focus-visible{outline:3px solid #3f8ed8;outline-offset:3px}
+img,svg{display:block;max-width:100%}
+[hidden]{display:none!important}
