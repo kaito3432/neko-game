@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FDFBF7">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=1.9.5b">
+<link rel="stylesheet" href="./style.css?v=1.9.visual1">
 </head>
 <body>
 <div class="app">
@@ -59,20 +59,33 @@
 </div>
 
 
-<div class="overlay show title-screen" id="modeOverlay">
+<div class="overlay show title-screen visual-update1" id="modeOverlay">
   <div class="title-menu">
-    <button class="title-gear" id="titleSettingsBtn" type="button" aria-label="設定">⚙️</button>
+    <button class="title-gear" id="titleSettingsBtn" type="button" aria-label="設定">
+      <span class="css-gear" aria-hidden="true"></span>
+    </button>
 
-    <img class="title-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
-    <div class="title-sub">🐾 遊び方を選んでね 🐾</div>
+    <section class="title-hero" aria-label="にゃんチェイス">
+      <img class="title-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
+      <div class="title-chase-scene" aria-hidden="true">
+        <img class="hero-cat" src="./assets/images/cat.png" alt="">
+        <div class="hero-dogs">
+          <img src="./assets/images/dog_red.png" alt="">
+          <img src="./assets/images/dog_green.png" alt="">
+          <img src="./assets/images/dog_blue.png" alt="">
+        </div>
+      </div>
+    </section>
+
+    <div class="title-sub">遊び方を選んでね</div>
 
     <div class="title-mode-list">
       <button class="title-mode-card local" id="localModeBtn" type="button">
         <div class="title-mode-text">
-          <strong>👥 対人戦</strong>
+          <strong>対人戦</strong>
           <span>同じスマホを交代しながら遊ぶ</span>
         </div>
-        <div class="title-mode-art pair-art">
+        <div class="title-mode-art pair-art" aria-hidden="true">
           <img src="./assets/images/cat.png" alt="">
           <img src="./assets/images/dog_red.png" alt="">
         </div>
@@ -80,10 +93,10 @@
 
       <button class="title-mode-card cpu" id="cpuModeBtn" type="button">
         <div class="title-mode-text">
-          <strong>🤖 CPU対戦</strong>
+          <strong>CPU対戦</strong>
           <span>ネコ / 警察 どちらでも遊べる</span>
         </div>
-        <div class="title-mode-art triple-art">
+        <div class="title-mode-art triple-art" aria-hidden="true">
           <img src="./assets/images/dog_red.png" alt="">
           <img src="./assets/images/dog_green.png" alt="">
           <img src="./assets/images/dog_blue.png" alt="">
@@ -92,10 +105,10 @@
 
       <button class="title-mode-card online" type="button" disabled>
         <div class="title-mode-text">
-          <strong>🌐 オンライン</strong>
+          <strong>オンライン</strong>
           <span>準備中</span>
         </div>
-        <div class="online-lock">🔒</div>
+        <div class="css-lock" aria-hidden="true"></div>
       </button>
     </div>
 
@@ -108,13 +121,12 @@
     </div>
 
     <div class="title-bottom-row">
-      <button class="mini-menu-btn" id="howToBtn" type="button">📖 遊び方</button>
-      <button class="mini-menu-btn" id="soundQuickBtn" type="button">🔊 サウンド</button>
-      <button class="mini-menu-btn" type="button" disabled>👑 ランキング<br><small>準備中</small></button>
+      <button class="mini-menu-btn" id="howToBtn" type="button"><span class="menu-mark book-mark" aria-hidden="true"></span><span>遊び方</span></button>
+      <button class="mini-menu-btn" id="soundQuickBtn" type="button"><span class="menu-mark sound-mark" aria-hidden="true"></span><span>サウンド</span></button>
+      <button class="mini-menu-btn" type="button" disabled><span class="menu-mark crown-mark" aria-hidden="true"></span><span>ランキング<small>準備中</small></span></button>
     </div>
   </div>
 </div>
-
 
 
 <div class="overlay" id="cpuSideOverlay">
@@ -244,9 +256,9 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./engine.js?v=1.9.5b"></script>
-<script src="./audio.js?v=1.9.5b"></script>
-<script src="./animation.js?v=1.9.5b"></script>
-<script src="./game.js?v=1.9.5b"></script>
+<script src="./engine.js?v=1.9.visual1"></script>
+<script src="./audio.js?v=1.9.visual1"></script>
+<script src="./animation.js?v=1.9.visual1"></script>
+<script src="./game.js?v=1.9.visual1"></script>
 </body>
 </html>
