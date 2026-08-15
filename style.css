@@ -1264,3 +1264,34 @@ body.phase-cat-setup .dogstack{
   z-index:8!important;
   pointer-events:none!important;
 }
+
+
+/* ===== Ver1.9 Phase4-1 : CPUネコ ===== */
+.cpu-side-modal{width:min(92vw,430px)}
+.cpu-side-grid{display:grid;gap:10px;margin:14px 0}
+.cpu-side-btn{
+  width:100%;min-height:86px;padding:10px 12px;
+  border:2px solid var(--brown);border-radius:17px;
+  box-shadow:0 3px 0 var(--shadow);
+  display:grid;grid-template-columns:82px 1fr;align-items:center;
+  gap:10px;text-align:left;
+}
+.cpu-side-btn.cat-side{background:#FFF2F7}
+.cpu-side-btn.dog-side{background:#EEF8FF}
+.cpu-side-btn>img{
+  width:70px;height:70px;object-fit:cover;border-radius:50%;
+  border:2px solid rgba(93,64,55,.28);background:#fff
+}
+.dog-side-art{display:flex;align-items:center;justify-content:center}
+.dog-side-art img{
+  width:46px;height:46px;object-fit:cover;border-radius:50%;
+  border:2px solid rgba(93,64,55,.28);background:#fff
+}
+.dog-side-art img+img{margin-left:-15px}
+.cpu-side-btn strong{display:block;font-size:17px;font-weight:900}
+.cpu-side-btn span{display:block;margin-top:5px;font-size:10px;font-weight:800;color:var(--brown2)}
+.cpu-side-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow)}
+
+body.cpu-cat-thinking .guide{
+  background:#FFF0F6!important;
+}

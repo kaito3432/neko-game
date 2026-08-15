@@ -8,9 +8,10 @@
   const Audio=NyanAudio;
   let game;
   let toastTimer=null;
-  let playMode="local"; // local | cpuPolice
+  let playMode="local"; // local | cpuPolice | cpuCat
   let cpuTimer=null;
   let cpuDifficulty="normal"; // easy | normal | hard
+  let pendingCpuSide="cat"; // cat => player cat, police => player police
 
   let cpuMemory={
     lastDogNodes:[null,null,null],
@@ -23,6 +24,7 @@
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
+  const cpuSideOverlay=$("cpuSideOverlay"),playCatSideBtn=$("playCatSideBtn"),playPoliceSideBtn=$("playPoliceSideBtn"),cpuSideBackBtn=$("cpuSideBackBtn");
   const difficultyOverlay=$("difficultyOverlay"),cpuEasyBtn=$("cpuEasyBtn"),cpuNormalBtn=$("cpuNormalBtn"),
         cpuHardBtn=$("cpuHardBtn"),difficultyBackBtn=$("difficultyBackBtn");
   const titleSettingsBtn=$("titleSettingsBtn"),howToBtn=$("howToBtn"),soundQuickBtn=$("soundQuickBtn");
@@ -109,28 +111,55 @@
 
   function startCpuPoliceMode(){
     modeOverlay.classList.remove("show");
+    cpuSideOverlay.classList.add("show");
+  }
+
+  function chooseCpuSide(side){
+    pendingCpuSide=side;
+    cpuSideOverlay.classList.remove("show");
     difficultyOverlay.classList.add("show");
+  }
+
+  function closeCpuSidePicker(){
+    cpuSideOverlay.classList.remove("show");
+    modeOverlay.classList.add("show");
   }
 
   function beginCpuPoliceGame(difficulty){
     cpuDifficulty=difficulty;
-    playMode="cpuPolice";
     difficultyOverlay.classList.remove("show");
+
+    if(pendingCpuSide==="cat"){
+      playMode="cpuPolice";
+      initGame(false);
+      cpuSetupDogs();
+      game.phase="catSetup";
+      game.turn=1;
+
+      const label={easy:"やさしい",normal:"ふつう",hard:"つよい"}[cpuDifficulty];
+      showPrivacy("🐱","逃走1ターン目・ネコの番",
+        `CPU柴犬警察（${label}）の配置が完了しました。配置を見て、スタート地点にする箱を1つ選んでください。`);
+      setMessage("🐱 柴犬の配置を見て、好きな箱に隠れよう。");
+      render();
+      return;
+    }
+
+    // Player = police / CPU = cat
+    playMode="cpuCat";
     initGame(false);
-    cpuSetupDogs();
-    game.phase="catSetup";
-    game.turn=1;
+    game.phase="dogSetup";
+    game.turn=0;
 
     const label={easy:"やさしい",normal:"ふつう",hard:"つよい"}[cpuDifficulty];
-    showPrivacy("🐱","逃走1ターン目・ネコの番",
-      `CPU柴犬警察（${label}）の配置が完了しました。配置を見て、スタート地点にする箱を1つ選んでください。`);
-    setMessage("🐱 柴犬の配置を見て、好きな箱に隠れよう。");
+    showPrivacy("🐕","0ターン目・警察配置",
+      `CPUネコ（${label}）と対戦します。まず柴犬警察3匹を中央16交差点に配置してください。`);
+    setMessage("🐕 柴犬警察3匹を配置しよう。配置後、CPUネコが隠れます。");
     render();
   }
 
   function closeDifficultyPicker(){
     difficultyOverlay.classList.remove("show");
-    modeOverlay.classList.add("show");
+    cpuSideOverlay.classList.add("show");
   }
 
   function render(){
@@ -373,6 +402,15 @@
       game.dogSetupCount++;
 
       if(game.dogSetupCount>=3){
+        if(playMode==="cpuCat"){
+          game.phase="catSetup";
+          game.turn=1;
+          setMessage("🐱 CPUネコが隠れ場所を考えています…");
+          render();
+          cpuTimer=setTimeout(cpuCatInitialHide,250);
+          return;
+        }
+
         game.phase="catSetup";
         game.turn=1;
         showPrivacy("🐱","逃走1ターン目・ネコの番",
@@ -414,7 +452,7 @@
   }
 
   function selectDog(di){
-    if(playMode!=="local")return;
+    if(playMode!=="local"&&playMode!=="cpuCat")return;
     if(game.phase!=="dogs"||game.gameOver||game.actionLocked||game.dogs[di]===null)return;
 
     if(game.dogAction[di]){
@@ -519,6 +557,11 @@
 
   function finishDogTurn(){
     if(game.phase!=="waitingEnd"||game.gameOver||game.actionLocked)return;
+
+    if(playMode==="cpuCat"){
+      runCpuCatTurn();
+      return;
+    }
 
     if(game.turn>=E.MAX_TURNS){
       endGame("cat","11ターンすべて逃げ切りました！");
@@ -633,7 +676,7 @@
       if(game.selectedDog===i)c.classList.add("selected");
 
       c.disabled=!(
-        playMode==="local" &&
+        (playMode==="local"||playMode==="cpuCat") &&
         game.phase==="dogs" &&
         pos!==null &&
         !game.dogAction[i] &&
@@ -662,7 +705,7 @@
     catViewBtn.disabled=game.phase!=="cat"||game.gameOver||game.actionLocked;
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
 
-    finishDogTurnBtn.classList.toggle("show",playMode==="local"&&game.phase==="waitingEnd");
+    finishDogTurnBtn.classList.toggle("show",(playMode==="local"||playMode==="cpuCat")&&game.phase==="waitingEnd");
     finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
 
@@ -1271,6 +1314,164 @@
     soundQuickBtn.textContent=(Audio.settings.sfx||Audio.settings.bgm)?"🔊 サウンド":"🔇 サウンド";
   }
 
+
+  function cpuCatDistanceFromDogs(boxIndex){
+    let min=99;
+    game.dogs.forEach(node=>{
+      if(node===null)return;
+      E.getBoxesAroundNode(node).forEach(b=>{
+        min=Math.min(min,boxDistance(b,boxIndex));
+      });
+    });
+    return min;
+  }
+
+  function cpuCatFutureFreedom(boxIndex){
+    return E.getBoxNeighbors(boxIndex).filter(n=>!game.catHistory.has(n)).length;
+  }
+
+  function cpuCatScore(boxIndex){
+    const dogDist=cpuCatDistanceFromDogs(boxIndex);
+    const freedom=cpuCatFutureFreedom(boxIndex);
+
+    let score=0;
+
+    if(cpuDifficulty==="easy"){
+      score+=dogDist*1.6;
+      score+=freedom*1.4;
+      score+=Math.random()*8;
+      if(freedom===0) score-=8;
+      return score;
+    }
+
+    if(cpuDifficulty==="normal"){
+      score+=dogDist*4;
+      score+=freedom*4.5;
+      if(freedom===0) score-=30;
+      if(freedom===1) score-=7;
+      score+=Math.random()*2.2;
+      return score;
+    }
+
+    // Hard: look one extra step ahead and strongly avoid future traps.
+    score+=dogDist*5.2;
+    score+=freedom*5.5;
+    if(freedom===0) score-=70;
+    if(freedom===1) score-=18;
+
+    let bestNext=-999;
+    E.getBoxNeighbors(boxIndex).forEach(n=>{
+      if(game.catHistory.has(n))return;
+      const nd=cpuCatDistanceFromDogs(n);
+      const nf=E.getBoxNeighbors(n).filter(x=>!game.catHistory.has(x) && x!==boxIndex).length;
+      bestNext=Math.max(bestNext,nd*4+nf*5);
+    });
+    if(bestNext>-999) score+=bestNext*.65;
+
+    score+=Math.random()*.45;
+    return score;
+  }
+
+  function cpuChooseStartBox(){
+    let best=0,bestScore=-Infinity;
+    for(let b=0;b<E.BOX_COUNT;b++){
+      let s=cpuCatDistanceFromDogs(b)*5 + E.getBoxNeighbors(b).length*2;
+      if(cpuDifficulty==="easy") s+=Math.random()*14;
+      else if(cpuDifficulty==="normal") s+=Math.random()*3;
+      else s+=Math.random()*.5;
+      if(s>bestScore){bestScore=s;best=b;}
+    }
+    return best;
+  }
+
+  function cpuChooseCatMove(){
+    const moves=E.getCatLegalMoves(game);
+    if(!moves.length)return null;
+
+    let best=moves[0],bestScore=-Infinity;
+    moves.forEach(b=>{
+      const s=cpuCatScore(b);
+      if(s>bestScore){bestScore=s;best=b;}
+    });
+    return best;
+  }
+
+  function cpuCatInitialHide(){
+    if(playMode!=="cpuCat"||game.gameOver)return;
+
+    game.actionLocked=true;
+    document.body.classList.add("cpu-cat-thinking");
+    guideDisplay.textContent="🐱💭 CPUネコが隠れ場所を考え中…";
+
+    cpuTimer=setTimeout(()=>{
+      const start=cpuChooseStartBox();
+      game.catPos=start;
+      game.catHistory.clear();
+      game.catHistory.set(start,1);
+      game.catVisible=false;
+      game.turn=1;
+      game.phase="dogs";
+      game.selectedDog=null;
+      game.dogAction=[false,false,false];
+      game.actionLocked=false;
+      document.body.classList.remove("cpu-cat-thinking");
+
+      showPhaseCue("🐕","捜査開始！");
+      setMessage("🐕 CPUネコが隠れました。柴犬を選んで捜査しよう。");
+      render();
+    },cpuDifficulty==="hard"?650:420);
+  }
+
+  function runCpuCatTurn(){
+    if(playMode!=="cpuCat"||game.gameOver)return;
+
+    if(game.turn>=E.MAX_TURNS){
+      endGame("cat","11ターンすべて逃げ切りました！");
+      return;
+    }
+
+    game.turn++;
+    game.phase="cat";
+    game.actionLocked=true;
+    document.body.classList.add("cpu-cat-thinking");
+    guideDisplay.textContent="🐱💭 CPUネコが逃げ道を考え中…";
+    render();
+
+    cpuTimer=setTimeout(()=>{
+      const target=cpuChooseCatMove();
+
+      if(target===null){
+        game.actionLocked=false;
+        document.body.classList.remove("cpu-cat-thinking");
+        endGame("dogs","CPUネコの逃げ道がなくなりました！");
+        return;
+      }
+
+      const from=game.catPos;
+      Audio.play("cat");
+
+      A.animateCatMove(board,from,target,()=>{
+        game.catPos=target;
+        game.catHistory.set(target,game.turn);
+        game.catVisible=false;
+        game.phase="dogs";
+        game.selectedDog=null;
+        game.dogAction=[false,false,false];
+        game.actionLocked=false;
+        document.body.classList.remove("cpu-cat-thinking");
+
+        if(E.getCatLegalMoves(game).length===0 && game.turn<E.MAX_TURNS){
+          endGame("dogs","CPUネコの次の逃げ道がなくなりました！");
+          return;
+        }
+
+        showPhaseCue("🐕","柴犬警察の捜査！");
+        setMessage("🐕 CPUネコが移動しました。柴犬3匹を行動させよう。");
+        render();
+      });
+    },cpuDifficulty==="hard"?720:(cpuDifficulty==="normal"?520:340));
+  }
+
   function endGame(winner,reason){
     game.gameOver=true;
     game.phase="gameover";
@@ -1300,6 +1501,9 @@
 
   bindPress(localModeBtn,startLocalMode);
   bindPress(cpuModeBtn,startCpuPoliceMode);
+  bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
+  bindPress(playPoliceSideBtn,()=>chooseCpuSide("police"));
+  bindPress(cpuSideBackBtn,closeCpuSidePicker);
   bindPress(cpuEasyBtn,()=>beginCpuPoliceGame("easy"));
   bindPress(cpuNormalBtn,()=>beginCpuPoliceGame("normal"));
   bindPress(cpuHardBtn,()=>beginCpuPoliceGame("hard"));
@@ -1318,12 +1522,17 @@
     if(playMode==="local"){
       showPrivacy("🐕","0ターン目・警察配置",
         "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。");
-    }else{
+    }else if(playMode==="cpuPolice"){
       cpuSetupDogs();
       game.phase="catSetup";
       game.turn=1;
       showPrivacy("🐱","逃走1ターン目・ネコの番",
         "CPU柴犬警察の配置を確認して、スタート地点にする箱を選んでください。");
+    }else{
+      game.phase="dogSetup";
+      game.turn=0;
+      showPrivacy("🐕","0ターン目・警察配置",
+        "CPUネコと再戦します。柴犬警察3匹を配置してください。");
     }
     render();
   });
