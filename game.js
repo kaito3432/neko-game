@@ -94,7 +94,7 @@
     resultOverlay.classList.remove("show");
     settingsOverlay.classList.remove("show");
     hideToast();
-    routeRevealPanel.classList.remove("show");
+    if(routeRevealPanel) routeRevealPanel.classList.remove("show");
     clearRouteReveal();
     setMessage("🐕 0ターン目。まず柴犬警察3匹を配置してください。");
     if(showMode){
@@ -1611,8 +1611,8 @@
       board.appendChild(badge);
     });
 
-    routeRevealSub.textContent=`${ordered.length}地点を通過`;
-    routeRevealPanel.classList.add("show");
+    if(routeRevealSub) routeRevealSub.textContent=`${ordered.length}地点を通過`;
+    if(routeRevealPanel) routeRevealPanel.classList.add("show");
   }
 
   function endGame(winner,reason){
