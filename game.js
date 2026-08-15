@@ -492,6 +492,18 @@
 
   function afterDogAction(){
     if(!E.allDogsDone(game))return;
+
+    // CPU戦では waitingEnd に切り替えない。
+    // 3匹目が「探索」だった場合、探索アニメーション終了後に
+    // runCpuPoliceTurn() がもう一度呼ばれ、di === -1 を検知して
+    // cpuFinishTurn() → ネコ側へ切り替える。
+    //
+    // ここで waitingEnd にしてしまうと runCpuPoliceTurn() 冒頭の
+    // phase !== "dogs" 判定で処理が止まり、CPUターンが終了できない。
+    if(playMode==="cpuPolice"){
+      return;
+    }
+
     game.phase="waitingEnd";
     setMessage("✅ 3匹の行動が完了しました。「柴犬ターン終了」を押してください。");
   }
