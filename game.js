@@ -32,6 +32,7 @@
   const phaseDisplay=$("phaseDisplay"),guideDisplay=$("guideDisplay");
   const dogCards=[$("dogCard0"),$("dogCard1"),$("dogCard2")];
   const dogRow=$("dogRow"),tracksSummary=$("tracksSummary"),tracksFoundCount=$("tracksFoundCount");
+  const routeRevealPanel=$("routeRevealPanel"),routeRevealSub=$("routeRevealSub");
   const message=$("message");
   const catViewBtn=$("catViewBtn"),settingsBtn=$("settingsBtn");
   const finishDogTurnBtn=$("finishDogTurnBtn");
@@ -93,6 +94,8 @@
     resultOverlay.classList.remove("show");
     settingsOverlay.classList.remove("show");
     hideToast();
+    routeRevealPanel.classList.remove("show");
+    clearRouteReveal();
     setMessage("🐕 0ターン目。まず柴犬警察3匹を配置してください。");
     if(showMode){
       modeOverlay.classList.add("show");
@@ -592,8 +595,14 @@
   }
 
   function renderStatus(){
+    const currentTurn=Math.max(0,Math.min(E.MAX_TURNS,game.turn));
     const remaining=game.turn===0 ? 11 : Math.max(0,E.MAX_TURNS-game.turn+1);
-    turnDisplay.textContent=String(remaining);
+    turnDisplay.textContent=`${currentTurn} / ${E.MAX_TURNS}`;
+
+    document.body.classList.remove("turn-mid","turn-late","turn-last");
+    if(currentTurn>=8 && currentTurn<=9) document.body.classList.add("turn-mid");
+    if(currentTurn===10) document.body.classList.add("turn-late");
+    if(currentTurn===11) document.body.classList.add("turn-last");
 
     // BGM changes reliably for the final 3 escape turns.
     if(game.turn>0 && remaining<=3 && !game.gameOver){
@@ -1331,57 +1340,114 @@
     return E.getBoxNeighbors(boxIndex).filter(n=>!game.catHistory.has(n)).length;
   }
 
+
+  function projectedDogPressure(boxIndex){
+    // Estimate how many police intersections can pressure this box next turn.
+    let pressure=0;
+    game.dogs.forEach((node,di)=>{
+      if(node===null)return;
+
+      // current adjacency
+      if(E.getBoxesAroundNode(node).includes(boxIndex)) pressure+=2.8;
+
+      // one-move reach
+      E.getDogLegalMoves(game,di).forEach(n=>{
+        if(E.getBoxesAroundNode(n).includes(boxIndex)) pressure+=1.1;
+      });
+    });
+    return pressure;
+  }
+
+  function cpuCatSecondStepValue(fromBox,nextBox){
+    let best=-999;
+    E.getBoxNeighbors(nextBox).forEach(n=>{
+      if(game.catHistory.has(n) || n===fromBox) return;
+
+      const dogDist=cpuCatDistanceFromDogs(n);
+      const freedom=E.getBoxNeighbors(n).filter(x=>!game.catHistory.has(x) && x!==nextBox).length;
+      const pressure=projectedDogPressure(n);
+
+      let s=dogDist*4.2 + freedom*5.4 - pressure*4.8;
+      if(freedom===0) s-=60;
+      else if(freedom===1) s-=16;
+
+      best=Math.max(best,s);
+    });
+    return best;
+  }
+
   function cpuCatScore(boxIndex){
     const dogDist=cpuCatDistanceFromDogs(boxIndex);
     const freedom=cpuCatFutureFreedom(boxIndex);
+    const pressure=projectedDogPressure(boxIndex);
 
     let score=0;
 
     if(cpuDifficulty==="easy"){
       score+=dogDist*1.6;
       score+=freedom*1.4;
+      score-=pressure*.8;
       score+=Math.random()*8;
       if(freedom===0) score-=8;
       return score;
     }
 
     if(cpuDifficulty==="normal"){
-      score+=dogDist*4;
-      score+=freedom*4.5;
-      if(freedom===0) score-=30;
-      if(freedom===1) score-=7;
-      score+=Math.random()*2.2;
+      score+=dogDist*4.4;
+      score+=freedom*5.2;
+      score-=pressure*3.8;
+      if(freedom===0) score-=40;
+      if(freedom===1) score-=10;
+
+      const lookahead=cpuCatSecondStepValue(game.catPos,boxIndex);
+      if(lookahead>-999) score+=lookahead*.28;
+
+      score+=Math.random()*1.5;
       return score;
     }
 
-    // Hard: look one extra step ahead and strongly avoid future traps.
-    score+=dogDist*5.2;
-    score+=freedom*5.5;
-    if(freedom===0) score-=70;
-    if(freedom===1) score-=18;
+    // Hard: 2-step escape planning + police pressure avoidance.
+    score+=dogDist*5.8;
+    score+=freedom*6.2;
+    score-=pressure*6.2;
+    if(freedom===0) score-=95;
+    if(freedom===1) score-=26;
 
-    let bestNext=-999;
-    E.getBoxNeighbors(boxIndex).forEach(n=>{
-      if(game.catHistory.has(n))return;
-      const nd=cpuCatDistanceFromDogs(n);
-      const nf=E.getBoxNeighbors(n).filter(x=>!game.catHistory.has(x) && x!==boxIndex).length;
-      bestNext=Math.max(bestNext,nd*4+nf*5);
-    });
-    if(bestNext>-999) score+=bestNext*.65;
+    const lookahead=cpuCatSecondStepValue(game.catPos,boxIndex);
+    if(lookahead>-999) score+=lookahead*.72;
 
-    score+=Math.random()*.45;
+    // Avoid getting squeezed toward an edge unless it is actually safe.
+    if(isEdgeBox(boxIndex) && freedom<=2) score-=8;
+
+    score+=Math.random()*.3;
     return score;
   }
 
   function cpuChooseStartBox(){
     let best=0,bestScore=-Infinity;
+
     for(let b=0;b<E.BOX_COUNT;b++){
-      let s=cpuCatDistanceFromDogs(b)*5 + E.getBoxNeighbors(b).length*2;
-      if(cpuDifficulty==="easy") s+=Math.random()*14;
-      else if(cpuDifficulty==="normal") s+=Math.random()*3;
-      else s+=Math.random()*.5;
+      const dogDist=cpuCatDistanceFromDogs(b);
+      const freedom=E.getBoxNeighbors(b).length;
+      const pressure=projectedDogPressure(b);
+
+      let s=dogDist*5 + freedom*2.3 - pressure*2.5;
+
+      if(cpuDifficulty==="easy"){
+        s+=Math.random()*14;
+      }else if(cpuDifficulty==="normal"){
+        s+=freedom*2.2;
+        s+=Math.random()*2.2;
+      }else{
+        // Hard prefers starts with both distance and multiple exits.
+        s+=freedom*4.4;
+        if(freedom<=2)s-=10;
+        s+=Math.random()*.35;
+      }
+
       if(s>bestScore){bestScore=s;best=b;}
     }
+
     return best;
   }
 
@@ -1477,8 +1543,70 @@
     },cpuDifficulty==="hard"?720:(cpuDifficulty==="normal"?520:340));
   }
 
+
+  function clearRouteReveal(){
+    board.querySelectorAll(".route-step,.route-line").forEach(el=>el.remove());
+  }
+
+  function boxCenterPercent(boxIndex){
+    const r=E.boxRow(boxIndex),c=E.boxCol(boxIndex);
+    // Board layout is a 5x5 box grid with intersections between boxes.
+    // These percentages match the box centers visually.
+    return {
+      x:10 + c*20,
+      y:12 + r*20
+    };
+  }
+
+  function revealCpuCatRoute(){
+    if(playMode!=="cpuCat")return;
+
+    clearRouteReveal();
+
+    const ordered=[...game.catHistory.entries()]
+      .sort((a,b)=>a[1]-b[1])
+      .map(([box,turn])=>({box,turn}));
+
+    if(!ordered.length)return;
+
+    ordered.forEach((step,idx)=>{
+      if(idx<ordered.length-1){
+        const a=boxCenterPercent(step.box);
+        const b=boxCenterPercent(ordered[idx+1].box);
+        const dx=b.x-a.x,dy=b.y-a.y;
+        const length=Math.sqrt(dx*dx+dy*dy);
+        const angle=Math.atan2(dy,dx)*180/Math.PI;
+
+        const line=document.createElement("div");
+        line.className="route-line";
+        line.style.left=`${a.x}%`;
+        line.style.top=`${a.y}%`;
+        line.style.width=`${length}%`;
+        line.style.transform=`rotate(${angle}deg)`;
+        board.appendChild(line);
+      }
+    });
+
+    ordered.forEach((step,idx)=>{
+      const p=boxCenterPercent(step.box);
+      const badge=document.createElement("div");
+      badge.className="route-step";
+      if(idx===0)badge.classList.add("start");
+      if(idx===ordered.length-1)badge.classList.add("final");
+
+      badge.style.left=`${p.x}%`;
+      badge.style.top=`${p.y}%`;
+      badge.textContent=idx===0?"START":String(step.turn);
+      board.appendChild(badge);
+    });
+
+    routeRevealSub.textContent=`${ordered.length}地点を通過`;
+    routeRevealPanel.classList.add("show");
+  }
+
   function endGame(winner,reason){
     game.gameOver=true;
+    if(playMode==="cpuCat") setTimeout(revealCpuCatRoute,250);
     game.phase="gameover";
     game.catVisible=true;
     game.selectedDog=null;
