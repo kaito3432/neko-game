@@ -41,6 +41,7 @@
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
   const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon");
   const resultTitle=$("resultTitle"),resultText=$("resultText"),againBtn=$("againBtn");
+  const resultRoute=$("resultRoute"),resultRouteBoard=$("resultRouteBoard"),resultRouteNote=$("resultRouteNote");
   const settingsOverlay=$("settingsOverlay"),sfxToggleBtn=$("sfxToggleBtn"),bgmToggleBtn=$("bgmToggleBtn");
   const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState"),bgmState=$("bgmState");
   const vibrationState=$("vibrationState"),settingsCloseBtn=$("settingsCloseBtn");
@@ -94,6 +95,9 @@
     cpuCatRoute=[];
     privacyOverlay.classList.remove("show");
     resultOverlay.classList.remove("show");
+    resultRoute.classList.remove("show");
+    resultRouteBoard.innerHTML="";
+    resultRouteNote.textContent="";
     settingsOverlay.classList.remove("show");
     hideToast();
     if(routeRevealPanel) routeRevealPanel.classList.remove("show");
@@ -1573,6 +1577,62 @@
     };
   }
 
+
+  function renderResultCpuCatRoute(){
+    if(playMode!=="cpuCat")return;
+
+    const ordered=cpuCatRoute.length
+      ? cpuCatRoute.slice().sort((a,b)=>a.turn-b.turn)
+      : [...game.catHistory.entries()]
+          .sort((a,b)=>a[1]-b[1])
+          .map(([box,turn])=>({box,turn}));
+
+    if(!ordered.length)return;
+
+    resultRouteBoard.innerHTML="";
+
+    // Draw all 25 cardboard cells.
+    for(let b=0;b<E.BOX_COUNT;b++){
+      const r=E.boxRow(b),c=E.boxCol(b);
+      const cell=document.createElement("div");
+      cell.className="result-route-cell";
+      cell.style.left=`${10+c*20}%`;
+      cell.style.top=`${10+r*20}%`;
+      cell.textContent=b+1;
+      resultRouteBoard.appendChild(cell);
+    }
+
+    // SVG route line.
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("viewBox","0 0 100 100");
+    svg.setAttribute("preserveAspectRatio","none");
+    svg.classList.add("result-route-svg");
+
+    const polyline=document.createElementNS("http://www.w3.org/2000/svg","polyline");
+    const points=ordered.map(step=>{
+      const r=E.boxRow(step.box),c=E.boxCol(step.box);
+      return `${10+c*20},${10+r*20}`;
+    }).join(" ");
+    polyline.setAttribute("points",points);
+    svg.appendChild(polyline);
+    resultRouteBoard.appendChild(svg);
+
+    ordered.forEach((step,idx)=>{
+      const r=E.boxRow(step.box),c=E.boxCol(step.box);
+      const badge=document.createElement("div");
+      badge.className="result-route-badge";
+      if(idx===0)badge.classList.add("start");
+      if(idx===ordered.length-1)badge.classList.add("final");
+      badge.style.left=`${10+c*20}%`;
+      badge.style.top=`${10+r*20}%`;
+      badge.textContent=idx===0?"S":String(step.turn);
+      resultRouteBoard.appendChild(badge);
+    });
+
+    resultRouteNote.textContent=`STARTから最終地点まで ${ordered.length}地点`;
+    resultRoute.classList.add("show");
+  }
+
   function revealCpuCatRoute(){
     if(playMode!=="cpuCat")return;
 
@@ -1641,6 +1701,9 @@
 
   function endGame(winner,reason){
     game.gameOver=true;
+    resultRoute.classList.remove("show");
+    resultRouteBoard.innerHTML="";
+    resultRouteNote.textContent="";
     game.phase="gameover";
     game.catVisible=true;
     game.selectedDog=null;
@@ -1664,6 +1727,13 @@
     A.confetti(confettiLayer);
     setTimeout(()=>resultOverlay.classList.remove("resultOverlayCelebration"),700);
     render();
+
+    // Police-vs-CPU-cat: show the whole escape route immediately in the result modal.
+    if(playMode==="cpuCat"){
+      renderResultCpuCatRoute();
+      // Also prepare the board overlay behind the modal for later inspection.
+      setTimeout(revealCpuCatRoute,120);
+    }
   }
 
   bindPress(localModeBtn,startLocalMode);
@@ -1703,11 +1773,7 @@
     }
     render();
 
-    if(playMode==="cpuCat"){
-      setTimeout(()=>{
-        revealCpuCatRoute();
-      },350);
-    }
+
   });
   bindPress(backToTitleBtn,()=>{
     settingsOverlay.classList.remove("show");
