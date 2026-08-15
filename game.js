@@ -729,7 +729,7 @@
         }
       }
 
-      const dogImg=["dog_red.png","dog_green.png","dog_blue.png"][i];
+      const dogImg=["dog_card_red.png","dog_card_green.png","dog_card_blue.png"][i];
       const role=playMode==="cpuPolice" ? ["探索に強い","バランス型","移動に強い"][i] : "";
       c.innerHTML=`<span class="dog-name"><img class="character-img" src="./assets/images/${dogImg}" alt="">${E.DOGS[i].name}</span>
         ${role?`<span class="dog-role">${role}</span>`:""}
