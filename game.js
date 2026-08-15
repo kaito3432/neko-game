@@ -24,6 +24,7 @@
   const settingsOverlay=$("settingsOverlay"),sfxToggleBtn=$("sfxToggleBtn"),bgmToggleBtn=$("bgmToggleBtn");
   const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState"),bgmState=$("bgmState");
   const vibrationState=$("vibrationState"),settingsCloseBtn=$("settingsCloseBtn");
+  const bgmVolumeSlider=$("bgmVolumeSlider"),bgmVolumeValue=$("bgmVolumeValue");
   const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
   const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
 
@@ -84,8 +85,9 @@
         if(game.catHistory.get(i)===0)b.classList.add("start-track");
       }
 
-      b.innerHTML=`<span class="boxnum">${i+1}</span><span class="boxemoji">📦</span>
-        ${game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat">🐱</span>':""}
+      b.innerHTML=`<span class="boxnum">${i+1}</span>
+        <img class="box-art" src="./assets/images/box.png" alt="">
+        ${game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat.png" alt="ネコ"></span>':""}
         ${privateHistoryHTML(i)}
         ${publicTrackHTML(i)}
         ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}`;
@@ -117,7 +119,8 @@
         here.forEach(j=>{
           const t=document.createElement("span");
           t.className=`dogtoken ${E.DOGS[j].token}`;
-          t.textContent=`🐕${j+1}`;
+          const dogImg=["dog_red.png","dog_green.png","dog_blue.png"][j];
+          t.innerHTML=`<img src="./assets/images/${dogImg}" alt="${E.DOGS[j].name}">`;
           s.appendChild(t);
         });
         n.appendChild(s);
@@ -130,16 +133,18 @@
 
   function privateHistoryHTML(i){
     if(game.phase!=="cat"||!game.catVisible||!game.catHistory.has(i))return"";
-    if(game.catHistory.get(i)===0)return'<span class="private-foot private-start">🚩</span>';
-    return'<span class="private-foot">🐾</span>';
+    if(game.catHistory.get(i)===0){
+      return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
+    }
+    return'<span class="private-foot"><img src="./assets/images/paw.png" alt="足跡"></span>';
   }
 
   function publicTrackHTML(i){
     if(game.phase==="cat"||!game.revealedTracks.has(i))return"";
     if(game.catHistory.get(i)===0){
-      return'<span class="track-badge"><span class="track-icon">🚩</span><span class="start-label">START</span></span>';
+      return'<span class="track-badge"><img class="start-art" src="./assets/images/start.png" alt="START"></span>';
     }
-    return'<span class="track-badge"><span class="track-icon">🐾</span></span>';
+    return'<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡"></span>';
   }
 
   function handleBoxPress(i){
@@ -437,7 +442,8 @@
         }
       }
 
-      c.innerHTML=`<span class="dog-name">${E.DOGS[i].label} ${E.DOGS[i].name}</span>${status}`;
+      const dogImg=["dog_red.png","dog_green.png","dog_blue.png"][i];
+      c.innerHTML=`<span class="dog-name"><img class="character-img" src="./assets/images/${dogImg}" alt="">${E.DOGS[i].name}</span>${status}`;
       if(game.selectedDog===i)c.classList.add("selected");
 
       c.disabled=!(
@@ -488,6 +494,8 @@
     sfxState.style.background=Audio.settings.sfx?"var(--green)":"#E6E2DE";
     bgmState.style.background=Audio.settings.bgm?"var(--green)":"#E6E2DE";
     vibrationState.style.background=Audio.settings.vibration?"var(--green)":"#E6E2DE";
+    bgmVolumeSlider.value=String(Audio.settings.bgmVolume);
+    bgmVolumeValue.textContent=`${Audio.settings.bgmVolume}%`;
   }
 
   function openSettings(){
@@ -532,6 +540,11 @@
   bindPress(settingsCloseBtn,closeSettings);
   bindPress(sfxToggleBtn,()=>{Audio.toggleSfx();updateSettingsUI();});
   bindPress(bgmToggleBtn,()=>{Audio.toggleBgm();updateSettingsUI();});
+  bgmVolumeSlider.addEventListener("input",()=>{
+    const v=Audio.setBgmVolume(bgmVolumeSlider.value);
+    bgmVolumeValue.textContent=`${v}%`;
+    Audio.startBgm();
+  });
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
   bindPress(restartBtn,initGame);

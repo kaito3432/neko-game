@@ -5,10 +5,12 @@
 window.NyanAudio = (() => {
   let audioCtx=null;
 
+  const savedVolume=parseInt(localStorage.getItem("nyanChaseBgmVolume")||"72",10);
   const settings={
     sfx: localStorage.getItem("nyanChaseSfx")!=="off",
     bgm: localStorage.getItem("nyanChaseBgm")!=="off",
-    vibration: localStorage.getItem("nyanChaseVibration")!=="off"
+    vibration: localStorage.getItem("nyanChaseVibration")!=="off",
+    bgmVolume: Number.isFinite(savedVolume) ? Math.max(0,Math.min(100,savedVolume)) : 72
   };
 
   let bgmStarted=false;
@@ -156,8 +158,8 @@ window.NyanAudio = (() => {
 
     if(!bgmGain){
       bgmGain=ctx.createGain();
-      // 旧版0.16では小さすぎたため、聞こえる音量へ調整
-      bgmGain.gain.value=0.48;
+      // Ver1.6: 初期音量を上げ、設定スライダーと連動
+      bgmGain.gain.value=0.62*(settings.bgmVolume/100);
       bgmGain.connect(ctx.destination);
     }
 
@@ -259,7 +261,7 @@ window.NyanAudio = (() => {
         try{
           bgmGain.gain.cancelScheduledValues(t);
           bgmGain.gain.setValueAtTime(Math.max(.0001,bgmGain.gain.value),t);
-          bgmGain.gain.exponentialRampToValueAtTime(.48,t+.22);
+          bgmGain.gain.exponentialRampToValueAtTime(Math.max(.0001,0.62*(settings.bgmVolume/100)),t+.22);
         }catch(e){}
       }
     },ms);
@@ -295,6 +297,23 @@ window.NyanAudio = (() => {
     return settings.vibration;
   }
 
+  function setBgmVolume(value){
+    const v=Math.max(0,Math.min(100,Number(value)||0));
+    settings.bgmVolume=v;
+    localStorage.setItem("nyanChaseBgmVolume",String(v));
+
+    if(bgmGain && audioCtx){
+      const now=audioCtx.currentTime;
+      const target=Math.max(.0001,0.62*(v/100));
+      try{
+        bgmGain.gain.cancelScheduledValues(now);
+        bgmGain.gain.setValueAtTime(Math.max(.0001,bgmGain.gain.value),now);
+        bgmGain.gain.exponentialRampToValueAtTime(target,now+.08);
+      }catch(e){}
+    }
+    return v;
+  }
+
   return {
     settings,
     play,
@@ -306,6 +325,7 @@ window.NyanAudio = (() => {
     duckBgm,
     toggleSfx,
     toggleBgm,
-    toggleVibration
+    toggleVibration,
+    setBgmVolume
   };
 })();

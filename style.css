@@ -180,3 +180,131 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-user-select:
 }
 .setting-row strong{padding:4px 8px;border-radius:999px;background:var(--green)}
 .disabled-row{opacity:.55;background:#F1EFED}
+
+
+/* ===== Ver1.6 アート実装 ===== */
+
+.art-hero{
+  min-height:82px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.game-logo{
+  width:min(88%,390px);
+  max-height:82px;
+  object-fit:cover;
+  object-position:center 42%;
+  border-radius:18px;
+  filter:drop-shadow(0 3px 0 rgba(93,64,55,.16));
+}
+.board-shell{
+  position:relative;
+  overflow:hidden;
+}
+.board-shell::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:url("./assets/images/bg_day.png") center/cover no-repeat;
+  opacity:.11;
+  pointer-events:none;
+}
+.board-shell > *{position:relative;z-index:1}
+
+.character-img{
+  width:34px;height:34px;
+  object-fit:cover;
+  object-position:center;
+  border-radius:50%;
+  border:2px solid var(--brown);
+  background:#fff;
+  vertical-align:middle;
+  margin-right:4px;
+  box-shadow:0 2px 0 rgba(93,64,55,.15);
+}
+.dog-card .dog-name{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:3px;
+}
+.dogtoken{
+  overflow:hidden;
+  padding:0;
+}
+.dogtoken img{
+  width:100%;height:100%;
+  object-fit:cover;
+  border-radius:50%;
+}
+.box-art{
+  position:absolute;
+  inset:5px;
+  width:calc(100% - 10px);
+  height:calc(100% - 10px);
+  object-fit:cover;
+  border-radius:8px;
+  opacity:.92;
+  pointer-events:none;
+}
+.boxemoji{display:none}
+.track-art{
+  width:74%;
+  max-width:46px;
+  height:auto;
+  object-fit:contain;
+  border-radius:10px;
+}
+.cat-art{
+  width:76%;
+  height:76%;
+  object-fit:cover;
+  border-radius:50%;
+  border:2px solid rgba(93,64,55,.5);
+  background:#fff;
+  box-shadow:0 2px 0 rgba(93,64,55,.15);
+}
+.start-art{
+  width:92%;
+  max-width:58px;
+  height:auto;
+  object-fit:contain;
+}
+.private-foot img{
+  width:20px;height:20px;
+  object-fit:cover;border-radius:50%;
+}
+.private-foot.private-start img{
+  width:25px;height:22px;
+  object-fit:contain;border-radius:4px;
+}
+
+.volume-row{
+  width:100%;
+  min-height:58px;
+  padding:9px 12px;
+  border:2px solid var(--brown);
+  border-radius:14px;
+  background:#fff;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:900;
+}
+.volume-row input[type="range"]{
+  width:100%;
+  accent-color:#E77FA6;
+}
+.volume-row strong{
+  min-width:42px;
+  text-align:right;
+}
+
+@media(max-width:380px){
+  .game-logo{max-height:72px}
+  .character-img{width:30px;height:30px}
+}

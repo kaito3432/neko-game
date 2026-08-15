@@ -9,8 +9,8 @@
 </head>
 <body>
 <div class="app">
-  <header class="hero">
-    <h1>🐱 にゃんチェイス 🐕</h1>
+  <header class="hero art-hero">
+    <img class="game-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
     <p>いたずらネコ vs 柴犬警察！11ターン逃げ切れ！</p>
   </header>
 
@@ -85,6 +85,11 @@
       <button class="setting-row" id="bgmToggleBtn" type="button">
         <span>🎵 BGM</span><strong id="bgmState">ON</strong>
       </button>
+      <div class="volume-row">
+        <span>🔉 BGM音量</span>
+        <input id="bgmVolumeSlider" type="range" min="0" max="100" step="1" value="72" aria-label="BGM音量">
+        <strong id="bgmVolumeValue">72%</strong>
+      </div>
     </div>
     <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
   </div>
