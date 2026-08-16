@@ -307,13 +307,25 @@
     return'<span class="private-foot"><img src="./assets/images/paw.png" alt="足跡"></span>';
   }
 
+  function shouldShowTrackTurn(turn){
+    // ターン数字は「プレイヤー＝警察 / CPUネコ戦」の難易度ヒントだけ。
+    if(playMode!=="cpuCat") return false;
+    if(cpuDifficulty==="easy") return turn===3||turn===6||turn===9;
+    if(cpuDifficulty==="normal") return turn===6;
+    return false; // hard / つよい
+  }
+
   function publicTrackHTML(i){
     if(game.phase==="cat"||!game.revealedTracks.has(i))return"";
     const turn=game.revealedTracks.get(i) ?? game.catHistory.get(i);
+    const turnBadge=shouldShowTrackTurn(turn)
+      ?`<b class="track-turn">${turn}</b>`
+      :"";
+
     if(game.catHistory.get(i)===1){
-      return'<span class="track-badge"><img class="start-art" src="./assets/images/start.png" alt="START"><b class="track-turn">1</b></span>';
+      return`<span class="track-badge"><img class="start-art" src="./assets/images/start.png" alt="START">${turnBadge}</span>`;
     }
-    return`<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡"><b class="track-turn">${turn}</b></span>`;
+    return`<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡">${turnBadge}</span>`;
   }
 
 
@@ -384,7 +396,10 @@
         game.catHistory.set(i,game.turn);
         game.catVisible=false;
 
-        if(dead||E.getCatLegalMoves(game).length===0){
+        // 1〜10ターン目は、次の逃げ道が無ければ警察勝利。
+        // 11ターン目は次の12ターン目が存在しないため、
+        // 行き止まりでもそのまま警察の最終捜索へ進む。
+        if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
           game.actionLocked=false;
           endGame("dogs","ネコが行き止まりに入り、次の逃げ道がなくなりました！");
           return;
