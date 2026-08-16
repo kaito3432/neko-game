@@ -88,6 +88,9 @@ window.NyanEngine = (() => {
   }
 
   function isCatDeadEnd(state,target){
+    // 非合法マスは危険判定の対象外。
+    // これを入れないと、移動できない全マスが⚠️扱いになってしまう。
+    if(!getCatLegalMoves(state).includes(target)) return false;
     return !canCatFinishFrom(state,target);
   }
 

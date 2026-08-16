@@ -316,20 +316,6 @@
     return`<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡"><b class="track-turn">${turn}</b></span>`;
   }
 
-  // CPUネコ戦（プレイヤー＝警察）の難易度ヒント。
-  // やさしい: 3 / 6 / 9ターン目、ふつう: 6ターン目、つよい: 自動公開なし。
-  function cpuCatClueTurns(){
-    if(cpuDifficulty==="easy") return new Set([3,6,9]);
-    if(cpuDifficulty==="normal") return new Set([6]);
-    return new Set();
-  }
-
-  function revealCpuCatScheduledClue(){
-    if(playMode!=="cpuCat"||cpuDifficulty==="hard") return;
-    if(!cpuCatClueTurns().has(game.turn)) return;
-    if(game.catPos===null) return;
-    game.revealedTracks.set(game.catPos,game.turn);
-  }
 
   function handleBoxPress(i){
     if(game.gameOver||game.actionLocked)return;
@@ -1593,7 +1579,6 @@
       game.catPos=target;
       game.catHistory.set(target,game.turn);
       cpuCatRoute.push({box:target,turn:game.turn});
-      revealCpuCatScheduledClue();
       game.catVisible=false;
       game.phase="dogs";
       game.selectedDog=null;
