@@ -2170,7 +2170,11 @@ body.turn-last .turn-pill{
 .vu3-sub::before,.vu3-sub::after{content:"●";margin:0 11px;color:#D88F78;font-size:.72em}
 .vu3-modes{min-height:0;display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(6px,.85vh,8px)}
 .vu3-mode{min-height:0;overflow:hidden;border:2.5px solid var(--brown);border-radius:19px;box-shadow:0 4px 0 rgba(93,64,55,.14);padding:5px 10px 5px 15px;display:grid;grid-template-columns:minmax(0,1fr) 38%;align-items:center;text-align:left}
-.vu3-vs{background:#FFF1F3;border-color:#D87579}.vu3-cpu{background:#F2F8E7;border-color:#5E8C56}.vu3-online{background:#F3F3F0;border-color:#AAA7A2;color:#AAA49F}
+.vu3-vs{background:#FFF1F3;border-color:#D87579}.vu3-cpu{background:#F2F8E7;border-color:#5E8C56}.vu3-online{
+  background:#EEF7FF;
+  border-color:#6AA7D8;
+  color:var(--brown);
+}
 .vu3-copy strong{display:block;font-size:clamp(22px,3.4vh,30px);line-height:1;font-weight:900}.vu3-copy span{display:block;margin-top:5px;font-size:clamp(9px,1.45vh,12px);line-height:1.15;font-weight:800}
 .vu3-mode-art{width:100%;height:100%;min-height:0;object-fit:contain;object-position:center;display:block;border-radius:11px}
 .vu3-lock{width:42px;height:42px;justify-self:end;margin-right:15px;fill:none;stroke:#9DA29F;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
