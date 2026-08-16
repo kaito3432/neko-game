@@ -1854,6 +1854,43 @@ const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"
 bindPress(onlineBackBtn,()=>{
   onlineOverlay.classList.remove("show");
 }); 
+
+   bindPress(createOnlineRoomBtn,async()=>{
+  if(!window.NyanOnline){
+    onlineStatus.textContent="オンライン機能を読み込めませんでした";
+    return;
+  }
+
+  createOnlineRoomBtn.disabled=true;
+  onlineStatus.textContent="部屋を作成しています…";
+
+  try{
+    const room=await window.NyanOnline.createRoom();
+
+    onlineStatus.innerHTML=
+      `合言葉コード<br><strong style="font-size:32px">${room.roomCode}</strong><br>`+
+      `相手を待っています…`;
+
+    window.NyanOnline.connect({
+      onPresence:(data)=>{
+        if(data.ready){
+          onlineStatus.innerHTML=
+            `合言葉コード<br><strong style="font-size:32px">${room.roomCode}</strong><br>`+
+            `🐾 2人そろいました！`;
+        }
+      },
+      onError:()=>{
+        onlineStatus.textContent="通信エラーが発生しました";
+      }
+    });
+
+  }catch(err){
+    console.error(err);
+    onlineStatus.textContent="部屋を作れませんでした";
+    createOnlineRoomBtn.disabled=false;
+  }
+});
+   
   bindPress(localModeBtn,startLocalMode);
   bindPress(cpuModeBtn,startCpuPoliceMode);
   bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
