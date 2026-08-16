@@ -525,8 +525,7 @@
     }
 
     game.selectedDog=di;
-    Audio.play("tap");
-    setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} を選択。緑の交差点＝移動、青い箱＝探索です。`);
+        setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} を選択。緑の交差点＝移動、青い箱＝探索です。`);
     render();
   }
 
@@ -843,8 +842,7 @@
     if(game.actionLocked)return;
     updateSettingsUI();
     settingsOverlay.classList.add("show");
-    Audio.play("tap");
-  }
+      }
 
   function closeSettings(){settingsOverlay.classList.remove("show");}
 
@@ -1613,8 +1611,7 @@
         return;
       }
 
-      Audio.play("tap");
-      showPhaseCue("🐕","柴犬警察の捜査！");
+            showPhaseCue("🐕","柴犬警察の捜査！");
       setMessage("🐕 CPUネコが移動しました。柴犬3匹を行動させよう。");
       render();
     },cpuDifficulty==="hard"?720:(cpuDifficulty==="normal"?520:340));

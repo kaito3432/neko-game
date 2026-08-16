@@ -68,7 +68,9 @@ window.NyanAnimation = (() => {
   }
 
   function animateSniff(board,nodeIndex,di,bi,motionStatus,done){
-    Nyan
+    // Phase4.2: the stray `Nyan` identifier caused a ReferenceError here,
+    // leaving game.actionLocked=true and making search look frozen.
+    NyanAudio.play("search");
     const n=centerOfNode(board,nodeIndex);
     if(!n){ if(done)done(); return; }
 

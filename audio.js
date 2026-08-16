@@ -14,6 +14,28 @@ window.NyanAudio = (() => {
     tension:"./assets/audio/bgm_tension.wav"
   };
 
+  const SFX_VOLUME={
+    tap:.20,
+    button:.20,
+    box:.26,
+    sniff:.26,
+    search:.26,
+    paw:.30,
+    footprint:.30,
+    cat:.25,
+    move:.25,
+    empty:.24,
+    invalid:.24,
+    start:.30,
+    lastturn:.30,
+    turn:.28,
+    gamestart:.32,
+    capture:.34,
+    catwin:.46,
+    policewin:.46,
+    win:.46
+  };
+
   const SFX={
     tap:"./assets/audio/se_button_tap.wav",
     button:"./assets/audio/se_button_tap.wav",
@@ -149,7 +171,7 @@ window.NyanAudio = (() => {
 
     try{
       const a=base.cloneNode(true);
-      a.volume=.78;
+      a.volume=SFX_VOLUME[name] ?? .28;
       a.playsInline=true;
       const p=a.play();
       if(p && typeof p.catch==="function") p.catch(()=>{});
@@ -175,7 +197,6 @@ window.NyanAudio = (() => {
   function toggleSfx(){
     settings.sfx=!settings.sfx;
     localStorage.setItem("nyanChaseSfx",settings.sfx?"on":"off");
-    if(settings.sfx) play("tap");
     return settings.sfx;
   }
 
