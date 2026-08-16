@@ -117,6 +117,7 @@
     setMessage("🐕 0ターン目。まず柴犬警察3匹を配置してください。");
     if(showMode){
       modeOverlay.classList.add("show");
+      Audio.setBgmMode("home");
     }
     render();
   }
@@ -124,6 +125,8 @@
   function startLocalMode(){
     playMode="local";
     modeOverlay.classList.remove("show");
+    Audio.setBgmMode("normal");
+    Audio.play("gamestart");
     initGame(false);
     showPrivacy("🐕","0ターン目・警察配置",
       "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。");
@@ -144,11 +147,14 @@
   function closeCpuSidePicker(){
     cpuSideOverlay.classList.remove("show");
     modeOverlay.classList.add("show");
+    Audio.setBgmMode("home");
   }
 
   function beginCpuPoliceGame(difficulty){
     cpuDifficulty=difficulty;
     difficultyOverlay.classList.remove("show");
+    Audio.setBgmMode("normal");
+    Audio.play("gamestart");
 
     if(pendingCpuSide==="cat"){
       playMode="cpuPolice";
@@ -379,6 +385,7 @@
       }
 
       if(!E.getCatLegalMoves(game).includes(i)){
+        Audio.play("invalid");
         setMessage("グレー＝移動不可。緑＝11ターン目まで逃げ切れる道あり、赤⚠️＝残りターンを逆算すると詰みです。");
         return;
       }
@@ -491,7 +498,7 @@
       }
 
       // 移動は即時確定。以後この犬は行動不可。
-      Audio.play("tap");
+      Audio.play("move");
       game.dogs[di]=i;
       game.dogAction[di]="move";
       game.selectedDog=null;
@@ -539,7 +546,7 @@
 
     A.animateSniff(board,game.dogs[di],di,bi,motionStatus,()=>{
       if(bi===game.catPos){
-        Audio.play("cat");
+        Audio.play("capture");
         Audio.haptic([35,45,70]);
         A.burstAtBox(board,bi,"🐱✨");
         A.shakeBoxSoon(board,bi);
@@ -1313,7 +1320,7 @@
         game.actionLocked=false;
 
         setMessage(`🤖 ${E.DOGS[di].name} が移動したワン！`);
-        Audio.play("tap");
+        Audio.play("move");
         render();
 
         cpuTimer=setTimeout(runCpuPoliceTurn,430);
@@ -1778,8 +1785,8 @@
 
     resultOverlay.classList.add("show");
     resultOverlay.classList.add("resultOverlayCelebration");
-    Audio.duckBgm(1250);
-    Audio.play("win");
+    Audio.stopBgm();
+    Audio.play(winner==="cat"?"catwin":"policewin");
     Audio.haptic([40,50,40,50,90]);
     A.confetti(confettiLayer);
     setTimeout(()=>resultOverlay.classList.remove("resultOverlayCelebration"),700);
@@ -1846,7 +1853,12 @@
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
   bindPress(privacyBtn,closePrivacy);
-  bindPress(againBtn,initGame);
+  bindPress(againBtn,()=>{
+    Audio.setBgmMode("normal");
+    Audio.startBgm();
+    Audio.play("gamestart");
+    initGame(false);
+  });
 
   initGame(true);
 })();

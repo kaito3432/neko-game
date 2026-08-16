@@ -68,7 +68,7 @@ window.NyanAnimation = (() => {
   }
 
   function animateSniff(board,nodeIndex,di,bi,motionStatus,done){
-    NyanAudio.play("sniff");
+    Nyan
     const n=centerOfNode(board,nodeIndex);
     if(!n){ if(done)done(); return; }
 
