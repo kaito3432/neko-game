@@ -2184,3 +2184,89 @@ body.turn-last .turn-pill{
 .vu3-side-copy strong{display:block;font-size:21px}.vu3-side-copy span{display:block;margin-top:5px;font-size:11px}
 .dog-card .character-img{width:46px!important;height:46px!important;object-fit:cover!important;border-radius:50%!important;flex:0 0 auto!important;background:transparent!important}
 @media(max-height:740px){.vu3-home{grid-template-rows:minmax(0,27%) auto minmax(0,1fr) auto;gap:4px;padding-top:4px}.vu3-copy strong{font-size:21px}.vu3-copy span{font-size:9px;margin-top:3px}.vu3-mini{min-height:40px}}
+
+
+/* ===== Ver1.9 Visual Update 3a : home layout polish ===== */
+.visual-update3{
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
+}
+.vu3-home{
+  grid-template-rows:minmax(0,32%) auto minmax(0,1fr) auto!important;
+  padding-top:max(10px,env(safe-area-inset-top))!important;
+}
+.vu3-brand{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  overflow:visible!important;
+  min-height:0!important;
+}
+.vu3-logo{
+  flex:0 0 clamp(76px,10.5vh,102px)!important;
+  width:min(92%,410px)!important;
+  height:clamp(76px,10.5vh,102px)!important;
+  max-width:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  display:block!important;
+  margin:0 auto 2px!important;
+}
+.vu3-hero{
+  flex:1 1 auto!important;
+  width:min(92%,410px)!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:calc(100% - clamp(78px,11vh,106px))!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  display:block!important;
+  margin:0 auto!important;
+  border-radius:0!important;
+}
+.vu3-mode-art{
+  background:transparent!important;
+  border-radius:0!important;
+  object-fit:contain!important;
+}
+.vu3-vs .vu3-mode-art,
+.vu3-cpu .vu3-mode-art{
+  mix-blend-mode:multiply;
+}
+
+/* SVG icons: no CSS-shape glitches */
+.vu3-svg{
+  width:27px;
+  height:27px;
+  flex:0 0 auto;
+  fill:none;
+  stroke:var(--brown);
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.vu3-svg.gear-svg{
+  width:30px;
+  height:30px;
+}
+.vu3-mini{
+  gap:8px!important;
+  font-size:12px!important;
+}
+.vu3-book,.vu3-sound,.vu3-gear{
+  display:none!important;
+}
+
+@media(max-height:740px){
+  .vu3-home{
+    grid-template-rows:minmax(0,29%) auto minmax(0,1fr) auto!important;
+  }
+  .vu3-logo{
+    flex-basis:66px!important;
+    height:66px!important;
+  }
+  .vu3-hero{
+    max-height:calc(100% - 68px)!important;
+  }
+}
