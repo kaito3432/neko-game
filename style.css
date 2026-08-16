@@ -2297,7 +2297,3 @@ body.turn-last .turn-pill{
 /* Ver2.0 Phase4.3 — very short sniff popup */
 .motion-status{transition:opacity .05s ease,transform .05s ease!important}
 
-/* Ver2.0 Phase4.4 — short sniff visual */
-.motion-status{transition:opacity .03s ease,transform .03s ease!important}
-.dog-sniff{animation-duration:.14s!important}
-.dog-sniff::before{animation-duration:.18s!important}

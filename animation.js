@@ -85,17 +85,17 @@ window.NyanAnimation = (() => {
     if(motionStatus){
       motionStatus.textContent="クンクン……";
       motionStatus.classList.add("show");
-      setTimeout(()=>motionStatus.classList.remove("show"),90);
+      setTimeout(()=>motionStatus.classList.remove("show"),750);
     }
 
     NyanAudio.haptic(18);
-    setTimeout(()=>animateBoxOpen(board,bi),90);
+    setTimeout(()=>animateBoxOpen(board,bi),320);
 
     setTimeout(()=>{
       burstAtBox(board,bi,"✨");
       e.remove();
       if(done)done();
-    },280);
+    },820);
   }
 
   function shakeBoxSoon(board,i){
