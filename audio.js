@@ -15,25 +15,25 @@ window.NyanAudio = (() => {
   };
 
   const SFX_VOLUME={
-    tap:.20,
-    button:.20,
-    box:.26,
-    sniff:.26,
-    search:.26,
-    paw:.30,
-    footprint:.30,
-    cat:.125,
-    move:.125,
-    empty:.24,
-    invalid:.24,
-    start:.30,
-    lastturn:.30,
-    turn:.28,
-    gamestart:.32,
-    capture:.34,
-    catwin:.46,
-    policewin:.46,
-    win:.46
+    tap:.10,
+    button:.10,
+    box:.13,
+    sniff:.13,
+    search:.13,
+    paw:.15,
+    footprint:.15,
+    cat:.0625,
+    move:.0625,
+    empty:.12,
+    invalid:.12,
+    start:.15,
+    lastturn:.15,
+    turn:.14,
+    gamestart:.16,
+    capture:.17,
+    catwin:.23,
+    policewin:.23,
+    win:.23
   };
 
   const SFX={
