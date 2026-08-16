@@ -26,6 +26,9 @@
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
+  const onlineModeBtn=$("onlineModeBtn"),onlineOverlay=$("onlineOverlay"),onlineBackBtn=$("onlineBackBtn");
+const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnlineRoomBtn");
+const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"); 
   const cpuSideOverlay=$("cpuSideOverlay"),playCatSideBtn=$("playCatSideBtn"),playPoliceSideBtn=$("playPoliceSideBtn"),cpuSideBackBtn=$("cpuSideBackBtn");
   const difficultyOverlay=$("difficultyOverlay"),cpuEasyBtn=$("cpuEasyBtn"),cpuNormalBtn=$("cpuNormalBtn"),
         cpuHardBtn=$("cpuHardBtn"),difficultyBackBtn=$("difficultyBackBtn");
@@ -1844,6 +1847,13 @@
     victoryCutinTimer=setTimeout(()=>showVictoryCutin(winner),280);
   }
 
+  bindPress(onlineModeBtn,()=>{
+  onlineOverlay.classList.add("show");
+});
+
+bindPress(onlineBackBtn,()=>{
+  onlineOverlay.classList.remove("show");
+}); 
   bindPress(localModeBtn,startLocalMode);
   bindPress(cpuModeBtn,startCpuPoliceMode);
   bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
