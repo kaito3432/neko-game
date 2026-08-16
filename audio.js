@@ -68,19 +68,9 @@ window.NyanAudio = (() => {
   }
 
   async function unlockAudio(){
+    // bindPress runs on every tap. Never touch the active BGM here.
+    if(unlocked) return true;
     unlocked=true;
-    // iOS Safari: a muted micro-play inside a user gesture unlocks media playback.
-    try{
-      const a=createBgm();
-      if(!a.src) a.src=BGM[bgmMode];
-      const oldMuted=a.muted;
-      a.muted=true;
-      const p=a.play();
-      if(p && typeof p.then==="function") await p.catch(()=>{});
-      a.pause();
-      a.currentTime=0;
-      a.muted=oldMuted;
-    }catch(e){}
     return true;
   }
 
@@ -118,6 +108,10 @@ window.NyanAudio = (() => {
     if(!a.src) a.src=BGM[bgmMode];
     a.loop=true;
     a.volume=.58*(settings.bgmVolume/100);
+
+    // Keep playing continuously across ordinary taps / menus.
+    if(bgmStarted && !a.paused) return;
+
     bgmStarted=true;
     try{
       const p=a.play();

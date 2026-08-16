@@ -2290,3 +2290,6 @@ body.turn-last .turn-pill{
   z-index:4;
   box-shadow:0 1px 2px rgba(0,0,0,.15);
 }
+
+/* Ver2.0 Phase4.1: quicker sniff status popup */
+.motion-status{transition:opacity .10s ease,transform .10s ease!important}
