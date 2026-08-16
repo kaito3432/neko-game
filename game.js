@@ -309,10 +309,26 @@
 
   function publicTrackHTML(i){
     if(game.phase==="cat"||!game.revealedTracks.has(i))return"";
+    const turn=game.revealedTracks.get(i) ?? game.catHistory.get(i);
     if(game.catHistory.get(i)===1){
-      return'<span class="track-badge"><img class="start-art" src="./assets/images/start.png" alt="START"></span>';
+      return'<span class="track-badge"><img class="start-art" src="./assets/images/start.png" alt="START"><b class="track-turn">1</b></span>';
     }
-    return'<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡"></span>';
+    return`<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡"><b class="track-turn">${turn}</b></span>`;
+  }
+
+  // CPUネコ戦（プレイヤー＝警察）の難易度ヒント。
+  // やさしい: 3 / 6 / 9ターン目、ふつう: 6ターン目、つよい: 自動公開なし。
+  function cpuCatClueTurns(){
+    if(cpuDifficulty==="easy") return new Set([3,6,9]);
+    if(cpuDifficulty==="normal") return new Set([6]);
+    return new Set();
+  }
+
+  function revealCpuCatScheduledClue(){
+    if(playMode!=="cpuCat"||cpuDifficulty==="hard") return;
+    if(!cpuCatClueTurns().has(game.turn)) return;
+    if(game.catPos===null) return;
+    game.revealedTracks.set(game.catPos,game.turn);
   }
 
   function handleBoxPress(i){
@@ -365,7 +381,7 @@
       }
 
       if(!E.getCatLegalMoves(game).includes(i)){
-        setMessage("グレーの箱には戻れません。緑＝安全、赤⚠️＝次ターン行き止まりです。");
+        setMessage("グレー＝移動不可。緑＝11ターン目まで逃げ切れる道あり、赤⚠️＝残りターンを逆算すると詰みです。");
         return;
       }
 
@@ -929,9 +945,9 @@
       };
     }
     return {
-      fresh:11.5, track:3.6, spread:.72, backtrack:9, role:4.2,
-      endgame:5.5, noise:1.25, forceSearch:1, think:390,
-      targetSearches:2, searchBias:4.2
+      fresh:11.8, track:4.0, spread:.78, backtrack:9.4, role:4.5,
+      endgame:5.9, noise:1.05, forceSearch:1, think:390,
+      targetSearches:2, searchBias:4.6
     };
   }
 
@@ -1577,6 +1593,7 @@
       game.catPos=target;
       game.catHistory.set(target,game.turn);
       cpuCatRoute.push({box:target,turn:game.turn});
+      revealCpuCatScheduledClue();
       game.catVisible=false;
       game.phase="dogs";
       game.selectedDog=null;

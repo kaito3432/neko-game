@@ -2270,3 +2270,23 @@ body.turn-last .turn-pill{
     max-height:calc(100% - 68px)!important;
   }
 }
+
+/* ===== Ver2.0 Phase3: numbered CPU-cat clue footprints ===== */
+.track-badge{position:absolute!important}
+.track-turn{
+  position:absolute;
+  right:-5px;
+  bottom:-5px;
+  min-width:18px;
+  height:18px;
+  padding:0 4px;
+  box-sizing:border-box;
+  border:2px solid #6b493f;
+  border-radius:999px;
+  background:#fff8df;
+  color:#6b493f;
+  font:900 11px/14px system-ui,-apple-system,sans-serif;
+  text-align:center;
+  z-index:4;
+  box-shadow:0 1px 2px rgba(0,0,0,.15);
+}

@@ -60,11 +60,35 @@ window.NyanEngine = (() => {
     return getBoxNeighbors(state.catPos).filter(i => !state.catHistory.has(i));
   }
 
-  function isCatDeadEnd(state,target){
+  // A red move is one that cannot possibly complete the remaining route
+  // through turn 11 without revisiting a box.  This is stronger than the old
+  // "next turn has no exit" check and catches traps several turns in advance.
+  function canCatFinishFrom(state,target){
     if(!getCatLegalMoves(state).includes(target)) return false;
-    return getBoxNeighbors(target)
-      .filter(n => n!==state.catPos && !state.catHistory.has(n))
-      .length === 0;
+
+    // target is the box chosen for the current turn.  After entering it, the
+    // cat still needs one new box for each later turn through MAX_TURNS.
+    const movesNeeded=Math.max(0,MAX_TURNS-state.turn);
+    if(movesNeeded===0) return true;
+
+    const blocked=new Set(state.catHistory.keys());
+    blocked.add(target);
+
+    function dfs(pos,stepsLeft){
+      if(stepsLeft===0) return true;
+      for(const next of getBoxNeighbors(pos)){
+        if(blocked.has(next)) continue;
+        blocked.add(next);
+        if(dfs(next,stepsLeft-1)) return true;
+        blocked.delete(next);
+      }
+      return false;
+    }
+    return dfs(target,movesNeeded);
+  }
+
+  function isCatDeadEnd(state,target){
+    return !canCatFinishFrom(state,target);
   }
 
   function getNodeNeighbors(i){
@@ -117,7 +141,7 @@ window.NyanEngine = (() => {
     BOX_COUNT, NODE_COUNT, MAX_TURNS, DOGS,
     createState, boxRow, boxCol, nodeRow, nodeCol,
     isActiveDogNode, getBoxNeighbors, getCatLegalMoves,
-    isCatDeadEnd, getNodeNeighbors, getDogLegalMoves,
+    canCatFinishFrom, isCatDeadEnd, getNodeNeighbors, getDogLegalMoves,
     getBoxesAroundNode, allDogsDone,
     manhattanNodeDistance, boxesAroundDogs
   };
