@@ -11,7 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=2.0.phase4.6">
+<link rel="stylesheet" href="./style.css?v=2.0.phase5">
 </head>
 <body>
 <div class="app">
@@ -171,6 +171,17 @@
   </div>
 </div>
 
+
+
+<div class="victory-cutin" id="victoryCutin" aria-hidden="true">
+  <div class="victory-cutin-backdrop"></div>
+  <div class="victory-cutin-card">
+    <div class="victory-cutin-flash"></div>
+    <img id="victoryCutinImage" src="" alt="">
+    <div class="victory-cutin-skip">タップで結果へ</div>
+  </div>
+</div>
+
 <div class="overlay" id="resultOverlay">
   <div class="modal">
     <div class="modal-icon" id="resultIcon">🎉</div>
@@ -231,10 +242,10 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./engine.js?v=2.0.phase4.6"></script>
-<script src="./audio.js?v=2.0.phase4.6"></script>
-<script src="./animation.js?v=2.0.phase4.6"></script>
-<script src="./game.js?v=2.0.phase4.6"></script>
+<script src="./engine.js?v=2.0.phase5"></script>
+<script src="./audio.js?v=2.0.phase5"></script>
+<script src="./animation.js?v=2.0.phase5"></script>
+<script src="./game.js?v=2.0.phase5"></script>
 
 <script>
 if ("serviceWorker" in navigator) {

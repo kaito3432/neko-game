@@ -8,6 +8,7 @@
   const Audio=NyanAudio;
   let game;
   let toastTimer=null;
+  let victoryCutinTimer=null;
   let playMode="local"; // local | cpuPolice | cpuCat
   let cpuTimer=null;
   let cpuDifficulty="normal"; // easy | normal | hard
@@ -39,6 +40,7 @@
   const finishDogTurnBtn=$("finishDogTurnBtn");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
+  const victoryCutin=$("victoryCutin"),victoryCutinImage=$("victoryCutinImage");
   const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon");
   const resultTitle=$("resultTitle"),resultText=$("resultText"),againBtn=$("againBtn");
   const resultRoute=$("resultRoute"),resultRouteBoard=$("resultRouteBoard"),resultRouteNote=$("resultRouteNote");
@@ -96,6 +98,11 @@
   function initGame(showMode=false){
     game=E.createState();
     clearTimeout(cpuTimer);
+    clearTimeout(victoryCutinTimer);
+    if(victoryCutin){
+      victoryCutin.classList.remove("show","closing");
+      victoryCutin.setAttribute("aria-hidden","true");
+    }
     cpuMemory={
       lastDogNodes:[null,null,null],
       discoveredTrackBoxes:[],
@@ -1634,7 +1641,6 @@
 
 
   function renderResultCpuCatRoute(){
-    if(playMode!=="cpuCat"&&playMode!=="local")return;
 
     const ordered=cpuCatRoute.length
       ? cpuCatRoute.slice().sort((a,b)=>a.turn-b.turn)
@@ -1689,7 +1695,6 @@
   }
 
   function revealCpuCatRoute(){
-    if(playMode!=="cpuCat")return;
 
     clearRouteReveal();
 
@@ -1754,6 +1759,54 @@
     guideDisplay.textContent="🐾 ネコの逃走ルートを公開しました";
   }
 
+  function showResultAfterCutin(){
+    if(!resultOverlay)return;
+
+    resultOverlay.classList.add("show");
+    resultOverlay.classList.add("resultOverlayCelebration");
+    A.confetti(confettiLayer);
+    setTimeout(()=>resultOverlay.classList.remove("resultOverlayCelebration"),700);
+
+    // Connect Phase5 cut-in directly to the existing escape-route result.
+    renderResultCpuCatRoute();
+    setTimeout(revealCpuCatRoute,160);
+  }
+
+  function showVictoryCutin(winner){
+    if(!victoryCutin || !victoryCutinImage){
+      showResultAfterCutin();
+      return;
+    }
+
+    clearTimeout(victoryCutinTimer);
+    victoryCutin.classList.remove("closing");
+    victoryCutinImage.src=winner==="cat"
+      ? "./assets/images/cutin_cat_win.jpg"
+      : "./assets/images/cutin_police_win.jpg";
+    victoryCutinImage.alt=winner==="cat"
+      ? "いたずらネコ勝利カットイン"
+      : "柴犬警察勝利カットイン";
+
+    victoryCutin.classList.add("show");
+    victoryCutin.setAttribute("aria-hidden","false");
+
+    let finished=false;
+    const finish=()=>{
+      if(finished)return;
+      finished=true;
+      clearTimeout(victoryCutinTimer);
+      victoryCutin.classList.add("closing");
+      setTimeout(()=>{
+        victoryCutin.classList.remove("show","closing");
+        victoryCutin.setAttribute("aria-hidden","true");
+        showResultAfterCutin();
+      },240);
+    };
+
+    victoryCutin.onclick=finish;
+    victoryCutinTimer=setTimeout(finish,1850);
+  }
+
   function endGame(winner,reason){
     game.gameOver=true;
     if(resultRoute) resultRoute.classList.remove("show");
@@ -1780,21 +1833,15 @@
       resultText.textContent=`${reason} 最後は箱${game.catPos+1}に隠れていました。`;
     }
 
-    resultOverlay.classList.add("show");
-    resultOverlay.classList.add("resultOverlayCelebration");
+    // Freeze the final board first, then play the dedicated Phase5 cut-in.
+    resultOverlay.classList.remove("show");
     Audio.stopBgm();
     Audio.play(winner==="cat"?"catwin":"policewin");
     Audio.haptic([40,50,40,50,90]);
-    A.confetti(confettiLayer);
-    setTimeout(()=>resultOverlay.classList.remove("resultOverlayCelebration"),700);
     render();
 
-    // Police-vs-CPU-cat: show the whole escape route immediately in the result modal.
-    if(playMode==="cpuCat"||playMode==="local"){
-      renderResultCpuCatRoute();
-      // Also prepare the board overlay behind the modal for later inspection.
-      setTimeout(revealCpuCatRoute,120);
-    }
+    // Short beat before the cut-in makes the win moment feel intentional.
+    victoryCutinTimer=setTimeout(()=>showVictoryCutin(winner),280);
   }
 
   bindPress(localModeBtn,startLocalMode);

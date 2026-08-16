@@ -2297,3 +2297,92 @@ body.turn-last .turn-pill{
 /* Ver2.0 Phase4.3 — very short sniff popup */
 .motion-status{transition:opacity .05s ease,transform .05s ease!important}
 
+
+
+/* ===== Ver2.0 Phase5 — 勝敗カットイン ===== */
+.victory-cutin{
+  position:fixed;
+  inset:0;
+  z-index:5000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:max(12px,env(safe-area-inset-top)) 10px max(12px,env(safe-area-inset-bottom));
+  overflow:hidden;
+}
+.victory-cutin.show{display:flex}
+.victory-cutin-backdrop{
+  position:absolute;inset:0;
+  background:rgba(42,28,24,.78);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  animation:cutinBackdrop .18s ease both;
+}
+.victory-cutin-card{
+  position:relative;
+  z-index:1;
+  width:min(96vw,900px);
+  border:3px solid rgba(255,255,255,.94);
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 18px 46px rgba(49,29,20,.42);
+  transform-origin:center;
+  animation:cutinIn .34s cubic-bezier(.16,.88,.24,1.18) both;
+  background:#fff8e9;
+}
+.victory-cutin.closing .victory-cutin-card{
+  animation:cutinOut .24s ease both;
+}
+.victory-cutin.closing .victory-cutin-backdrop{
+  animation:cutinBackdropOut .24s ease both;
+}
+.victory-cutin-card img{
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:76vh;
+  object-fit:contain;
+  background:#fff8e9;
+}
+.victory-cutin-flash{
+  position:absolute;
+  z-index:3;
+  inset:-30%;
+  pointer-events:none;
+  background:linear-gradient(110deg,transparent 37%,rgba(255,255,255,.8) 49%,transparent 61%);
+  transform:translateX(-70%);
+  animation:cutinFlash .62s .15s ease-out both;
+}
+.victory-cutin-skip{
+  position:absolute;
+  z-index:4;
+  right:10px;
+  bottom:8px;
+  padding:5px 9px;
+  border-radius:999px;
+  color:#fff;
+  background:rgba(65,43,35,.62);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.02em;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+@keyframes cutinIn{
+  0%{opacity:0;transform:scale(.76) rotate(-1.5deg)}
+  70%{opacity:1;transform:scale(1.025) rotate(.35deg)}
+  100%{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes cutinOut{
+  to{opacity:0;transform:scale(1.06)}
+}
+@keyframes cutinBackdrop{from{opacity:0}to{opacity:1}}
+@keyframes cutinBackdropOut{to{opacity:0}}
+@keyframes cutinFlash{
+  from{transform:translateX(-75%) rotate(3deg)}
+  to{transform:translateX(75%) rotate(3deg)}
+}
+@media(max-width:480px){
+  .victory-cutin-card{width:97vw;border-radius:18px}
+  .victory-cutin-card img{max-height:70vh}
+}
