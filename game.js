@@ -821,7 +821,7 @@
     toastTitle.textContent=title;
     toastText.textContent=text;
     toast.classList.add("show");
-    toastTimer=setTimeout(hideToast,1500);
+    toastTimer=setTimeout(hideToast,450);
   }
 
   function hideToast(){toast.classList.remove("show");}
