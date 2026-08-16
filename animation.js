@@ -85,7 +85,7 @@ window.NyanAnimation = (() => {
     if(motionStatus){
       motionStatus.textContent="クンクン……";
       motionStatus.classList.add("show");
-      setTimeout(()=>motionStatus.classList.remove("show"),360);
+      setTimeout(()=>motionStatus.classList.remove("show"),120);
     }
 
     NyanAudio.haptic(18);

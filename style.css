@@ -2293,3 +2293,6 @@ body.turn-last .turn-pill{
 
 /* Ver2.0 Phase4.1: quicker sniff status popup */
 .motion-status{transition:opacity .10s ease,transform .10s ease!important}
+
+/* Ver2.0 Phase4.3 — very short sniff popup */
+.motion-status{transition:opacity .05s ease,transform .05s ease!important}
