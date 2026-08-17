@@ -2237,6 +2237,20 @@ onlineStartGameBtn.hidden=false;
 
   if(result==="capture"){
     Audio.play("capture");
+     if(Array.isArray(route)){
+  cpuCatRoute=route
+    .map(step=>({
+      box:Number(step.box),
+      turn:Number(step.turn)
+    }))
+    .filter(step=>
+      Number.isInteger(step.box) &&
+      step.box>=0 &&
+      step.box<E.BOX_COUNT &&
+      Number.isInteger(step.turn)
+    )
+    .sort((a,b)=>a.turn-b.turn);
+}
     Audio.haptic([35,45,70]);
     A.burstAtBox(board,box,"🐱✨");
     A.shakeBoxSoon(board,box);
@@ -2600,6 +2614,20 @@ if(
 
   if(result==="capture"){
     Audio.play("capture");
+     if(Array.isArray(route)){
+  cpuCatRoute=route
+    .map(step=>({
+      box:Number(step.box),
+      turn:Number(step.turn)
+    }))
+    .filter(step=>
+      Number.isInteger(step.box) &&
+      step.box>=0 &&
+      step.box<E.BOX_COUNT &&
+      Number.isInteger(step.turn)
+    )
+    .sort((a,b)=>a.turn-b.turn);
+}
     Audio.haptic([35,45,70]);
     A.burstAtBox(board,box,"🐱✨");
     A.shakeBoxSoon(board,box);
