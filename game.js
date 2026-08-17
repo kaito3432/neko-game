@@ -542,7 +542,7 @@ game.actionLocked=false;
 
   render();
 }
-        }
+      
       });
       render();
       return;
