@@ -427,8 +427,8 @@ let onlineGameStarted=false;
   }
 
   function publicTrackHTML(i){
-    if(game.phase==="cat"||!game.revealedTracks.has(i))return"";
-    const turn=game.revealedTracks.get(i) ?? game.catHistory.get(i);
+if(!game.revealedTracks.has(i))return"";
+     const turn=game.revealedTracks.get(i) ?? game.catHistory.get(i);
     const turnBadge=shouldShowTrackTurn(turn)
       ?`<b class="track-turn">${turn}</b>`
       :"";
@@ -2467,20 +2467,37 @@ if(
   render();
 }
          
-  if(
+if(
   data.payload?.type==="trackCount" &&
   onlineAssignedRole==="cat"
 ){
   const count=Number(data.payload.count);
+  const box=Number(data.payload.box);
+  const trackTurn=Number(data.payload.trackTurn);
 
   if(
     Number.isInteger(count) &&
     count>=0
   ){
-onlineFoundTrackCount=count;
-render();
+    onlineFoundTrackCount=count;
   }
-}   
+
+  if(
+    Number.isInteger(box) &&
+    box>=0 &&
+    box<E.BOX_COUNT &&
+    Number.isInteger(trackTurn)
+  ){
+    game.revealedTracks.set(box,trackTurn);
+
+    // START地点として発見された場合
+    if(trackTurn===1){
+      game.catHistory.set(box,1);
+    }
+  }
+
+  render();
+}
          
 },
        
@@ -2879,14 +2896,31 @@ if(
   onlineAssignedRole==="cat"
 ){
   const count=Number(data.payload.count);
+  const box=Number(data.payload.box);
+  const trackTurn=Number(data.payload.trackTurn);
 
   if(
     Number.isInteger(count) &&
     count>=0
   ){
-onlineFoundTrackCount=count;
-render();
+    onlineFoundTrackCount=count;
   }
+
+  if(
+    Number.isInteger(box) &&
+    box>=0 &&
+    box<E.BOX_COUNT &&
+    Number.isInteger(trackTurn)
+  ){
+    game.revealedTracks.set(box,trackTurn);
+
+    // START地点として発見された場合
+    if(trackTurn===1){
+      game.catHistory.set(box,1);
+    }
+  }
+
+  render();
 }
         
 },
