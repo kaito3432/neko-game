@@ -437,11 +437,16 @@ if(playMode==="onlineCat"){
   });
 }
 
-game.phase="dogs";
+if(playMode==="onlineCat"){
+  game.phase="onlineWaitingPolice";
+}else{
+  game.phase="dogs";
+}
+
 game.selectedDog=null;
-        game.dogAction=[false,false,false];
-        game.cpuSearchesThisTurn=0;
-        game.actionLocked=false;
+game.dogAction=[false,false,false];
+game.cpuSearchesThisTurn=0;
+game.actionLocked=false;
 
         showPhaseCue("🐕","柴犬警察の捜査！");
 
@@ -493,6 +498,17 @@ game.selectedDog=null;
   });
 } 
          
+         if(playMode==="onlineCat"){
+  game.phase="onlineWaitingPolice";
+}else{
+  game.phase="dogs";
+}
+
+game.selectedDog=null;
+game.dogAction=[false,false,false];
+game.cpuSearchesThisTurn=0;
+game.actionLocked=false;
+         
 
         // 1〜10ターン目は、次の逃げ道が無ければ警察勝利。
         // 11ターン目は次の12ターン目が存在しないため、
@@ -503,21 +519,29 @@ game.selectedDog=null;
           return;
         }
 
-        game.phase="dogs";
-        game.selectedDog=null;
-        game.dogAction=[false,false,false];
-        game.cpuSearchesThisTurn=0;
-        game.actionLocked=false;
 
-        if(playMode==="cpuPolice"){
-          setMessage("🤖 柴犬警察CPUが捜査中…");
-          render();
-          cpuTimer=setTimeout(runCpuPoliceTurn,550);
-        }else{
-          showPrivacy("🐕","柴犬警察の番",
-            "ネコの移動が完了しました。現在地と未発見の足跡は隠れています。");
-          setMessage("🐕 柴犬を選択すると、緑の交差点へ移動・青い箱を探索できます。");
-          render();
+      if(playMode==="cpuPolice"){
+  setMessage("🤖 柴犬警察CPUが捜査中…");
+  render();
+  cpuTimer=setTimeout(runCpuPoliceTurn,550);
+
+}else if(playMode==="onlineCat"){
+  setMessage("🐱 柴犬警察が捜査中です…");
+  render();
+
+}else{
+  showPrivacy(
+    "🐕",
+    "柴犬警察の番",
+    "ネコの移動が完了しました。現在地と未発見の足跡は隠れています。"
+  );
+
+  setMessage(
+    "🐕 柴犬を選択すると、緑の交差点へ移動・青い箱を探索できます。"
+  );
+
+  render();
+}
         }
       });
       render();
