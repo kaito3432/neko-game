@@ -542,6 +542,27 @@ let onlineGameStarted=false;
           return;
         }
 
+         if(playMode==="onlinePolice"){
+  window.NyanOnline.sendGame({
+    type:"dogSetup",
+    dogs:[...game.dogs]
+  });
+
+  game.phase="onlineWaitingCatSetup";
+  game.turn=0;
+
+  showPrivacy(
+    "🐕",
+    "配置完了！",
+    "柴犬警察3匹の配置をネコ側へ送りました。ネコが隠れ場所を決めるまで待ってね。"
+  );
+
+  setMessage("🐕 ネコが隠れ場所を決めています…");
+
+  render();
+  return;
+}
+
         game.phase="catSetup";
         game.turn=1;
         showPrivacy("🐱","逃走1ターン目・ネコの番",
@@ -1977,6 +1998,31 @@ onlineStartGameBtn.hidden=false;
     onlinePeerReady=true;
     tryStartOnlineGame();
   }
+          if(
+  data.payload?.type==="dogSetup" &&
+  onlineAssignedRole==="cat"
+){
+  const dogs=data.payload.dogs;
+
+  if(Array.isArray(dogs) && dogs.length===3){
+    game.dogs=[...dogs];
+    game.dogSetupCount=3;
+    game.phase="catSetup";
+    game.turn=1;
+
+    showPrivacy(
+      "🐱",
+      "警察の配置完了！",
+      "柴犬警察3匹の配置を確認して、スタート地点にする箱を1つ選んでください。"
+    );
+
+    setMessage(
+      "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
+    );
+
+    render();
+  }
+}
 },
       onError:()=>{
         onlineStatus.textContent="通信エラーが発生しました";
@@ -2042,6 +2088,31 @@ onlineStartGameBtn.hidden=false;
     onlinePeerReady=true;
     tryStartOnlineGame();
   }
+          if(
+  data.payload?.type==="dogSetup" &&
+  onlineAssignedRole==="cat"
+){
+  const dogs=data.payload.dogs;
+
+  if(Array.isArray(dogs) && dogs.length===3){
+    game.dogs=[...dogs];
+    game.dogSetupCount=3;
+    game.phase="catSetup";
+    game.turn=1;
+
+    showPrivacy(
+      "🐱",
+      "警察の配置完了！",
+      "柴犬警察3匹の配置を確認して、スタート地点にする箱を1つ選んでください。"
+    );
+
+    setMessage(
+      "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
+    );
+
+    render();
+  }
+}
 },
 
       onPresence:(data)=>{
