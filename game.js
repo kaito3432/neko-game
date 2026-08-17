@@ -2222,6 +2222,7 @@ onlineStartGameBtn.hidden=false;
   const box=Number(data.payload.box);
   const result=data.payload.result;
   const trackTurn=data.payload.trackTurn;
+  const route=data.payload.route;          
 
   if(
     !Number.isInteger(dogIndex) ||
@@ -2584,6 +2585,7 @@ if(
   const box=Number(data.payload.box);
   const result=data.payload.result;
   const trackTurn=data.payload.trackTurn;
+  const route=data.payload.route;         
 
   if(
     !Number.isInteger(dogIndex) ||
