@@ -410,14 +410,6 @@
         game.catHistory.set(i,game.turn);
         game.catVisible=false;
 
-         if(playMode==="onlineCat"){
-  window.NyanOnline.sendGame({
-    type:"catMove",
-    catPos:i,
-    turn:game.turn
-  });
-}
-
         // 1〜10ターン目は、次の逃げ道が無ければ警察勝利。
         // 11ターン目は次の12ターン目が存在しないため、
         // 行き止まりでもそのまま警察の最終捜索へ進む。
