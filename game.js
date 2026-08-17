@@ -27,9 +27,14 @@
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
   const onlineModeBtn=$("onlineModeBtn"),onlineOverlay=$("onlineOverlay"),onlineBackBtn=$("onlineBackBtn");
+   const onlineStartGameBtn=$("onlineStartGameBtn");
 const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnlineRoomBtn");
 const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"); 
    let onlineAssignedRole=null;
+   let onlineSelfReady=false;
+let onlinePeerReady=false;
+let onlineGameStarted=false;
+   
   const cpuSideOverlay=$("cpuSideOverlay"),playCatSideBtn=$("playCatSideBtn"),playPoliceSideBtn=$("playPoliceSideBtn"),cpuSideBackBtn=$("cpuSideBackBtn");
   const difficultyOverlay=$("difficultyOverlay"),cpuEasyBtn=$("cpuEasyBtn"),cpuNormalBtn=$("cpuNormalBtn"),
         cpuHardBtn=$("cpuHardBtn"),difficultyBackBtn=$("difficultyBackBtn");
@@ -58,6 +63,15 @@ const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"
   let lastRenderedPhase=null;
   let lastTurnStingerPlayed=false;
   const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
+
+   function tryStartOnlineGame(){
+  if(onlineGameStarted)return;
+
+  if(onlineSelfReady && onlinePeerReady){
+    onlineGameStarted=true;
+    startOnlineGame();
+  }
+}
 
   function bindPress(el,fn){
     if(!el)return;
@@ -132,6 +146,55 @@ const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"
     }
     render();
   }
+   function startOnlineGame(){
+  if(!onlineAssignedRole)return;
+
+  playMode=
+    onlineAssignedRole==="cat"
+      ? "onlineCat"
+      : "onlinePolice";
+
+  onlineOverlay.classList.remove("show");
+  modeOverlay.classList.remove("show");
+
+  Audio.setBgmMode("normal");
+  Audio.play("gamestart");
+
+  initGame(false);
+
+  if(onlineAssignedRole==="police"){
+    // 自分が柴犬警察
+    game.phase="dogSetup";
+    game.turn=0;
+
+    showPrivacy(
+      "🐕",
+      "あなたは柴犬警察！",
+      "まず柴犬警察3匹を中央16交差点に配置してください。ネコは配置が終わるまで待機しています。"
+    );
+
+    setMessage(
+      "🐕 柴犬警察3匹を配置しよう。"
+    );
+
+  }else{
+    // 自分がネコ
+    game.phase="onlineWaitingDogSetup";
+    game.turn=0;
+
+    showPrivacy(
+      "🐱",
+      "あなたはネコ！",
+      "柴犬警察が配置を決めています。少し待ってね。"
+    );
+
+    setMessage(
+      "🐱 柴犬警察が配置中です…"
+    );
+  }
+
+  render();
+}
 
   function startLocalMode(){
     playMode="local";
@@ -1856,6 +1919,20 @@ bindPress(onlineBackBtn,()=>{
   onlineOverlay.classList.remove("show");
 }); 
 
+   bindPress(onlineStartGameBtn,()=>{
+  if(onlineGameStarted)return;
+
+  onlineSelfReady=true;
+  onlineStartGameBtn.disabled=true;
+  onlineStartGameBtn.textContent="相手を待っています…";
+
+  window.NyanOnline.sendGame({
+    type:"ready"
+  });
+
+  tryStartOnlineGame();
+});
+
    bindPress(createOnlineRoomBtn,async()=>{
   if(!window.NyanOnline){
     onlineStatus.textContent="オンライン機能を読み込めませんでした";
@@ -1883,7 +1960,7 @@ bindPress(onlineBackBtn,()=>{
 
        onRole:(data)=>{
   onlineAssignedRole=data.role;
-
+onlineStartGameBtn.hidden=false;
   if(data.role==="cat"){
     onlineStatus.innerHTML=
       `🐱 あなたはネコ！<br>`+
@@ -1892,6 +1969,13 @@ bindPress(onlineBackBtn,()=>{
     onlineStatus.innerHTML=
       `🐕 あなたは警察！<br>`+
       `<span style="font-size:14px">いたずらネコを見つけよう！</span>`;
+  }
+},
+
+       onGame:(data)=>{
+  if(data.payload?.type==="ready"){
+    onlinePeerReady=true;
+    tryStartOnlineGame();
   }
 },
       onError:()=>{
@@ -1941,6 +2025,7 @@ bindPress(onlineBackBtn,()=>{
       },
        onRole:(data)=>{
     onlineAssignedRole=data.role;
+    onlineStartGameBtn.hidden=false;      
 
     if(data.role==="cat"){
       onlineStatus.innerHTML=
@@ -1952,6 +2037,12 @@ bindPress(onlineBackBtn,()=>{
         `<span style="font-size:14px">いたずらネコを見つけよう！</span>`;
     }
   },
+       onGame:(data)=>{
+  if(data.payload?.type==="ready"){
+    onlinePeerReady=true;
+    tryStartOnlineGame();
+  }
+},
 
       onPresence:(data)=>{
         if(data.ready){
