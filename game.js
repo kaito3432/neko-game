@@ -2138,10 +2138,27 @@ onlineStartGameBtn.hidden=false;
     tryStartOnlineGame();
   }
 
-    if(
+ if(
   data.payload?.type==="catNoEscape" &&
   onlineAssignedRole==="police"
 ){
+  const route=data.payload.route;
+
+  if(Array.isArray(route)){
+    cpuCatRoute=route
+      .map(step=>({
+        box:Number(step.box),
+        turn:Number(step.turn)
+      }))
+      .filter(step=>
+        Number.isInteger(step.box) &&
+        step.box>=0 &&
+        step.box<E.BOX_COUNT &&
+        Number.isInteger(step.turn)
+      )
+      .sort((a,b)=>a.turn-b.turn);
+  }
+
   game.actionLocked=false;
 
   endGame(
@@ -2150,7 +2167,7 @@ onlineStartGameBtn.hidden=false;
   );
 
   return;
-}     
+}
 
   // 警察3匹の初期配置をネコ側へ反映
   if(
@@ -2533,10 +2550,27 @@ render();
     onlinePeerReady=true;
     tryStartOnlineGame();
   }
-        if(
+       if(
   data.payload?.type==="catNoEscape" &&
   onlineAssignedRole==="police"
 ){
+  const route=data.payload.route;
+
+  if(Array.isArray(route)){
+    cpuCatRoute=route
+      .map(step=>({
+        box:Number(step.box),
+        turn:Number(step.turn)
+      }))
+      .filter(step=>
+        Number.isInteger(step.box) &&
+        step.box>=0 &&
+        step.box<E.BOX_COUNT &&
+        Number.isInteger(step.turn)
+      )
+      .sort((a,b)=>a.turn-b.turn);
+  }
+
   game.actionLocked=false;
 
   endGame(
