@@ -428,9 +428,17 @@ let onlineGameStarted=false;
         game.catHistory.clear();
         game.catHistory.set(chosenStart,1);
         game.catVisible=false;
-        game.turn=1;
-        game.phase="dogs";
-        game.selectedDog=null;
+game.turn=1;
+
+if(playMode==="onlineCat"){
+  window.NyanOnline.sendGame({
+    type:"catSetup",
+    catPos:chosenStart
+  });
+}
+
+game.phase="dogs";
+game.selectedDog=null;
         game.dogAction=[false,false,false];
         game.cpuSearchesThisTurn=0;
         game.actionLocked=false;
@@ -2023,6 +2031,38 @@ onlineStartGameBtn.hidden=false;
     render();
   }
 }
+          if(
+  data.payload?.type==="catSetup" &&
+  onlineAssignedRole==="police"
+){
+  const catPos=Number(data.payload.catPos);
+
+  if(Number.isInteger(catPos) && catPos>=0 && catPos<E.BOX_COUNT){
+    game.catPos=catPos;
+    game.catHistory.clear();
+    game.catHistory.set(catPos,1);
+    game.catVisible=false;
+
+    game.turn=1;
+    game.phase="dogs";
+    game.selectedDog=null;
+    game.dogAction=[false,false,false];
+    game.cpuSearchesThisTurn=0;
+    game.actionLocked=false;
+
+    showPrivacy(
+      "🐕",
+      "捜査開始！",
+      "ネコが隠れました。現在地は秘密です。柴犬警察で捜査を開始してください。"
+    );
+
+    setMessage(
+      "🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。"
+    );
+
+    render();
+  }
+}
 },
       onError:()=>{
         onlineStatus.textContent="通信エラーが発生しました";
@@ -2108,6 +2148,38 @@ onlineStartGameBtn.hidden=false;
 
     setMessage(
       "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
+    );
+
+    render();
+  }
+}
+          if(
+  data.payload?.type==="catSetup" &&
+  onlineAssignedRole==="police"
+){
+  const catPos=Number(data.payload.catPos);
+
+  if(Number.isInteger(catPos) && catPos>=0 && catPos<E.BOX_COUNT){
+    game.catPos=catPos;
+    game.catHistory.clear();
+    game.catHistory.set(catPos,1);
+    game.catVisible=false;
+
+    game.turn=1;
+    game.phase="dogs";
+    game.selectedDog=null;
+    game.dogAction=[false,false,false];
+    game.cpuSearchesThisTurn=0;
+    game.actionLocked=false;
+
+    showPrivacy(
+      "🐕",
+      "捜査開始！",
+      "ネコが隠れました。現在地は秘密です。柴犬警察で捜査を開始してください。"
+    );
+
+    setMessage(
+      "🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。"
     );
 
     render();
