@@ -601,10 +601,19 @@ game.selectedDog=null;
       }
 
       // 移動は即時確定。以後この犬は行動不可。
-      Audio.play("move");
-      game.dogs[di]=i;
-      game.dogAction[di]="move";
-      game.selectedDog=null;
+Audio.play("move");
+game.dogs[di]=i;
+
+if(playMode==="onlinePolice"){
+  window.NyanOnline.sendGame({
+    type:"dogMove",
+    dogIndex:di,
+    node:i
+  });
+}
+
+game.dogAction[di]="move";
+game.selectedDog=null;
       setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} は移動済み✓。`);
       afterDogAction();
       render();
@@ -2030,6 +2039,31 @@ onlineStartGameBtn.hidden=false;
 
     render();
   }
+             if(
+  data.payload?.type==="dogMove" &&
+  onlineAssignedRole==="cat"
+){
+  const dogIndex=Number(data.payload.dogIndex);
+  const node=Number(data.payload.node);
+
+  if(
+    Number.isInteger(dogIndex) &&
+    dogIndex>=0 &&
+    dogIndex<3 &&
+    Number.isInteger(node) &&
+    node>=0 &&
+    node<E.NODE_COUNT
+  ){
+    game.dogs[dogIndex]=node;
+    game.dogAction[dogIndex]="move";
+
+    setMessage(
+      `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} が移動しました。`
+    );
+
+    render();
+  }
+}
 }
           if(
   data.payload?.type==="catSetup" &&
@@ -2185,6 +2219,31 @@ onlineStartGameBtn.hidden=false;
     render();
   }
 }
+if(
+  data.payload?.type==="dogMove" &&
+  onlineAssignedRole==="cat"
+){
+  const dogIndex=Number(data.payload.dogIndex);
+  const node=Number(data.payload.node);
+
+  if(
+    Number.isInteger(dogIndex) &&
+    dogIndex>=0 &&
+    dogIndex<3 &&
+    Number.isInteger(node) &&
+    node>=0 &&
+    node<E.NODE_COUNT
+  ){
+    game.dogs[dogIndex]=node;
+    game.dogAction[dogIndex]="move";
+
+    setMessage(
+      `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} が移動しました。`
+    );
+
+    render();
+  }
+}          
 },
 
       onPresence:(data)=>{
