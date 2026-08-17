@@ -118,6 +118,7 @@ window.NyanOnline = (() => {
   function connect({
     onOpen,
     onPresence,
+      onRole,
     onGame,
     onClose,
     onError
@@ -159,6 +160,12 @@ window.NyanOnline = (() => {
       ) {
         onPresence(data);
       }
+       if (
+  data.type === "role" &&
+  onRole
+) {
+  onRole(data);
+}
 
       if (
         data.type === "game" &&
