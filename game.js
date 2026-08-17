@@ -746,6 +746,21 @@ if(
       runCpuCatTurn();
       return;
     }
+     if(playMode==="onlinePolice"){
+  window.NyanOnline.sendGame({
+    type:"dogTurnEnd",
+    turn:game.turn
+  });
+
+  game.phase="onlineWaitingCatMove";
+
+  setMessage(
+    "🐕 ネコが次の逃げ先を決めています…"
+  );
+
+  render();
+  return;
+}
 
     if(game.turn>=E.MAX_TURNS){
       endGame("cat","11ターンすべて逃げ切りました！");
@@ -2123,6 +2138,44 @@ onlineStartGameBtn.hidden=false;
       render();
     }
   }
+         if(
+  data.payload?.type==="dogTurnEnd" &&
+  onlineAssignedRole==="cat"
+){
+  if(game.turn>=E.MAX_TURNS){
+    endGame("cat","11ターンすべて逃げ切りました！");
+    return;
+  }
+
+  game.turn++;
+
+  if(E.getCatLegalMoves(game).length===0){
+    endGame("dogs","ネコが次に移動できる箱がありません！");
+    return;
+  }
+
+  game.phase="cat";
+  game.catVisible=false;
+  game.selectedDog=null;
+  game.dogAction=[false,false,false];
+
+  let extra=
+    game.turn===9 ? " あと3ターン！" :
+    game.turn===10 ? " あと2ターン！" :
+    game.turn===11 ? " LAST TURN！" : "";
+
+  showPrivacy(
+    "🐱",
+    `ターン${game.turn}・ネコの番`,
+    `柴犬警察の捜査が終わりました。次の箱へ逃げてください。${extra}`
+  );
+
+  setMessage(
+    `🐱 ターン${game.turn}。まだ通っていない隣の箱へ移動しよう。${extra}`
+  );
+
+  render();
+}
 },
        
       onError:()=>{
@@ -2283,6 +2336,44 @@ onlineStartGameBtn.hidden=false;
       render();
     }
   }
+        if(
+  data.payload?.type==="dogTurnEnd" &&
+  onlineAssignedRole==="cat"
+){
+  if(game.turn>=E.MAX_TURNS){
+    endGame("cat","11ターンすべて逃げ切りました！");
+    return;
+  }
+
+  game.turn++;
+
+  if(E.getCatLegalMoves(game).length===0){
+    endGame("dogs","ネコが次に移動できる箱がありません！");
+    return;
+  }
+
+  game.phase="cat";
+  game.catVisible=false;
+  game.selectedDog=null;
+  game.dogAction=[false,false,false];
+
+  let extra=
+    game.turn===9 ? " あと3ターン！" :
+    game.turn===10 ? " あと2ターン！" :
+    game.turn===11 ? " LAST TURN！" : "";
+
+  showPrivacy(
+    "🐱",
+    `ターン${game.turn}・ネコの番`,
+    `柴犬警察の捜査が終わりました。次の箱へ逃げてください。${extra}`
+  );
+
+  setMessage(
+    `🐱 ターン${game.turn}。まだ通っていない隣の箱へ移動しよう。${extra}`
+  );
+
+  render();
+}
 },
       onPresence:(data)=>{
         if(data.ready){
