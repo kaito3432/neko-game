@@ -544,11 +544,23 @@ game.actionLocked=false;
         // 1〜10ターン目は、次の逃げ道が無ければ警察勝利。
         // 11ターン目は次の12ターン目が存在しないため、
         // 行き止まりでもそのまま警察の最終捜索へ進む。
-        if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
-          game.actionLocked=false;
-          endGame("dogs","ネコが行き止まりに入り、次の逃げ道がなくなりました！");
-          return;
-        }
+if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
+  game.actionLocked=false;
+
+  if(playMode==="onlineCat"){
+    window.NyanOnline.sendGame({
+      type:"catNoEscape",
+      turn:game.turn
+    });
+  }
+
+  endGame(
+    "dogs",
+    "ネコが行き止まりに入り、次の逃げ道がなくなりました！"
+  );
+
+  return;
+}
 
 
       if(playMode==="cpuPolice"){
@@ -2126,6 +2138,20 @@ onlineStartGameBtn.hidden=false;
     tryStartOnlineGame();
   }
 
+    if(
+  data.payload?.type==="catNoEscape" &&
+  onlineAssignedRole==="police"
+){
+  game.actionLocked=false;
+
+  endGame(
+    "dogs",
+    "ネコが行き止まりに入り、逃げ道がなくなりました！"
+  );
+
+  return;
+}     
+
   // 警察3匹の初期配置をネコ側へ反映
   if(
     data.payload?.type==="dogSetup" &&
@@ -2437,7 +2463,8 @@ if(
 onlineFoundTrackCount=count;
 render();
   }
-}       
+}   
+         
 },
        
       onError:()=>{
@@ -2506,6 +2533,19 @@ render();
     onlinePeerReady=true;
     tryStartOnlineGame();
   }
+        if(
+  data.payload?.type==="catNoEscape" &&
+  onlineAssignedRole==="police"
+){
+  game.actionLocked=false;
+
+  endGame(
+    "dogs",
+    "ネコが行き止まりに入り、逃げ道がなくなりました！"
+  );
+
+  return;
+}
 
   // 警察3匹の初期配置をネコ側へ反映
   if(
