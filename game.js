@@ -621,8 +621,11 @@ game.selectedDog=null;
   }
 
   function selectDog(di){
-    if(playMode!=="local"&&playMode!=="cpuCat")return;
-    if(game.phase!=="dogs"||game.gameOver||game.actionLocked||game.dogs[di]===null)return;
+if(
+  playMode!=="local" &&
+  playMode!=="cpuCat" &&
+  playMode!=="onlinePolice"
+)return;    if(game.phase!=="dogs"||game.gameOver||game.actionLocked||game.dogs[di]===null)return;
 
     if(game.dogAction[di]){
       setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} はこのターン行動済みです。`);
@@ -871,13 +874,17 @@ game.selectedDog=null;
         <span class="dog-status">${status}</span>`;
       if(game.selectedDog===i)c.classList.add("selected");
 
-      c.disabled=!(
-        (playMode==="local"||playMode==="cpuCat") &&
-        game.phase==="dogs" &&
-        pos!==null &&
-        !game.dogAction[i] &&
-        !game.actionLocked
-      );
+c.disabled=!(
+  (
+    playMode==="local" ||
+    playMode==="cpuCat" ||
+    playMode==="onlinePolice"
+  ) &&
+  game.phase==="dogs" &&
+  pos!==null &&
+  !game.dogAction[i] &&
+  !game.actionLocked
+);
     }
   }
 
