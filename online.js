@@ -12,6 +12,19 @@ window.NyanOnline = (() => {
   let token = "";
   let player = "";
 
+   function disconnect(){
+  if(socket){
+    try{
+      socket.close(1000,"client_disconnect");
+    }catch(_){}
+  }
+
+  socket=null;
+  roomCode="";
+  token="";
+  player="";
+}
+
   function api(path) {
     return API_BASE.replace(/\/+$/, "") + path;
   }
