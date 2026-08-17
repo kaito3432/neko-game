@@ -908,8 +908,15 @@ c.disabled=!(
     catViewBtn.disabled=game.phase!=="cat"||game.gameOver||game.actionLocked;
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
 
-    finishDogTurnBtn.classList.toggle("show",(playMode==="local"||playMode==="cpuCat")&&game.phase==="waitingEnd");
-    finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
+finishDogTurnBtn.classList.toggle(
+  "show",
+  (
+    playMode==="local" ||
+    playMode==="cpuCat" ||
+    playMode==="onlinePolice"
+  ) &&
+  game.phase==="waitingEnd"
+);    finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
 
   function showPhaseCue(icon,text){
