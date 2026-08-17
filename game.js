@@ -2326,6 +2326,20 @@ onlineStartGameBtn.hidden=false;
   afterDogAction();
   render();
 }
+if(
+  data.payload?.type==="captured" &&
+  onlineAssignedRole==="cat"
+){
+  game.actionLocked=false;
+
+  endGame(
+    "dogs",
+    "柴犬警察に見つかってしまいました！"
+  );
+
+  return;
+}
+      
          if(
   data.payload?.type==="catMoveDone" &&
   onlineAssignedRole==="police"
@@ -2359,6 +2373,7 @@ onlineStartGameBtn.hidden=false;
 
   render();
 }
+         
 },
        
       onError:()=>{
@@ -2659,6 +2674,20 @@ if(result==="track"){
   afterDogAction();
   render();
 }
+if(
+  data.payload?.type==="captured" &&
+  onlineAssignedRole==="cat"
+){
+  game.actionLocked=false;
+
+  endGame(
+    "dogs",
+    "柴犬警察に見つかってしまいました！"
+  );
+
+  return;
+}
+        
         if(
   data.payload?.type==="catMoveDone" &&
   onlineAssignedRole==="police"
