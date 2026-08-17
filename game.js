@@ -35,6 +35,36 @@ const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"
 let onlinePeerReady=false;
 let onlineGameStarted=false;
    let onlineFoundTrackCount=0;
+
+   function resetOnlineState(){
+  onlineAssignedRole=null;
+  onlineSelfReady=false;
+  onlinePeerReady=false;
+  onlineGameStarted=false;
+  onlineFoundTrackCount=0;
+
+  if(onlineStartGameBtn){
+    onlineStartGameBtn.hidden=true;
+    onlineStartGameBtn.disabled=false;
+    onlineStartGameBtn.textContent="🎮 ゲーム開始";
+  }
+
+  if(onlineStatus){
+    onlineStatus.textContent="";
+  }
+
+  if(onlineRoomCodeInput){
+    onlineRoomCodeInput.value="";
+  }
+
+  if(createOnlineRoomBtn){
+    createOnlineRoomBtn.disabled=false;
+  }
+
+  if(joinOnlineRoomBtn){
+    joinOnlineRoomBtn.disabled=false;
+  }
+}
    
   const cpuSideOverlay=$("cpuSideOverlay"),playCatSideBtn=$("playCatSideBtn"),playPoliceSideBtn=$("playPoliceSideBtn"),cpuSideBackBtn=$("cpuSideBackBtn");
   const difficultyOverlay=$("difficultyOverlay"),cpuEasyBtn=$("cpuEasyBtn"),cpuNormalBtn=$("cpuNormalBtn"),
@@ -2026,7 +2056,8 @@ finishDogTurnBtn.classList.toggle(
     victoryCutinTimer=setTimeout(()=>showVictoryCutin(winner),280);
   }
 
-  bindPress(onlineModeBtn,()=>{
+bindPress(onlineModeBtn,()=>{
+  resetOnlineState();
   onlineOverlay.classList.add("show");
 });
 
@@ -2871,11 +2902,23 @@ render();
   bindPress(finishDogTurnBtn,finishDogTurn);
   bindPress(privacyBtn,closePrivacy);
   bindPress(againBtn,()=>{
-    Audio.setBgmMode("normal");
-    Audio.startBgm();
-    Audio.play("gamestart");
-    initGame(false);
-  });
+  Audio.setBgmMode("normal");
+  Audio.startBgm();
+
+  // オンライン対戦終了後はホームへ戻す
+  if(
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice"
+  ){
+    resetOnlineState();
+    initGame(true);
+    return;
+  }
+
+  // ローカル・CPU戦はこれまで通り再戦
+  Audio.play("gamestart");
+  initGame(false);
+});
 
   initGame(true);
 })();
