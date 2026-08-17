@@ -2255,10 +2255,23 @@ onlineStartGameBtn.hidden=false;
   data.payload?.type==="dogTurnEnd" &&
   onlineAssignedRole==="cat"
 ){
-  if(game.turn>=E.MAX_TURNS){
-    endGame("cat","11ターンすべて逃げ切りました！");
-    return;
+if(game.turn>=E.MAX_TURNS){
+
+  // オンラインでは警察側にも「ネコ逃げ切り」を通知
+  if(playMode==="onlineCat"){
+    window.NyanOnline.sendGame({
+      type:"catEscaped",
+      turn:game.turn
+    });
   }
+
+  endGame(
+    "cat",
+    "11ターンすべて逃げ切りました！"
+  );
+
+  return;
+}
 
 
   game.turn++;
@@ -2498,6 +2511,19 @@ if(
 
   render();
 }
+         if(
+  data.payload?.type==="catEscaped" &&
+  onlineAssignedRole==="police"
+){
+  game.actionLocked=false;
+
+  endGame(
+    "cat",
+    "11ターンすべて逃げ切られました！"
+  );
+
+  return;
+}
          
 },
        
@@ -2684,10 +2710,23 @@ if(
   data.payload?.type==="dogTurnEnd" &&
   onlineAssignedRole==="cat"
 ){
-  if(game.turn>=E.MAX_TURNS){
-    endGame("cat","11ターンすべて逃げ切りました！");
-    return;
+if(game.turn>=E.MAX_TURNS){
+
+  // オンラインでは警察側にも「ネコ逃げ切り」を通知
+  if(playMode==="onlineCat"){
+    window.NyanOnline.sendGame({
+      type:"catEscaped",
+      turn:game.turn
+    });
   }
+
+  endGame(
+    "cat",
+    "11ターンすべて逃げ切りました！"
+  );
+
+  return;
+}
 
   game.turn++;
 
@@ -2922,7 +2961,19 @@ if(
 
   render();
 }
-        
+       if(
+  data.payload?.type==="catEscaped" &&
+  onlineAssignedRole==="police"
+){
+  game.actionLocked=false;
+
+  endGame(
+    "cat",
+    "11ターンすべて逃げ切られました！"
+  );
+
+  return;
+} 
 },
       onPresence:(data)=>{
         if(data.ready){
