@@ -2390,3 +2390,6 @@ body.turn-last .turn-pill{
   .victory-cutin-card{width:97vw;border-radius:18px}
   .victory-cutin-card img{max-height:70vh}
 }
+#onlineRoomCodeInput{
+  font-size:16px;
+}
