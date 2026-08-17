@@ -34,6 +34,7 @@ const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"
    let onlineSelfReady=false;
 let onlinePeerReady=false;
 let onlineGameStarted=false;
+   let onlineFoundTrackCount=0;
    
   const cpuSideOverlay=$("cpuSideOverlay"),playCatSideBtn=$("playCatSideBtn"),playPoliceSideBtn=$("playPoliceSideBtn"),cpuSideBackBtn=$("cpuSideBackBtn");
   const difficultyOverlay=$("difficultyOverlay"),cpuEasyBtn=$("cpuEasyBtn"),cpuNormalBtn=$("cpuNormalBtn"),
@@ -961,8 +962,11 @@ c.disabled=!(
     }
 
     tracksSummary.style.display=(game.phase==="dogSetup"||game.phase==="catSetup")?"none":"flex";
-    tracksFoundCount.textContent=String(game.revealedTracks.size);
-
+tracksFoundCount.textContent=String(
+  playMode==="onlineCat"
+    ? onlineFoundTrackCount
+    : game.revealedTracks.size
+);
     catViewBtn.classList.toggle("show",game.phase==="cat");
     catViewBtn.disabled=game.phase!=="cat"||game.gameOver||game.actionLocked;
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
@@ -2399,7 +2403,8 @@ if(
     Number.isInteger(count) &&
     count>=0
   ){
-    tracksFoundCount.textContent=String(count);
+onlineFoundTrackCount=count;
+render();
   }
 }       
 },
@@ -2774,7 +2779,8 @@ if(
     Number.isInteger(count) &&
     count>=0
   ){
-    tracksFoundCount.textContent=String(count);
+onlineFoundTrackCount=count;
+render();
   }
 }
         
