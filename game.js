@@ -2511,10 +2511,27 @@ if(
 
   render();
 }
-         if(
+        if(
   data.payload?.type==="catEscaped" &&
   onlineAssignedRole==="police"
 ){
+  const route=data.payload.route;
+
+  if(Array.isArray(route)){
+    cpuCatRoute=route
+      .map(step=>({
+        box:Number(step.box),
+        turn:Number(step.turn)
+      }))
+      .filter(step=>
+        Number.isInteger(step.box) &&
+        step.box>=0 &&
+        step.box<E.BOX_COUNT &&
+        Number.isInteger(step.turn)
+      )
+      .sort((a,b)=>a.turn-b.turn);
+  }
+
   game.actionLocked=false;
 
   endGame(
@@ -2961,10 +2978,27 @@ if(
 
   render();
 }
-       if(
+      if(
   data.payload?.type==="catEscaped" &&
   onlineAssignedRole==="police"
 ){
+  const route=data.payload.route;
+
+  if(Array.isArray(route)){
+    cpuCatRoute=route
+      .map(step=>({
+        box:Number(step.box),
+        turn:Number(step.turn)
+      }))
+      .filter(step=>
+        Number.isInteger(step.box) &&
+        step.box>=0 &&
+        step.box<E.BOX_COUNT &&
+        Number.isInteger(step.turn)
+      )
+      .sort((a,b)=>a.turn-b.turn);
+  }
+
   game.actionLocked=false;
 
   endGame(
@@ -2973,7 +3007,7 @@ if(
   );
 
   return;
-} 
+}
 },
       onPresence:(data)=>{
         if(data.ready){
