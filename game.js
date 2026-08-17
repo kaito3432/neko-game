@@ -2374,6 +2374,19 @@ if(
   render();
 }
          
+  if(
+  data.payload?.type==="trackCount" &&
+  onlineAssignedRole==="cat"
+){
+  const count=Number(data.payload.count);
+
+  if(
+    Number.isInteger(count) &&
+    count>=0
+  ){
+    tracksFoundCount.textContent=String(count);
+  }
+}       
 },
        
       onError:()=>{
@@ -2721,6 +2734,20 @@ if(
 
   render();
 }
+if(
+  data.payload?.type==="trackCount" &&
+  onlineAssignedRole==="cat"
+){
+  const count=Number(data.payload.count);
+
+  if(
+    Number.isInteger(count) &&
+    count>=0
+  ){
+    tracksFoundCount.textContent=String(count);
+  }
+}
+        
 },
       onPresence:(data)=>{
         if(data.ready){
