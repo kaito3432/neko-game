@@ -2158,6 +2158,7 @@ onlineStartGameBtn.hidden=false;
     return;
   }
 
+
   game.turn++;
 
   if(E.getCatLegalMoves(game).length===0){
@@ -2187,6 +2188,8 @@ onlineStartGameBtn.hidden=false;
 
   render();
 }
+
+         
          if(
   data.payload?.type==="searchResult" &&
   onlineAssignedRole==="police"
@@ -2278,6 +2281,39 @@ onlineStartGameBtn.hidden=false;
   );
 
   afterDogAction();
+  render();
+}
+         if(
+  data.payload?.type==="catMoveDone" &&
+  onlineAssignedRole==="police"
+){
+  const turn=Number(data.payload.turn);
+
+  if(
+    !Number.isInteger(turn) ||
+    turn<1 ||
+    turn>E.MAX_TURNS
+  ){
+    return;
+  }
+
+  game.turn=turn;
+  game.phase="dogs";
+  game.selectedDog=null;
+  game.dogAction=[false,false,false];
+  game.cpuSearchesThisTurn=0;
+  game.actionLocked=false;
+
+  showPrivacy(
+    "🐕",
+    `ターン${game.turn}・柴犬警察の番`,
+    "ネコの移動が完了しました。現在地は秘密です。捜査を開始してください。"
+  );
+
+  setMessage(
+    "🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。"
+  );
+
   render();
 }
 },
@@ -2560,6 +2596,39 @@ onlineStartGameBtn.hidden=false;
   );
 
   afterDogAction();
+  render();
+}
+        if(
+  data.payload?.type==="catMoveDone" &&
+  onlineAssignedRole==="police"
+){
+  const turn=Number(data.payload.turn);
+
+  if(
+    !Number.isInteger(turn) ||
+    turn<1 ||
+    turn>E.MAX_TURNS
+  ){
+    return;
+  }
+
+  game.turn=turn;
+  game.phase="dogs";
+  game.selectedDog=null;
+  game.dogAction=[false,false,false];
+  game.cpuSearchesThisTurn=0;
+  game.actionLocked=false;
+
+  showPrivacy(
+    "🐕",
+    `ターン${game.turn}・柴犬警察の番`,
+    "ネコの移動が完了しました。現在地は秘密です。捜査を開始してください。"
+  );
+
+  setMessage(
+    "🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。"
+  );
+
   render();
 }
 },
