@@ -2010,61 +2010,106 @@ onlineStartGameBtn.hidden=false;
   }
 },
 
-       onGame:(data)=>{
+      onGame:(data)=>{
+
+  // 2人ともゲーム開始を押した
   if(data.payload?.type==="ready"){
     onlinePeerReady=true;
     tryStartOnlineGame();
   }
-          if(
-  data.payload?.type==="dogSetup" &&
-  onlineAssignedRole==="cat"
-){
-  const dogs=data.payload.dogs;
 
-  if(Array.isArray(dogs) && dogs.length===3){
-    game.dogs=[...dogs];
-    game.dogSetupCount=3;
-    game.phase="catSetup";
-    game.turn=1;
-
-    showPrivacy(
-      "🐱",
-      "警察の配置完了！",
-      "柴犬警察3匹の配置を確認して、スタート地点にする箱を1つ選んでください。"
-    );
-
-    setMessage(
-      "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
-    );
-
-    render();
-  }
-             if(
-  data.payload?.type==="dogMove" &&
-  onlineAssignedRole==="cat"
-){
-  const dogIndex=Number(data.payload.dogIndex);
-  const node=Number(data.payload.node);
-
+  // 警察3匹の初期配置をネコ側へ反映
   if(
-    Number.isInteger(dogIndex) &&
-    dogIndex>=0 &&
-    dogIndex<3 &&
-    Number.isInteger(node) &&
-    node>=0 &&
-    node<E.NODE_COUNT
+    data.payload?.type==="dogSetup" &&
+    onlineAssignedRole==="cat"
   ){
-    game.dogs[dogIndex]=node;
-    game.dogAction[dogIndex]="move";
+    const dogs=data.payload.dogs;
 
-    setMessage(
-      `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} が移動しました。`
-    );
+    if(Array.isArray(dogs) && dogs.length===3){
+      game.dogs=[...dogs];
+      game.dogSetupCount=3;
+      game.phase="catSetup";
+      game.turn=1;
 
-    render();
+      showPrivacy(
+        "🐱",
+        "警察の配置完了！",
+        "柴犬警察3匹の配置を確認して、スタート地点にする箱を1つ選んでください。"
+      );
+
+      setMessage(
+        "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
+      );
+
+      render();
+    }
   }
-}
-}
+
+  // ネコのスタート地点を警察側へ反映
+  if(
+    data.payload?.type==="catSetup" &&
+    onlineAssignedRole==="police"
+  ){
+    const catPos=Number(data.payload.catPos);
+
+    if(
+      Number.isInteger(catPos) &&
+      catPos>=0 &&
+      catPos<E.BOX_COUNT
+    ){
+      game.catPos=catPos;
+      game.catHistory.clear();
+      game.catHistory.set(catPos,1);
+      game.catVisible=false;
+
+      game.turn=1;
+      game.phase="dogs";
+      game.selectedDog=null;
+      game.dogAction=[false,false,false];
+      game.cpuSearchesThisTurn=0;
+      game.actionLocked=false;
+
+      showPrivacy(
+        "🐕",
+        "捜査開始！",
+        "ネコが隠れました。現在地は秘密です。柴犬警察で捜査を開始してください。"
+      );
+
+      setMessage(
+        "🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。"
+      );
+
+      render();
+    }
+  }
+
+  // 警察の移動をネコ側へ反映
+  if(
+    data.payload?.type==="dogMove" &&
+    onlineAssignedRole==="cat"
+  ){
+    const dogIndex=Number(data.payload.dogIndex);
+    const node=Number(data.payload.node);
+
+    if(
+      Number.isInteger(dogIndex) &&
+      dogIndex>=0 &&
+      dogIndex<3 &&
+      Number.isInteger(node) &&
+      node>=0 &&
+      node<E.NODE_COUNT
+    ){
+      game.dogs[dogIndex]=node;
+      game.dogAction[dogIndex]="move";
+
+      setMessage(
+        `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} が移動しました。`
+      );
+
+      render();
+    }
+  }
+},
           if(
   data.payload?.type==="catSetup" &&
   onlineAssignedRole==="police"
@@ -2157,95 +2202,106 @@ onlineStartGameBtn.hidden=false;
         `<span style="font-size:14px">いたずらネコを見つけよう！</span>`;
     }
   },
-       onGame:(data)=>{
+     onGame:(data)=>{
+
+  // 2人ともゲーム開始を押した
   if(data.payload?.type==="ready"){
     onlinePeerReady=true;
     tryStartOnlineGame();
   }
-          if(
-  data.payload?.type==="dogSetup" &&
-  onlineAssignedRole==="cat"
-){
-  const dogs=data.payload.dogs;
 
-  if(Array.isArray(dogs) && dogs.length===3){
-    game.dogs=[...dogs];
-    game.dogSetupCount=3;
-    game.phase="catSetup";
-    game.turn=1;
-
-    showPrivacy(
-      "🐱",
-      "警察の配置完了！",
-      "柴犬警察3匹の配置を確認して、スタート地点にする箱を1つ選んでください。"
-    );
-
-    setMessage(
-      "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
-    );
-
-    render();
-  }
-}
-          if(
-  data.payload?.type==="catSetup" &&
-  onlineAssignedRole==="police"
-){
-  const catPos=Number(data.payload.catPos);
-
-  if(Number.isInteger(catPos) && catPos>=0 && catPos<E.BOX_COUNT){
-    game.catPos=catPos;
-    game.catHistory.clear();
-    game.catHistory.set(catPos,1);
-    game.catVisible=false;
-
-    game.turn=1;
-    game.phase="dogs";
-    game.selectedDog=null;
-    game.dogAction=[false,false,false];
-    game.cpuSearchesThisTurn=0;
-    game.actionLocked=false;
-
-    showPrivacy(
-      "🐕",
-      "捜査開始！",
-      "ネコが隠れました。現在地は秘密です。柴犬警察で捜査を開始してください。"
-    );
-
-    setMessage(
-      "🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。"
-    );
-
-    render();
-  }
-}
-if(
-  data.payload?.type==="dogMove" &&
-  onlineAssignedRole==="cat"
-){
-  const dogIndex=Number(data.payload.dogIndex);
-  const node=Number(data.payload.node);
-
+  // 警察3匹の初期配置をネコ側へ反映
   if(
-    Number.isInteger(dogIndex) &&
-    dogIndex>=0 &&
-    dogIndex<3 &&
-    Number.isInteger(node) &&
-    node>=0 &&
-    node<E.NODE_COUNT
+    data.payload?.type==="dogSetup" &&
+    onlineAssignedRole==="cat"
   ){
-    game.dogs[dogIndex]=node;
-    game.dogAction[dogIndex]="move";
+    const dogs=data.payload.dogs;
 
-    setMessage(
-      `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} が移動しました。`
-    );
+    if(Array.isArray(dogs) && dogs.length===3){
+      game.dogs=[...dogs];
+      game.dogSetupCount=3;
+      game.phase="catSetup";
+      game.turn=1;
 
-    render();
+      showPrivacy(
+        "🐱",
+        "警察の配置完了！",
+        "柴犬警察3匹の配置を確認して、スタート地点にする箱を1つ選んでください。"
+      );
+
+      setMessage(
+        "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
+      );
+
+      render();
+    }
   }
-}          
-},
 
+  // ネコのスタート地点を警察側へ反映
+  if(
+    data.payload?.type==="catSetup" &&
+    onlineAssignedRole==="police"
+  ){
+    const catPos=Number(data.payload.catPos);
+
+    if(
+      Number.isInteger(catPos) &&
+      catPos>=0 &&
+      catPos<E.BOX_COUNT
+    ){
+      game.catPos=catPos;
+      game.catHistory.clear();
+      game.catHistory.set(catPos,1);
+      game.catVisible=false;
+
+      game.turn=1;
+      game.phase="dogs";
+      game.selectedDog=null;
+      game.dogAction=[false,false,false];
+      game.cpuSearchesThisTurn=0;
+      game.actionLocked=false;
+
+      showPrivacy(
+        "🐕",
+        "捜査開始！",
+        "ネコが隠れました。現在地は秘密です。柴犬警察で捜査を開始してください。"
+      );
+
+      setMessage(
+        "🐕 柴犬を選択。緑の交差点＝移動、青い箱＝探索です。"
+      );
+
+      render();
+    }
+  }
+
+  // 警察の移動をネコ側へ反映
+  if(
+    data.payload?.type==="dogMove" &&
+    onlineAssignedRole==="cat"
+  ){
+    const dogIndex=Number(data.payload.dogIndex);
+    const node=Number(data.payload.node);
+
+    if(
+      Number.isInteger(dogIndex) &&
+      dogIndex>=0 &&
+      dogIndex<3 &&
+      Number.isInteger(node) &&
+      node>=0 &&
+      node<E.NODE_COUNT
+    ){
+      game.dogs[dogIndex]=node;
+      game.dogAction[dogIndex]="move";
+
+      setMessage(
+        `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} が移動しました。`
+      );
+
+      render();
+    }
+  }
+},
       onPresence:(data)=>{
         if(data.ready){
           onlineStatus.innerHTML=
