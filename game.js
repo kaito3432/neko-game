@@ -658,6 +658,17 @@ if(
     game.dogAction[di]="search";
     game.selectedDog=null;
     game.actionLocked=true;
+     if(playMode==="onlinePolice"){
+  window.NyanOnline.sendGame({
+    type:"search",
+    dogIndex:di,
+    box:bi
+  });
+
+  setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} がクンクン調査中…`);
+  render();
+  return;
+}
 
     if(playMode==="cpuPolice"){
       game.cpuSearchedBoxes.add(bi);
@@ -2176,6 +2187,99 @@ onlineStartGameBtn.hidden=false;
 
   render();
 }
+         if(
+  data.payload?.type==="searchResult" &&
+  onlineAssignedRole==="police"
+){
+  const dogIndex=Number(data.payload.dogIndex);
+  const box=Number(data.payload.box);
+  const result=data.payload.result;
+  const trackTurn=data.payload.trackTurn;
+
+  if(
+    !Number.isInteger(dogIndex) ||
+    dogIndex<0 ||
+    dogIndex>=3 ||
+    !Number.isInteger(box) ||
+    box<0 ||
+    box>=E.BOX_COUNT
+  ){
+    return;
+  }
+
+  if(result==="capture"){
+    Audio.play("capture");
+    Audio.haptic([35,45,70]);
+    A.burstAtBox(board,box,"🐱✨");
+    A.shakeBoxSoon(board,box);
+
+    game.actionLocked=false;
+
+    endGame(
+      "dogs",
+      `${E.DOGS[dogIndex].name} が箱${box+1}をクンクン……ネコを発見！`
+    );
+
+    return;
+  }
+
+  if(result==="track"){
+    game.revealedTracks.set(
+      box,
+      Number.isInteger(Number(trackTurn))
+        ? Number(trackTurn)
+        : game.turn
+    );
+
+    const foundBox=board.querySelector(
+      `.box[data-box-index="${box}"]`
+    );
+
+    if(foundBox){
+      foundBox.classList.remove("found-track");
+      void foundBox.offsetWidth;
+      foundBox.classList.add("found-track");
+    }
+
+    Audio.play("paw");
+    Audio.haptic([15,35,25]);
+    A.shakeBoxSoon(board,box);
+    A.burstAtBox(board,box,"🐾✨");
+    showToast(
+      "🐕🐾",
+      "クンクン……！",
+      "ネコの足跡を発見！"
+    );
+  }else{
+    const emptyBox=board.querySelector(
+      `.box[data-box-index="${box}"]`
+    );
+
+    if(emptyBox){
+      emptyBox.classList.remove("empty-search");
+      void emptyBox.offsetWidth;
+      emptyBox.classList.add("empty-search");
+    }
+
+    Audio.play("empty");
+    Audio.haptic(10);
+    A.burstAtBox(board,box,"💨");
+    showToast(
+      "💨",
+      "クンクン……",
+      "何もないワン！"
+    );
+  }
+
+  game.actionLocked=false;
+
+  setMessage(
+    `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} は探索済み✓。`
+  );
+
+  afterDogAction();
+  render();
+}
 },
        
       onError:()=>{
@@ -2363,6 +2467,99 @@ onlineStartGameBtn.hidden=false;
     `🐱 ターン${game.turn}。まだ通っていない隣の箱へ移動しよう。${extra}`
   );
 
+  render();
+}
+        if(
+  data.payload?.type==="searchResult" &&
+  onlineAssignedRole==="police"
+){
+  const dogIndex=Number(data.payload.dogIndex);
+  const box=Number(data.payload.box);
+  const result=data.payload.result;
+  const trackTurn=data.payload.trackTurn;
+
+  if(
+    !Number.isInteger(dogIndex) ||
+    dogIndex<0 ||
+    dogIndex>=3 ||
+    !Number.isInteger(box) ||
+    box<0 ||
+    box>=E.BOX_COUNT
+  ){
+    return;
+  }
+
+  if(result==="capture"){
+    Audio.play("capture");
+    Audio.haptic([35,45,70]);
+    A.burstAtBox(board,box,"🐱✨");
+    A.shakeBoxSoon(board,box);
+
+    game.actionLocked=false;
+
+    endGame(
+      "dogs",
+      `${E.DOGS[dogIndex].name} が箱${box+1}をクンクン……ネコを発見！`
+    );
+
+    return;
+  }
+
+  if(result==="track"){
+    game.revealedTracks.set(
+      box,
+      Number.isInteger(Number(trackTurn))
+        ? Number(trackTurn)
+        : game.turn
+    );
+
+    const foundBox=board.querySelector(
+      `.box[data-box-index="${box}"]`
+    );
+
+    if(foundBox){
+      foundBox.classList.remove("found-track");
+      void foundBox.offsetWidth;
+      foundBox.classList.add("found-track");
+    }
+
+    Audio.play("paw");
+    Audio.haptic([15,35,25]);
+    A.shakeBoxSoon(board,box);
+    A.burstAtBox(board,box,"🐾✨");
+    showToast(
+      "🐕🐾",
+      "クンクン……！",
+      "ネコの足跡を発見！"
+    );
+  }else{
+    const emptyBox=board.querySelector(
+      `.box[data-box-index="${box}"]`
+    );
+
+    if(emptyBox){
+      emptyBox.classList.remove("empty-search");
+      void emptyBox.offsetWidth;
+      emptyBox.classList.add("empty-search");
+    }
+
+    Audio.play("empty");
+    Audio.haptic(10);
+    A.burstAtBox(board,box,"💨");
+    showToast(
+      "💨",
+      "クンクン……",
+      "何もないワン！"
+    );
+  }
+
+  game.actionLocked=false;
+
+  setMessage(
+    `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} は探索済み✓。`
+  );
+
+  afterDogAction();
   render();
 }
 },
