@@ -2250,33 +2250,52 @@ onlineStartGameBtn.hidden=false;
     return;
   }
 
-  if(result==="track"){
-    game.revealedTracks.set(
-      box,
-      Number.isInteger(Number(trackTurn))
-        ? Number(trackTurn)
-        : game.turn
+ if(result==="track"){
+  const foundTurn=Number(trackTurn);
+
+  game.revealedTracks.set(
+    box,
+    Number.isInteger(foundTurn)
+      ? foundTurn
+      : game.turn
+  );
+
+  // オンラインでもSTART判定できるように公開情報側へ記録
+  if(foundTurn===1){
+    game.catHistory.set(box,1);
+  }
+
+  const foundBox=board.querySelector(
+    `.box[data-box-index="${box}"]`
+  );
+
+  if(foundBox){
+    foundBox.classList.remove("found-track");
+    void foundBox.offsetWidth;
+    foundBox.classList.add("found-track");
+  }
+
+  Audio.haptic([15,35,25]);
+  A.shakeBoxSoon(board,box);
+
+  if(foundTurn===1){
+    Audio.play("start");
+    A.burstAtBox(board,box,"🚩✨");
+    showToast(
+      "🚩",
+      "スタート地点を発見！",
+      "ここから逃げ始めたみたいだワン！"
     );
-
-    const foundBox=board.querySelector(
-      `.box[data-box-index="${box}"]`
-    );
-
-    if(foundBox){
-      foundBox.classList.remove("found-track");
-      void foundBox.offsetWidth;
-      foundBox.classList.add("found-track");
-    }
-
+  }else{
     Audio.play("paw");
-    Audio.haptic([15,35,25]);
-    A.shakeBoxSoon(board,box);
     A.burstAtBox(board,box,"🐾✨");
     showToast(
       "🐕🐾",
       "クンクン……！",
       "ネコの足跡を発見！"
     );
+  }
+
   }else{
     const emptyBox=board.querySelector(
       `.box[data-box-index="${box}"]`
@@ -2565,53 +2584,71 @@ onlineStartGameBtn.hidden=false;
     return;
   }
 
-  if(result==="track"){
-    game.revealedTracks.set(
-      box,
-      Number.isInteger(Number(trackTurn))
-        ? Number(trackTurn)
-        : game.turn
+if(result==="track"){
+  const foundTurn=Number(trackTurn);
+
+  game.revealedTracks.set(
+    box,
+    Number.isInteger(foundTurn)
+      ? foundTurn
+      : game.turn
+  );
+
+  if(foundTurn===1){
+    game.catHistory.set(box,1);
+  }
+
+  const foundBox=board.querySelector(
+    `.box[data-box-index="${box}"]`
+  );
+
+  if(foundBox){
+    foundBox.classList.remove("found-track");
+    void foundBox.offsetWidth;
+    foundBox.classList.add("found-track");
+  }
+
+  Audio.haptic([15,35,25]);
+  A.shakeBoxSoon(board,box);
+
+  if(foundTurn===1){
+    Audio.play("start");
+    A.burstAtBox(board,box,"🚩✨");
+    showToast(
+      "🚩",
+      "スタート地点を発見！",
+      "ここから逃げ始めたみたいだワン！"
     );
-
-    const foundBox=board.querySelector(
-      `.box[data-box-index="${box}"]`
-    );
-
-    if(foundBox){
-      foundBox.classList.remove("found-track");
-      void foundBox.offsetWidth;
-      foundBox.classList.add("found-track");
-    }
-
+  }else{
     Audio.play("paw");
-    Audio.haptic([15,35,25]);
-    A.shakeBoxSoon(board,box);
     A.burstAtBox(board,box,"🐾✨");
     showToast(
       "🐕🐾",
       "クンクン……！",
       "ネコの足跡を発見！"
     );
-  }else{
-    const emptyBox=board.querySelector(
-      `.box[data-box-index="${box}"]`
-    );
-
-    if(emptyBox){
-      emptyBox.classList.remove("empty-search");
-      void emptyBox.offsetWidth;
-      emptyBox.classList.add("empty-search");
-    }
-
-    Audio.play("empty");
-    Audio.haptic(10);
-    A.burstAtBox(board,box,"💨");
-    showToast(
-      "💨",
-      "クンクン……",
-      "何もないワン！"
-    );
   }
+
+}else{
+  const emptyBox=board.querySelector(
+    `.box[data-box-index="${box}"]`
+  );
+
+  if(emptyBox){
+    emptyBox.classList.remove("empty-search");
+    void emptyBox.offsetWidth;
+    emptyBox.classList.add("empty-search");
+  }
+
+  Audio.play("empty");
+  Audio.haptic(10);
+  A.burstAtBox(board,box,"💨");
+  showToast(
+    "💨",
+    "クンクン……",
+    "何もないワン！"
+  );
+}
 
   game.actionLocked=false;
 
