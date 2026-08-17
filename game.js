@@ -2887,10 +2887,19 @@ render();
 
 
   });
-  bindPress(backToTitleBtn,()=>{
-    settingsOverlay.classList.remove("show");
-    initGame(true);
-  });
+bindPress(backToTitleBtn,()=>{
+  settingsOverlay.classList.remove("show");
+
+  if(
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice"
+  ){
+    window.NyanOnline?.disconnect();
+    resetOnlineState();
+  }
+
+  initGame(true);
+});
   bindPress(sfxToggleBtn,()=>{Audio.toggleSfx();updateSettingsUI();});
   bindPress(bgmToggleBtn,()=>{Audio.toggleBgm();updateSettingsUI();});
   bgmVolumeSlider.addEventListener("input",()=>{
@@ -2906,14 +2915,15 @@ render();
   Audio.startBgm();
 
   // オンライン対戦終了後はホームへ戻す
-  if(
-    playMode==="onlineCat" ||
-    playMode==="onlinePolice"
-  ){
-    resetOnlineState();
-    initGame(true);
-    return;
-  }
+if(
+  playMode==="onlineCat" ||
+  playMode==="onlinePolice"
+){
+  window.NyanOnline?.disconnect();
+  resetOnlineState();
+  initGame(true);
+  return;
+}
 
   // ローカル・CPU戦はこれまで通り再戦
   Audio.play("gamestart");
