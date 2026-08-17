@@ -29,6 +29,7 @@
   const onlineModeBtn=$("onlineModeBtn"),onlineOverlay=$("onlineOverlay"),onlineBackBtn=$("onlineBackBtn");
 const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnlineRoomBtn");
 const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"); 
+   let onlineAssignedRole=null;
   const cpuSideOverlay=$("cpuSideOverlay"),playCatSideBtn=$("playCatSideBtn"),playPoliceSideBtn=$("playPoliceSideBtn"),cpuSideBackBtn=$("cpuSideBackBtn");
   const difficultyOverlay=$("difficultyOverlay"),cpuEasyBtn=$("cpuEasyBtn"),cpuNormalBtn=$("cpuNormalBtn"),
         cpuHardBtn=$("cpuHardBtn"),difficultyBackBtn=$("difficultyBackBtn");
@@ -1879,6 +1880,20 @@ bindPress(onlineBackBtn,()=>{
             `🐾 2人そろいました！`;
         }
       },
+
+       onRole:(data)=>{
+  onlineAssignedRole=data.role;
+
+  if(data.role==="cat"){
+    onlineStatus.innerHTML=
+      `🐱 あなたはネコ！<br>`+
+      `<span style="font-size:14px">柴犬警察から逃げ切ろう！</span>`;
+  }else{
+    onlineStatus.innerHTML=
+      `🐕 あなたは警察！<br>`+
+      `<span style="font-size:14px">いたずらネコを見つけよう！</span>`;
+  }
+},
       onError:()=>{
         onlineStatus.textContent="通信エラーが発生しました";
       }
@@ -1924,6 +1939,19 @@ bindPress(onlineBackBtn,()=>{
           `<strong style="font-size:32px">${room.roomCode}</strong><br>`+
           `相手と接続しました！`;
       },
+       onRole:(data)=>{
+    onlineAssignedRole=data.role;
+
+    if(data.role==="cat"){
+      onlineStatus.innerHTML=
+        `🐱 あなたはネコ！<br>`+
+        `<span style="font-size:14px">柴犬警察から逃げ切ろう！</span>`;
+    }else{
+      onlineStatus.innerHTML=
+        `🐕 あなたは警察！<br>`+
+        `<span style="font-size:14px">いたずらネコを見つけよう！</span>`;
+    }
+  },
 
       onPresence:(data)=>{
         if(data.ready){
