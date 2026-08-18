@@ -3045,7 +3045,7 @@ if(
       onError:()=>{
         onlineStatus.textContent="通信エラーが発生しました";
         joinOnlineRoomBtn.disabled=false;
-      }
+      },
        onPeerDisconnected:()=>{
   // ゲーム中なら切断を明示
   if(
