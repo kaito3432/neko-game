@@ -2547,6 +2547,30 @@ if(
       onError:()=>{
         onlineStatus.textContent="通信エラーが発生しました";
       }
+       onPeerDisconnected:()=>{
+  // ゲーム中なら切断を明示
+  if(
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice"
+  ){
+    game.actionLocked=true;
+
+    showPrivacy(
+      "📡",
+      "接続が切れました",
+      "相手との接続が切れました。タイトルへ戻って、もう一度オンライン対戦を始めてください。"
+    );
+
+    setMessage(
+      "📡 相手との接続が切れました。"
+    );
+
+    render();
+  }else{
+    onlineStatus.textContent=
+      "相手との接続が切れました";
+  }
+},
     });
 
   }catch(err){
@@ -3022,6 +3046,30 @@ if(
         onlineStatus.textContent="通信エラーが発生しました";
         joinOnlineRoomBtn.disabled=false;
       }
+       onPeerDisconnected:()=>{
+  // ゲーム中なら切断を明示
+  if(
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice"
+  ){
+    game.actionLocked=true;
+
+    showPrivacy(
+      "📡",
+      "接続が切れました",
+      "相手との接続が切れました。タイトルへ戻って、もう一度オンライン対戦を始めてください。"
+    );
+
+    setMessage(
+      "📡 相手との接続が切れました。"
+    );
+
+    render();
+  }else{
+    onlineStatus.textContent=
+      "相手との接続が切れました";
+  }
+},
     });
 
   }catch(err){
