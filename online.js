@@ -185,13 +185,6 @@ socket.addEventListener("message", event => {
     onPeerDisconnected(data);
   }
 });
-                           if (
-  data.type === "peerDisconnected" &&
-  onPeerDisconnected
-) {
-  onPeerDisconnected(data);
-}
-                           );
 
     socket.addEventListener("close", event => {
       if (onClose) onClose(event);
