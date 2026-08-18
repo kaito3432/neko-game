@@ -3156,8 +3156,20 @@ bindPress(backToTitleBtn,()=>{
   });
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
-  bindPress(privacyBtn,closePrivacy);
-  bindPress(againBtn,()=>{
+bindPress(privacyBtn,()=>{
+  if(onlinePeerDisconnected){
+    window.NyanOnline?.disconnect();
+    resetOnlineState();
+
+    privacyBtn.textContent="OK";
+    privacyOverlay.classList.remove("show");
+
+    initGame(true);
+    return;
+  }
+
+  closePrivacy();
+});  bindPress(againBtn,()=>{
   Audio.setBgmMode("normal");
   Audio.startBgm();
 
