@@ -128,14 +128,15 @@ window.NyanOnline = (() => {
     return url.toString();
   }
 
-  function connect({
-    onOpen,
-    onPresence,
-      onRole,
-    onGame,
-    onClose,
-    onError
-  } = {}) {
+function connect({
+  onOpen,
+  onPresence,
+  onRole,
+  onGame,
+  onClose,
+  onError,
+  onPeerDisconnected
+} = {}) {
     disconnect();
 
     if (!roomCode || !token) {
@@ -186,7 +187,14 @@ window.NyanOnline = (() => {
       ) {
         onGame(data);
       }
-    });
+    }
+                           if (
+  data.type === "peerDisconnected" &&
+  onPeerDisconnected
+) {
+  onPeerDisconnected(data);
+}
+                           );
 
     socket.addEventListener("close", event => {
       if (onClose) onClose(event);
