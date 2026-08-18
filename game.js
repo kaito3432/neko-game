@@ -2546,7 +2546,7 @@ if(
        
       onError:()=>{
         onlineStatus.textContent="通信エラーが発生しました";
-      }
+      },
        onPeerDisconnected:()=>{
   // ゲーム中なら切断を明示
   if(
