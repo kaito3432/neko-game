@@ -34,6 +34,7 @@ const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"
    let onlineSelfReady=false;
 let onlinePeerReady=false;
 let onlineGameStarted=false;
+   let onlinePeerDisconnected = false;
    let onlineFoundTrackCount=0;
 
    function resetOnlineState(){
@@ -42,6 +43,7 @@ let onlineGameStarted=false;
   onlinePeerReady=false;
   onlineGameStarted=false;
   onlineFoundTrackCount=0;
+onlinePeerDisconnected=false;
 
   if(onlineStartGameBtn){
     onlineStartGameBtn.hidden=true;
@@ -2548,6 +2550,7 @@ if(
         onlineStatus.textContent="通信エラーが発生しました";
       },
        onPeerDisconnected:()=>{
+  onlinePeerDisconnected=true;
   // ゲーム中なら切断を明示
   if(
     playMode==="onlineCat" ||
@@ -3047,6 +3050,7 @@ if(
         joinOnlineRoomBtn.disabled=false;
       },
        onPeerDisconnected:()=>{
+  onlinePeerDisconnected=true;
   // ゲーム中なら切断を明示
   if(
     playMode==="onlineCat" ||
