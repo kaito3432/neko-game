@@ -1750,6 +1750,7 @@ if(isEdgeBox(boxIndex)){
 score += Math.random() * 0.08;
 
 return score;
+  }
   function cpuChooseStartBox(){
     let best=0,bestScore=-Infinity;
 
