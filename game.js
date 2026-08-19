@@ -1470,43 +1470,89 @@ if(cpuDifficulty==="hard"){
     return "広く捜査するワン…";
   }
 
-  function cpuSetupDogs(){
-    const active=[];
-    for(let i=0;i<E.NODE_COUNT;i++){
-      if(E.isActiveDogNode(i)) active.push(i);
-    }
+function cpuSetupDogs(){
+  const active=[];
 
-    // Spread the dogs across the inner 4x4 grid.
-    const preferred=[7,10,25,28].filter(E.isActiveDogNode);
-    const chosen=[];
+  for(let i=0;i<E.NODE_COUNT;i++){
+    if(E.isActiveDogNode(i)) active.push(i);
+  }
 
-    while(chosen.length<3){
-      let best=null,bestScore=-Infinity;
+  const chosen=[];
 
-      active.forEach(n=>{
-        if(chosen.includes(n)) return;
+  while(chosen.length<3){
+    const candidates=[];
 
-        let score=Math.random()*0.35;
+    active.forEach(n=>{
+      if(chosen.includes(n)) return;
 
-        // Prefer distance from already chosen dogs.
-        chosen.forEach(c=>{
-          score+=E.manhattanNodeDistance(n,c)*1.6;
-        });
+      let score=0;
 
-        if(preferred.includes(n)) score+=1.2;
-
-        if(score>bestScore){
-          bestScore=score;
-          best=n;
-        }
+      /*
+       * すでに置いた犬とは適度に離れる。
+       * ただし距離だけで毎回同じ場所にならないようにする。
+       */
+      chosen.forEach(c=>{
+        score += E.manhattanNodeDistance(n,c) * 1.15;
       });
 
-      chosen.push(best);
-    }
+      /*
+       * 中央付近を少しだけ優遇。
+       * 固定の preferred ノードは使わない。
+       */
+      const r=E.nodeRow(n);
+      const c=E.nodeCol(n);
 
-    game.dogs=[chosen[0],chosen[1],chosen[2]];
-    game.dogSetupCount=3;
+      const centerDist=
+        Math.abs(r-2.5) +
+        Math.abs(c-2.5);
+
+      score += Math.max(0,4-centerDist) * 0.55;
+
+      /*
+       * ゲームごとの個性。
+       * 以前の0.35より大幅にランダム性を増やす。
+       */
+      score += Math.random() * 3.2;
+
+      candidates.push({
+        node:n,
+        score
+      });
+    });
+
+    candidates.sort((a,b)=>b.score-a.score);
+
+    /*
+     * 最善地点に固定せず、
+     * 上位候補からランダム選択。
+     */
+    const top=candidates.slice(
+      0,
+      Math.min(5,candidates.length)
+    );
+
+    const picked=
+      top[Math.floor(Math.random()*top.length)];
+
+    chosen.push(picked.node);
   }
+
+  /*
+   * 犬の色と初期位置の組み合わせも毎回変える
+   */
+  for(let i=chosen.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [chosen[i],chosen[j]]=[chosen[j],chosen[i]];
+  }
+
+  game.dogs=[
+    chosen[0],
+    chosen[1],
+    chosen[2]
+  ];
+
+  game.dogSetupCount=3;
+}
 
   function boxDistance(a,b){
     return Math.abs(E.boxRow(a)-E.boxRow(b))+Math.abs(E.boxCol(a)-E.boxCol(b));
