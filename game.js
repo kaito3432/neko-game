@@ -1174,13 +1174,22 @@ finishDogTurnBtn.classList.toggle(
         targetSearches:1, searchBias:0
       };
     }
-    if(cpuDifficulty==="hard"){
-      return {
-        fresh:13.5, track:5.2, spread:1.2, backtrack:12, role:6.2,
-        endgame:8.5, noise:.45, forceSearch:1, think:520,
-        targetSearches:2, searchBias:5.5
-      };
-    }
+if(cpuDifficulty==="hard"){
+  return {
+    fresh:15.5,
+    track:6.5,
+    spread:1.5,
+    backtrack:14,
+    role:7.5,
+    endgame:11,
+    noise:.15,
+    forceSearch:1,
+    think:520,
+
+    targetSearches:2,
+    searchBias:7.5
+  };
+}
     return {
       fresh:11.8, track:4.0, spread:.78, backtrack:9.4, role:4.5,
       endgame:5.9, noise:1.05, forceSearch:1, think:390,
