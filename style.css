@@ -2719,7 +2719,7 @@ body.turn-last .turn-pill{
   object-fit:cover!important;
   object-position:center!important;
 
-  transform:translate(-50%,-50%) scale(1.9)!important;
+  transform:translate(-50%,-50%) scale(1.75)!important;
 
   border-radius:inherit!important;
   pointer-events:none!important;
