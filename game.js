@@ -106,45 +106,43 @@ onlinePeerDisconnected=false;
   }
 }
 
-  function bindPress(el,fn){
-    if(!el)return;
+function bindPress(el, fn){
+  if(!el) return;
 
-    let lastFire=0;
+  let lastFire = 0;
 
-    const fire=(e)=>{
-      if(el.disabled)return;
+  const fire = (e)=>{
+    if(el.disabled) return;
 
-      const now=Date.now();
-      if(now-lastFire<350)return;
-      lastFire=now;
+    const now = Date.now();
+    if(now - lastFire < 350) return;
+    lastFire = now;
 
-      if(e){
-        e.preventDefault();
-        e.stopPropagation();
-      }
-
-      try{
-        const unlock=Audio.unlockAudio();
-        if(unlock && typeof unlock.then==="function"){
-          unlock.then(()=>Audio.startBgm()).catch(()=>{});
-        }else{
-          Audio.startBgm();
-        }
-      }catch(err){
-        // Audio must never block UI navigation.
-      }
-
-      fn(e);
-    };
-
-    if(window.PointerEvent){
-      el.addEventListener("pointerup",fire,{passive:false});
-    }else{
-      el.addEventListener("touchend",fire,{passive:false});
+    if(e){
+      e.preventDefault();
+      e.stopPropagation();
     }
 
-    el.addEventListener("click",fire,{passive:false});
-  }
+    try{
+      const unlock = Audio.unlockAudio();
+
+      if(unlock && typeof unlock.then === "function"){
+        unlock
+          .then(()=>Audio.startBgm())
+          .catch(()=>{});
+      }else{
+        Audio.startBgm();
+      }
+    }catch(err){
+      // Audio must never block UI navigation.
+    }
+
+    fn(e);
+  };
+
+  /* clickだけに統一してタップ貫通を防ぐ */
+  el.addEventListener("click", fire, { passive:false });
+}
 
   function initGame(showMode=false){
     game=E.createState();
