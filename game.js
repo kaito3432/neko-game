@@ -863,30 +863,48 @@ if(
         Audio.play("capture");
         Audio.haptic([35,45,70]);
         A.burstAtBox(board,bi,"🐱✨");
-        A.shakeBoxSoon(board,bi);
         game.actionLocked=false;
         endGame("dogs",`${E.DOGS[di].name} が箱${bi+1}をクンクン……ネコを発見！`);
         return;
       }
+if(game.catHistory.has(bi)){
 
-      if(game.catHistory.has(bi)){
-        game.revealedTracks.set(bi,game.catHistory.get(bi));
-        if(!cpuMemory.discoveredTrackBoxes.includes(bi)) cpuMemory.discoveredTrackBoxes.push(bi);
+  // まだ発見していない痕跡かどうか
+  const isNewTrack = !game.revealedTracks.has(bi);
 
-        const foundBox=board.querySelector(`.box[data-box-index="${bi}"]`);
-        if(foundBox){
-          foundBox.classList.remove("found-track");
-          void foundBox.offsetWidth;
-          foundBox.classList.add("found-track");
-        }
-        Audio.haptic([15,35,25]);
-        A.shakeBoxSoon(board,bi);
+  game.revealedTracks.set(
+    bi,
+    game.catHistory.get(bi)
+  );
 
-        if(game.catHistory.get(bi)===1){
-          Audio.play("start");
-          A.burstAtBox(board,bi,"🚩✨");
-          showToast("🚩","スタート地点を発見！","ここから逃げ始めたみたいだワン！");
-        }else{
+  if(!cpuMemory.discoveredTrackBoxes.includes(bi)){
+    cpuMemory.discoveredTrackBoxes.push(bi);
+  }
+
+  // ★ 初めて発見した瞬間だけ演出
+  if(isNewTrack){
+    const foundBox=board.querySelector(
+      `.box[data-box-index="${bi}"]`
+    );
+
+    if(foundBox){
+      foundBox.classList.remove("found-track");
+      void foundBox.offsetWidth;
+      foundBox.classList.add("found-track");
+    }
+
+    Audio.haptic([15,35,25]);
+  }
+
+  if(game.catHistory.get(bi)===1){
+    Audio.play("start");
+    A.burstAtBox(board,bi,"🚩✨");
+    showToast(
+      "🚩",
+      "スタート地点を発見！",
+      "ここから逃げ始めたみたいだワン！"
+    );
+  }else{
   Audio.duckBgm(700);
   Audio.play("paw");
 
