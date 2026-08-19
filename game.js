@@ -774,10 +774,16 @@ if(
           A.burstAtBox(board,bi,"🚩✨");
           showToast("🚩","スタート地点を発見！","ここから逃げ始めたみたいだワン！");
         }else{
-          Audio.play("paw");
-          A.burstAtBox(board,bi,"🐾✨");
-          showToast("🐕🐾","クンクン……！","ネコの足跡を発見！");
-        }
+  Audio.duckBgm(700);
+  Audio.play("paw");
+
+  A.burstAtBox(board,bi,"🐾✨");
+  showToast(
+    "🐕🐾",
+    "クンクン……！",
+    "ネコの足跡を発見！"
+  );
+}
       }else{
         if(playMode==="cpuPolice") cpuMemory.emptyBoxes.add(bi);
         const emptyBox=board.querySelector(`.box[data-box-index="${bi}"]`);
@@ -2417,15 +2423,16 @@ if(game.turn>=E.MAX_TURNS){
       "ここから逃げ始めたみたいだワン！"
     );
   }else{
-    Audio.play("paw");
-    A.burstAtBox(board,box,"🐾✨");
-    showToast(
-      "🐕🐾",
-      "クンクン……！",
-      "ネコの足跡を発見！"
-    );
-  }
+  Audio.duckBgm(700);
+  Audio.play("paw");
 
+  A.burstAtBox(board,bi,"🐾✨");
+  showToast(
+    "🐕🐾",
+    "クンクン……！",
+    "ネコの足跡を発見！"
+  );
+}
   }else{
     const emptyBox=board.querySelector(
       `.box[data-box-index="${box}"]`
@@ -2911,14 +2918,16 @@ if(result==="track"){
       "ここから逃げ始めたみたいだワン！"
     );
   }else{
-    Audio.play("paw");
-    A.burstAtBox(board,box,"🐾✨");
-    showToast(
-      "🐕🐾",
-      "クンクン……！",
-      "ネコの足跡を発見！"
-    );
-  }
+  Audio.duckBgm(700);
+  Audio.play("paw");
+
+  A.burstAtBox(board,bi,"🐾✨");
+  showToast(
+    "🐕🐾",
+    "クンクン……！",
+    "ネコの足跡を発見！"
+  );
+}
 
 }else{
   const emptyBox=board.querySelector(
