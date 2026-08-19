@@ -2842,3 +2842,19 @@ body.turn-last .turn-pill{
   animation:none!important;
   transform:none!important;
 }
+/* PCで痕跡表示を完全固定 */
+.persistent-track,
+.persistent-track .track-badge,
+.persistent-track .track-art,
+.persistent-track .start-art{
+  animation:none!important;
+  transform:none!important;
+  transition:none!important;
+}
+
+/* 発見済みの箱は探索可能でも脈動させない */
+.box.revealed.searchable,
+.box.start-track.searchable{
+  animation:none!important;
+  transform:none!important;
+}
