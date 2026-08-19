@@ -2858,3 +2858,28 @@ body.turn-last .turn-pill{
   animation:none!important;
   transform:none!important;
 }
+/* ===== 痕跡発見演出：初回だけ光らせる ===== */
+
+.box.found-track{
+  animation:foundTrackFlashOnce .65s ease-out 1!important;
+}
+
+@keyframes foundTrackFlashOnce{
+  0%{
+    box-shadow:
+      0 0 0 0 rgba(255,190,60,.9),
+      0 3px 0 rgba(93,64,55,.16);
+  }
+
+  45%{
+    box-shadow:
+      0 0 0 8px rgba(255,190,60,.45),
+      0 3px 0 rgba(93,64,55,.16);
+  }
+
+  100%{
+    box-shadow:
+      0 0 0 0 rgba(255,190,60,0),
+      0 3px 0 rgba(93,64,55,.16);
+  }
+}
