@@ -3190,26 +3190,25 @@ bindPress(privacyBtn,()=>{
   }
 
   closePrivacy();
-});bindPress(againBtn,()=>{
+});  bindPress(againBtn,()=>{
   Audio.setBgmMode("normal");
   Audio.startBgm();
 
   // オンライン対戦終了後はホームへ戻す
-  if(
-    playMode==="onlineCat" ||
-    playMode==="onlinePolice"
-  ){
-    window.NyanOnline?.disconnect();
-    resetOnlineState();
-    initGame(true);
-    return;
-  }
+if(
+  playMode==="onlineCat" ||
+  playMode==="onlinePolice"
+){
+  window.NyanOnline?.disconnect();
+  resetOnlineState();
+  initGame(true);
+  return;
+}
 
-  // ローカル・CPU戦
+  // ローカル・CPU戦はこれまで通り再戦
   Audio.play("gamestart");
   initGame(false);
 });
 
-initGame(true);
-
+  initGame(true);
 })();
