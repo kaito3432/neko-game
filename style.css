@@ -2814,3 +2814,25 @@ body.turn-last .turn-pill{
   width:100%!important;
   margin-top:2px!important;
 }
+.track-layer{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:20;
+}
+
+.persistent-track{
+  position:absolute;
+  pointer-events:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.persistent-track .track-badge{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
