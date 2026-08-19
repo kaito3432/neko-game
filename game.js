@@ -1719,23 +1719,37 @@ if(cpuDifficulty==="hard"){
       return score;
     }
 
-    // Hard: 2-step escape planning + police pressure avoidance.
-    score+=dogDist*5.8;
-    score+=freedom*6.2;
-    score-=pressure*6.2;
-    if(freedom===0) score-=95;
-    if(freedom===1) score-=26;
+  // Hard: stronger 2-step escape planning + police pressure avoidance.
+score += dogDist * 6.2;
+score += freedom * 8.5;
+score -= pressure * 8.0;
 
-    const lookahead=cpuCatSecondStepValue(game.catPos,boxIndex);
-    if(lookahead>-999) score+=lookahead*.72;
+if(freedom === 0) score -= 150;
+if(freedom === 1) score -= 55;
+if(freedom === 2) score -= 10;
 
-    // Avoid getting squeezed toward an edge unless it is actually safe.
-    if(isEdgeBox(boxIndex) && freedom<=2) score-=8;
+const lookahead = cpuCatSecondStepValue(
+  game.catPos,
+  boxIndex
+);
 
-    score+=Math.random()*.3;
-    return score;
+if(lookahead > -999){
+  score += lookahead * 1.15;
+}
+
+/* 端に追い詰められる動きをかなり嫌う */
+if(isEdgeBox(boxIndex)){
+  if(freedom <= 2){
+    score -= 22;
+  }else{
+    score -= 4;
   }
+}
 
+/* ほぼ判断ミスしない */
+score += Math.random() * 0.08;
+
+return score;
   function cpuChooseStartBox(){
     let best=0,bestScore=-Infinity;
 
