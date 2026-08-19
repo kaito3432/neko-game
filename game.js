@@ -2821,7 +2821,7 @@ if(game.turn>=E.MAX_TURNS){
   Audio.duckBgm(700);
   Audio.play("paw");
 
-  A.burstAtBox(board,bi,"🐾✨");
+  A.burstAtBox(board,box,"🐾✨");
   showToast(
     "🐕🐾",
     "クンクン……！",
@@ -3316,7 +3316,7 @@ if(result==="track"){
   Audio.duckBgm(700);
   Audio.play("paw");
 
-  A.burstAtBox(board,bi,"🐾✨");
+  A.burstAtBox(board,box,"🐾✨");
   showToast(
     "🐕🐾",
     "クンクン……！",
