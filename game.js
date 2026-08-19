@@ -3190,25 +3190,91 @@ bindPress(privacyBtn,()=>{
   }
 
   closePrivacy();
-});  bindPress(againBtn,()=>{
+}); bindPress(againBtn,()=>{
   Audio.setBgmMode("normal");
   Audio.startBgm();
 
   // オンライン対戦終了後はホームへ戻す
-if(
-  playMode==="onlineCat" ||
-  playMode==="onlinePolice"
-){
-  window.NyanOnline?.disconnect();
-  resetOnlineState();
-  initGame(true);
-  return;
-}
+  if(
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice"
+  ){
+    window.NyanOnline?.disconnect();
+    resetOnlineState();
+    initGame(true);
+    return;
+  }
 
-  // ローカル・CPU戦はこれまで通り再戦
+  // CPUネコ戦：プレイヤー＝柴犬警察
+  if(playMode==="cpuCat"){
+    Audio.play("gamestart");
+
+    initGame(false);
+
+    game.phase="dogSetup";
+    game.turn=0;
+
+    const label={
+      easy:"やさしい",
+      normal:"ふつう",
+      hard:"つよい"
+    }[cpuDifficulty];
+
+    showPrivacy(
+      "🐕",
+      "0ターン目・警察配置",
+      `CPUネコ（${label}）と再戦します。まず柴犬警察3匹を中央16交差点に配置してください。`
+    );
+
+    setMessage(
+      "🐕 柴犬警察3匹を配置しよう。配置後、CPUネコが隠れます。"
+    );
+
+    render();
+    return;
+  }
+
+  // CPU警察戦：プレイヤー＝ネコ
+  if(playMode==="cpuPolice"){
+    Audio.play("gamestart");
+
+    initGame(false);
+
+    cpuSetupDogs();
+    game.phase="catSetup";
+    game.turn=1;
+
+    const label={
+      easy:"やさしい",
+      normal:"ふつう",
+      hard:"つよい"
+    }[cpuDifficulty];
+
+    showPrivacy(
+      "🐱",
+      "逃走1ターン目・ネコの番",
+      `CPU柴犬警察（${label}）と再戦します。配置を見て、スタート地点にする箱を1つ選んでください。`
+    );
+
+    setMessage(
+      "🐱 柴犬の配置を見て、好きな箱に隠れよう。"
+    );
+
+    render();
+    return;
+  }
+
+  // 通常の対人戦
   Audio.play("gamestart");
   initGame(false);
-});
 
+  showPrivacy(
+    "🐕",
+    "0ターン目・警察配置",
+    "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。"
+  );
+
+  render();
+});
   initGame(true);
 })();
