@@ -6,6 +6,19 @@
   const E=NyanEngine;
   const A=NyanAnimation;
   const Audio=NyanAudio;
+   // 盤面で頻繁に使う画像を先に読み込んでおく
+[
+  "./assets/images/paw.png",
+  "./assets/images/start.png",
+  "./assets/images/box.png",
+  "./assets/images/dog_red.png",
+  "./assets/images/dog_green.png",
+  "./assets/images/dog_blue.png"
+].forEach(src=>{
+  const img=new Image();
+  img.src=src;
+  img.decode?.().catch(()=>{});
+});
   let game;
   let toastTimer=null;
   let victoryCutinTimer=null;
@@ -426,18 +439,45 @@ function bindPress(el, fn){
     return false; // hard / つよい
   }
 
-  function publicTrackHTML(i){
-if(!game.revealedTracks.has(i))return"";
-     const turn=game.revealedTracks.get(i) ?? game.catHistory.get(i);
-    const turnBadge=shouldShowTrackTurn(turn)
-      ?`<b class="track-turn">${turn}</b>`
-      :"";
+function publicTrackHTML(i){
+  if(!game.revealedTracks.has(i)) return "";
 
-    if(game.catHistory.get(i)===1){
-      return`<span class="track-badge"><img class="start-art" src="./assets/images/start.png" alt="START">${turnBadge}</span>`;
-    }
-    return`<span class="track-badge"><img class="track-art" src="./assets/images/paw.png" alt="足跡">${turnBadge}</span>`;
+  const turn =
+    game.revealedTracks.get(i) ??
+    game.catHistory.get(i);
+
+  const turnBadge = shouldShowTrackTurn(turn)
+    ? `<b class="track-turn">${turn}</b>`
+    : "";
+
+  if(game.catHistory.get(i) === 1){
+    return `
+      <span class="track-badge">
+        <img
+          class="start-art"
+          src="./assets/images/start.png"
+          alt="START"
+          decoding="sync"
+          draggable="false"
+        >
+        ${turnBadge}
+      </span>
+    `;
   }
+
+  return `
+    <span class="track-badge">
+      <img
+        class="track-art"
+        src="./assets/images/paw.png"
+        alt="足跡"
+        decoding="sync"
+        draggable="false"
+      >
+      ${turnBadge}
+    </span>
+  `;
+}
 
 
   function handleBoxPress(i){
