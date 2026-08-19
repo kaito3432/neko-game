@@ -322,9 +322,82 @@ function bindPress(el, fn){
     renderDogCards();
     renderControls();
   }
+   function renderTrackLayer(){
+  let layer=board.querySelector(".track-layer");
+
+  if(!layer){
+    layer=document.createElement("div");
+    layer.className="track-layer";
+  }
+
+  const existing=new Map();
+
+  layer.querySelectorAll("[data-track-index]").forEach(el=>{
+    existing.set(
+      Number(el.dataset.trackIndex),
+      el
+    );
+  });
+
+  game.revealedTracks.forEach((turn,i)=>{
+    if(existing.has(i)){
+      existing.delete(i);
+      return;
+    }
+
+    const r=E.boxRow(i);
+    const c=E.boxCol(i);
+
+    const mark=document.createElement("div");
+    mark.className="persistent-track";
+    mark.dataset.trackIndex=String(i);
+
+    mark.style.left=`${5 + c*19}%`;
+    mark.style.top=`${5 + r*19}%`;
+    mark.style.width="14%";
+    mark.style.height="14%";
+
+    const turnBadge=shouldShowTrackTurn(turn)
+      ? `<b class="track-turn">${turn}</b>`
+      : "";
+
+    if(game.catHistory.get(i)===1){
+      mark.innerHTML=`
+        <span class="track-badge">
+          <img
+            class="start-art"
+            src="./assets/images/start.png"
+            alt="START"
+          >
+          ${turnBadge}
+        </span>
+      `;
+    }else{
+      mark.innerHTML=`
+        <span class="track-badge">
+          <img
+            class="track-art"
+            src="./assets/images/paw.png"
+            alt="足跡"
+          >
+          ${turnBadge}
+        </span>
+      `;
+    }
+
+    layer.appendChild(mark);
+  });
+
+  // 今は存在しなくなった痕跡だけ削除
+  existing.forEach(el=>el.remove());
+
+  board.appendChild(layer);
+}
 
   function renderBoard(){
-    board.innerHTML="";
+    board.querySelectorAll(
+  ":scope > .box, :scope > .node"
+).forEach(el=>el.remove());
 
     for(let i=0;i<E.BOX_COUNT;i++){
       const r=E.boxRow(i),c=E.boxCol(i),b=document.createElement("button");
@@ -364,7 +437,6 @@ function bindPress(el, fn){
         <img class="box-art" src="./assets/images/box.png" alt="">
         ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat_play_normal.png" alt="ネコ"></span>':""}
         ${privateHistoryHTML(i)}
-        ${publicTrackHTML(i)}
         ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}`;
 
       if(game.phase==="catSetup"){
@@ -420,6 +492,7 @@ function bindPress(el, fn){
       if(!n.disabled)bindPress(n,()=>handleNodePress(i));
       board.appendChild(n);
     }
+     renderTrackLayer();
   }
 
   function privateHistoryHTML(i){
