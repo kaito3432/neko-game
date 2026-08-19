@@ -1566,7 +1566,49 @@ function cpuSetupDogs(){
       game.cpuSearchesThisTurn=0;
     }
 
-    let di=game.dogAction.findIndex(a=>a===false);
+    const availableDogs=[];
+
+for(let d=0;d<3;d++){
+  if(game.dogAction[d]===false){
+    availableDogs.push(d);
+  }
+}
+
+let di=-1;
+
+if(availableDogs.length){
+  /*
+   * 痕跡がある場合は、痕跡に近い犬が
+   * 少し行動しやすい。ただし固定しない。
+   */
+  if(knownTrackBoxes().length){
+    const ranked=availableDogs
+      .map(d=>{
+        let dist=99;
+
+        knownTrackBoxes().forEach(b=>{
+          dist=Math.min(
+            dist,
+            nodeToBoxDistance(game.dogs[d],b)
+          );
+        });
+
+        return {
+          dog:d,
+          score:(8-dist)+Math.random()*4
+        };
+      })
+      .sort((a,b)=>b.score-a.score);
+
+    di=ranked[0].dog;
+
+  }else{
+    // 痕跡なしなら完全にランダム
+    di=availableDogs[
+      Math.floor(Math.random()*availableDogs.length)
+    ];
+  }
+}
 
     if(di===-1){
       cpuFinishTurn();
