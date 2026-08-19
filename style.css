@@ -2399,3 +2399,285 @@ body.turn-last .turn-pill{
   font-size:16px;
   text-align:center;
 }
+/* ==================================================
+   v1.0 iPhone / Mobile Responsive Final
+   ホーム画面を端末サイズに合わせて1画面に収める
+================================================== */
+
+.visual-update3{
+  height:100dvh!important;
+  min-height:100dvh!important;
+  overflow:hidden!important;
+}
+
+/* ホーム全体 */
+.vu3-home{
+  box-sizing:border-box!important;
+
+  width:min(100%,500px)!important;
+  height:100dvh!important;
+  min-height:0!important;
+
+  margin:0 auto!important;
+
+  padding:
+    max(6px,env(safe-area-inset-top))
+    clamp(8px,3vw,14px)
+    max(8px,env(safe-area-inset-bottom))!important;
+
+  display:grid!important;
+
+  /* 
+    1. ロゴ＋キャラクター
+    2. 遊び方を選んでね
+    3. 3つのゲームモード
+    4. 下メニュー
+  */
+  grid-template-rows:
+    minmax(0,clamp(170px,27dvh,270px))
+    auto
+    minmax(0,1fr)
+    auto!important;
+
+  gap:clamp(4px,.7dvh,8px)!important;
+
+  overflow:hidden!important;
+}
+
+
+/* ===== ロゴ＋キャラクター ===== */
+
+.vu3-brand{
+  min-height:0!important;
+  height:100%!important;
+
+  display:flex!important;
+  flex-direction:column!important;
+
+  align-items:center!important;
+  justify-content:flex-start!important;
+
+  overflow:hidden!important;
+}
+
+.vu3-logo{
+  flex:0 0 auto!important;
+
+  width:min(92%,410px)!important;
+  height:clamp(55px,8.5dvh,92px)!important;
+
+  object-fit:contain!important;
+
+  margin:0 auto!important;
+}
+
+.vu3-hero{
+  flex:1 1 0!important;
+
+  width:min(94%,420px)!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:none!important;
+
+  object-fit:contain!important;
+  object-position:center!important;
+
+  margin:0 auto!important;
+}
+
+
+/* ===== 「遊び方を選んでね」 ===== */
+
+.vu3-sub{
+  padding:clamp(1px,.35dvh,4px) 0!important;
+
+  font-size:clamp(15px,2.2dvh,21px)!important;
+  line-height:1!important;
+
+  white-space:nowrap;
+}
+
+
+/* ===== 3つのモード ===== */
+
+.vu3-modes{
+  min-height:0!important;
+
+  display:grid!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+
+  gap:clamp(5px,.7dvh,8px)!important;
+}
+
+.vu3-mode{
+  min-height:0!important;
+  height:100%!important;
+
+  padding:
+    clamp(4px,.6dvh,7px)
+    clamp(8px,3vw,15px)!important;
+
+  border-radius:clamp(14px,2.2vh,19px)!important;
+
+  grid-template-columns:minmax(0,1fr) minmax(92px,38%)!important;
+
+  overflow:hidden!important;
+}
+
+.vu3-copy{
+  min-width:0!important;
+}
+
+.vu3-copy strong{
+  font-size:clamp(20px,3dvh,30px)!important;
+  line-height:1!important;
+}
+
+.vu3-copy span{
+  margin-top:clamp(2px,.45dvh,5px)!important;
+
+  font-size:clamp(9px,1.3dvh,12px)!important;
+  line-height:1.15!important;
+}
+
+.vu3-mode-art{
+  width:100%!important;
+  height:100%!important;
+
+  min-width:0!important;
+  min-height:0!important;
+
+  object-fit:contain!important;
+}
+
+
+/* ===== 下部3ボタン ===== */
+
+.vu3-bottom{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+
+  gap:clamp(5px,1.8vw,8px)!important;
+
+  min-height:0!important;
+}
+
+.vu3-mini{
+  min-width:0!important;
+
+  min-height:0!important;
+  height:clamp(40px,5.8dvh,54px)!important;
+
+  padding:clamp(3px,.55dvh,6px)!important;
+
+  border-radius:clamp(11px,1.8vh,15px)!important;
+
+  gap:clamp(3px,1vw,7px)!important;
+
+  font-size:clamp(9px,2.7vw,12px)!important;
+
+  white-space:nowrap!important;
+}
+
+.vu3-svg{
+  width:clamp(21px,3.5dvh,27px)!important;
+  height:clamp(21px,3.5dvh,27px)!important;
+}
+
+
+/* ==================================================
+   縦が短い端末
+   iPhone SE系・横長比率のスマホなど
+================================================== */
+
+@media (max-height:740px){
+
+  .vu3-home{
+    grid-template-rows:
+      minmax(0,24dvh)
+      auto
+      minmax(0,1fr)
+      auto!important;
+
+    gap:3px!important;
+  }
+
+  .vu3-logo{
+    height:clamp(48px,7.8dvh,62px)!important;
+  }
+
+  .vu3-sub{
+    font-size:14px!important;
+  }
+
+  .vu3-copy strong{
+    font-size:19px!important;
+  }
+
+  .vu3-copy span{
+    font-size:8px!important;
+    margin-top:2px!important;
+  }
+
+  .vu3-mini{
+    height:38px!important;
+    font-size:9px!important;
+  }
+
+  .vu3-svg{
+    width:20px!important;
+    height:20px!important;
+  }
+}
+
+
+/* ==================================================
+   横幅が狭い端末
+================================================== */
+
+@media (max-width:374px){
+
+  .vu3-home{
+    padding-left:7px!important;
+    padding-right:7px!important;
+  }
+
+  .vu3-mode{
+    grid-template-columns:minmax(0,1fr) 35%!important;
+    padding-left:10px!important;
+    padding-right:7px!important;
+  }
+
+  .vu3-copy strong{
+    font-size:clamp(18px,6vw,23px)!important;
+  }
+
+  .vu3-copy span{
+    font-size:8px!important;
+  }
+
+  .vu3-mini{
+    font-size:9px!important;
+    gap:3px!important;
+  }
+}
+
+
+/* ==================================================
+   背が高い端末
+   Pro Max等では少しゆったり
+================================================== */
+
+@media (min-height:900px){
+
+  .vu3-home{
+    grid-template-rows:
+      minmax(0,29dvh)
+      auto
+      minmax(0,1fr)
+      auto!important;
+  }
+
+  .vu3-mini{
+    height:54px!important;
+  }
+}
