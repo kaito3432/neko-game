@@ -2699,3 +2699,34 @@ body.turn-last .turn-pill{
   max-height:100%!important;
   box-sizing:border-box!important;
 }
+/* ===== v1.0 ホーム：モードカード全面画像 ===== */
+
+.vu3-mode{
+  padding:0!important;
+  overflow:hidden!important;
+  display:block!important;
+  background:transparent!important;
+}
+
+.vu3-mode-full{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  border-radius:inherit;
+  pointer-events:none;
+}
+
+/* タップ感はボタン側に残す */
+.vu3-mode:active{
+  transform:translateY(2px) scale(.99);
+}
+
+/* 小さい端末でも文字や絵が切れにくいように */
+@media (max-width:390px){
+  .vu3-mode-full{
+    object-fit:contain;
+    background:#fff;
+  }
+}
