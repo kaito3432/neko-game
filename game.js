@@ -882,19 +882,24 @@ if(game.catHistory.has(bi)){
   }
 
   // ★ 初めて発見した瞬間だけ演出
-  if(isNewTrack){
-    const foundBox=board.querySelector(
-      `.box[data-box-index="${bi}"]`
-    );
+if(isNewTrack){
+  const foundBox=board.querySelector(
+    `.box[data-box-index="${bi}"]`
+  );
 
-    if(foundBox){
+  if(foundBox){
+    foundBox.classList.remove("found-track");
+    void foundBox.offsetWidth;
+    foundBox.classList.add("found-track");
+
+    // 1回の演出が終わったらクラスも外す
+    setTimeout(()=>{
       foundBox.classList.remove("found-track");
-      void foundBox.offsetWidth;
-      foundBox.classList.add("found-track");
-    }
-
-    Audio.haptic([15,35,25]);
+    },700);
   }
+
+  Audio.haptic([15,35,25]);
+}
 
   if(game.catHistory.get(bi)===1){
     Audio.play("start");
