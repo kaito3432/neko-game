@@ -2762,3 +2762,55 @@ body.turn-last .turn-pill{
   border-radius:inherit!important;
   pointer-events:none!important;
 }
+/* ===== ホーム：3カード最終整列 ===== */
+
+/* 3枚のカードエリア */
+.vu3-modes{
+  display:grid!important;
+  grid-template-rows:repeat(3, minmax(0, 1fr))!important;
+  gap:8px!important;
+  min-height:0!important;
+
+  /* 下メニューとの間を少し開ける */
+  margin-bottom:10px!important;
+}
+
+/* 3枚すべて完全に同じ形 */
+.vu3-mode{
+  position:relative!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+
+  padding:0!important;
+  margin:0!important;
+
+  overflow:hidden!important;
+  border-radius:20px!important;
+
+  display:block!important;
+  box-sizing:border-box!important;
+}
+
+/* 画像も3枚完全共通 */
+.vu3-mode-full{
+  position:absolute!important;
+  inset:0!important;
+
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+
+  object-fit:cover!important;
+  object-position:center!important;
+
+  transform:none!important;
+  border-radius:17px!important;
+  pointer-events:none!important;
+}
+
+/* 下の3ボタン */
+.vu3-bottom{
+  width:100%!important;
+  margin-top:2px!important;
+}
