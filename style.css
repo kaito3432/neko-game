@@ -2737,3 +2737,28 @@ body.turn-last .turn-pill{
     background:#fff;
   }
 }
+
+
+/* ===== ホーム3カード画像 修正 ===== */
+
+.vu3-mode{
+  position:relative!important;
+  padding:0!important;
+  overflow:hidden!important;
+  display:block!important;
+}
+
+.vu3-mode-full{
+  position:absolute!important;
+  inset:0!important;
+
+  width:100%!important;
+  height:100%!important;
+
+  object-fit:cover!important;
+  object-position:center!important;
+
+  transform:none!important;
+  border-radius:inherit!important;
+  pointer-events:none!important;
+}
