@@ -2836,3 +2836,9 @@ body.turn-last .turn-pill{
   align-items:center;
   justify-content:center;
 }
+/* 発見済みの痕跡・STARTは探索可能でも揺らさない */
+.box.revealed.searchable,
+.box.start-track.searchable{
+  animation:none!important;
+  transform:none!important;
+}
