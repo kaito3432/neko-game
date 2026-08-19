@@ -2677,6 +2677,7 @@ onlineStartGameBtn.hidden=false;
     }
   }
 // 警察がどの箱を探索しているかネコ側へ表示
+// 警察の探索をネコ側でも演出
 if(
   data.payload?.type==="policeSearch" &&
   onlineAssignedRole==="cat"
@@ -2696,17 +2697,20 @@ if(
       `🐕 ${E.DOGS[dogIndex].name} が箱${box+1}をクンクン調査中…`
     );
 
-    const searchedBox=board.querySelector(
-      `.box[data-box-index="${box}"]`
+    // 現在の犬位置・盤面を確実に反映
+    render();
+
+    // CPU戦と同じクンクン演出
+    A.animateSniff(
+      board,
+      game.dogs[dogIndex],
+      dogIndex,
+      box,
+      motionStatus,
+      ()=>{
+        // 演出終了後は特に何もしない
+      }
     );
-
-    if(searchedBox){
-      searchedBox.classList.add("online-searching");
-
-      setTimeout(()=>{
-        searchedBox.classList.remove("online-searching");
-      },700);
-    }
   }
 }
          
@@ -3210,6 +3214,7 @@ if(
     }
   }
 // 警察がどの箱を探索しているかネコ側へ表示
+// 警察の探索をネコ側でも演出
 if(
   data.payload?.type==="policeSearch" &&
   onlineAssignedRole==="cat"
@@ -3229,17 +3234,20 @@ if(
       `🐕 ${E.DOGS[dogIndex].name} が箱${box+1}をクンクン調査中…`
     );
 
-    const searchedBox=board.querySelector(
-      `.box[data-box-index="${box}"]`
+    // 現在の犬位置・盤面を確実に反映
+    render();
+
+    // CPU戦と同じクンクン演出
+    A.animateSniff(
+      board,
+      game.dogs[dogIndex],
+      dogIndex,
+      box,
+      motionStatus,
+      ()=>{
+        // 演出終了後は特に何もしない
+      }
     );
-
-    if(searchedBox){
-      searchedBox.classList.add("online-searching");
-
-      setTimeout(()=>{
-        searchedBox.classList.remove("online-searching");
-      },700);
-    }
   }
 }
         
