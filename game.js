@@ -1109,6 +1109,38 @@ finishDogTurnBtn.classList.toggle(
   function knownTrackBoxes(){
     return [...game.revealedTracks.keys()];
   }
+   function trackAge(boxIndex){
+  const trackTurn=game.revealedTracks.get(boxIndex);
+
+  if(!Number.isInteger(trackTurn)){
+    return 99;
+  }
+
+  return Math.max(
+    0,
+    game.turn-trackTurn
+  );
+}
+
+function trackFreshness(boxIndex){
+  const age=trackAge(boxIndex);
+
+  /*
+   * 発見した痕跡が現在から何ターン前か。
+   *
+   * 0～1ターン前 = 非常に強い情報
+   * 2～3ターン前 = かなり参考になる
+   * 4～5ターン前 = 弱い手掛かり
+   * 6ターン以上  = ほぼ参考程度
+   */
+  if(age<=1) return 1.00;
+  if(age===2) return 0.82;
+  if(age===3) return 0.62;
+  if(age===4) return 0.43;
+  if(age===5) return 0.28;
+
+  return 0.15;
+}
 
   function inferredHotBoxes(){
     const tracks=knownTrackBoxes();
@@ -1310,53 +1342,177 @@ if(cpuDifficulty==="hard"){
     return score;
   }
 
-  function hardProbabilityMap(){
-    const probs=new Map();
-    const tracks=knownTrackBoxes();
+function hardProbabilityMap(){
+  const probs=new Map();
+  const tracks=knownTrackBoxes();
 
-    for(let b=0;b<E.BOX_COUNT;b++){
-      let p=1;
+  for(let b=0;b<E.BOX_COUNT;b++){
+    let p=1;
 
-      if(game.cpuSearchedBoxes.has(b)) p*=0.08;
-      if(cpuMemory.emptyBoxes.has(b)) p*=0.03;
-      if(game.revealedTracks.has(b)) p*=0.25;
+    if(game.cpuSearchedBoxes.has(b)) p*=0.08;
+    if(cpuMemory.emptyBoxes.has(b)) p*=0.03;
+    if(game.revealedTracks.has(b)) p*=0.18;
 
-      if(tracks.length){
-        let nearest=99;
-        tracks.forEach(t=>nearest=Math.min(nearest,boxDistance(t,b)));
-        if(nearest===1) p*=7.5;
-        else if(nearest===2) p*=4.2;
-        else if(nearest===3) p*=2.1;
-        else p*=0.7;
-      }else{
-        const r=E.boxRow(b),c=E.boxCol(b);
-        p*=1.2+(2.2-Math.abs(r-2)*.25-Math.abs(c-2)*.25);
-      }
+    if(tracks.length){
 
-      p*=1+(catEscapeDegree(b)*.28);
-      probs.set(b,p);
+      let evidence=0;
+
+      tracks.forEach(t=>{
+        const age=trackAge(t);
+        const freshness=trackFreshness(t);
+        const dist=boxDistance(t,b);
+
+        /*
+         * 古い痕跡ほど猫が移動できる範囲が広い。
+         *
+         * age=1 → かなり近く
+         * age=3 → 中距離まで候補
+         * age=6 → 広範囲
+         */
+        const expectedRadius=
+          Math.min(7,Math.max(1,age+1));
+
+        const delta=
+          Math.abs(dist-expectedRadius);
+
+        let trackScore;
+
+        /*
+         * 新しい痕跡は近距離を強く評価。
+         */
+        if(age<=2){
+          if(dist<=age+1){
+            trackScore=
+              9.0-(dist*1.5);
+          }else{
+            trackScore=
+              Math.max(.4,4-(dist-age));
+          }
+
+        /*
+         * 中程度の古さなら
+         * 周辺だけでなく逃走先も見る。
+         */
+        }else if(age<=5){
+          trackScore=
+            Math.max(
+              .5,
+              5.5-delta
+            );
+
+        /*
+         * 古い痕跡なら場所を決めつけない。
+         */
+        }else{
+          trackScore=
+            Math.max(
+              .8,
+              2.2-delta*.2
+            );
+        }
+
+        evidence+=trackScore*freshness;
+      });
+
+      p*=1+evidence;
+
+    }else{
+      /*
+       * 情報ゼロの序盤。
+       * 中央固定を弱める。
+       */
+      const r=E.boxRow(b);
+      const c=E.boxCol(b);
+
+      const center=
+        2.5-
+        Math.abs(r-2)*.18-
+        Math.abs(c-2)*.18;
+
+      p*=1+Math.max(0,center);
+
+      // 毎ゲーム少し違う探索傾向
+      p*=0.82+Math.random()*.36;
     }
 
-    const total=[...probs.values()].reduce((a,b)=>a+b,0)||1;
-    probs.forEach((v,k)=>probs.set(k,v/total));
-    return probs;
+    /*
+     * 逃げ道の多い箱も候補に残す。
+     */
+    p*=1+(catEscapeDegree(b)*.20);
+
+    probs.set(b,p);
   }
 
-  function hardBestProbabilitySearch(di){
-    const boxes=E.getBoxesAroundNode(game.dogs[di]);
-    if(!boxes.length)return null;
-    const probs=hardProbabilityMap();
-    let best=null,bestScore=-Infinity;
+  const total=
+    [...probs.values()]
+      .reduce((a,b)=>a+b,0)||1;
 
-    boxes.forEach(b=>{
-      let s=(probs.get(b)||0)*160;
-      if(!game.cpuSearchedBoxes.has(b)) s+=18;
-      if(cpuMemory.emptyBoxes.has(b)) s-=25;
-      if(s>bestScore){bestScore=s;best=b;}
+  probs.forEach(
+    (v,k)=>probs.set(k,v/total)
+  );
+
+  return probs;
+}
+
+function hardBestProbabilitySearch(di){
+  const boxes=E.getBoxesAroundNode(game.dogs[di]);
+  if(!boxes.length)return null;
+
+  const probs=hardProbabilityMap();
+  const candidates=[];
+
+  boxes.forEach(b=>{
+    let s=(probs.get(b)||0)*160;
+
+    if(!game.cpuSearchedBoxes.has(b)) s+=18;
+    if(cpuMemory.emptyBoxes.has(b)) s-=25;
+
+    /*
+     * 痕跡がまだ1つも無い序盤は
+     * 探索候補に意図的な揺らぎを入れる。
+     */
+    if(!knownTrackBoxes().length){
+      s+=Math.random()*18;
+    }else{
+      s+=Math.random()*2;
+    }
+
+    candidates.push({
+      box:b,
+      score:s
     });
+  });
 
-    return best===null?null:{type:"search",target:best,score:bestScore};
+  candidates.sort((a,b)=>b.score-a.score);
+
+  /*
+   * 痕跡ゼロなら上位候補からランダム。
+   * 痕跡発見後はほぼ最善手を選ぶ。
+   */
+  if(!knownTrackBoxes().length){
+    const top=candidates.slice(
+      0,
+      Math.min(3,candidates.length)
+    );
+
+    const picked=
+      top[Math.floor(Math.random()*top.length)];
+
+    return {
+      type:"search",
+      target:picked.box,
+      score:picked.score
+    };
   }
+
+  const best=candidates[0];
+
+  return {
+    type:"search",
+    target:best.box,
+    score:best.score
+  };
+}
 
   function hardBestContainmentMove(di){
     const moves=E.getDogLegalMoves(game,di);
