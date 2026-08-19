@@ -901,19 +901,34 @@ if(isNewTrack){
   Audio.haptic([15,35,25]);
 }
 
-  if(game.catHistory.get(bi)===1){
+if(game.catHistory.get(bi)===1){
+
+  // START発見時もBGMを下げる
+  Audio.duckBgm(900);
+
+  setTimeout(()=>{
     Audio.play("start");
-    A.burstAtBox(board,bi,"🚩✨");
-    showToast(
-      "🚩",
-      "スタート地点を発見！",
-      "ここから逃げ始めたみたいだワン！"
-    );
-  }else{
-  Audio.duckBgm(700);
-  Audio.play("paw");
+  },60);
+
+  A.burstAtBox(board,bi,"🚩✨");
+
+  showToast(
+    "🚩",
+    "スタート地点を発見！",
+    "ここから逃げ始めたみたいだワン！"
+  );
+
+}else{
+
+  // 足跡発見
+  Audio.duckBgm(900);
+
+  setTimeout(()=>{
+    Audio.play("paw");
+  },60);
 
   A.burstAtBox(board,bi,"🐾✨");
+
   showToast(
     "🐕🐾",
     "クンクン……！",
