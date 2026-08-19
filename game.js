@@ -2676,6 +2676,40 @@ onlineStartGameBtn.hidden=false;
       render();
     }
   }
+// 警察がどの箱を探索しているかネコ側へ表示
+if(
+  data.payload?.type==="policeSearch" &&
+  onlineAssignedRole==="cat"
+){
+  const dogIndex=Number(data.payload.dogIndex);
+  const box=Number(data.payload.box);
+
+  if(
+    Number.isInteger(dogIndex) &&
+    dogIndex>=0 &&
+    dogIndex<3 &&
+    Number.isInteger(box) &&
+    box>=0 &&
+    box<E.BOX_COUNT
+  ){
+    setMessage(
+      `🐕 ${E.DOGS[dogIndex].name} が箱${box+1}をクンクン調査中…`
+    );
+
+    const searchedBox=board.querySelector(
+      `.box[data-box-index="${box}"]`
+    );
+
+    if(searchedBox){
+      searchedBox.classList.add("online-searching");
+
+      setTimeout(()=>{
+        searchedBox.classList.remove("online-searching");
+      },700);
+    }
+  }
+}
+         
          if(
   data.payload?.type==="dogTurnEnd" &&
   onlineAssignedRole==="cat"
@@ -3175,6 +3209,40 @@ if(
       render();
     }
   }
+// 警察がどの箱を探索しているかネコ側へ表示
+if(
+  data.payload?.type==="policeSearch" &&
+  onlineAssignedRole==="cat"
+){
+  const dogIndex=Number(data.payload.dogIndex);
+  const box=Number(data.payload.box);
+
+  if(
+    Number.isInteger(dogIndex) &&
+    dogIndex>=0 &&
+    dogIndex<3 &&
+    Number.isInteger(box) &&
+    box>=0 &&
+    box<E.BOX_COUNT
+  ){
+    setMessage(
+      `🐕 ${E.DOGS[dogIndex].name} が箱${box+1}をクンクン調査中…`
+    );
+
+    const searchedBox=board.querySelector(
+      `.box[data-box-index="${box}"]`
+    );
+
+    if(searchedBox){
+      searchedBox.classList.add("online-searching");
+
+      setTimeout(()=>{
+        searchedBox.classList.remove("online-searching");
+      },700);
+    }
+  }
+}
+        
         if(
   data.payload?.type==="dogTurnEnd" &&
   onlineAssignedRole==="cat"
