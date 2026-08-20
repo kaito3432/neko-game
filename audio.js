@@ -91,38 +91,7 @@ window.NyanAudio = (() => {
 
 async function unlockAudio(){
   if(unlocked) return true;
-
   unlocked=true;
-
-  // iPhone / Safari用：
-  // ユーザー操作中にSE Audioを一度だけ再生可能状態にする
-  for(const [name,src] of Object.entries(SFX)){
-    let a=sfxCache.get(name);
-
-    if(!a){
-      a=new Audio(src);
-      a.preload="auto";
-      a.playsInline=true;
-      sfxCache.set(name,a);
-    }
-
-    try{
-      a.volume=0;
-      a.currentTime=0;
-
-      const p=a.play();
-
-      if(p && typeof p.then==="function"){
-        await p.catch(()=>{});
-      }
-
-      a.pause();
-      a.currentTime=0;
-
-      // 本来の音量はplay()側で設定するので0のままでOK
-    }catch(e){}
-  }
-
   return true;
 }
 
