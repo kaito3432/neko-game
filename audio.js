@@ -87,10 +87,6 @@ try{
 
   const response=await fetch(url);
 
-  if(!response.ok){
-    throw new Error(`HTTP ${response.status}`);
-  }
-
   const arrayBuffer=await response.arrayBuffer();
   const buffer=await audioContext.decodeAudioData(arrayBuffer);
 
