@@ -1192,6 +1192,7 @@ finishDogTurnBtn.classList.toggle(
   function setMessage(t){message.textContent=t;}
 
   function showPrivacy(icon,title,text){
+     privacyBtn.textContent="OK";
     privacyIcon.textContent=icon;
     privacyTitle.textContent=title;
     privacyText.textContent=text;
