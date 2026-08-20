@@ -58,11 +58,59 @@ window.NyanAudio = (() => {
     win:"./assets/audio/jingle_cat_win.wav"
   };
 
-  let bgmMode="home";
-  let bgmStarted=false;
-  let bgmAudio=null;
-  let unlocked=false;
-  const sfxCache=new Map();
+let bgmMode="home";
+let bgmStarted=false;
+let bgmAudio=null;
+let unlocked=false;
+const sfxCache=new Map();
+
+// iPhoneでもBGM音量を変更するためのWeb Audio
+let audioContext=null;
+let bgmSource=null;
+let bgmGain=null;
+
+function setupBgmWebAudio(){
+  if(audioContext && bgmGain) return;
+
+  const AudioContextClass=
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if(!AudioContextClass) return;
+
+  try{
+    audioContext=new AudioContextClass();
+
+    const a=createBgm();
+
+    bgmSource=audioContext.createMediaElementSource(a);
+    bgmGain=audioContext.createGain();
+
+    bgmSource.connect(bgmGain);
+    bgmGain.connect(audioContext.destination);
+
+    // HTMLAudio側は100%にして、
+    // 実際の音量はGainNodeで制御
+    a.volume=1;
+
+    bgmGain.gain.value=
+      .58*(settings.bgmVolume/100);
+
+  }catch(e){
+    console.warn("BGM WebAudio setup failed",e);
+  }
+}
+
+function applyBgmVolume(){
+  const volume=.58*(settings.bgmVolume/100);
+
+  if(bgmGain){
+    bgmGain.gain.value=volume;
+  }else if(bgmAudio){
+    // Web Audio非対応ブラウザ用
+    bgmAudio.volume=volume;
+  }
+}
 
   function createBgm(){
     if(bgmAudio) return bgmAudio;
@@ -123,22 +171,49 @@ async function unlockAudio(){
     }
   }
 
-  async function startBgm(){
-    if(!settings.bgm) return;
-    const a=createBgm();
-    if(!a.src) a.src=BGM[bgmMode];
-    a.loop=true;
-    a.volume=.58*(settings.bgmVolume/100);
+async function startBgm(){
+  if(!settings.bgm) return;
 
-    // Keep playing continuously across ordinary taps / menus.
-    if(bgmStarted && !a.paused) return;
+  const a=createBgm();
 
-    bgmStarted=true;
+  // Web Audioを準備
+  setupBgmWebAudio();
+
+  // iPhoneではAudioContextがsuspendedになりやすいので復帰
+  if(audioContext && audioContext.state==="suspended"){
     try{
-      const p=a.play();
-      if(p && typeof p.then==="function") await p.catch(()=>{});
+      await audioContext.resume();
     }catch(e){}
   }
+
+  if(!a.src){
+    a.src=BGM[bgmMode];
+  }
+
+  a.loop=true;
+
+  // Web Audio使用時はHTMLAudio側の音量を1に固定
+  if(bgmGain){
+    a.volume=1;
+    applyBgmVolume();
+  }else{
+    a.volume=.58*(settings.bgmVolume/100);
+  }
+
+  if(bgmStarted && !a.paused){
+    return;
+  }
+
+  bgmStarted=true;
+
+  try{
+    const p=a.play();
+
+    if(p && typeof p.then==="function"){
+      await p.catch(()=>{});
+    }
+  }catch(e){}
+}
 
   function stopBgm(){
     bgmStarted=false;
@@ -224,13 +299,18 @@ if(p && typeof p.catch==="function"){
     return settings.vibration;
   }
 
-  function setBgmVolume(value){
-    const v=Math.max(0,Math.min(100,Number(value)||0));
-    settings.bgmVolume=v;
-    localStorage.setItem("nyanChaseBgmVolume",String(v));
-    if(bgmAudio) bgmAudio.volume=.58*(v/100);
-    return v;
-  }
+function setBgmVolume(value){
+  const v=Math.max(0,Math.min(100,Number(value)||0));
+
+  settings.bgmVolume=v;
+  localStorage.setItem("nyanChaseBgmVolume",String(v));
+
+  // iPhone → GainNode
+  // PCなどWeb Audio未使用時 → HTMLAudio.volume
+  applyBgmVolume();
+
+  return v;
+}
 
   preload();
 
