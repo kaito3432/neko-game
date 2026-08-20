@@ -150,37 +150,13 @@ Object.entries(SFX).forEach(([name,src])=>{
   }
 
 async function unlockAudio(){
+  if(unlocked) return true;
+
   try{
-    // BGM用Web Audioを準備
     setupBgmWebAudio();
 
-    // iOSで停止中のAudioContextを復帰
     if(audioContext && audioContext.state==="suspended"){
       await audioContext.resume();
-    }
-
-    // SEをユーザー操作中に一度だけ無音で再生して
-    // iOSの音声再生制限を解除する
-    const src=SFX.tap;
-
-    if(src){
-      const a=new Audio(src);
-      a.preload="auto";
-      a.playsInline=true;
-      a.volume=0;
-
-      try{
-        const p=a.play();
-
-        if(p && typeof p.then==="function"){
-          await p;
-        }
-
-        a.pause();
-        a.currentTime=0;
-      }catch(e){
-        console.warn("SE unlock failed",e);
-      }
     }
 
     unlocked=true;
