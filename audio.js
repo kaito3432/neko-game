@@ -89,12 +89,42 @@ window.NyanAudio = (() => {
     });
   }
 
-  async function unlockAudio(){
-    // bindPress runs on every tap. Never touch the active BGM here.
-    if(unlocked) return true;
-    unlocked=true;
-    return true;
+async function unlockAudio(){
+  if(unlocked) return true;
+
+  unlocked=true;
+
+  // iPhone / Safari用：
+  // ユーザー操作中にSE Audioを一度だけ再生可能状態にする
+  for(const [name,src] of Object.entries(SFX)){
+    let a=sfxCache.get(name);
+
+    if(!a){
+      a=new Audio(src);
+      a.preload="auto";
+      a.playsInline=true;
+      sfxCache.set(name,a);
+    }
+
+    try{
+      a.volume=0;
+      a.currentTime=0;
+
+      const p=a.play();
+
+      if(p && typeof p.then==="function"){
+        await p.catch(()=>{});
+      }
+
+      a.pause();
+      a.currentTime=0;
+
+      // 本来の音量はplay()側で設定するので0のままでOK
+    }catch(e){}
   }
+
+  return true;
+}
 
   async function switchBgm(mode, force=false){
     if(!BGM[mode]) mode="normal";
@@ -170,10 +200,21 @@ window.NyanAudio = (() => {
     }
 
     try{
-      const a=base.cloneNode(true);
-      a.volume=SFX_VOLUME[name] ?? .28;
-      a.playsInline=true;
-      const p=a.play();
+const a=base;
+
+try{
+  a.pause();
+  a.currentTime=0;
+}catch(e){}
+
+a.volume=SFX_VOLUME[name] ?? .28;
+a.playsInline=true;
+
+const p=a.play();
+
+if(p && typeof p.catch==="function"){
+  p.catch(()=>{});
+}
       if(p && typeof p.catch==="function") p.catch(()=>{});
     }catch(e){}
   }
