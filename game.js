@@ -838,14 +838,21 @@ if(
     game.dogAction[di]="search";
     game.selectedDog=null;
     game.actionLocked=true;
-     if(playMode==="onlinePolice"){
+if(playMode==="onlinePolice"){
+
+  // ★ 警察側でも探索開始SE
+  Audio.play("sniff");
+
   window.NyanOnline.sendGame({
     type:"search",
     dogIndex:di,
     box:bi
   });
 
-  setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} がクンクン調査中…`);
+  setMessage(
+    `${E.DOGS[di].label} ${E.DOGS[di].name} がクンクン調査中…`
+  );
+
   render();
   return;
 }
@@ -2982,15 +2989,25 @@ if(
     }
 
     // ★ 猫側でも痕跡発見SEを鳴らす
-    if(isNewTrack){
-      Audio.duckBgm(1000);
+if(isNewTrack){
+  Audio.duckBgm(1200);
 
-      if(trackTurn===1){
-        Audio.play("start");
-      }else{
-        Audio.play("paw");
-      }
-    }
+  if(trackTurn===1){
+
+    // START
+    setTimeout(()=>{
+      Audio.play("start");
+    },180);
+
+  }else{
+
+    // 通常足跡
+    setTimeout(()=>{
+      Audio.play("paw");
+    },250);
+
+  }
+}
   }
 
   render();
@@ -3534,15 +3551,25 @@ if(
     }
 
     // ★ 猫側でも痕跡発見SEを鳴らす
-    if(isNewTrack){
-      Audio.duckBgm(1000);
+if(isNewTrack){
+  Audio.duckBgm(1200);
 
-      if(trackTurn===1){
-        Audio.play("start");
-      }else{
-        Audio.play("paw");
-      }
-    }
+  if(trackTurn===1){
+
+    // START
+    setTimeout(()=>{
+      Audio.play("start");
+    },180);
+
+  }else{
+
+    // 通常足跡
+    setTimeout(()=>{
+      Audio.play("paw");
+    },250);
+
+  }
+}
   }
 
   render();
