@@ -3680,10 +3680,13 @@ bindPress(backToTitleBtn,()=>{
 });
   bindPress(sfxToggleBtn,()=>{Audio.toggleSfx();updateSettingsUI();});
   bindPress(bgmToggleBtn,()=>{Audio.toggleBgm();updateSettingsUI();});
-bgmVolumeSlider.addEventListener("input",()=>{
+function applyBgmVolume(){
   const v=Audio.setBgmVolume(bgmVolumeSlider.value);
   bgmVolumeValue.textContent=`${v}%`;
-});
+}
+
+bgmVolumeSlider.addEventListener("input",applyBgmVolume);
+bgmVolumeSlider.addEventListener("change",applyBgmVolume);
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
 bindPress(privacyBtn,()=>{
