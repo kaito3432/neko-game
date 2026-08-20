@@ -15,26 +15,26 @@ window.NyanAudio = (() => {
   };
 
   const SFX_VOLUME={
-    tap:0.05,
-    button:0.05,
-    box:0.065,
-    sniff:0.065,
-    search:0.065,
-    paw:0.075,
-    footprint:0.075,
-    cat:0.03125,
-    move:0.03125,
-    empty:0.06,
-    invalid:0.06,
-    start:0.075,
-    lastturn:0.075,
-    turn:0.07,
-    gamestart:0.08,
-    capture:0.085,
-    catwin:0.115,
-    policewin:0.115,
-    win:.23
-  };
+  tap:0.12,
+  button:0.12,
+  box:0.18,
+  sniff:0.20,
+  search:0.20,
+  paw:0.24,
+  footprint:0.24,
+  cat:0.14,
+  move:0.14,
+  empty:0.18,
+  invalid:0.18,
+  start:0.24,
+  lastturn:0.22,
+  turn:0.20,
+  gamestart:0.24,
+  capture:0.30,
+  catwin:0.34,
+  policewin:0.34,
+  win:0.38
+};
 
   const SFX={
     tap:"./assets/audio/se_button_tap.wav",
