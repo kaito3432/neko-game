@@ -132,19 +132,64 @@ function createBgm(){
       a.preload="auto";
       a.src=src;
     });
-    Object.entries(SFX).forEach(([name,src])=>{
-      if(sfxCache.has(name)) return;
-      const a=new Audio(src);
-      a.preload="auto";
-      a.playsInline=true;
-      sfxCache.set(name,a);
-    });
+Object.entries(SFX).forEach(([name,src])=>{
+  if(sfxCache.has(name)) return;
+
+  const a=new Audio();
+  a.src=src;
+  a.preload="auto";
+  a.playsInline=true;
+
+  // iOS WebViewで読み込みを明示
+  try{
+    a.load();
+  }catch(e){}
+
+  sfxCache.set(name,a);
+});
   }
 
 async function unlockAudio(){
-  if(unlocked) return true;
-  unlocked=true;
-  return true;
+  try{
+    // BGM用Web Audioを準備
+    setupBgmWebAudio();
+
+    // iOSで停止中のAudioContextを復帰
+    if(audioContext && audioContext.state==="suspended"){
+      await audioContext.resume();
+    }
+
+    // SEをユーザー操作中に一度だけ無音で再生して
+    // iOSの音声再生制限を解除する
+    const src=SFX.tap;
+
+    if(src){
+      const a=new Audio(src);
+      a.preload="auto";
+      a.playsInline=true;
+      a.volume=0;
+
+      try{
+        const p=a.play();
+
+        if(p && typeof p.then==="function"){
+          await p;
+        }
+
+        a.pause();
+        a.currentTime=0;
+      }catch(e){
+        console.warn("SE unlock failed",e);
+      }
+    }
+
+    unlocked=true;
+    return true;
+
+  }catch(e){
+    console.warn("Audio unlock failed",e);
+    return false;
+  }
 }
 
   async function switchBgm(mode, force=false){
@@ -240,38 +285,50 @@ async function startBgm(){
     switchBgm(mode,false);
   }
 
-  async function play(name){
-    if(!settings.sfx) return;
-    const src=SFX[name];
-    if(!src) return;
+async function play(name){
+  if(!settings.sfx) return;
 
-    let base=sfxCache.get(name);
-    if(!base){
-      base=new Audio(src);
-      base.preload="auto";
-      base.playsInline=true;
-      sfxCache.set(name,base);
-    }
+  const src=SFX[name];
+  if(!src) return;
 
+  // iOSでAudioContextが停止していたら復帰を試みる
+  if(audioContext && audioContext.state==="suspended"){
     try{
-const a=base;
-
-try{
-  a.pause();
-  a.currentTime=0;
-}catch(e){}
-
-a.volume=SFX_VOLUME[name] ?? .28;
-a.playsInline=true;
-
-const p=a.play();
-
-if(p && typeof p.catch==="function"){
-  p.catch(()=>{});
-}
-      if(p && typeof p.catch==="function") p.catch(()=>{});
+      await audioContext.resume();
     }catch(e){}
   }
+
+  let base=sfxCache.get(name);
+
+  if(!base){
+    base=new Audio(src);
+    base.preload="auto";
+    base.playsInline=true;
+    base.load();
+    sfxCache.set(name,base);
+  }
+
+  try{
+    // ★ 同じAudioを使い回さない
+    // オンライン受信が連続しても前のSEを止めない
+    const a=base.cloneNode(true);
+
+    a.volume=SFX_VOLUME[name] ?? .28;
+    a.playsInline=true;
+    a.preload="auto";
+
+    const p=a.play();
+
+    if(p && typeof p.catch==="function"){
+      p.catch(err=>{
+        console.warn("SE play failed:",name,err);
+      });
+    }
+
+  }catch(err){
+    console.warn("SE error:",name,err);
+  }
+}
 
   function haptic(pattern){
     if(!settings.vibration) return;
