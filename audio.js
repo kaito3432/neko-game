@@ -163,19 +163,8 @@ function createBgm(){
       a.preload="auto";
       a.src=src;
     });
-function preload(){
-  Object.values(BGM).forEach(src=>{
-    const a=new Audio();
-    a.preload="auto";
-    a.src=src;
-  });
 
-  // SEはWeb Audio用バッファとして先読み
-  Object.keys(SFX).forEach(name=>{
-    loadSfxBuffer(name);
-  });
 }
-  }
 
 async function unlockAudio(){
   if(unlocked) return true;
