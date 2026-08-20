@@ -3512,11 +3512,25 @@ if(
     box<E.BOX_COUNT &&
     Number.isInteger(trackTurn)
   ){
+    // 今回初めて公開された痕跡か
+    const isNewTrack=!game.revealedTracks.has(box);
+
     game.revealedTracks.set(box,trackTurn);
 
-    // START地点として発見された場合
+    // START地点
     if(trackTurn===1){
       game.catHistory.set(box,1);
+    }
+
+    // ★ 猫側でも痕跡発見SEを鳴らす
+    if(isNewTrack){
+      Audio.duckBgm(1000);
+
+      if(trackTurn===1){
+        Audio.play("start");
+      }else{
+        Audio.play("paw");
+      }
     }
   }
 
