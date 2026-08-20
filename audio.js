@@ -80,24 +80,32 @@ let bgmGain=null;
 
   if(!audioContext) return null;
 
-  try{
-    const response=await fetch(src);
+try{
+  const url=new URL(src,window.location.href).href;
 
-    if(!response.ok){
-      throw new Error(`HTTP ${response.status}`);
-    }
+  console.log("SFX loading:",name,url);
 
-    const arrayBuffer=await response.arrayBuffer();
-    const buffer=await audioContext.decodeAudioData(arrayBuffer);
+  const response=await fetch(url);
 
-    sfxBufferCache.set(name,buffer);
-
-    return buffer;
-
-  }catch(err){
-    console.warn("SFX buffer load failed:",name,err);
-    return null;
+  if(!response.ok){
+    throw new Error(`HTTP ${response.status}`);
   }
+
+  const arrayBuffer=await response.arrayBuffer();
+  const buffer=await audioContext.decodeAudioData(arrayBuffer);
+
+  sfxBufferCache.set(name,buffer);
+
+  return buffer;
+
+}catch(err){
+  console.warn(
+    "SFX buffer load failed:",
+    name,
+    err?.message || String(err)
+  );
+  return null;
+}
 }
 
 function setupBgmWebAudio(){
