@@ -63,11 +63,42 @@ let bgmStarted=false;
 let bgmAudio=null;
 let unlocked=false;
 const sfxCache=new Map();
-
+const sfxBufferCache=new Map();
 // iPhoneでもBGM音量を変更するためのWeb Audio
 let audioContext=null;
 let bgmSource=null;
 let bgmGain=null;
+  async function loadSfxBuffer(name){
+  if(sfxBufferCache.has(name)){
+    return sfxBufferCache.get(name);
+  }
+
+  const src=SFX[name];
+  if(!src) return null;
+
+  setupBgmWebAudio();
+
+  if(!audioContext) return null;
+
+  try{
+    const response=await fetch(src);
+
+    if(!response.ok){
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const arrayBuffer=await response.arrayBuffer();
+    const buffer=await audioContext.decodeAudioData(arrayBuffer);
+
+    sfxBufferCache.set(name,buffer);
+
+    return buffer;
+
+  }catch(err){
+    console.warn("SFX buffer load failed:",name,err);
+    return null;
+  }
+}
 
 function setupBgmWebAudio(){
   if(audioContext && bgmGain) return;
@@ -132,21 +163,18 @@ function createBgm(){
       a.preload="auto";
       a.src=src;
     });
-Object.entries(SFX).forEach(([name,src])=>{
-  if(sfxCache.has(name)) return;
+function preload(){
+  Object.values(BGM).forEach(src=>{
+    const a=new Audio();
+    a.preload="auto";
+    a.src=src;
+  });
 
-  const a=new Audio();
-  a.src=src;
-  a.preload="auto";
-  a.playsInline=true;
-
-  // iOS WebViewで読み込みを明示
-  try{
-    a.load();
-  }catch(e){}
-
-  sfxCache.set(name,a);
-});
+  // SEはWeb Audio用バッファとして先読み
+  Object.keys(SFX).forEach(name=>{
+    loadSfxBuffer(name);
+  });
+}
   }
 
 async function unlockAudio(){
@@ -158,6 +186,11 @@ async function unlockAudio(){
     if(audioContext && audioContext.state==="suspended"){
       await audioContext.resume();
     }
+
+    // SEバッファを初回操作時に読み込み開始
+    await Promise.all(
+      Object.keys(SFX).map(name=>loadSfxBuffer(name))
+    );
 
     unlocked=true;
     return true;
@@ -264,45 +297,35 @@ async function startBgm(){
 async function play(name){
   if(!settings.sfx) return;
 
-  const src=SFX[name];
-  if(!src) return;
+  setupBgmWebAudio();
 
-  // iOSでAudioContextが停止していたら復帰を試みる
-  if(audioContext && audioContext.state==="suspended"){
+  if(!audioContext) return;
+
+  if(audioContext.state==="suspended"){
     try{
       await audioContext.resume();
     }catch(e){}
   }
 
-  let base=sfxCache.get(name);
-
-  if(!base){
-    base=new Audio(src);
-    base.preload="auto";
-    base.playsInline=true;
-    base.load();
-    sfxCache.set(name,base);
-  }
-
   try{
-    // ★ 同じAudioを使い回さない
-    // オンライン受信が連続しても前のSEを止めない
-    const a=base.cloneNode(true);
+    const buffer=await loadSfxBuffer(name);
+    if(!buffer) return;
 
-    a.volume=SFX_VOLUME[name] ?? .28;
-    a.playsInline=true;
-    a.preload="auto";
+    const source=audioContext.createBufferSource();
+    const gain=audioContext.createGain();
 
-    const p=a.play();
+    source.buffer=buffer;
 
-    if(p && typeof p.catch==="function"){
-      p.catch(err=>{
-        console.warn("SE play failed:",name,err);
-      });
-    }
+    gain.gain.value=
+      SFX_VOLUME[name] ?? 0.28;
+
+    source.connect(gain);
+    gain.connect(audioContext.destination);
+
+    source.start(0);
 
   }catch(err){
-    console.warn("SE error:",name,err);
+    console.warn("SE WebAudio play failed:",name,err);
   }
 }
 
