@@ -2903,6 +2903,9 @@ if(
 ){
   game.actionLocked=false;
 
+  Audio.duckBgm(900);
+  Audio.play("capture");
+
   endGame(
     "dogs",
     "柴犬警察に見つかってしまいました！"
@@ -3450,6 +3453,9 @@ if(
   onlineAssignedRole==="cat"
 ){
   game.actionLocked=false;
+
+  Audio.duckBgm(900);
+  Audio.play("capture");
 
   endGame(
     "dogs",
