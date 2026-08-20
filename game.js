@@ -3680,11 +3680,10 @@ bindPress(backToTitleBtn,()=>{
 });
   bindPress(sfxToggleBtn,()=>{Audio.toggleSfx();updateSettingsUI();});
   bindPress(bgmToggleBtn,()=>{Audio.toggleBgm();updateSettingsUI();});
-  bgmVolumeSlider.addEventListener("input",()=>{
-    const v=Audio.setBgmVolume(bgmVolumeSlider.value);
-    bgmVolumeValue.textContent=`${v}%`;
-    Audio.startBgm();
-  });
+bgmVolumeSlider.addEventListener("input",()=>{
+  const v=Audio.setBgmVolume(bgmVolumeSlider.value);
+  bgmVolumeValue.textContent=`${v}%`;
+});
   bindPress(vibrationToggleBtn,()=>{Audio.toggleVibration();updateSettingsUI();});
   bindPress(finishDogTurnBtn,finishDogTurn);
 bindPress(privacyBtn,()=>{
