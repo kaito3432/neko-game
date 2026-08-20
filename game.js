@@ -1239,15 +1239,15 @@ function openSettings(){
 
   updateSettingsUI();
 
-  // ホーム画面・オンライン対戦では
-  // 「最初からやり直す」を表示しない
-  const hideRestart =
-    game.phase === "home" ||
-    playMode === "onlineCat" ||
-    playMode === "onlinePolice";
+  const isHome =
+    modeOverlay.classList.contains("show");
+
+  const isOnline =
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice";
 
   restartFromSettingsBtn.style.display =
-    hideRestart ? "none" : "";
+    (isHome || isOnline) ? "none" : "";
 
   settingsOverlay.classList.add("show");
 }
