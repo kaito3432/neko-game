@@ -1234,11 +1234,23 @@ finishDogTurnBtn.classList.toggle(
     bgmVolumeValue.textContent=`${Audio.settings.bgmVolume}%`;
   }
 
-  function openSettings(){
-    if(game.actionLocked)return;
-    updateSettingsUI();
-    settingsOverlay.classList.add("show");
-      }
+function openSettings(){
+  if(game.actionLocked)return;
+
+  updateSettingsUI();
+
+  // ホーム画面・オンライン対戦では
+  // 「最初からやり直す」を表示しない
+  const hideRestart =
+    game.phase === "home" ||
+    playMode === "onlineCat" ||
+    playMode === "onlinePolice";
+
+  restartFromSettingsBtn.style.display =
+    hideRestart ? "none" : "";
+
+  settingsOverlay.classList.add("show");
+}
 
   function closeSettings(){settingsOverlay.classList.remove("show");}
 
