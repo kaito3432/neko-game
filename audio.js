@@ -112,15 +112,19 @@ function applyBgmVolume(){
   }
 }
 
-  function createBgm(){
-    if(bgmAudio) return bgmAudio;
-    bgmAudio=new Audio();
-    bgmAudio.loop=true;
-    bgmAudio.preload="auto";
-    bgmAudio.playsInline=true;
-    bgmAudio.volume=.58*(settings.bgmVolume/100);
-    return bgmAudio;
-  }
+function createBgm(){
+  if(bgmAudio) return bgmAudio;
+
+  bgmAudio=new Audio();
+  bgmAudio.loop=true;
+  bgmAudio.preload="auto";
+  bgmAudio.playsInline=true;
+
+  // Web Audio使用前のフォールバック音量
+  bgmAudio.volume=.58*(settings.bgmVolume/100);
+
+  return bgmAudio;
+}
 
   function preload(){
     Object.values(BGM).forEach(src=>{
@@ -159,8 +163,14 @@ async function unlockAudio(){
       a.load();
     }
 
-    a.loop=true;
-    a.volume=.58*(settings.bgmVolume/100);
+a.loop=true;
+
+if(bgmGain){
+  a.volume=1;
+  applyBgmVolume();
+}else{
+  a.volume=.58*(settings.bgmVolume/100);
+}
 
     if(settings.bgm && (bgmStarted||force)){
       bgmStarted=true;
@@ -268,16 +278,55 @@ if(p && typeof p.catch==="function"){
     try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
   }
 
-  function duckBgm(ms=700){
-    if(!bgmAudio || !settings.bgm) return;
-    const normal=.58*(settings.bgmVolume/100);
-    bgmAudio.volume=Math.max(.04,normal*.30);
-    setTimeout(()=>{
-      if(bgmAudio && settings.bgm){
-        bgmAudio.volume=normal;
-      }
-    },ms);
+function duckBgm(ms=700){
+  if(!settings.bgm) return;
+
+  const normal=.58*(settings.bgmVolume/100);
+  const ducked=Math.max(.04,normal*.30);
+
+  // Web Audio使用時
+  if(bgmGain && audioContext){
+    const now=audioContext.currentTime;
+
+    try{
+      bgmGain.gain.cancelScheduledValues(now);
+      bgmGain.gain.setValueAtTime(
+        bgmGain.gain.value,
+        now
+      );
+
+      // SEが聞こえるようにBGMを下げる
+      bgmGain.gain.linearRampToValueAtTime(
+        ducked,
+        now+0.05
+      );
+
+      // 指定時間後に元の音量へ
+      bgmGain.gain.setValueAtTime(
+        ducked,
+        now+(ms/1000)
+      );
+
+      bgmGain.gain.linearRampToValueAtTime(
+        normal,
+        now+(ms/1000)+0.15
+      );
+    }catch(e){}
+
+    return;
   }
+
+  // Web Audio非対応ブラウザ
+  if(!bgmAudio) return;
+
+  bgmAudio.volume=ducked;
+
+  setTimeout(()=>{
+    if(bgmAudio && settings.bgm){
+      bgmAudio.volume=normal;
+    }
+  },ms);
+}
 
   function toggleSfx(){
     settings.sfx=!settings.sfx;
