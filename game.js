@@ -2906,10 +2906,12 @@ if(
   Audio.duckBgm(900);
   Audio.play("capture");
 
-  endGame(
-    "dogs",
-    "柴犬警察に見つかってしまいました！"
-  );
+  setTimeout(()=>{
+    endGame(
+      "dogs",
+      "柴犬警察に見つかってしまいました！"
+    );
+  },500);
 
   return;
 }
@@ -3457,10 +3459,12 @@ if(
   Audio.duckBgm(900);
   Audio.play("capture");
 
-  endGame(
-    "dogs",
-    "柴犬警察に見つかってしまいました！"
-  );
+  setTimeout(()=>{
+    endGame(
+      "dogs",
+      "柴犬警察に見つかってしまいました！"
+    );
+  },500);
 
   return;
 }
