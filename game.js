@@ -30,7 +30,7 @@
   let cpuMemory={
     lastDogNodes:[null,null,null],
     discoveredTrackBoxes:[],
-    emptyBoxes:new Set(),
+    emptyBoxes:new Map(),
     recentTargets:[],
     thoughtText:""
   };
@@ -168,7 +168,7 @@ function bindPress(el, fn){
     cpuMemory={
       lastDogNodes:[null,null,null],
       discoveredTrackBoxes:[],
-      emptyBoxes:new Set(),
+      emptyBoxes:new Map(),
       recentTargets:[],
       thoughtText:""
     };
@@ -943,7 +943,7 @@ if(game.catHistory.get(bi)===1){
   );
 }
       }else{
-        if(playMode==="cpuPolice") cpuMemory.emptyBoxes.add(bi);
+        if(playMode==="cpuPolice") cpuMemory.emptyBoxes.set(bi, game.turn);
         const emptyBox=board.querySelector(`.box[data-box-index="${bi}"]`);
         if(emptyBox){
           emptyBox.classList.remove("empty-search");
@@ -1341,8 +1341,17 @@ function trackFreshness(boxIndex){
       // Prefer escape corridors with multiple onward options.
       s+=catEscapeDegree(b)*1.25;
 
-      if(game.cpuSearchedBoxes.has(b)) s-=5.5;
-      if(cpuMemory.emptyBoxes.has(b)) s-=6.5;
+      
+      if(cpuMemory.emptyBoxes.has(b)){
+  const emptyTurn=cpuMemory.emptyBoxes.get(b);
+  const age=Math.max(0,game.turn-emptyTurn);
+
+  if(age===0) s-=6.5;
+  else if(age===1) s-=4.5;
+  else if(age===2) s-=2.5;
+  else if(age===3) s-=1.2;
+  else s-=0.3;
+}
 
       scores.set(b,s);
     }
@@ -1418,9 +1427,19 @@ if(cpuDifficulty==="hard"){
     let score=(hot.get(boxIndex)||0);
 
     // Always value fresh information.
-    if(!game.cpuSearchedBoxes.has(boxIndex)) score+=profile.fresh;
-    if(game.cpuSearchedBoxes.has(boxIndex)) score-=16;
-    if(cpuMemory.emptyBoxes.has(boxIndex)) score-=18;
+if(!game.cpuSearchedBoxes.has(boxIndex)){
+  score+=profile.fresh;
+}
+    if(cpuMemory.emptyBoxes.has(boxIndex)){
+  const emptyTurn=cpuMemory.emptyBoxes.get(boxIndex);
+  const age=Math.max(0,game.turn-emptyTurn);
+
+  if(age===0) score-=18;
+  else if(age===1) score-=12;
+  else if(age===2) score-=7;
+  else if(age===3) score-=3;
+  else score-=1;
+}
 
     // Evidence discovered here previously is useful, but do not obsess forever.
     if(game.revealedTracks.has(boxIndex)) score-=4;
@@ -1470,11 +1489,24 @@ if(cpuDifficulty==="hard"){
     hot.forEach(b=>nearest=Math.min(nearest,nodeToBoxDistance(node,b)));
     score+=Math.max(0,7-nearest)*2.1;
 
-    // Nodes overlooking multiple fresh boxes are valuable.
-    const around=E.getBoxesAroundNode(node);
-    const fresh=around.filter(b=>!game.cpuSearchedBoxes.has(b)).length;
-    score+=fresh*1.35;
-    if(fresh===0) score-=5.5;
+// 最近探索していない箱を多く見られる位置を評価する。
+// 昔探索した箱でも、時間が経てば再び価値がある。
+const around=E.getBoxesAroundNode(node);
+
+const fresh=around.filter(b=>{
+  if(!cpuMemory.emptyBoxes.has(b)) return true;
+
+  const emptyTurn=cpuMemory.emptyBoxes.get(b);
+  const age=Math.max(0,game.turn-emptyTurn);
+
+  return age>=2;
+}).length;
+
+score+=fresh*1.35;
+
+if(fresh===0){
+  score-=5.5;
+}
 
     // Blocker values nodes adjacent to low-degree escape boxes.
     if(role==="blocker"){
@@ -1755,18 +1787,38 @@ function hardBestProbabilitySearch(di){
     }
 
     // Normal and Hard: aim for two searches every police turn.
-    if(game.cpuSearchesThisTurn<profile.targetSearches && search && search.target!==null){
-      if(!game.cpuSearchedBoxes.has(search.target)) return search;
-    }
+if(
+  game.cpuSearchesThisTurn < profile.targetSearches &&
+  search &&
+  search.target !== null
+){
+  const recentlyEmpty =
+    cpuMemory.emptyBoxes.has(search.target) &&
+    game.turn - cpuMemory.emptyBoxes.get(search.target) <= 1;
+
+  if(!recentlyEmpty){
+    return search;
+  }
+}
 
     if(knownTrackBoxes().length && search && search.target!==null){
       const evidenceBonus=cpuDifficulty==="hard" ? 8 : (cpuDifficulty==="normal" ? 6 : 2);
       if(!move || search.score+evidenceBonus>=move.score) return search;
     }
 
-    if(role==="searcher" && search && search.target!==null && !game.cpuSearchedBoxes.has(search.target)){
-      if(cpuDifficulty!=="easy") return search;
-    }
+if(
+  role==="searcher" &&
+  search &&
+  search.target!==null
+){
+  const recentlyEmpty =
+    cpuMemory.emptyBoxes.has(search.target) &&
+    game.turn - cpuMemory.emptyBoxes.get(search.target) <= 1;
+
+  if(!recentlyEmpty && cpuDifficulty!=="easy"){
+    return search;
+  }
+}
 
     if(remaining<=3 && role==="blocker" && move && move.target!==null){
       const bonus=cpuDifficulty==="hard" ? 7 : (cpuDifficulty==="normal" ? 2.5 : 0);
