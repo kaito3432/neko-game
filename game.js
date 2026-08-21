@@ -31,6 +31,7 @@
     lastDogNodes:[null,null,null],
     discoveredTrackBoxes:[],
     emptyBoxes:new Map(),
+     emptyByTurn:new Map(),
     recentTargets:[],
     thoughtText:""
   };
@@ -169,6 +170,7 @@ function bindPress(el, fn){
       lastDogNodes:[null,null,null],
       discoveredTrackBoxes:[],
       emptyBoxes:new Map(),
+       emptyByTurn:new Map(),
       recentTargets:[],
       thoughtText:""
     };
@@ -943,7 +945,17 @@ if(game.catHistory.get(bi)===1){
   );
 }
       }else{
-        if(playMode==="cpuPolice") cpuMemory.emptyBoxes.set(bi, game.turn);
+        if(playMode==="cpuPolice"){
+  cpuMemory.emptyBoxes.set(bi, game.turn);
+
+  if(!cpuMemory.emptyByTurn.has(game.turn)){
+    cpuMemory.emptyByTurn.set(game.turn,new Set());
+  }
+
+  cpuMemory.emptyByTurn
+    .get(game.turn)
+    .add(bi);
+}
         const emptyBox=board.querySelector(`.box[data-box-index="${bi}"]`);
         if(emptyBox){
           emptyBox.classList.remove("empty-search");
@@ -1312,24 +1324,138 @@ function trackFreshness(boxIndex){
 
   return 0.15;
 }
+function inferPossibleCatBoxes(){
+  const tracks=[...game.revealedTracks.entries()]
+    .filter(([,turn])=>Number.isInteger(turn))
+    .sort((a,b)=>a[1]-b[1]);
+
+  // 痕跡がまだ無ければ全25箱が候補
+  if(!tracks.length){
+    return new Set(
+      Array.from({length:E.BOX_COUNT},(_,i)=>i)
+    );
+  }
+
+  // 「何ターン目に、どの箱の痕跡が見つかっているか」
+  const trackByTurn=new Map();
+
+  tracks.forEach(([box,turn])=>{
+    trackByTurn.set(turn,box);
+  });
+
+  // 一番古い既知の痕跡から推理を開始
+  const [startBox,startTurn]=tracks[0];
+
+  let states=[
+    {
+      pos:startBox,
+      visited:new Set([startBox])
+    }
+  ];
+
+  for(let turn=startTurn+1;turn<=game.turn;turn++){
+    const nextStates=[];
+    const knownBox=trackByTurn.get(turn);
+     const emptyBoxesThisTurn =
+  cpuMemory.emptyByTurn.get(turn) || new Set();
+
+    for(const state of states){
+      for(const next of E.getBoxNeighbors(state.pos)){
+
+        // 猫は一度通った箱へ戻れない
+        if(state.visited.has(next)) continue;
+
+         // このターンに探索して空だった箱には
+// 猫はいなかったので候補から除外
+if(emptyBoxesThisTurn.has(next)) continue;
+
+        // このターンの痕跡が発見済みなら、
+        // 必ずその箱を通ったルートだけ残す
+        if(
+          Number.isInteger(knownBox) &&
+          next!==knownBox
+        ){
+          continue;
+        }
+
+        const visited=new Set(state.visited);
+        visited.add(next);
+
+        nextStates.push({
+          pos:next,
+          visited
+        });
+      }
+    }
+
+    // 同じ「現在位置＋通過履歴」はまとめる
+    const unique=new Map();
+
+    nextStates.forEach(state=>{
+      const key=
+        `${state.pos}:`+
+        [...state.visited]
+          .sort((a,b)=>a-b)
+          .join(",");
+
+      if(!unique.has(key)){
+        unique.set(key,state);
+      }
+    });
+
+    states=[...unique.values()];
+
+    if(!states.length) break;
+  }
+
+  return new Set(
+    states.map(state=>state.pos)
+  );
+}
 
   function inferredHotBoxes(){
     const tracks=knownTrackBoxes();
+     const possibleCatBoxes=inferPossibleCatBoxes();
     const scores=new Map();
 
-    if(!tracks.length){
-      for(let b=0;b<E.BOX_COUNT;b++){
-        let s=0;
-        const r=E.boxRow(b),c=E.boxCol(b);
-        s+=5-Math.abs(r-2)-Math.abs(c-2);
-        if(!game.cpuSearchedBoxes.has(b)) s+=2.5;
-        scores.set(b,s);
-      }
-      return scores;
+if(!tracks.length){
+  for(let b=0;b<E.BOX_COUNT;b++){
+    let s=0;
+
+    const r=E.boxRow(b);
+    const c=E.boxCol(b);
+
+    // 序盤は中央付近を少し優先
+    s+=5-Math.abs(r-2)-Math.abs(c-2);
+
+    // 最近空振りした箱は避けるが、
+    // 時間が経てば再び探索候補へ戻す
+    if(cpuMemory.emptyBoxes.has(b)){
+      const emptyTurn=cpuMemory.emptyBoxes.get(b);
+      const age=Math.max(0,game.turn-emptyTurn);
+
+      if(age===0) s-=5;
+      else if(age===1) s-=3;
+      else if(age===2) s-=1;
+      else s+=1;
+    }else{
+      // まだ探索していない場所を少し優先
+      s+=2.5;
     }
+
+    scores.set(b,s);
+  }
+
+  return scores;
+}
 
     for(let b=0;b<E.BOX_COUNT;b++){
       let s=0;
+       if(possibleCatBoxes.has(b)){
+  s+=8;
+}else{
+  s-=4;
+}
       let nearest=99;
       tracks.forEach(t=>nearest=Math.min(nearest,boxDistance(t,b)));
       s+=Math.max(0,7-nearest)*2.8;
@@ -1338,8 +1464,6 @@ function trackFreshness(boxIndex){
       // but not already discovered become especially interesting.
       if(!game.revealedTracks.has(b)) s+=2.2;
 
-      // Prefer escape corridors with multiple onward options.
-      s+=catEscapeDegree(b)*1.25;
 
       
       if(cpuMemory.emptyBoxes.has(b)){
@@ -1426,6 +1550,14 @@ if(cpuDifficulty==="hard"){
 
     let score=(hot.get(boxIndex)||0);
 
+     const possibleCatBoxes=inferPossibleCatBoxes();
+
+if(possibleCatBoxes.has(boxIndex)){
+  score+=7;
+}else{
+  score-=5;
+}
+
     // Always value fresh information.
 if(!game.cpuSearchedBoxes.has(boxIndex)){
   score+=profile.fresh;
@@ -1485,6 +1617,39 @@ if(!game.cpuSearchedBoxes.has(boxIndex)){
 
     // Move toward hot zones.
     const hot=likelyEscapeBoxes(8);
+     const possibleCatBoxes=inferPossibleCatBoxes();
+     // 現在地候補を多く監視できるノードを評価
+const possibleAround=
+  E.getBoxesAroundNode(node)
+    .filter(b=>possibleCatBoxes.has(b))
+    .length;
+
+score+=possibleAround*3.2;
+
+     // 他の柴犬と同じ候補箱ばかり監視する移動は少し減点
+let overlap=0;
+
+const candidateBoxes=E.getBoxesAroundNode(node);
+
+game.dogs.forEach((other,j)=>{
+  if(j===di || other===null) return;
+
+  const otherBoxes=new Set(
+    E.getBoxesAroundNode(other)
+  );
+
+  candidateBoxes.forEach(b=>{
+    if(
+      possibleCatBoxes.has(b) &&
+      otherBoxes.has(b)
+    ){
+      overlap++;
+    }
+  });
+});
+
+score-=overlap*1.8;
+     
     let nearest=99;
     hot.forEach(b=>nearest=Math.min(nearest,nodeToBoxDistance(node,b)));
     score+=Math.max(0,7-nearest)*2.1;
@@ -2000,12 +2165,19 @@ if(availableDogs.length){
       const remainingDogs=game.dogAction.filter(a=>a===false).length;
       const searchesNeeded=cpuProfile().targetSearches-game.cpuSearchesThisTurn;
 
-      if(remainingDogs<=searchesNeeded){
-        const forced=bestSearchAction(di);
-        if(forced && forced.target!==null && !game.cpuSearchedBoxes.has(forced.target)){
-          action=forced;
-        }
-      }
+if(remainingDogs<=searchesNeeded){
+  const forced=bestSearchAction(di);
+
+  if(forced && forced.target!==null){
+    const recentlyEmpty =
+      cpuMemory.emptyBoxes.has(forced.target) &&
+      game.turn - cpuMemory.emptyBoxes.get(forced.target) <= 1;
+
+    if(!recentlyEmpty){
+      action=forced;
+    }
+  }
+}
     }
 
     if(!action){
