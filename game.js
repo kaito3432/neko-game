@@ -1673,14 +1673,6 @@ if(fresh===0){
   score-=5.5;
 }
 
-    // Blocker values nodes adjacent to low-degree escape boxes.
-    if(role==="blocker"){
-      const choke=around.reduce((acc,b)=>{
-        const deg=catEscapeDegree(b);
-        return acc + (deg<=2 ? 2.2 : 0);
-      },0);
-      score+=choke;
-    }
 
     // Tracker moves toward discovered tracks.
     if(role==="tracker" && knownTrackBoxes().length){
