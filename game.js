@@ -1030,6 +1030,10 @@ if(game.catHistory.get(bi)===1){
   if(game.gameOver) return;
   if(game.actionLocked) return;
   if(game.catAbilities.sneakUsed) return;
+      if(game.catHistory.get(game.catPos)===1){
+  setMessage("🚩 スタート地点では忍び足は使えません。");
+  return;
+}
 
   if(game.catAbilityPending==="sneak"){
     game.catAbilityPending=null;
@@ -1226,13 +1230,14 @@ tracksFoundCount.textContent=String(
     catViewBtn.classList.toggle("show",game.phase==="cat");
     catViewBtn.disabled=game.phase!=="cat"||game.gameOver||game.actionLocked;
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
-     const canUseSneak=
+const canUseSneak=
   game.abilitiesEnabled &&
   playMode==="local" &&
   game.phase==="cat" &&
   !game.gameOver &&
   !game.actionLocked &&
-  !game.catAbilities.sneakUsed;
+  !game.catAbilities.sneakUsed &&
+  game.catHistory.get(game.catPos)!==1;
 
 sneakBtn.classList.toggle(
   "show",
@@ -1248,8 +1253,13 @@ sneakBtn.textContent=
   game.catAbilities.sneakUsed
     ? "🐾 忍び足 使用済み"
     : game.catAbilityPending==="sneak"
-      ? "✅ 忍び足 発動中"
+      ? "✨🐾 忍び足 発動中！"
       : "🐾 忍び足";
+
+     document.body.classList.toggle(
+  "sneak-active",
+  game.catAbilityPending==="sneak"
+);
 
 finishDogTurnBtn.classList.toggle(
   "show",
