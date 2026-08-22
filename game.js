@@ -631,15 +631,30 @@ game.actionLocked=false;
       const dead=E.isCatDeadEnd(game,i);
       const from=game.catPos;
 
+       const useSneak=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.catAbilityPending==="sneak" &&
+  !game.catAbilities.sneakUsed;
+
       // 猫移動中も入力ロック
       game.actionLocked=true;
       Audio.haptic(10);
       Audio.play("cat");
 
-      A.animateCatMove(board,from,i,()=>{
-        game.catPos=i;
-        game.catHistory.set(i,game.turn);
-        game.catVisible=false;
+A.animateCatMove(board,from,i,()=>{
+
+  // 忍び足を使った場合、
+  // 移動前にいた箱には痕跡を残さない
+  if(useSneak){
+    game.noTrackBoxes.add(from);
+    game.catAbilities.sneakUsed=true;
+    game.catAbilityPending=null;
+  }
+
+  game.catPos=i;
+  game.catHistory.set(i,game.turn);
+  game.catVisible=false;
 
         if(playMode==="onlineCat"){
   window.NyanOnline.sendGame({
@@ -881,8 +896,10 @@ if(playMode==="onlinePolice"){
         endGame("dogs",`${E.DOGS[di].name} が箱${bi+1}をクンクン……ネコを発見！`);
         return;
       }
-if(game.catHistory.has(bi)){
-
+if(
+  game.catHistory.has(bi) &&
+  !game.noTrackBoxes.has(bi)
+){
   // まだ発見していない痕跡かどうか
   const isNewTrack = !game.revealedTracks.has(bi);
 
