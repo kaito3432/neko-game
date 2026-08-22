@@ -2883,3 +2883,19 @@ body.turn-last .turn-pill{
       0 3px 0 rgba(93,64,55,.16);
   }
 }
+body.sneak-active #sneakBtn{
+  transform:scale(1.04);
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.8),
+    0 0 18px rgba(255,215,90,.9);
+  animation:sneakPulse 1s ease-in-out infinite;
+}
+
+@keyframes sneakPulse{
+  0%,100%{
+    transform:scale(1.02);
+  }
+  50%{
+    transform:scale(1.07);
+  }
+}
