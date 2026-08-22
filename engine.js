@@ -29,6 +29,18 @@ window.NyanEngine = (() => {
       selectedDog:null,
       dogAction:[false,false,false],
       actionLocked:false,
+       abilitiesEnabled:false,
+
+catAbilities:{
+  sneakUsed:false,
+  fakePawUsed:false
+},
+
+dogAbilities:{
+  howlUsed:false,
+  dashUsed:false,
+  doubleSearchUsed:false
+},
       cpuSearchedBoxes:new Set(),
       cpuSearchCount:0,
       cpuSearchesThisTurn:0,
