@@ -35,7 +35,9 @@ catAbilities:{
   sneakUsed:false,
   fakePawUsed:false
 },
-
+catAbilityPending:null,
+noTrackBoxes:new Set(),
+       
 dogAbilities:{
   howlUsed:false,
   dashUsed:false,
