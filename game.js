@@ -1006,6 +1006,22 @@ if(game.catHistory.get(bi)===1){
       :"🙈 ネコの位置と足跡を隠しました。");
     render();
   }
+   function toggleSneak(){
+  if(!game.abilitiesEnabled) return;
+  if(playMode!=="local") return;
+  if(game.phase!=="cat") return;
+  if(game.gameOver) return;
+  if(game.actionLocked) return;
+  if(game.catAbilities.sneakUsed) return;
+
+  if(game.catAbilityPending==="sneak"){
+    game.catAbilityPending=null;
+  }else{
+    game.catAbilityPending="sneak";
+  }
+
+  render();
+}
 
   function finishDogTurn(){
     if(game.phase!=="waitingEnd"||game.gameOver||game.actionLocked)return;
@@ -3936,6 +3952,8 @@ if(isNewTrack){
 
   for(let i=0;i<3;i++) bindPress(dogCards[i],()=>selectDog(i));
   bindPress(catViewBtn,toggleCatView);
+   bindPress(sneakBtn,toggleSneak);
+   
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
   bindPress(restartFromSettingsBtn,()=>{
