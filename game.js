@@ -92,8 +92,9 @@ onlinePeerDisconnected=false;
   const dogRow=$("dogRow"),tracksSummary=$("tracksSummary"),tracksFoundCount=$("tracksFoundCount");
   const routeRevealPanel=$("routeRevealPanel"),routeRevealSub=$("routeRevealSub");
   const message=$("message");
-  const catViewBtn=$("catViewBtn"),settingsBtn=$("settingsBtn");
-  const finishDogTurnBtn=$("finishDogTurnBtn");
+const catViewBtn=$("catViewBtn"),
+      sneakBtn=$("sneakBtn"),
+      settingsBtn=$("settingsBtn");  const finishDogTurnBtn=$("finishDogTurnBtn");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
   const victoryCutin=$("victoryCutin"),victoryCutinImage=$("victoryCutinImage");
@@ -1192,6 +1193,31 @@ tracksFoundCount.textContent=String(
     catViewBtn.classList.toggle("show",game.phase==="cat");
     catViewBtn.disabled=game.phase!=="cat"||game.gameOver||game.actionLocked;
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
+     const canUseSneak=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="cat" &&
+  !game.gameOver &&
+  !game.actionLocked &&
+  !game.catAbilities.sneakUsed;
+
+sneakBtn.classList.toggle(
+  "show",
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="cat"
+);
+
+sneakBtn.disabled=
+  !canUseSneak ||
+  game.catAbilityPending==="sneak";
+
+sneakBtn.textContent=
+  game.catAbilities.sneakUsed
+    ? "🐾 忍び足 使用済み"
+    : game.catAbilityPending==="sneak"
+      ? "✅ 忍び足 発動中"
+      : "🐾 忍び足";
 
 finishDogTurnBtn.classList.toggle(
   "show",
