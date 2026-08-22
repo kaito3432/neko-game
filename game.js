@@ -1225,8 +1225,7 @@ sneakBtn.classList.toggle(
 );
 
 sneakBtn.disabled=
-  !canUseSneak ||
-  game.catAbilityPending==="sneak";
+  !canUseSneak;
 
 sneakBtn.textContent=
   game.catAbilities.sneakUsed
