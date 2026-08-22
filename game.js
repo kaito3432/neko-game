@@ -160,6 +160,10 @@ function bindPress(el, fn){
 
   function initGame(showMode=false){
     game=E.createState();
+     game.abilitiesEnabled=
+  playMode==="local" ||
+  playMode==="onlineCat" ||
+  playMode==="onlinePolice";
     clearTimeout(cpuTimer);
     clearTimeout(victoryCutinTimer);
     if(victoryCutin){
