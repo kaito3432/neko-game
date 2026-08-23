@@ -2060,6 +2060,7 @@ const canUseDash=
   !game.gameOver &&
   !game.actionLocked &&
   !game.policeAbilities.dashUsed;
+     
 dashBtn.classList.toggle(
   "show",
   game.abilitiesEnabled &&
@@ -2096,15 +2097,24 @@ dashBtn.textContent=
 );
 const canCancelAbility=
   (
-    game.catAbilityPending==="fakePaw" &&
-    !game.fakePawConfirmed
+    game.phase==="cat" &&
+    (
+      game.catAbilityPending==="sneak" ||
+      (
+        game.catAbilityPending==="fakePaw" &&
+        !game.fakePawConfirmed
+      )
+    )
   ) ||
   (
-    game.policeAbilityPending==="howl"
-  ) ||
-  (
-    game.policeAbilityPending==="dash" &&
-    !game.dashConfirmed
+    game.phase==="dogs" &&
+    (
+      game.policeAbilityPending==="howl" ||
+      (
+        game.policeAbilityPending==="dash" &&
+        !game.dashConfirmed
+      )
+    )
   );
 
 abilityCancelBtn.classList.toggle(
