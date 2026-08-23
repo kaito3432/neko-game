@@ -382,55 +382,94 @@
 <!-- ============================= -->
 <section class="overlay" id="catAbilityOverlay">
 
-<div class="ability-select-header cat-select-header">
-  <div class="ability-select-kicker">CAT SPECIAL SKILL</div>
-  <h2>ネコの特殊スキルを選択</h2>
-  <p>警察には使用タイミングを知られません</p>
-</div>
+<section class="overlay" id="catAbilityOverlay">
 
-<div class="ability-card-grid cat-card-grid">
+  <div class="panel ability-select-panel">
 
-  <button class="ability-card cat-card" id="selectSneakBtn" type="button">
-    <span class="ability-card-badge">1 GAME / 1 USE</span>
+    <div class="ability-select-header">
+      <div class="ability-select-kicker">
+        CAT SPECIAL SKILL
+      </div>
 
-    <span class="ability-card-icon">🐾</span>
+      <h2>🐱 ネコの特殊スキルを選択</h2>
 
-    <span class="ability-card-name">
-      忍び足
-    </span>
+      <p>
+        このゲームで使用する特殊スキルを1つ選んでください。
+      </p>
+    </div>
 
-    <span class="ability-card-desc">
-      移動前にいた箱の足跡を残さずに移動します。
-      追跡をかわす秘密スキルです。
-    </span>
+    <div class="ability-card-grid">
 
-    <span class="ability-card-footer">
-      痕跡隠蔽タイプ
-    </span>
-  </button>
+      <button
+        class="ability-card cat-card"
+        id="selectSneakBtn"
+        type="button"
+        data-ability="sneak"
+      >
+        <span class="ability-selected-mark">✓ 選択中</span>
 
+        <span class="ability-card-badge">
+          1 GAME / 1 USE
+        </span>
 
-  <button class="ability-card cat-card" id="selectFakePawBtn" type="button">
-    <span class="ability-card-badge">1 GAME / 1 USE</span>
+        <span class="ability-card-icon">🐾</span>
 
-    <span class="ability-card-icon">🎭🐾</span>
+        <span class="ability-card-name">
+          忍び足
+        </span>
 
-    <span class="ability-card-name">
-      フェイク肉球
-    </span>
+        <span class="ability-card-desc">
+          移動前にいた箱の足跡を残さずに移動します。
+          警察から痕跡を隠せます。
+        </span>
 
-    <span class="ability-card-desc">
-      本当の移動先とは別の箱に偽の足跡を残します。
-      警察の推理を惑わせます。
-    </span>
+        <span class="ability-card-footer">
+          痕跡隠蔽タイプ
+        </span>
+      </button>
 
-    <span class="ability-card-footer">
-      撹乱タイプ
-    </span>
-  </button>
+      <button
+        class="ability-card cat-card"
+        id="selectFakePawBtn"
+        type="button"
+        data-ability="fakePaw"
+      >
+        <span class="ability-selected-mark">✓ 選択中</span>
 
-</div>
+        <span class="ability-card-badge">
+          1 GAME / 1 USE
+        </span>
 
+        <span class="ability-card-icon">🎭🐾</span>
+
+        <span class="ability-card-name">
+          フェイク肉球
+        </span>
+
+        <span class="ability-card-desc">
+          本当の移動先とは別の箱に偽の足跡を残します。
+          警察の推理を惑わせます。
+        </span>
+
+        <span class="ability-card-footer">
+          撹乱タイプ
+        </span>
+      </button>
+
+    </div>
+
+    <button
+      class="btn ability-confirm-btn"
+      id="confirmCatAbilityBtn"
+      type="button"
+      disabled
+    >
+      このスキルに決定
+    </button>
+
+  </div>
+
+</section>
 </section>
 
 
