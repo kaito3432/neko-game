@@ -1507,6 +1507,7 @@ const canUseSneak=
   game.abilitiesEnabled &&
   playMode==="local" &&
   game.phase==="cat" &&
+   game.catVisible &&
   !game.gameOver &&
   !game.actionLocked &&
   !game.catAbilities.sneakUsed &&
@@ -1529,11 +1530,13 @@ const isStartBox=
 sneakBtn.textContent=
   game.catAbilities.sneakUsed
     ? "🐾 忍び足 使用済み"
-    : isStartBox
-      ? "🐾 忍び足｜スタート地点では使用できません"
-      : game.catAbilityPending==="sneak"
-        ? "✨🐾 忍び足 発動中！"
-        : "🐾 忍び足";
+    : !game.catVisible
+      ? "🐾 忍び足｜先にネコ位置を確認"
+      : isStartBox
+        ? "🐾 忍び足｜スタート地点では使用できません"
+        : game.catAbilityPending==="sneak"
+          ? "✨🐾 忍び足 発動中！"
+          : "🐾 忍び足";
 
      document.body.classList.toggle(
   "sneak-active",
@@ -1557,6 +1560,7 @@ const canUseFakePaw=
   game.abilitiesEnabled &&
   playMode==="local" &&
   game.phase==="cat" &&
+   game.catVisible &&
   !game.gameOver &&
   !game.actionLocked &&
   !game.catAbilities.fakePawUsed;
@@ -1576,6 +1580,9 @@ fakePawBtn.textContent=
   game.catAbilities.fakePawUsed
     ? "🐾 フェイク肉球 使用済み"
 
+    : !game.catVisible
+      ? "🐾 フェイク肉球｜先にネコ位置を確認"
+
     : game.catAbilityPending==="fakePaw" &&
       game.fakePawTarget!==null &&
       !game.fakePawConfirmed
@@ -1589,7 +1596,6 @@ fakePawBtn.textContent=
       ? "🎭🐾 フェイク肉球｜場所を選択中"
 
     : "🐾 フェイク肉球";
-
      const showFakePawBanner=
   game.abilitiesEnabled &&
   playMode==="local" &&
