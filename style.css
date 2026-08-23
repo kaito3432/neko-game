@@ -3017,10 +3017,10 @@ body.fake-paw-mode #fakePawBtn{
 
 @keyframes dashMovePulse{
   0%,100%{
-    transform:scale(1);
+    transform:translate(-50%,-50%) scale(1);
   }
 
   50%{
-    transform:scale(1.15);
+    transform:translate(-50%,-50%) scale(1.15);
   }
 }
