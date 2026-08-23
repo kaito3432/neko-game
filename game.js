@@ -545,6 +545,15 @@ function startLocalMode(){
         <img class="box-art" src="./assets/images/box.png" alt="">
         ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat_play_normal.png" alt="ネコ"></span>':""}
         ${privateHistoryHTML(i)}
+        ${game.phase==="cat" &&
+  game.catVisible &&
+  game.catAbilityPending==="fakePaw" &&
+  game.fakePawTarget===i
+    ? `<span class="fake-paw-marker">
+         ${game.fakePawConfirmed ? "🎭🐾" : "🐾?"}
+       </span>`
+    : ""
+}
         ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}`;
 
       if(game.phase==="catSetup"){
@@ -730,21 +739,32 @@ if(
   const legalMoves=
     E.getCatLegalMoves(game);
 
-  // 偽足跡は「今いる箱から本来移動可能な別方向」にだけ置ける
-  if(!legalMoves.includes(i)){
+  // 現在いる箱にはフェイク肉球を置けない
+  if(i===game.catPos){
     Audio.play("invalid");
-    setMessage("🐾 フェイク肉球は、今いる箱から移動できる隣の箱を選んでください。");
+    setMessage(
+      "🐾 今いる箱にはフェイク肉球を置けません。隣の箱を選んでください。"
+    );
     return;
   }
 
-   
+  // 偽足跡は「今いる箱から本来移動可能な別方向」にだけ置ける
+  if(!legalMoves.includes(i)){
+    Audio.play("invalid");
+    setMessage(
+      "🐾 フェイク肉球は、今いる箱から移動できる隣の箱を選んでください。"
+    );
+    return;
+  }
 
+  // まだ仮選択。ここでは確定しない
   game.fakePawTarget=i;
+  game.fakePawConfirmed=false;
 
   Audio.haptic(10);
 
   setMessage(
-    `✨ 箱${i+1}に偽の足跡を置きます。次に、本当に移動する別の箱を選んでください。`
+    `🐾 箱${i+1}を選択しました。フェイク肉球を確定してください。`
   );
 
   render();
@@ -1182,7 +1202,7 @@ if(game.catHistory.get(bi)===1){
   render();
 }
 
-   function toggleFakePaw(){
+function toggleFakePaw(){
   if(!game.abilitiesEnabled) return;
   if(playMode!=="local") return;
   if(game.phase!=="cat") return;
@@ -1190,18 +1210,67 @@ if(game.catHistory.get(bi)===1){
   if(game.actionLocked) return;
   if(game.catAbilities.fakePawUsed) return;
 
-  // 忍び足とフェイク肉球は同時使用させない
+  // ---------------------------------
+  // ① 箱を仮選択済み → 確定する
+  // ---------------------------------
+  if(
+    game.catAbilityPending==="fakePaw" &&
+    game.fakePawTarget!==null &&
+    !game.fakePawConfirmed
+  ){
+    game.fakePawConfirmed=true;
+
+    Audio.haptic(15);
+
+    setMessage(
+      `🎭🐾 箱${game.fakePawTarget+1}にフェイク肉球を仕掛けます。本当に逃げる別の箱を選んでください。`
+    );
+
+    render();
+    return;
+  }
+
+  // ---------------------------------
+  // ② すでに確定済み
+  // ---------------------------------
+  if(
+    game.catAbilityPending==="fakePaw" &&
+    game.fakePawConfirmed
+  ){
+    setMessage(
+      "🎭🐾 フェイク肉球は確定済みです。本当に逃げる箱を選んでください。"
+    );
+    return;
+  }
+
+  // 忍び足を選択していたら解除
   if(game.catAbilityPending==="sneak"){
     game.catAbilityPending=null;
   }
 
-  // フェイク肉球を選択 / キャンセル
-  if(game.catAbilityPending==="fakePaw"){
-    game.catAbilityPending=null;
-    game.fakePawTarget=null;
-  }else{
+  // ---------------------------------
+  // ③ フェイク肉球をON
+  // ---------------------------------
+  if(game.catAbilityPending!=="fakePaw"){
     game.catAbilityPending="fakePaw";
     game.fakePawTarget=null;
+    game.fakePawConfirmed=false;
+
+    setMessage(
+      "🐾 フェイク肉球を置く箱を選んでください。"
+    );
+
+  // ---------------------------------
+  // ④ 箱を選ぶ前ならキャンセル可能
+  // ---------------------------------
+  }else{
+    game.catAbilityPending=null;
+    game.fakePawTarget=null;
+    game.fakePawConfirmed=false;
+
+    setMessage(
+      "フェイク肉球をキャンセルしました。"
+    );
   }
 
   render();
@@ -1465,9 +1534,20 @@ fakePawBtn.disabled=
 fakePawBtn.textContent=
   game.catAbilities.fakePawUsed
     ? "🐾 フェイク肉球 使用済み"
+
+    : game.catAbilityPending==="fakePaw" &&
+      game.fakePawTarget!==null &&
+      !game.fakePawConfirmed
+      ? `✅ 箱${game.fakePawTarget+1}に確定`
+
+    : game.catAbilityPending==="fakePaw" &&
+      game.fakePawConfirmed
+      ? "🎭🐾 フェイク肉球 発動中！"
+
     : game.catAbilityPending==="fakePaw"
       ? "✨🐾 フェイク肉球 選択中"
-      : "🐾 フェイク肉球";     
+
+    : "🐾 フェイク肉球";
 
 finishDogTurnBtn.classList.toggle(
   "show",
