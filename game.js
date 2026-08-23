@@ -2093,8 +2093,6 @@ const canUseDash=
 
 
 
-doubleSearchBtn.disabled=
-  !canUseDoubleSearch;
      
 const showDashBtn=
   game.abilitiesEnabled &&
@@ -2176,6 +2174,9 @@ doubleSearchBtn.style.display=
   !game.policeAbilities.doubleSearchUsed &&
   !game.gameOver &&
   !game.actionLocked;
+
+     doubleSearchBtn.disabled=
+  !canUseDoubleSearch;
 
           doubleSearchBtn.textContent=
   game.policeAbilities.doubleSearchUsed
