@@ -35,6 +35,16 @@ window.NyanEngine = (() => {
   police:null
 },
 
+       policeAbilities:{
+  howlUsed:false,
+  dashUsed:false,
+  doubleSearchUsed:false
+},
+
+policeAbilityPending:null,
+dashTarget:null,
+dashConfirmed:false,
+
 catAbilities:{
   sneakUsed:false,
   fakePawUsed:false
