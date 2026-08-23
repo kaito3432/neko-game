@@ -1078,6 +1078,9 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
 
     if(game.selectedDog!==null&&!game.dogAction[game.selectedDog]){
       const di=game.selectedDog;
+       if(
+  game.policeAbilityPending!==null
+)
 if(
   di===0 &&
   game.policeAbilityPending==="howl"
@@ -1150,6 +1153,7 @@ game.selectedDog=null;
       afterDogAction();
       render();
     }
+     
   }
 
   function selectDog(di){
