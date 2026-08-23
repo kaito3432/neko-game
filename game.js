@@ -800,6 +800,14 @@ if(
   game.catAbilityPending==="sneak" &&
   !game.catAbilities.sneakUsed;
 
+       const useFakePaw=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.catAbilityPending==="fakePaw" &&
+  game.fakePawConfirmed &&
+  game.fakePawTarget!==null &&
+  !game.catAbilities.fakePawUsed;
+
       // 猫移動中も入力ロック
       game.actionLocked=true;
       Audio.haptic(10);
@@ -814,6 +822,22 @@ A.animateCatMove(board,from,i,()=>{
     game.catAbilities.sneakUsed=true;
     game.catAbilityPending=null;
   }
+
+   // フェイク肉球を使った場合
+if(useFakePaw){
+
+  // 選択した箱へ偽の足跡を保存
+  game.fakeTracks.set(
+    game.fakePawTarget,
+    game.turn
+  );
+
+  game.catAbilities.fakePawUsed=true;
+
+  game.catAbilityPending=null;
+  game.fakePawTarget=null;
+  game.fakePawConfirmed=false;
+}
 
   game.catPos=i;
   game.catHistory.set(i,game.turn);
@@ -1059,17 +1083,26 @@ if(playMode==="onlinePolice"){
         endGame("dogs",`${E.DOGS[di].name} が箱${bi+1}をクンクン……ネコを発見！`);
         return;
       }
-if(
+const hasRealTrack=
   game.catHistory.has(bi) &&
-  !game.noTrackBoxes.has(bi)
-){
+  !game.noTrackBoxes.has(bi);
+
+const hasFakeTrack=
+  game.fakeTracks.has(bi);
+
+if(hasRealTrack || hasFakeTrack){
   // まだ発見していない痕跡かどうか
   const isNewTrack = !game.revealedTracks.has(bi);
 
-  game.revealedTracks.set(
-    bi,
-    game.catHistory.get(bi)
-  );
+const trackTurn=
+  hasRealTrack
+    ? game.catHistory.get(bi)
+    : game.fakeTracks.get(bi);
+
+game.revealedTracks.set(
+  bi,
+  trackTurn
+);
 
   if(!cpuMemory.discoveredTrackBoxes.includes(bi)){
     cpuMemory.discoveredTrackBoxes.push(bi);
@@ -1095,7 +1128,10 @@ if(isNewTrack){
   Audio.haptic([15,35,25]);
 }
 
-if(game.catHistory.get(bi)===1){
+if(
+  hasRealTrack &&
+  game.catHistory.get(bi)===1
+){
 
   // START発見時もBGMを下げる
   Audio.duckBgm(900);
