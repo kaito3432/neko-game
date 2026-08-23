@@ -734,52 +734,54 @@ game.actionLocked=false;
         setMessage("まず「👀 ネコ位置を見る」をタップしてください。");
         return;
       }
+       
        // フェイク肉球：まず偽足跡を置く箱を選ぶ
+// ---------------------------------
+// フェイク肉球モード
+// 確定するまでは猫自身は移動しない
+// ---------------------------------
 if(
   game.catAbilityPending==="fakePaw" &&
-  game.fakePawTarget===null
+  !game.fakePawConfirmed
 ){
   const legalMoves=
     E.getCatLegalMoves(game);
 
-  // 現在いる箱にはフェイク肉球を置けない
+  // 現在地は選択不可
   if(i===game.catPos){
     Audio.play("invalid");
+
     setMessage(
-      "🐾 今いる箱にはフェイク肉球を置けません。隣の箱を選んでください。"
+      "🎭🐾 今いる箱にはフェイク肉球を置けません。"
     );
+
     return;
   }
 
-  // 偽足跡は「今いる箱から本来移動可能な別方向」にだけ置ける
+  // 通常なら移動可能な箱だけ候補
   if(!legalMoves.includes(i)){
     Audio.play("invalid");
+
     setMessage(
-      "🐾 フェイク肉球は、今いる箱から移動できる隣の箱を選んでください。"
+      "🎭🐾 光っている隣の箱から、偽の足跡を置く場所を選んでください。"
     );
+
     return;
   }
 
-  // まだ仮選択。ここでは確定しない
+  // 仮選択位置を変更
   game.fakePawTarget=i;
-  game.fakePawConfirmed=false;
 
   Audio.haptic(10);
 
   setMessage(
-    `🐾 箱${i+1}を選択しました。フェイク肉球を確定してください。`
+    `🎭🐾 箱${i+1}を仮選択中。別の箱を選び直すか、「この場所に確定」を押してください。`
   );
 
   render();
-  return;
-}
 
-       if(
-  game.catAbilityPending==="fakePaw" &&
-  game.fakePawTarget===i
-){
-  Audio.play("invalid");
-  setMessage("その箱には偽の足跡を置きます。本当の移動先は別の箱を選んでください。");
+  // ★ここで必ず終了
+  // 猫は絶対に移動させない
   return;
 }
 
