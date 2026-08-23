@@ -94,7 +94,8 @@ onlinePeerDisconnected=false;
   const message=$("message");
 const catViewBtn=$("catViewBtn"),
       sneakBtn=$("sneakBtn"),
-      settingsBtn=$("settingsBtn");  
+      fakePawBtn=$("fakePawBtn"),
+      settingsBtn=$("settingsBtn");
    const sneakBanner=$("sneakBanner");
    const finishDogTurnBtn=$("finishDogTurnBtn");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
@@ -1046,6 +1047,31 @@ if(game.catHistory.get(bi)===1){
   render();
 }
 
+   function toggleFakePaw(){
+  if(!game.abilitiesEnabled) return;
+  if(playMode!=="local") return;
+  if(game.phase!=="cat") return;
+  if(game.gameOver) return;
+  if(game.actionLocked) return;
+  if(game.catAbilities.fakePawUsed) return;
+
+  // 忍び足とフェイク肉球は同時使用させない
+  if(game.catAbilityPending==="sneak"){
+    game.catAbilityPending=null;
+  }
+
+  // フェイク肉球を選択 / キャンセル
+  if(game.catAbilityPending==="fakePaw"){
+    game.catAbilityPending=null;
+    game.fakePawTarget=null;
+  }else{
+    game.catAbilityPending="fakePaw";
+    game.fakePawTarget=null;
+  }
+
+  render();
+}
+
   function finishDogTurn(){
     if(game.phase!=="waitingEnd"||game.gameOver||game.actionLocked)return;
 
@@ -1281,6 +1307,31 @@ sneakBanner.classList.toggle(
   showSneakBanner
 );
 
+const canUseFakePaw=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="cat" &&
+  !game.gameOver &&
+  !game.actionLocked &&
+  !game.catAbilities.fakePawUsed;
+
+fakePawBtn.classList.toggle(
+  "show",
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="cat"
+);
+
+fakePawBtn.disabled=
+  !canUseFakePaw;
+
+fakePawBtn.textContent=
+  game.catAbilities.fakePawUsed
+    ? "🐾 フェイク肉球 使用済み"
+    : game.catAbilityPending==="fakePaw"
+      ? "✨🐾 フェイク肉球 選択中"
+      : "🐾 フェイク肉球";     
+
 finishDogTurnBtn.classList.toggle(
   "show",
   (
@@ -1289,10 +1340,9 @@ finishDogTurnBtn.classList.toggle(
     playMode==="onlinePolice"
   ) &&
   game.phase==="waitingEnd"
-);    finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
+);   
+     finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
-
-   
 
   function showPhaseCue(icon,text){
     phaseCueIcon.textContent=icon;
@@ -4001,7 +4051,7 @@ if(isNewTrack){
   for(let i=0;i<3;i++) bindPress(dogCards[i],()=>selectDog(i));
   bindPress(catViewBtn,toggleCatView);
    bindPress(sneakBtn,toggleSneak);
-   
+   bindPress(fakePawBtn,toggleFakePaw);
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
   bindPress(restartFromSettingsBtn,()=>{
