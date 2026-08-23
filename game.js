@@ -94,7 +94,9 @@ onlinePeerDisconnected=false;
   const message=$("message");
 const catViewBtn=$("catViewBtn"),
       sneakBtn=$("sneakBtn"),
-      settingsBtn=$("settingsBtn");  const finishDogTurnBtn=$("finishDogTurnBtn");
+      settingsBtn=$("settingsBtn");  
+   const sneakBanner=$("sneakBanner");
+   const finishDogTurnBtn=$("finishDogTurnBtn");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
   const victoryCutin=$("victoryCutin"),victoryCutinImage=$("victoryCutinImage");
@@ -1261,6 +1263,19 @@ sneakBtn.textContent=
   game.catAbilityPending==="sneak"
 );
 
+     const showSneakBanner=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="cat" &&
+  game.catVisible &&
+  game.catAbilityPending==="sneak" &&
+  !game.catAbilities.sneakUsed;
+
+sneakBanner.classList.toggle(
+  "show",
+  showSneakBanner
+);
+
 finishDogTurnBtn.classList.toggle(
   "show",
   (
@@ -1271,6 +1286,8 @@ finishDogTurnBtn.classList.toggle(
   game.phase==="waitingEnd"
 );    finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
+
+   
 
   function showPhaseCue(icon,text){
     phaseCueIcon.textContent=icon;
