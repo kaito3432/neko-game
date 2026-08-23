@@ -43,6 +43,7 @@
    const policeAbilityOverlay=$("policeAbilityOverlay");
 const catAbilityOverlay=$("catAbilityOverlay");
 const abilityRevealOverlay=$("abilityRevealOverlay");
+   const abilityCancelBtn=$("abilityCancelBtn");
 
 const selectHowlBtn=$("selectHowlBtn");
 const selectDashBtn=$("selectDashBtn");
@@ -1317,7 +1318,43 @@ if(
   render();
 }
 
-   
+
+   function cancelPendingAbility(){
+
+  // フェイク肉球
+  if(
+    game.catAbilityPending==="fakePaw" &&
+    !game.fakePawConfirmed
+  ){
+    game.catAbilityPending=null;
+    game.fakePawTarget=null;
+    game.fakePawConfirmed=false;
+
+    setMessage(
+      "フェイク肉球をキャンセルしました。通常の移動に戻ります。"
+    );
+
+    render();
+    return;
+  }
+
+  // 黒柴ダッシュ
+  if(
+    game.policeAbilityPending==="dash" &&
+    !game.dashConfirmed
+  ){
+    game.policeAbilityPending=null;
+    game.dashTarget=null;
+    game.dashConfirmed=false;
+
+    setMessage(
+      "黒柴ダッシュをキャンセルしました。通常の行動に戻ります。"
+    );
+
+    render();
+    return;
+  }
+}
 
 function toggleFakePaw(){
   if(!game.abilitiesEnabled) return;
@@ -1879,6 +1916,23 @@ dashBtn.textContent=
   "dash-mode",
   game.policeAbilityPending==="dash"
 );
+     const canCancelAbility=
+  (
+    game.catAbilityPending==="fakePaw" &&
+    !game.fakePawConfirmed
+  ) ||
+  (
+    game.policeAbilityPending==="dash" &&
+    !game.dashConfirmed
+  );
+
+abilityCancelBtn.classList.toggle(
+  "show",
+  canCancelAbility
+);
+
+abilityCancelBtn.disabled=
+  !canCancelAbility;
      
      finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
@@ -4598,6 +4652,7 @@ if(isNewTrack){
   bindPress(titleSettingsBtn,openSettings);
   bindPress(howToBtn,showHowTo);
   bindPress(soundQuickBtn,toggleQuickSound);
+bindPress(abilityCancelBtn,cancelPendingAbility);
 
   for(let i=0;i<3;i++) bindPress(dogCards[i],()=>selectDog(i));
   bindPress(catViewBtn,toggleCatView);
