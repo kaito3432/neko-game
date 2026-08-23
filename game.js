@@ -1879,7 +1879,7 @@ const showSneakBtn=
   game.selectedAbilities.cat==="sneak";
 
 sneakBtn.style.display=
-  showSneakBtn ? "" : "none";
+  showSneakBtn ? "block" : "none";
 
 sneakBtn.disabled=
   !canUseSneak;
@@ -1932,7 +1932,7 @@ const showFakePawBtn=
   game.selectedAbilities.cat==="fakePaw";
 
 fakePawBtn.style.display=
-  showFakePawBtn ? "" : "none";
+  showFakePawBtn ? "block" : "none";
 
 fakePawBtn.disabled=
   !canUseFakePaw;
@@ -2033,7 +2033,7 @@ const showHowlBtn=
   game.selectedAbilities.police==="howl";
 
 howlBtn.style.display=
-  showHowlBtn ? "" : "none";
+  showHowlBtn ? "block" : "none";
 
 howlBtn.disabled=
   !canUseHowl;
@@ -2071,7 +2071,7 @@ const showDashBtn=
   game.selectedAbilities.police==="dash";
 
 dashBtn.style.display=
-  showDashBtn ? "" : "none";
+  showDashBtn ? "block" : "none";
 
 dashBtn.disabled=
   !canUseDash;
@@ -2122,7 +2122,7 @@ const canCancelAbility=
   );
 
 abilityCancelBtn.style.display=
-  canCancelAbility ? "" : "none";
+  canCancelAbility ? "block" : "none";
 
 abilityCancelBtn.disabled=
   !canCancelAbility;
