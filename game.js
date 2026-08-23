@@ -49,6 +49,10 @@ const selectHowlBtn=$("selectHowlBtn");
 const selectDashBtn=$("selectDashBtn");
 const selectDoubleSearchBtn=$("selectDoubleSearchBtn");
 
+   const confirmPoliceAbilityBtn=$("confirmPoliceAbilityBtn");
+
+let pendingPoliceAbility=null;
+
 const selectSneakBtn=$("selectSneakBtn");
 const selectFakePawBtn=$("selectFakePawBtn");
 
@@ -4199,9 +4203,58 @@ bindPress(onlineModeBtn,()=>{
 bindPress(onlineBackBtn,()=>{
   onlineOverlay.classList.remove("show");
 }); 
-   bindPress(selectHowlBtn,()=>selectPoliceAbility("howl"));
-bindPress(selectDashBtn,()=>selectPoliceAbility("dash"));
-bindPress(selectDoubleSearchBtn,()=>selectPoliceAbility("doubleSearch"));
+function choosePendingPoliceAbility(ability){
+
+  pendingPoliceAbility=ability;
+
+  [
+    selectHowlBtn,
+    selectDashBtn,
+    selectDoubleSearchBtn
+  ].forEach(btn=>{
+    btn.classList.toggle(
+      "selected",
+      btn.dataset.ability===ability
+    );
+  });
+
+  confirmPoliceAbilityBtn.disabled=false;
+}
+   bindPress(
+  selectHowlBtn,
+  ()=>choosePendingPoliceAbility("howl")
+);
+
+bindPress(
+  selectDashBtn,
+  ()=>choosePendingPoliceAbility("dash")
+);
+
+bindPress(
+  selectDoubleSearchBtn,
+  ()=>choosePendingPoliceAbility("doubleSearch")
+);
+   bindPress(confirmPoliceAbilityBtn,()=>{
+
+  if(!pendingPoliceAbility) return;
+
+  selectPoliceAbility(
+    pendingPoliceAbility
+  );
+
+  pendingPoliceAbility=null;
+
+  confirmPoliceAbilityBtn.disabled=true;
+
+  [
+    selectHowlBtn,
+    selectDashBtn,
+    selectDoubleSearchBtn
+  ].forEach(btn=>{
+    btn.classList.remove("selected");
+  });
+
+});
 
    bindPress(selectSneakBtn,()=>selectCatAbility("sneak"));
 bindPress(selectFakePawBtn,()=>selectCatAbility("fakePaw"));
