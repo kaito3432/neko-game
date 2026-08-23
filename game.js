@@ -565,6 +565,21 @@ if(
   b.classList.add("howl-area");
 }
 
+       if(
+  game.phase==="dogs" &&
+  game.selectedDog===2 &&
+  game.policeAbilityPending==="doubleSearch" &&
+  !game.policeAbilities.doubleSearchUsed &&
+  !game.dogAction[2] &&
+  !game.actionLocked &&
+  E.getBoxesAroundNode(game.dogs[2]).includes(i)
+){
+  b.classList.add("double-search-area");
+
+  if(game.doubleSearchTargets.includes(i)){
+    b.classList.add("double-search-selected");
+  }
+}
 
       if(game.phase!=="cat"&&game.revealedTracks.has(i)){
         b.classList.add("revealed");
@@ -976,6 +991,83 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
       render();
       return;
     }
+
+     // =====================================
+// 白柴・一斉捜索：2箱を仮選択
+// =====================================
+if(
+  game.phase==="dogs" &&
+  game.selectedDog===2 &&
+  game.policeAbilityPending==="doubleSearch" &&
+  !game.policeAbilities.doubleSearchUsed
+){
+  const searchArea=
+    E.getBoxesAroundNode(game.dogs[2]);
+
+  // 白柴の通常探索範囲外
+  if(!searchArea.includes(i)){
+    Audio.play("invalid");
+
+    setMessage(
+      "🔍 一斉捜索は、白柴の周囲4箱から選んでください。"
+    );
+
+    return;
+  }
+
+  // 選択済みの箱を再タップ → 選択解除
+  if(game.doubleSearchTargets.includes(i)){
+
+    game.doubleSearchTargets=
+      game.doubleSearchTargets.filter(
+        box=>box!==i
+      );
+
+    setMessage(
+      `🔍 選択を解除しました。あと${2-game.doubleSearchTargets.length}箱選んでください。`
+    );
+
+    render();
+    return;
+  }
+
+  // すでに2箱選択済み
+  if(game.doubleSearchTargets.length>=2){
+
+    // 新しい箱を押した場合、
+    // 最初に選んだ箱を外して新しい箱へ変更
+    game.doubleSearchTargets.shift();
+    game.doubleSearchTargets.push(i);
+
+    setMessage(
+      "🔍 捜索する2箱を変更しました。「一斉捜索を確定」で実行します。"
+    );
+
+    render();
+    return;
+  }
+
+  // 新規選択
+  game.doubleSearchTargets.push(i);
+
+  Audio.haptic(10);
+
+  if(game.doubleSearchTargets.length===1){
+
+    setMessage(
+      "🔍 1箱目を選択しました。もう1箱選んでください。"
+    );
+
+  }else{
+
+    setMessage(
+      "✨ 2箱を選択しました。内容を確認して「一斉捜索を確定」を押してください。"
+    );
+  }
+
+  render();
+  return;
+}
 
      if(
   game.phase==="dogs" &&
@@ -1503,6 +1595,76 @@ function toggleFakePaw(){
       "フェイク肉球をキャンセルしました。"
     );
   }
+
+  render();
+}
+
+   function toggleDoubleSearch(){
+  if(!game.abilitiesEnabled) return;
+  if(playMode!=="local") return;
+  if(game.phase!=="dogs") return;
+  if(game.gameOver) return;
+  if(game.actionLocked) return;
+
+  // 白柴だけ
+  if(game.selectedDog!==2){
+    setMessage(
+      "🔍 白柴を選択してから一斉捜索を使ってください。"
+    );
+    return;
+  }
+
+  if(game.dogAction[2]){
+    setMessage(
+      "🔍 白柴はこのターンすでに行動済みです。"
+    );
+    return;
+  }
+
+  if(game.policeAbilities.doubleSearchUsed) return;
+
+
+  // ------------------------------
+  // すでに2箱選択済み → 確定
+  // ------------------------------
+  if(
+    game.policeAbilityPending==="doubleSearch" &&
+    game.doubleSearchTargets.length===2
+  ){
+    game.doubleSearchConfirmed=true;
+
+    setMessage(
+      "🔍 一斉捜索を確定しました。"
+    );
+
+    // 実際の探索処理は次の工程で追加
+    render();
+    return;
+  }
+
+
+  // ------------------------------
+  // 一斉捜索モード開始
+  // ------------------------------
+  if(game.policeAbilityPending!=="doubleSearch"){
+
+    game.policeAbilityPending="doubleSearch";
+    game.doubleSearchTargets=[];
+    game.doubleSearchConfirmed=false;
+
+    setMessage(
+      "🔍 白柴の周囲4箱から、捜索する2箱を選んでください。"
+    );
+
+    render();
+    return;
+  }
+
+
+  // まだ2箱選んでいない
+  setMessage(
+    `🔍 あと${2-game.doubleSearchTargets.length}箱選んでください。`
+  );
 
   render();
 }
@@ -2188,8 +2350,12 @@ doubleSearchBtn.style.display=
     : game.dogAction[2]
       ? "🔍 白柴・一斉捜索｜白柴は行動済み"
 
-    : game.policeAbilityPending==="doubleSearch"
-      ? "🔍 一斉捜索 選択中"
+: game.policeAbilityPending==="doubleSearch" &&
+  game.doubleSearchTargets.length===2
+    ? "✅ 一斉捜索を確定"
+
+: game.policeAbilityPending==="doubleSearch"
+  ? `🔍 捜索する箱を選択中 ${game.doubleSearchTargets.length}/2`
 
     : "🔍 白柴・一斉捜索";
      
@@ -4919,6 +5085,7 @@ bindPress(abilityCancelBtn,cancelPendingAbility);
    bindPress(fakePawBtn,toggleFakePaw);
 bindPress(dashBtn,toggleDash);
    bindPress(howlBtn,toggleHowl);
+   bindPress(doubleSearchBtn,toggleDoubleSearch);
    
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
