@@ -258,77 +258,124 @@
 <!-- ============================= -->
 <section class="overlay" id="policeAbilityOverlay">
 
- <div class="ability-select-header">
-  <div class="ability-select-kicker">POLICE SPECIAL SKILL</div>
-  <h2>警察の特殊スキルを選択</h2>
-  <p>このゲームで使う特殊スキルを1つ選んでください</p>
-</div>
+  <div class="panel ability-select-panel">
 
-<div class="ability-card-grid">
+    <div class="ability-select-header">
+      <div class="ability-select-kicker">
+        POLICE SPECIAL SKILL
+      </div>
 
-  <button class="ability-card police-card" id="selectHowlBtn" type="button">
-    <span class="ability-card-badge">1 GAME / 1 USE</span>
+      <h2>🐕 警察の特殊スキルを選択</h2>
 
-    <span class="ability-card-icon">📣</span>
-
-    <span class="ability-card-name">
-      あか柴・遠吠え
-    </span>
-
-    <span class="ability-card-desc">
-      あか柴の周囲にネコの気配があるかを探知。
-      正確な箱までは分かりません。
-    </span>
-
-    <span class="ability-card-footer">
-      情報探知タイプ
-    </span>
-  </button>
+      <p>
+        このゲームで使用する特殊スキルを1つ選んでください。
+      </p>
+    </div>
 
 
-  <button class="ability-card police-card" id="selectDashBtn" type="button">
-    <span class="ability-card-badge">1 GAME / 1 USE</span>
+    <div class="ability-card-grid">
 
-    <span class="ability-card-icon">⚡</span>
+      <button
+        class="ability-card police-card"
+        id="selectHowlBtn"
+        type="button"
+        data-ability="howl"
+      >
+        <span class="ability-selected-mark">✓ 選択中</span>
 
-    <span class="ability-card-name">
-      くろ柴・ダッシュ
-    </span>
+        <span class="ability-card-badge">
+          1 GAME / 1 USE
+        </span>
 
-    <span class="ability-card-desc">
-      くろ柴が一気に2マス移動。
-      通常では届かない場所へ素早く接近できます。
-    </span>
+        <span class="ability-card-icon">📣</span>
 
-    <span class="ability-card-footer">
-      高速移動タイプ
-    </span>
-  </button>
+        <span class="ability-card-name">
+          あか柴・遠吠え
+        </span>
+
+        <span class="ability-card-desc">
+          あか柴の周囲にネコの気配があるかを探知。
+          正確な箱までは分かりません。
+        </span>
+
+        <span class="ability-card-footer">
+          情報探知タイプ
+        </span>
+      </button>
 
 
-  <button class="ability-card police-card" id="selectDoubleSearchBtn" type="button">
-    <span class="ability-card-badge">1 GAME / 1 USE</span>
+      <button
+        class="ability-card police-card"
+        id="selectDashBtn"
+        type="button"
+        data-ability="dash"
+      >
+        <span class="ability-selected-mark">✓ 選択中</span>
 
-    <span class="ability-card-icon">🔍</span>
+        <span class="ability-card-badge">
+          1 GAME / 1 USE
+        </span>
 
-    <span class="ability-card-name">
-      しろ柴・一斉捜索
-    </span>
+        <span class="ability-card-icon">⚡</span>
 
-    <span class="ability-card-desc">
-      しろ柴の周囲から2箱を選び、
-      一度の行動で2か所を捜索します。
-    </span>
+        <span class="ability-card-name">
+          くろ柴・ダッシュ
+        </span>
 
-    <span class="ability-card-footer">
-      広範囲捜索タイプ
-    </span>
-  </button>
+        <span class="ability-card-desc">
+          くろ柴が一気に2マス移動。
+          通常では届かない場所へ素早く接近できます。
+        </span>
 
-</div>
+        <span class="ability-card-footer">
+          高速移動タイプ
+        </span>
+      </button>
+
+
+      <button
+        class="ability-card police-card"
+        id="selectDoubleSearchBtn"
+        type="button"
+        data-ability="doubleSearch"
+      >
+        <span class="ability-selected-mark">✓ 選択中</span>
+
+        <span class="ability-card-badge">
+          1 GAME / 1 USE
+        </span>
+
+        <span class="ability-card-icon">🔍</span>
+
+        <span class="ability-card-name">
+          しろ柴・一斉捜索
+        </span>
+
+        <span class="ability-card-desc">
+          しろ柴の周囲から2箱を選び、
+          一度の行動で2か所を捜索します。
+        </span>
+
+        <span class="ability-card-footer">
+          広範囲捜索タイプ
+        </span>
+      </button>
+
+    </div>
+
+
+    <button
+      class="btn ability-confirm-btn"
+      id="confirmPoliceAbilityBtn"
+      type="button"
+      disabled
+    >
+      このスキルに決定
+    </button>
+
+  </div>
 
 </section>
-
 
 <!-- ============================= -->
 <!-- 特殊スキル選択：ネコ -->
