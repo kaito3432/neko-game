@@ -986,6 +986,18 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
   );
   return;
 }
+     if(
+  game.phase==="dogs" &&
+  game.policeAbilityPending!==null
+){
+  Audio.play("invalid");
+
+  setMessage(
+    "特殊スキル選択中です。スキルを確定するか、キャンセルしてください。"
+  );
+
+  return;
+}
      
     if(game.phase==="dogs"&&game.selectedDog!==null&&!game.dogAction[game.selectedDog]){
       const di=game.selectedDog;
