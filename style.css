@@ -2943,3 +2943,41 @@ body.sneak-active #sneakBtn{
     transform:translateY(0) scale(1);
   }
 }
+.fake-paw-marker{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  z-index:20;
+
+  min-width:34px;
+  min-height:34px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:50%;
+  background:rgba(255,255,255,.92);
+
+  font-size:18px;
+  font-weight:900;
+
+  box-shadow:
+    0 0 0 3px rgba(255,210,80,.9),
+    0 0 16px rgba(255,190,60,.8);
+
+  pointer-events:none;
+
+  animation:fakePawPulse .9s ease-in-out infinite;
+}
+
+@keyframes fakePawPulse{
+  0%,100%{
+    transform:translate(-50%,-50%) scale(1);
+  }
+
+  50%{
+    transform:translate(-50%,-50%) scale(1.12);
+  }
+}
