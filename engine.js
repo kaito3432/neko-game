@@ -12,7 +12,7 @@ window.NyanEngine = (() => {
 
   const DOGS = [
     {name:"あか柴", label:"🟥", token:"dog-red"},
-    {name:"あお柴", label:"🟦", token:"dog-blue"},
+    {name:"くろ柴", label:"🟦", token:"dog-blue"},
     {name:"しろ柴", label:"🟨", token:"dog-cream"}
   ];
 
