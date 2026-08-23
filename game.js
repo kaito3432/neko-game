@@ -722,6 +722,43 @@ game.actionLocked=false;
         setMessage("まず「👀 ネコ位置を見る」をタップしてください。");
         return;
       }
+       // フェイク肉球：まず偽足跡を置く箱を選ぶ
+if(
+  game.catAbilityPending==="fakePaw" &&
+  game.fakePawTarget===null
+){
+  const legalMoves=
+    E.getCatLegalMoves(game);
+
+  // 偽足跡は「今いる箱から本来移動可能な別方向」にだけ置ける
+  if(!legalMoves.includes(i)){
+    Audio.play("invalid");
+    setMessage("🐾 フェイク肉球は、今いる箱から移動できる隣の箱を選んでください。");
+    return;
+  }
+
+   
+
+  game.fakePawTarget=i;
+
+  Audio.haptic(10);
+
+  setMessage(
+    `✨ 箱${i+1}に偽の足跡を置きます。次に、本当に移動する別の箱を選んでください。`
+  );
+
+  render();
+  return;
+}
+
+       if(
+  game.catAbilityPending==="fakePaw" &&
+  game.fakePawTarget===i
+){
+  Audio.play("invalid");
+  setMessage("その箱には偽の足跡を置きます。本当の移動先は別の箱を選んでください。");
+  return;
+}
 
       if(!E.getCatLegalMoves(game).includes(i)){
         Audio.play("invalid");
