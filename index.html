@@ -258,40 +258,74 @@
 <!-- ============================= -->
 <section class="overlay" id="policeAbilityOverlay">
 
-  <div class="panel">
+ <div class="ability-select-header">
+  <div class="ability-select-kicker">POLICE SPECIAL SKILL</div>
+  <h2>警察の特殊スキルを選択</h2>
+  <p>このゲームで使う特殊スキルを1つ選んでください</p>
+</div>
 
-    <h2>🐕 警察の特殊スキル</h2>
+<div class="ability-card-grid">
 
-    <p>
-      警察プレイヤーだけ画面を見てください。<br>
-      使用する特殊スキルを1つ選びます。
-    </p>
+  <button class="ability-card police-card" id="selectHowlBtn" type="button">
+    <span class="ability-card-badge">1 GAME / 1 USE</span>
 
-    <button
-      class="btn"
-      id="selectHowlBtn"
-      type="button"
-    >
-      🔴 あか柴・遠吠え
-    </button>
+    <span class="ability-card-icon">📣</span>
 
-    <button
-      class="btn"
-      id="selectDashBtn"
-      type="button"
-    >
-      ⚫ くろ柴・ダッシュ
-    </button>
+    <span class="ability-card-name">
+      あか柴・遠吠え
+    </span>
 
-    <button
-      class="btn"
-      id="selectDoubleSearchBtn"
-      type="button"
-    >
-      ⚪ しろ柴・一斉捜索
-    </button>
+    <span class="ability-card-desc">
+      あか柴の周囲にネコの気配があるかを探知。
+      正確な箱までは分かりません。
+    </span>
 
-  </div>
+    <span class="ability-card-footer">
+      情報探知タイプ
+    </span>
+  </button>
+
+
+  <button class="ability-card police-card" id="selectDashBtn" type="button">
+    <span class="ability-card-badge">1 GAME / 1 USE</span>
+
+    <span class="ability-card-icon">⚡</span>
+
+    <span class="ability-card-name">
+      くろ柴・ダッシュ
+    </span>
+
+    <span class="ability-card-desc">
+      くろ柴が一気に2マス移動。
+      通常では届かない場所へ素早く接近できます。
+    </span>
+
+    <span class="ability-card-footer">
+      高速移動タイプ
+    </span>
+  </button>
+
+
+  <button class="ability-card police-card" id="selectDoubleSearchBtn" type="button">
+    <span class="ability-card-badge">1 GAME / 1 USE</span>
+
+    <span class="ability-card-icon">🔍</span>
+
+    <span class="ability-card-name">
+      しろ柴・一斉捜索
+    </span>
+
+    <span class="ability-card-desc">
+      しろ柴の周囲から2箱を選び、
+      一度の行動で2か所を捜索します。
+    </span>
+
+    <span class="ability-card-footer">
+      広範囲捜索タイプ
+    </span>
+  </button>
+
+</div>
 
 </section>
 
@@ -301,32 +335,54 @@
 <!-- ============================= -->
 <section class="overlay" id="catAbilityOverlay">
 
-  <div class="panel">
+<div class="ability-select-header cat-select-header">
+  <div class="ability-select-kicker">CAT SPECIAL SKILL</div>
+  <h2>ネコの特殊スキルを選択</h2>
+  <p>警察には使用タイミングを知られません</p>
+</div>
 
-    <h2>🐱 ネコの特殊スキル</h2>
+<div class="ability-card-grid cat-card-grid">
 
-    <p>
-      ネコプレイヤーだけ画面を見てください。<br>
-      使用する特殊スキルを1つ選びます。
-    </p>
+  <button class="ability-card cat-card" id="selectSneakBtn" type="button">
+    <span class="ability-card-badge">1 GAME / 1 USE</span>
 
-    <button
-      class="btn"
-      id="selectSneakBtn"
-      type="button"
-    >
-      🐾 忍び足
-    </button>
+    <span class="ability-card-icon">🐾</span>
 
-    <button
-      class="btn"
-      id="selectFakePawBtn"
-      type="button"
-    >
-      🐾 フェイク肉球
-    </button>
+    <span class="ability-card-name">
+      忍び足
+    </span>
 
-  </div>
+    <span class="ability-card-desc">
+      移動前にいた箱の足跡を残さずに移動します。
+      追跡をかわす秘密スキルです。
+    </span>
+
+    <span class="ability-card-footer">
+      痕跡隠蔽タイプ
+    </span>
+  </button>
+
+
+  <button class="ability-card cat-card" id="selectFakePawBtn" type="button">
+    <span class="ability-card-badge">1 GAME / 1 USE</span>
+
+    <span class="ability-card-icon">🎭🐾</span>
+
+    <span class="ability-card-name">
+      フェイク肉球
+    </span>
+
+    <span class="ability-card-desc">
+      本当の移動先とは別の箱に偽の足跡を残します。
+      警察の推理を惑わせます。
+    </span>
+
+    <span class="ability-card-footer">
+      撹乱タイプ
+    </span>
+  </button>
+
+</div>
 
 </section>
 
