@@ -40,6 +40,19 @@
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
+   const policeAbilityOverlay=$("policeAbilityOverlay");
+const catAbilityOverlay=$("catAbilityOverlay");
+const abilityRevealOverlay=$("abilityRevealOverlay");
+
+const selectHowlBtn=$("selectHowlBtn");
+const selectDashBtn=$("selectDashBtn");
+const selectDoubleSearchBtn=$("selectDoubleSearchBtn");
+
+const selectSneakBtn=$("selectSneakBtn");
+const selectFakePawBtn=$("selectFakePawBtn");
+
+const abilityRevealText=$("abilityRevealText");
+const abilityStartBtn=$("abilityStartBtn");
   const onlineModeBtn=$("onlineModeBtn"),onlineOverlay=$("onlineOverlay"),onlineBackBtn=$("onlineBackBtn");
    const onlineStartGameBtn=$("onlineStartGameBtn");
 const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnlineRoomBtn");
