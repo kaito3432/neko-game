@@ -1661,10 +1661,11 @@ const canUseDash=
   playMode==="local" &&
   game.phase==="dogs" &&
   game.selectedAbilities.police==="dash" &&
+  game.selectedDog===1 &&
+  !game.dogAction[1] &&
   !game.gameOver &&
   !game.actionLocked &&
   !game.policeAbilities.dashUsed;
-
 dashBtn.classList.toggle(
   "show",
   game.abilitiesEnabled &&
@@ -1679,9 +1680,17 @@ dashBtn.disabled=
 dashBtn.textContent=
   game.policeAbilities.dashUsed
     ? "⚡ 黒柴ダッシュ 使用済み"
+
+    : game.selectedDog!==1
+      ? "⚡ 黒柴ダッシュ｜先に黒柴を選択"
+
+    : game.dogAction[1]
+      ? "⚡ 黒柴ダッシュ｜黒柴は行動済み"
+
     : game.policeAbilityPending==="dash"
       ? "⚡ 黒柴ダッシュ 発動中！"
-      : "⚡ 黒柴ダッシュ";
+
+    : "⚡ 黒柴ダッシュ";
      
      finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
