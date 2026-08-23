@@ -121,8 +121,8 @@ const catViewBtn=$("catViewBtn"),
   const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState"),bgmState=$("bgmState");
   const vibrationState=$("vibrationState"),settingsCloseBtn=$("settingsCloseBtn");
   const bgmVolumeSlider=$("bgmVolumeSlider"),bgmVolumeValue=$("bgmVolumeValue");
-  const restartFromSettingsBtn=$("restartFromSettingsBtn"),backToTitleBtn=$("backToTitleBtn");
-  const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
+const backToTitleBtn=$("backToTitleBtn");
+   const toast=$("toast"),toastIcon=$("toastIcon"),toastTitle=$("toastTitle"),toastText=$("toastText");
   const lastTurnBanner=$("lastTurnBanner"),phaseCue=$("phaseCue"),phaseCueIcon=$("phaseCueIcon"),phaseCueText=$("phaseCueText");
   let lastRenderedPhase=null;
   let lastTurnStingerPlayed=false;
@@ -1508,8 +1508,6 @@ function openSettings(){
     playMode==="onlineCat" ||
     playMode==="onlinePolice";
 
-  restartFromSettingsBtn.style.display =
-    (isHome || isOnline) ? "none" : "";
 
   settingsOverlay.classList.add("show");
 }
@@ -4168,28 +4166,7 @@ if(isNewTrack){
    bindPress(fakePawBtn,toggleFakePaw);
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
-  bindPress(restartFromSettingsBtn,()=>{
-    settingsOverlay.classList.remove("show");
-    initGame(false);
-    if(playMode==="local"){
-      showPrivacy("🐕","0ターン目・警察配置",
-        "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。");
-    }else if(playMode==="cpuPolice"){
-      cpuSetupDogs();
-      game.phase="catSetup";
-      game.turn=1;
-      showPrivacy("🐱","逃走1ターン目・ネコの番",
-        "CPU柴犬警察の配置を確認して、スタート地点にする箱を選んでください。");
-    }else{
-      game.phase="dogSetup";
-      game.turn=0;
-      showPrivacy("🐕","0ターン目・警察配置",
-        "CPUネコと再戦します。柴犬警察3匹を配置してください。");
-    }
-    render();
 
-
-  });
 bindPress(backToTitleBtn,()=>{
   settingsOverlay.classList.remove("show");
 
