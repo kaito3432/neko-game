@@ -603,9 +603,13 @@ if(
   !game.actionLocked
 ){
   // ダッシュ中は2マス先だけ表示
-  if(E.getDogDashMoves(game,1).includes(i)){
-n.classList.add("dash-move");
+if(E.getDogDashMoves(game,1).includes(i)){
+  n.classList.add("dash-move");
+
+  if(game.dashTarget===i){
+    n.classList.add("dash-target");
   }
+}
 
 // 通常移動
 }else if(
@@ -1027,8 +1031,9 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
 
     if(game.selectedDog!==null&&!game.dogAction[game.selectedDog]){
       const di=game.selectedDog;
-       // ---------------------------------
+// ---------------------------------
 // 黒柴ダッシュ中
+// 確定するまでは黒柴を移動させない
 // ---------------------------------
 if(
   di===1 &&
@@ -1038,25 +1043,25 @@ if(
   const dashMoves=
     E.getDogDashMoves(game,1);
 
-  // 2マス先以外は移動させない
   if(!dashMoves.includes(i)){
     Audio.play("invalid");
 
     setMessage(
-      "⚡ ダッシュ中です。光っている2マス先の交差点を選んでください。"
+      "⚡ 黄色く光っている2マス先の交差点を選んでください。"
     );
 
     return;
   }
 
-  // まずはダッシュ先を仮選択
+  // ダッシュ先を仮選択
+  // 別の候補を押せば何度でも変更できる
   game.dashTarget=i;
   game.dashConfirmed=false;
 
   Audio.haptic(10);
 
   setMessage(
-    "⚡ ダッシュ先を選択しました。「ダッシュを確定」を押してください。"
+    "⚡ ダッシュ先を仮選択しました。別の黄色い交差点を選び直すか、「ダッシュ確定」を押してください。"
   );
 
   render();
@@ -1067,8 +1072,7 @@ if(
         setMessage("緑色に光っている交差点へ1マス移動できます。");
         return;
       }
-
-      // 移動は即時確定。以後この犬は行動不可。
+ // 移動は即時確定。以後この犬は行動不可。
 Audio.play("move");
 game.dogs[di]=i;
 
@@ -1389,7 +1393,7 @@ function toggleFakePaw(){
   render();
 }
 
-   function toggleDash(){
+function toggleDash(){
   if(!game.abilitiesEnabled) return;
   if(playMode!=="local") return;
   if(game.phase!=="dogs") return;
@@ -1398,35 +1402,96 @@ function toggleFakePaw(){
 
   // 黒柴だけ
   if(game.selectedDog!==1){
-    setMessage("⚡ 黒柴を選択してからダッシュを使ってください。");
+    setMessage(
+      "⚡ 黒柴を選択してからダッシュを使ってください。"
+    );
     return;
   }
 
   if(game.dogAction[1]){
-    setMessage("⚡ 黒柴はこのターンすでに行動済みです。");
+    setMessage(
+      "⚡ 黒柴はこのターンすでに行動済みです。"
+    );
     return;
   }
 
   if(game.policeAbilities.dashUsed) return;
 
+
+  // ---------------------------------
+  // ① ダッシュ先を仮選択済み
+  // → ここで確定して実際に移動
+  // ---------------------------------
+  if(
+    game.policeAbilityPending==="dash" &&
+    game.dashTarget!==null
+  ){
+    const target=game.dashTarget;
+
+    // 念のため再チェック
+    if(!E.getDogDashMoves(game,1).includes(target)){
+      game.dashTarget=null;
+
+      setMessage(
+        "⚡ その場所にはダッシュできません。もう一度選んでください。"
+      );
+
+      render();
+      return;
+    }
+
+    game.dashConfirmed=true;
+
+    Audio.play("move");
+    Audio.haptic([15,25,15]);
+
+    // 黒柴を2マス先へ移動
+    game.dogs[1]=target;
+
+    // 能力を消費
+    game.policeAbilities.dashUsed=true;
+
+    // 黒柴はこのターン行動終了
+    game.dogAction[1]="move";
+
+    // 状態を解除
+    game.policeAbilityPending=null;
+    game.dashTarget=null;
+    game.dashConfirmed=false;
+    game.selectedDog=null;
+
+    setMessage(
+      "⚡ 黒柴ダッシュ！2マス移動しました。"
+    );
+
+    afterDogAction();
+    render();
+    return;
+  }
+
+
+  // ---------------------------------
+  // ② ダッシュモードをキャンセル
+  // ---------------------------------
   if(game.policeAbilityPending==="dash"){
     game.policeAbilityPending=null;
     game.dashTarget=null;
     game.dashConfirmed=false;
 
-    setMessage("黒柴ダッシュをキャンセルしました。");
+    setMessage(
+      "黒柴ダッシュをキャンセルしました。"
+    );
+
+  // ---------------------------------
+  // ③ ダッシュモード開始
+  // ---------------------------------
   }else{
     game.policeAbilityPending="dash";
     game.dashTarget=null;
     game.dashConfirmed=false;
-     console.log(
-  "DASH:",
-  "現在地", game.dogs[1],
-  "候補", E.getDogDashMoves(game,1)
-);
 
     setMessage(
-      "⚡ 黒柴ダッシュ発動中。2マス先の移動先を選んでください。"
+      "⚡ 黒柴ダッシュ！黄色く光っている2マス先から移動先を選んでください。"
     );
   }
 
@@ -1801,8 +1866,12 @@ dashBtn.textContent=
     : game.dogAction[1]
       ? "⚡ 黒柴ダッシュ｜黒柴は行動済み"
 
+    : game.policeAbilityPending==="dash" &&
+      game.dashTarget!==null
+      ? "✅ ダッシュ確定"
+
     : game.policeAbilityPending==="dash"
-      ? "⚡ 黒柴ダッシュ 発動中！"
+      ? "⚡ ダッシュ先を選択中"
 
     : "⚡ 黒柴ダッシュ";
 
