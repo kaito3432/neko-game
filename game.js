@@ -593,10 +593,30 @@ function startLocalMode(){
       if(game.phase==="dogSetup"&&E.isActiveDogNode(i))n.classList.add("setup");
       if(game.selectedDog!==null&&game.dogs[game.selectedDog]===i)n.classList.add("selected");
 
-      if(game.phase==="dogs"&&game.selectedDog!==null&&!game.dogAction[game.selectedDog]&&!game.actionLocked
-         &&E.getDogLegalMoves(game,game.selectedDog).includes(i)){
-        n.classList.add("move");
-      }
+// 黒柴ダッシュ中
+if(
+  game.phase==="dogs" &&
+  game.selectedDog===1 &&
+  game.policeAbilityPending==="dash" &&
+  !game.policeAbilities.dashUsed &&
+  !game.dogAction[1] &&
+  !game.actionLocked
+){
+  // ダッシュ中は2マス先だけ表示
+  if(E.getDogDashMoves(game,1).includes(i)){
+    n.classList.add("dash-move");
+  }
+
+// 通常移動
+}else if(
+  game.phase==="dogs" &&
+  game.selectedDog!==null &&
+  !game.dogAction[game.selectedDog] &&
+  !game.actionLocked &&
+  E.getDogLegalMoves(game,game.selectedDog).includes(i)
+){
+  n.classList.add("move");
+}
 
        if(
   game.phase==="dogs" &&
@@ -1007,6 +1027,41 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
 
     if(game.selectedDog!==null&&!game.dogAction[game.selectedDog]){
       const di=game.selectedDog;
+       // ---------------------------------
+// 黒柴ダッシュ中
+// ---------------------------------
+if(
+  di===1 &&
+  game.policeAbilityPending==="dash" &&
+  !game.policeAbilities.dashUsed
+){
+  const dashMoves=
+    E.getDogDashMoves(game,1);
+
+  // 2マス先以外は移動させない
+  if(!dashMoves.includes(i)){
+    Audio.play("invalid");
+
+    setMessage(
+      "⚡ ダッシュ中です。光っている2マス先の交差点を選んでください。"
+    );
+
+    return;
+  }
+
+  // まずはダッシュ先を仮選択
+  game.dashTarget=i;
+  game.dashConfirmed=false;
+
+  Audio.haptic(10);
+
+  setMessage(
+    "⚡ ダッシュ先を選択しました。「ダッシュを確定」を押してください。"
+  );
+
+  render();
+  return;
+}
 
       if(!E.getDogLegalMoves(game,di).includes(i)){
         setMessage("緑色に光っている交差点へ1マス移動できます。");
