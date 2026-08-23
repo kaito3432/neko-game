@@ -3041,6 +3041,19 @@ body.fake-paw-mode #fakePawBtn{
     transform:translate(-50%,-50%) scale(1.18);
   }
 }
+.box.double-search-area{
+  box-shadow:
+    0 0 0 3px rgba(255,210,70,.95),
+    0 0 16px rgba(255,210,70,.65);
+}
+
+.box.double-search-selected{
+  box-shadow:
+    0 0 0 5px rgba(255,150,40,1),
+    0 0 24px rgba(255,150,40,.9);
+  transform:scale(1.04);
+}
+
 .box.howl-area{
   box-shadow:
     0 0 0 4px rgba(255,120,80,.95),
