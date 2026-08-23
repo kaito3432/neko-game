@@ -298,6 +298,67 @@ function startLocalMode(){
   privacyBtn.dataset.nextAction="openCatAbility";
 }
 
+   function selectCatAbility(ability){
+  if(playMode!=="local") return;
+
+  game.selectedAbilities.cat=ability;
+
+  catAbilityOverlay.classList.remove("show");
+
+  // 表示用の名前
+  const catNames={
+    sneak:"🐾 忍び足",
+    fakePaw:"🐾 フェイク肉球"
+  };
+
+  const policeNames={
+    howl:"🔴 赤柴・遠吠え",
+    dash:"⚫ 黒柴・ダッシュ",
+    doubleSearch:"⚪ 白柴・一斉捜索"
+  };
+
+  abilityRevealText.innerHTML=`
+    <div class="ability-reveal-side">
+      <strong>🐱 ネコ</strong><br>
+      ${catNames[game.selectedAbilities.cat]}
+    </div>
+
+    <div class="ability-reveal-vs">
+      VS
+    </div>
+
+    <div class="ability-reveal-side">
+      <strong>🐕 柴犬警察</strong><br>
+      ${policeNames[game.selectedAbilities.police]}
+    </div>
+  `;
+
+  abilityRevealOverlay.classList.add("show");
+}
+
+   function startLocalAfterAbilitySelect(){
+  if(playMode!=="local") return;
+
+  if(
+    !game.selectedAbilities.cat ||
+    !game.selectedAbilities.police
+  ){
+    return;
+  }
+
+  abilityRevealOverlay.classList.remove("show");
+
+  Audio.play("gamestart");
+
+  showPrivacy(
+    "🐕",
+    "0ターン目・警察配置",
+    "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。"
+  );
+
+  render();
+}
+
   function startCpuPoliceMode(){
     modeOverlay.classList.remove("show");
     cpuSideOverlay.classList.add("show");
@@ -2929,6 +2990,11 @@ bindPress(onlineBackBtn,()=>{
    bindPress(selectHowlBtn,()=>selectPoliceAbility("howl"));
 bindPress(selectDashBtn,()=>selectPoliceAbility("dash"));
 bindPress(selectDoubleSearchBtn,()=>selectPoliceAbility("doubleSearch"));
+
+   bindPress(selectSneakBtn,()=>selectCatAbility("sneak"));
+bindPress(selectFakePawBtn,()=>selectCatAbility("fakePaw"));
+
+   bindPress(abilityStartBtn,startLocalAfterAbilitySelect);
 
    bindPress(onlineStartGameBtn,()=>{
   if(onlineGameStarted)return;
