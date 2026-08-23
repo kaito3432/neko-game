@@ -2091,13 +2091,7 @@ const canUseDash=
   !game.actionLocked &&
   !game.policeAbilities.dashUsed;
 
-     const canUseDoubleSearch=
-  showDoubleSearchBtn &&
-  game.selectedDog===2 &&
-  !game.dogAction[2] &&
-  !game.policeAbilities.doubleSearchUsed &&
-  !game.gameOver &&
-  !game.actionLocked;
+
 
 doubleSearchBtn.disabled=
   !canUseDoubleSearch;
@@ -2133,20 +2127,6 @@ dashBtn.textContent=
 
     : "⚡ 黒柴ダッシュ";
 
-     doubleSearchBtn.textContent=
-  game.policeAbilities.doubleSearchUsed
-    ? "🔍 白柴・一斉捜索 使用済み"
-
-    : game.selectedDog!==2
-      ? "🔍 白柴・一斉捜索｜先に白柴を選択"
-
-    : game.dogAction[2]
-      ? "🔍 白柴・一斉捜索｜白柴は行動済み"
-
-    : game.policeAbilityPending==="doubleSearch"
-      ? "🔍 一斉捜索 選択中"
-
-    : "🔍 白柴・一斉捜索";
 
      document.body.classList.toggle(
   "dash-mode",
@@ -2188,6 +2168,29 @@ abilityCancelBtn.disabled=
 
 doubleSearchBtn.style.display=
   showDoubleSearchBtn ? "block" : "none";
+
+          const canUseDoubleSearch=
+  showDoubleSearchBtn &&
+  game.selectedDog===2 &&
+  !game.dogAction[2] &&
+  !game.policeAbilities.doubleSearchUsed &&
+  !game.gameOver &&
+  !game.actionLocked;
+
+          doubleSearchBtn.textContent=
+  game.policeAbilities.doubleSearchUsed
+    ? "🔍 白柴・一斉捜索 使用済み"
+
+    : game.selectedDog!==2
+      ? "🔍 白柴・一斉捜索｜先に白柴を選択"
+
+    : game.dogAction[2]
+      ? "🔍 白柴・一斉捜索｜白柴は行動済み"
+
+    : game.policeAbilityPending==="doubleSearch"
+      ? "🔍 一斉捜索 選択中"
+
+    : "🔍 白柴・一斉捜索";
      
      finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
