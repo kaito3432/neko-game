@@ -262,18 +262,41 @@ function bindPress(el, fn){
 
   render();
 }
+function startLocalMode(){
+  playMode="local";
 
-  function startLocalMode(){
-    playMode="local";
-    modeOverlay.classList.remove("show");
-    Audio.setBgmMode("normal");
-    Audio.play("gamestart");
-    initGame(false);
-     game.selectedAbilities.cat="sneak";
-    showPrivacy("🐕","0ターン目・警察配置",
-      "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。");
-    render();
-  }
+  modeOverlay.classList.remove("show");
+
+  // ゲーム状態だけ作る
+  initGame(false);
+
+  // 能力選択を初期化
+  game.selectedAbilities.cat=null;
+  game.selectedAbilities.police=null;
+
+  // まず警察側の特殊スキル選択へ
+  policeAbilityOverlay.classList.add("show");
+
+  Audio.setBgmMode("normal");
+
+  render();
+}
+   function selectPoliceAbility(ability){
+  if(playMode!=="local") return;
+
+  game.selectedAbilities.police=ability;
+
+  policeAbilityOverlay.classList.remove("show");
+
+  // 猫プレイヤーへ端末を渡す
+  showPrivacy(
+    "🐱",
+    "ネコプレイヤーに渡してください",
+    "次はネコ側の特殊スキルを選びます。警察プレイヤーは画面を見ないでください。"
+  );
+
+  privacyBtn.dataset.nextAction="openCatAbility";
+}
 
   function startCpuPoliceMode(){
     modeOverlay.classList.remove("show");
@@ -1378,10 +1401,16 @@ finishDogTurnBtn.classList.toggle(
     privacyOverlay.classList.add("show");
   }
 
-  function closePrivacy(){
-    if(game.actionLocked)return;
-    privacyOverlay.classList.remove("show");
+function closePrivacy(){
+  if(game.actionLocked)return;
+
+  privacyOverlay.classList.remove("show");
+
+  if(privacyBtn.dataset.nextAction==="openCatAbility"){
+    privacyBtn.dataset.nextAction="";
+    catAbilityOverlay.classList.add("show");
   }
+}
 
   function showToast(icon,title,text){
     clearTimeout(toastTimer);
@@ -2897,6 +2926,9 @@ bindPress(onlineModeBtn,()=>{
 bindPress(onlineBackBtn,()=>{
   onlineOverlay.classList.remove("show");
 }); 
+   bindPress(selectHowlBtn,()=>selectPoliceAbility("howl"));
+bindPress(selectDashBtn,()=>selectPoliceAbility("dash"));
+bindPress(selectDoubleSearchBtn,()=>selectPoliceAbility("doubleSearch"));
 
    bindPress(onlineStartGameBtn,()=>{
   if(onlineGameStarted)return;
