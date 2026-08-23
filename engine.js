@@ -55,11 +55,7 @@ fakePawTarget:null,
 fakeTracks:new Map(),
        fakePawConfirmed:false,
        
-dogAbilities:{
-  howlUsed:false,
-  dashUsed:false,
-  doubleSearchUsed:false
-},
+
       cpuSearchedBoxes:new Set(),
       cpuSearchCount:0,
       cpuSearchesThisTurn:0,
@@ -141,6 +137,44 @@ dogAbilities:{
       .filter(isActiveDogNode)
       .filter(t => !state.dogs.some((p,j) => j!==di && p===t));
   }
+
+   function getDogDashMoves(state,di){
+  // 黒柴 = index 1
+  if(di!==1) return [];
+
+  const start=state.dogs[di];
+  if(start===null) return [];
+
+  const results=new Set();
+
+  const firstSteps=
+    getNodeNeighbors(start)
+      .filter(isActiveDogNode)
+      .filter(n=>
+        !state.dogs.some(
+          (p,j)=>j!==di && p===n
+        )
+      );
+
+  for(const mid of firstSteps){
+
+    const secondSteps=
+      getNodeNeighbors(mid)
+        .filter(isActiveDogNode)
+        .filter(n=>n!==start)
+        .filter(n=>
+          !state.dogs.some(
+            (p,j)=>j!==di && p===n
+          )
+        );
+
+    secondSteps.forEach(n=>{
+      results.add(n);
+    });
+  }
+
+  return [...results];
+}
 
   function getBoxesAroundNode(i){
     const r=nodeRow(i), c=nodeCol(i), out=[];
