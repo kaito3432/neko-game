@@ -110,6 +110,9 @@ const catViewBtn=$("catViewBtn"),
       fakePawBtn=$("fakePawBtn"),
       settingsBtn=$("settingsBtn");
    const sneakBanner=$("sneakBanner");
+   const fakePawBanner=$("fakePawBanner");
+const fakePawBannerTitle=$("fakePawBannerTitle");
+const fakePawBannerText=$("fakePawBannerText");
    const finishDogTurnBtn=$("finishDogTurnBtn");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
