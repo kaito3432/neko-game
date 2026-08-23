@@ -1552,6 +1552,49 @@ fakePawBtn.textContent=
 
     : "🐾 フェイク肉球";
 
+     const showFakePawBanner=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="cat" &&
+  game.catVisible &&
+  game.catAbilityPending==="fakePaw" &&
+  !game.catAbilities.fakePawUsed;
+
+fakePawBanner.classList.toggle(
+  "show",
+  showFakePawBanner
+);
+
+if(showFakePawBanner){
+
+  if(
+    game.fakePawTarget!==null &&
+    game.fakePawConfirmed
+  ){
+    fakePawBannerTitle.textContent=
+      "🎭🐾 フェイク肉球 発動中";
+
+    fakePawBannerText.textContent=
+      `箱${game.fakePawTarget+1}に偽の足跡を仕掛けます。本当に逃げる別の箱を選んでください`;
+
+  }else if(game.fakePawTarget!==null){
+
+    fakePawBannerTitle.textContent=
+      "🎭🐾 フェイク肉球 仮選択中";
+
+    fakePawBannerText.textContent=
+      `箱${game.fakePawTarget+1}を選択中です。「確定」を押してください`;
+
+  }else{
+
+    fakePawBannerTitle.textContent=
+      "🎭🐾 フェイク肉球 選択中";
+
+    fakePawBannerText.textContent=
+      "警察をだます偽の足跡を置く箱を選んでください";
+  }
+}
+
 finishDogTurnBtn.classList.toggle(
   "show",
   (
