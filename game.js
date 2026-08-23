@@ -540,23 +540,7 @@ function startLocalMode(){
       if(game.phase==="dogs"&&game.selectedDog!==null&&!game.dogAction[game.selectedDog]&&!game.actionLocked){
         if(E.getBoxesAroundNode(game.dogs[game.selectedDog]).includes(i))b.classList.add("searchable");
       }
-       if(game.phase==="dogs"&&game.selectedDog!==null&&!game.dogAction[game.selectedDog]&&!game.actionLocked
-   &&E.getDogLegalMoves(game,game.selectedDog).includes(i)){
-  n.classList.add("move");
-}
 
-// ★ここから追加
-if(
-  game.phase==="dogs" &&
-  game.selectedDog===1 &&
-  game.policeAbilityPending==="dash" &&
-  !game.policeAbilities.dashUsed &&
-  !game.dogAction[1] &&
-  !game.actionLocked &&
-  E.getDogDashMoves(game,1).includes(i)
-){
-  n.classList.add("dash-move");
-}
 
       if(game.phase!=="cat"&&game.revealedTracks.has(i)){
         b.classList.add("revealed");
@@ -613,6 +597,18 @@ if(
          &&E.getDogLegalMoves(game,game.selectedDog).includes(i)){
         n.classList.add("move");
       }
+
+       if(
+  game.phase==="dogs" &&
+  game.selectedDog===1 &&
+  game.policeAbilityPending==="dash" &&
+  !game.policeAbilities.dashUsed &&
+  !game.dogAction[1] &&
+  !game.actionLocked &&
+  E.getDogDashMoves(game,1).includes(i)
+){
+  n.classList.add("dash-move");
+}
 
       const here=game.dogs.map((p,j)=>p===i?j:-1).filter(j=>j>=0);
       if(here.length){
