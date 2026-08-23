@@ -175,7 +175,7 @@ dogAbilities:{
     BOX_COUNT, NODE_COUNT, MAX_TURNS, DOGS,
     createState, boxRow, boxCol, nodeRow, nodeCol,
     isActiveDogNode, getBoxNeighbors, getCatLegalMoves,
-    canCatFinishFrom, isCatDeadEnd, getNodeNeighbors, getDogLegalMoves,
+    canCatFinishFrom, isCatDeadEnd, getNodeNeighbors, getDogLegalMoves,getDogDashMoves,
     getBoxesAroundNode, allDogsDone,
     manhattanNodeDistance, boxesAroundDogs
   };
