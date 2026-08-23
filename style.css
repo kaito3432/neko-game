@@ -3041,3 +3041,20 @@ body.fake-paw-mode #fakePawBtn{
     transform:translate(-50%,-50%) scale(1.18);
   }
 }
+.box.howl-area{
+  box-shadow:
+    0 0 0 4px rgba(255,120,80,.95),
+    0 0 20px rgba(255,90,60,.8);
+
+  animation:howlAreaPulse .9s ease-in-out infinite;
+}
+
+@keyframes howlAreaPulse{
+  0%,100%{
+    transform:scale(1);
+  }
+
+  50%{
+    transform:scale(1.04);
+  }
+}
