@@ -539,9 +539,19 @@ function startLocalMode(){
         }
       }
 
-      if(game.phase==="dogs"&&game.selectedDog!==null&&!game.dogAction[game.selectedDog]&&!game.actionLocked){
-        if(E.getBoxesAroundNode(game.dogs[game.selectedDog]).includes(i))b.classList.add("searchable");
-      }
+if(
+  game.phase==="dogs" &&
+  game.selectedDog!==null &&
+  !game.dogAction[game.selectedDog] &&
+  !game.actionLocked &&
+  game.policeAbilityPending===null
+){
+  if(
+    E.getBoxesAroundNode(game.dogs[game.selectedDog]).includes(i)
+  ){
+    b.classList.add("searchable");
+  }
+}
        if(
   game.phase==="dogs" &&
   game.selectedDog===0 &&
