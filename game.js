@@ -630,6 +630,7 @@ if(E.getDogDashMoves(game,1).includes(i)){
   game.selectedDog!==null &&
   !game.dogAction[game.selectedDog] &&
   !game.actionLocked &&
+   game.policeAbilityPending!=="howl" &&
   E.getDogLegalMoves(game,game.selectedDog).includes(i)
 ){
   n.classList.add("move");
