@@ -53,6 +53,7 @@ const selectSneakBtn=$("selectSneakBtn");
 const selectFakePawBtn=$("selectFakePawBtn");
 
    const dashBtn=$("dashBtn");
+   const howlBtn=$("howlBtn");
 
 const abilityRevealText=$("abilityRevealText");
 const abilityStartBtn=$("abilityStartBtn");
@@ -1872,6 +1873,40 @@ finishDogTurnBtn.classList.toggle(
   game.catAbilityPending==="fakePaw" &&
   !game.fakePawConfirmed
 );
+const canUseHowl=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="dogs" &&
+  game.selectedAbilities.police==="howl" &&
+  game.selectedDog===0 &&
+  !game.dogAction[0] &&
+  !game.policeAbilities.howlUsed &&
+  !game.gameOver &&
+  !game.actionLocked;
+
+howlBtn.classList.toggle(
+  "show",
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="dogs" &&
+  game.selectedAbilities.police==="howl"
+);
+
+howlBtn.disabled=
+  !canUseHowl;
+
+howlBtn.textContent=
+  game.policeAbilities.howlUsed
+    ? "📣 赤柴・遠吠え 使用済み"
+
+    : game.selectedDog!==0
+      ? "📣 赤柴・遠吠え｜先に赤柴を選択"
+
+    : game.dogAction[0]
+      ? "📣 赤柴・遠吠え｜赤柴は行動済み"
+
+    : "📣 赤柴・遠吠え";
+     
 const canUseDash=
   game.abilitiesEnabled &&
   playMode==="local" &&
