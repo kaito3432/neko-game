@@ -965,6 +965,17 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
       return;
     }
 
+     if(
+  game.phase==="dogs" &&
+  game.selectedDog===0 &&
+  game.policeAbilityPending==="howl"
+){
+  setMessage(
+    "📣 遠吠えモード中です。「遠吠えを確定」を押してください。"
+  );
+  return;
+}
+     
     if(game.phase==="dogs"&&game.selectedDog!==null&&!game.dogAction[game.selectedDog]){
       const di=game.selectedDog;
       if(!E.getBoxesAroundNode(game.dogs[di]).includes(i)){
@@ -1442,7 +1453,7 @@ function toggleFakePaw(){
   render();
 }
 
-   function toggleHowl(){
+function toggleHowl(){
   if(!game.abilitiesEnabled) return;
   if(playMode!=="local") return;
   if(game.phase!=="dogs") return;
@@ -1451,30 +1462,84 @@ function toggleFakePaw(){
 
   // 赤柴だけ
   if(game.selectedDog!==0){
-    setMessage("📣 赤柴を選択してから遠吠えを使ってください。");
+    setMessage(
+      "📣 赤柴を選択してから遠吠えを使ってください。"
+    );
     return;
   }
 
   if(game.dogAction[0]){
-    setMessage("📣 赤柴はこのターンすでに行動済みです。");
+    setMessage(
+      "📣 赤柴はこのターンすでに行動済みです。"
+    );
     return;
   }
 
   if(game.policeAbilities.howlUsed) return;
 
+
+  // ---------------------------------
+  // ① 遠吠えモード中 → 確定して実行
+  // ---------------------------------
   if(game.policeAbilityPending==="howl"){
+
+    const howlBoxes=
+      E.getBoxesAroundNode(game.dogs[0]);
+
+    const catInside=
+      howlBoxes.includes(game.catPos);
+
+    // 能力使用済み
+    game.policeAbilities.howlUsed=true;
+
+    // 赤柴の行動終了
+    game.dogAction[0]="howl";
+
+    // 能力モード解除
     game.policeAbilityPending=null;
 
-    setMessage(
-      "赤柴・遠吠えをキャンセルしました。"
-    );
-  }else{
-    game.policeAbilityPending="howl";
+    // 赤柴選択解除
+    game.selectedDog=null;
 
-    setMessage(
-      "📣 遠吠えの対象範囲を確認してください。赤柴の周囲4箱が対象です。"
-    );
+    Audio.haptic([20,30,20]);
+
+    if(catInside){
+      setMessage(
+        "📣 赤柴の遠吠え！この範囲にネコの気配があります！"
+      );
+
+      showToast(
+        "👀",
+        "気配あり！",
+        "この範囲のどこかにネコがいるワン！"
+      );
+
+    }else{
+      setMessage(
+        "📣 赤柴の遠吠え！この範囲にネコの気配はありません。"
+      );
+
+      showToast(
+        "💨",
+        "気配なし",
+        "この範囲にはネコはいないみたいだワン。"
+      );
+    }
+
+    afterDogAction();
+    render();
+    return;
   }
+
+
+  // ---------------------------------
+  // ② 遠吠えモード開始
+  // ---------------------------------
+  game.policeAbilityPending="howl";
+
+  setMessage(
+    "📣 赤柴の周囲4箱が遠吠え対象です。もう一度「遠吠え」を押すと確定します。"
+  );
 
   render();
 }
@@ -1952,6 +2017,9 @@ howlBtn.textContent=
 
     : game.dogAction[0]
       ? "📣 赤柴・遠吠え｜赤柴は行動済み"
+
+    : game.policeAbilityPending==="howl"
+      ? "✅ 遠吠えを確定"
 
     : "📣 赤柴・遠吠え";
      
