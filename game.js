@@ -1543,14 +1543,14 @@ fakePawBtn.textContent=
     : game.catAbilityPending==="fakePaw" &&
       game.fakePawTarget!==null &&
       !game.fakePawConfirmed
-      ? `✅ 箱${game.fakePawTarget+1}に確定`
+      ? `✅ 箱${game.fakePawTarget+1}｜この場所に確定`
 
     : game.catAbilityPending==="fakePaw" &&
       game.fakePawConfirmed
       ? "🎭🐾 フェイク肉球 発動中！"
 
     : game.catAbilityPending==="fakePaw"
-      ? "✨🐾 フェイク肉球 選択中"
+      ? "🎭🐾 フェイク肉球｜場所を選択中"
 
     : "🐾 フェイク肉球";
 
@@ -1606,6 +1606,12 @@ finishDogTurnBtn.classList.toggle(
   ) &&
   game.phase==="waitingEnd"
 );   
+
+     document.body.classList.toggle(
+  "fake-paw-mode",
+  game.catAbilityPending==="fakePaw" &&
+  !game.fakePawConfirmed
+);
      finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
 
