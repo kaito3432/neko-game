@@ -1245,6 +1245,8 @@ if(
   render();
 }
 
+   
+
 function toggleFakePaw(){
   if(!game.abilitiesEnabled) return;
   if(playMode!=="local") return;
@@ -1313,6 +1315,45 @@ function toggleFakePaw(){
 
     setMessage(
       "フェイク肉球をキャンセルしました。"
+    );
+  }
+
+  render();
+}
+
+   function toggleDash(){
+  if(!game.abilitiesEnabled) return;
+  if(playMode!=="local") return;
+  if(game.phase!=="dogs") return;
+  if(game.gameOver) return;
+  if(game.actionLocked) return;
+
+  // 黒柴だけ
+  if(game.selectedDog!==1){
+    setMessage("⚡ 黒柴を選択してからダッシュを使ってください。");
+    return;
+  }
+
+  if(game.dogAction[1]){
+    setMessage("⚡ 黒柴はこのターンすでに行動済みです。");
+    return;
+  }
+
+  if(game.policeAbilities.dashUsed) return;
+
+  if(game.policeAbilityPending==="dash"){
+    game.policeAbilityPending=null;
+    game.dashTarget=null;
+    game.dashConfirmed=false;
+
+    setMessage("黒柴ダッシュをキャンセルしました。");
+  }else{
+    game.policeAbilityPending="dash";
+    game.dashTarget=null;
+    game.dashConfirmed=false;
+
+    setMessage(
+      "⚡ 黒柴ダッシュ発動中。2マス先の移動先を選んでください。"
     );
   }
 
@@ -1691,6 +1732,11 @@ dashBtn.textContent=
       ? "⚡ 黒柴ダッシュ 発動中！"
 
     : "⚡ 黒柴ダッシュ";
+
+     document.body.classList.toggle(
+  "dash-mode",
+  game.policeAbilityPending==="dash"
+);
      
      finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
@@ -4415,6 +4461,8 @@ if(isNewTrack){
   bindPress(catViewBtn,toggleCatView);
    bindPress(sneakBtn,toggleSneak);
    bindPress(fakePawBtn,toggleFakePaw);
+bindPress(dashBtn,toggleDash);
+   
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
 
