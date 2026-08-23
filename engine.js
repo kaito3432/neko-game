@@ -43,6 +43,7 @@ catAbilityPending:null,
 noTrackBoxes:new Set(),
 fakePawTarget:null,
 fakeTracks:new Map(),
+       fakePawConfirmed:false,
        
 dogAbilities:{
   howlUsed:false,
