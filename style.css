@@ -3004,3 +3004,23 @@ body.fake-paw-mode #fakePawBtn{
     transform:scale(1.04);
   }
 }
+.node.dash-move{
+  background:#ffd96a;
+  border-color:#b87900;
+
+  box-shadow:
+    0 0 0 4px rgba(255,205,70,.95),
+    0 0 20px rgba(255,165,35,.85);
+
+  animation:dashMovePulse .8s ease-in-out infinite;
+}
+
+@keyframes dashMovePulse{
+  0%,100%{
+    transform:scale(1);
+  }
+
+  50%{
+    transform:scale(1.15);
+  }
+}
