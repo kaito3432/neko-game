@@ -51,6 +51,8 @@ const selectDoubleSearchBtn=$("selectDoubleSearchBtn");
 const selectSneakBtn=$("selectSneakBtn");
 const selectFakePawBtn=$("selectFakePawBtn");
 
+   const dashBtn=$("dashBtn");
+
 const abilityRevealText=$("abilityRevealText");
 const abilityStartBtn=$("abilityStartBtn");
   const onlineModeBtn=$("onlineModeBtn"),onlineOverlay=$("onlineOverlay"),onlineBackBtn=$("onlineBackBtn");
@@ -1654,6 +1656,33 @@ finishDogTurnBtn.classList.toggle(
   game.catAbilityPending==="fakePaw" &&
   !game.fakePawConfirmed
 );
+const canUseDash=
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="dogs" &&
+  game.selectedAbilities.police==="dash" &&
+  !game.gameOver &&
+  !game.actionLocked &&
+  !game.policeAbilities.dashUsed;
+
+dashBtn.classList.toggle(
+  "show",
+  game.abilitiesEnabled &&
+  playMode==="local" &&
+  game.phase==="dogs" &&
+  game.selectedAbilities.police==="dash"
+);
+
+dashBtn.disabled=
+  !canUseDash;
+
+dashBtn.textContent=
+  game.policeAbilities.dashUsed
+    ? "⚡ 黒柴ダッシュ 使用済み"
+    : game.policeAbilityPending==="dash"
+      ? "⚡ 黒柴ダッシュ 発動中！"
+      : "⚡ 黒柴ダッシュ";
+     
      finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
 
