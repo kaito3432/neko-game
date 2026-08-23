@@ -2981,3 +2981,26 @@ body.sneak-active #sneakBtn{
     transform:translate(-50%,-50%) scale(1.12);
   }
 }
+body.fake-paw-mode .board-shell{
+  box-shadow:
+    0 0 0 4px rgba(255,190,60,.85),
+    0 0 22px rgba(255,170,40,.65);
+}
+
+body.fake-paw-mode .guide{
+  transform:scale(1.015);
+}
+
+body.fake-paw-mode #fakePawBtn{
+  animation:fakeModePulse .9s ease-in-out infinite;
+}
+
+@keyframes fakeModePulse{
+  0%,100%{
+    transform:scale(1);
+  }
+
+  50%{
+    transform:scale(1.04);
+  }
+}
