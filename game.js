@@ -1627,6 +1627,275 @@ function toggleFakePaw(){
   render();
 }
 
+   function executeDoubleSearch(){
+
+  if(game.policeAbilityPending!=="doubleSearch") return;
+  if(game.doubleSearchTargets.length!==2) return;
+  if(game.policeAbilities.doubleSearchUsed) return;
+
+  const targets=[...game.doubleSearchTargets];
+
+  // ---------------------------------
+  // 一斉捜索を確定
+  // ---------------------------------
+  game.doubleSearchConfirmed=true;
+  game.actionLocked=true;
+
+  // 1ゲーム1回を消費
+  game.policeAbilities.doubleSearchUsed=true;
+
+  // 白柴はこのターン行動終了
+  game.dogAction[2]="doubleSearch";
+
+  // 特殊スキルモード解除
+  game.policeAbilityPending=null;
+
+  // 犬の選択解除
+  game.selectedDog=null;
+
+  Audio.haptic([20,25,20]);
+
+  setMessage(
+    `🔍 白柴・一斉捜索！ 箱${targets[0]+1}と箱${targets[1]+1}を調査します！`
+  );
+
+  render();
+
+
+  // ---------------------------------
+  // 1箱ずつ順番に探索
+  // ---------------------------------
+  let index=0;
+
+  function searchNext(){
+
+    // 2箱とも終了
+    if(index>=targets.length){
+
+      game.actionLocked=false;
+      game.doubleSearchTargets=[];
+      game.doubleSearchConfirmed=false;
+
+      setMessage(
+        "🔍 白柴の一斉捜索が完了しました。"
+      );
+
+      afterDogAction();
+      render();
+      return;
+    }
+
+    const bi=targets[index];
+
+    A.animateSniff(
+      board,
+      game.dogs[2],
+      2,
+      bi,
+      motionStatus,
+      ()=>{
+
+        // =================================
+        // ① 現在地に猫がいる → 捕獲
+        // =================================
+        if(bi===game.catPos){
+
+          Audio.play("capture");
+          Audio.haptic([35,45,70]);
+
+          A.burstAtBox(
+            board,
+            bi,
+            "🐱✨"
+          );
+
+          game.actionLocked=false;
+          game.doubleSearchTargets=[];
+          game.doubleSearchConfirmed=false;
+
+          endGame(
+            "dogs",
+            `白柴の一斉捜索！箱${bi+1}でネコを発見！`
+          );
+
+          return;
+        }
+
+
+        // =================================
+        // ② 本物の足跡
+        // =================================
+        const hasRealTrack=
+          game.catHistory.has(bi) &&
+          !game.noTrackBoxes.has(bi);
+
+
+        // =================================
+        // ③ フェイク肉球
+        // =================================
+        const hasFakeTrack=
+          game.fakeTracks.has(bi);
+
+
+        // =================================
+        // 足跡あり
+        // =================================
+        if(hasRealTrack || hasFakeTrack){
+
+          const isNewTrack=
+            !game.revealedTracks.has(bi);
+
+          const trackTurn=
+            hasRealTrack
+              ? game.catHistory.get(bi)
+              : game.fakeTracks.get(bi);
+
+          game.revealedTracks.set(
+            bi,
+            trackTurn
+          );
+
+
+          // 初めて見つけた足跡
+          if(isNewTrack){
+
+            const foundBox=
+              board.querySelector(
+                `.box[data-box-index="${bi}"]`
+              );
+
+            if(foundBox){
+
+              foundBox.classList.remove(
+                "found-track"
+              );
+
+              void foundBox.offsetWidth;
+
+              foundBox.classList.add(
+                "found-track"
+              );
+
+              setTimeout(()=>{
+                foundBox.classList.remove(
+                  "found-track"
+                );
+              },700);
+            }
+
+            Audio.haptic([15,35,25]);
+          }
+
+
+          // ---------------------------------
+          // スタート地点
+          // ---------------------------------
+          if(
+            hasRealTrack &&
+            game.catHistory.get(bi)===1
+          ){
+
+            Audio.duckBgm(900);
+
+            setTimeout(()=>{
+              Audio.play("start");
+            },60);
+
+            A.burstAtBox(
+              board,
+              bi,
+              "🚩✨"
+            );
+
+            showToast(
+              "🚩",
+              "スタート地点を発見！",
+              `箱${bi+1}から逃げ始めたみたいだワン！`
+            );
+
+          }else{
+
+            // ---------------------------------
+            // 通常の足跡
+            // ---------------------------------
+            Audio.duckBgm(900);
+
+            setTimeout(()=>{
+              Audio.play("paw");
+            },60);
+
+            A.burstAtBox(
+              board,
+              bi,
+              "🐾✨"
+            );
+
+            showToast(
+              "🐕🐾",
+              "足跡を発見！",
+              `箱${bi+1}にネコの痕跡があるワン！`
+            );
+          }
+
+        }else{
+
+          // =================================
+          // ④ 何もない
+          // =================================
+          const emptyBox=
+            board.querySelector(
+              `.box[data-box-index="${bi}"]`
+            );
+
+          if(emptyBox){
+
+            emptyBox.classList.remove(
+              "empty-search"
+            );
+
+            void emptyBox.offsetWidth;
+
+            emptyBox.classList.add(
+              "empty-search"
+            );
+          }
+
+          Audio.play("empty");
+          Audio.haptic(10);
+
+          A.burstAtBox(
+            board,
+            bi,
+            "💨"
+          );
+
+          showToast(
+            "💨",
+            "クンクン……",
+            `箱${bi+1}には何もないワン！`
+          );
+        }
+
+
+        // 盤面へ結果反映
+        render();
+
+        // 次の箱へ
+        index++;
+
+        setTimeout(
+          searchNext,
+          450
+        );
+      }
+    );
+  }
+
+
+  // 1箱目開始
+  searchNext();
+}
+
    function toggleDoubleSearch(){
   if(!game.abilitiesEnabled) return;
   if(playMode!=="local") return;
@@ -1655,20 +1924,13 @@ function toggleFakePaw(){
   // ------------------------------
   // すでに2箱選択済み → 確定
   // ------------------------------
-  if(
-    game.policeAbilityPending==="doubleSearch" &&
-    game.doubleSearchTargets.length===2
-  ){
-    game.doubleSearchConfirmed=true;
-
-    setMessage(
-      "🔍 一斉捜索を確定しました。"
-    );
-
-    // 実際の探索処理は次の工程で追加
-    render();
-    return;
-  }
+if(
+  game.policeAbilityPending==="doubleSearch" &&
+  game.doubleSearchTargets.length===2
+){
+  executeDoubleSearch();
+  return;
+}
 
 
   // ------------------------------
