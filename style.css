@@ -3071,3 +3071,144 @@ body.fake-paw-mode #fakePawBtn{
     transform:scale(1.04);
   }
 }
+.ability-select-header{
+  text-align:center;
+  margin-bottom:22px;
+}
+
+.ability-select-kicker{
+  font-size:11px;
+  letter-spacing:.18em;
+  font-weight:900;
+  opacity:.65;
+  margin-bottom:6px;
+}
+
+.ability-select-header h2{
+  margin:0 0 8px;
+  font-size:26px;
+  font-weight:900;
+}
+
+.ability-select-header p{
+  margin:0;
+  font-size:13px;
+  opacity:.7;
+}
+
+.ability-card-grid{
+  display:grid;
+  gap:14px;
+}
+
+.ability-card{
+  position:relative;
+  width:100%;
+  padding:20px 18px 16px;
+  border-radius:20px;
+  border:2px solid rgba(255,255,255,.55);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.96),
+      rgba(245,245,245,.88)
+    );
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.12),
+    inset 0 1px 0 rgba(255,255,255,.8);
+  text-align:left;
+  cursor:pointer;
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.ability-card:active{
+  transform:scale(.98);
+}
+
+.ability-card:hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 14px 30px rgba(0,0,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.ability-card-icon{
+  display:block;
+  font-size:34px;
+  margin-bottom:8px;
+}
+
+.ability-card-name{
+  display:block;
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.ability-card-desc{
+  display:block;
+  font-size:13px;
+  line-height:1.65;
+  opacity:.82;
+}
+
+.ability-card-footer{
+  display:inline-block;
+  margin-top:14px;
+  padding:5px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  background:rgba(0,0,0,.07);
+}
+
+.ability-card-badge{
+  position:absolute;
+  top:12px;
+  right:12px;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.08em;
+  opacity:.55;
+}
+
+.police-card{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,250,242,.98),
+      rgba(255,236,219,.92)
+    );
+}
+
+.cat-card{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(247,244,255,.98),
+      rgba(230,226,255,.92)
+    );
+}
+
+.police-card:hover{
+  border-color:rgba(255,140,70,.8);
+}
+
+.cat-card:hover{
+  border-color:rgba(140,110,255,.8);
+}#policeAbilityOverlay .panel,
+#catAbilityOverlay .panel{
+  border-radius:26px;
+  padding:24px 18px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.98),
+      rgba(246,246,246,.96)
+    );
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.22);
+}
