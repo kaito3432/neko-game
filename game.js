@@ -320,9 +320,9 @@ function startLocalMode(){
   };
 
   const policeNames={
-    howl:"🔴 赤柴・遠吠え",
-    dash:"⚫ 黒柴・ダッシュ",
-    doubleSearch:"⚪ 白柴・一斉捜索"
+    howl:"🔴 あか柴・遠吠え",
+    dash:"⚫ くろ柴・ダッシュ",
+    doubleSearch:"⚪ しろ柴・一斉捜索"
   };
 
   abilityRevealText.innerHTML=`
@@ -632,7 +632,7 @@ if(
       if(game.phase==="dogSetup"&&E.isActiveDogNode(i))n.classList.add("setup");
       if(game.selectedDog!==null&&game.dogs[game.selectedDog]===i)n.classList.add("selected");
 
-// 黒柴ダッシュ中
+// くろ柴ダッシュ中
 if(
   game.phase==="dogs" &&
   game.selectedDog===1 &&
@@ -993,7 +993,7 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
     }
 
      // =====================================
-// 白柴・一斉捜索：2箱を仮選択
+// しろ柴・一斉捜索：2箱を仮選択
 // =====================================
 if(
   game.phase==="dogs" &&
@@ -1004,12 +1004,12 @@ if(
   const searchArea=
     E.getBoxesAroundNode(game.dogs[2]);
 
-  // 白柴の通常探索範囲外
+  // しろ柴の通常探索範囲外
   if(!searchArea.includes(i)){
     Audio.play("invalid");
 
     setMessage(
-      "🔍 一斉捜索は、白柴の周囲4箱から選んでください。"
+      "🔍 一斉捜索は、しろ柴の周囲4箱から選んでください。"
     );
 
     return;
@@ -1188,8 +1188,8 @@ if(
 }
        
 // ---------------------------------
-// 黒柴ダッシュ中
-// 確定するまでは黒柴を移動させない
+// くろ柴ダッシュ中
+// 確定するまではくろ柴を移動させない
 // ---------------------------------
 if(
   di===1 &&
@@ -1512,14 +1512,14 @@ if(
   game.policeAbilityPending=null;
 
   setMessage(
-    "赤柴・遠吠えをキャンセルしました。通常の行動に戻ります。"
+    "あか柴・遠吠えをキャンセルしました。通常の行動に戻ります。"
   );
 
   render();
   return;
 }
 
-  // 黒柴ダッシュ
+  // くろ柴ダッシュ
   if(
     game.policeAbilityPending==="dash" &&
     !game.dashConfirmed
@@ -1529,13 +1529,13 @@ if(
     game.dashConfirmed=false;
 
     setMessage(
-      "黒柴ダッシュをキャンセルしました。通常の行動に戻ります。"
+      "くろ柴ダッシュをキャンセルしました。通常の行動に戻ります。"
     );
 
     render();
     return;
   }
-      // 白柴・一斉捜索
+      // しろ柴・一斉捜索
 if(
   game.policeAbilityPending==="doubleSearch" &&
   !game.doubleSearchConfirmed
@@ -1545,7 +1545,7 @@ if(
   game.doubleSearchConfirmed=false;
 
   setMessage(
-    "白柴・一斉捜索をキャンセルしました。通常の行動に戻ります。"
+    "しろ柴・一斉捜索をキャンセルしました。通常の行動に戻ります。"
   );
 
   render();
@@ -1644,7 +1644,7 @@ function toggleFakePaw(){
   // 1ゲーム1回を消費
   game.policeAbilities.doubleSearchUsed=true;
 
-  // 白柴はこのターン行動終了
+  // しろ柴はこのターン行動終了
   game.dogAction[2]="doubleSearch";
 
   // 特殊スキルモード解除
@@ -1656,7 +1656,7 @@ function toggleFakePaw(){
   Audio.haptic([20,25,20]);
 
   setMessage(
-    `🔍 白柴・一斉捜索！ 箱${targets[0]+1}と箱${targets[1]+1}を調査します！`
+    `🔍 しろ柴・一斉捜索！ 箱${targets[0]+1}と箱${targets[1]+1}を調査します！`
   );
 
   render();
@@ -1677,7 +1677,7 @@ function toggleFakePaw(){
       game.doubleSearchConfirmed=false;
 
       setMessage(
-        "🔍 白柴の一斉捜索が完了しました。"
+        "🔍 しろ柴の一斉捜索が完了しました。"
       );
 
       afterDogAction();
@@ -1715,7 +1715,7 @@ function toggleFakePaw(){
 
           endGame(
             "dogs",
-            `白柴の一斉捜索！箱${bi+1}でネコを発見！`
+            `しろ柴の一斉捜索！箱${bi+1}でネコを発見！`
           );
 
           return;
@@ -1903,17 +1903,17 @@ function toggleFakePaw(){
   if(game.gameOver) return;
   if(game.actionLocked) return;
 
-  // 白柴だけ
+  // しろ柴だけ
   if(game.selectedDog!==2){
     setMessage(
-      "🔍 白柴を選択してから一斉捜索を使ってください。"
+      "🔍 しろ柴を選択してから一斉捜索を使ってください。"
     );
     return;
   }
 
   if(game.dogAction[2]){
     setMessage(
-      "🔍 白柴はこのターンすでに行動済みです。"
+      "🔍 しろ柴はこのターンすでに行動済みです。"
     );
     return;
   }
@@ -1943,7 +1943,7 @@ if(
     game.doubleSearchConfirmed=false;
 
     setMessage(
-      "🔍 白柴の周囲4箱から、捜索する2箱を選んでください。"
+      "🔍 しろ柴の周囲4箱から、捜索する2箱を選んでください。"
     );
 
     render();
@@ -1966,17 +1966,17 @@ function toggleHowl(){
   if(game.gameOver) return;
   if(game.actionLocked) return;
 
-  // 赤柴だけ
+  // あか柴だけ
   if(game.selectedDog!==0){
     setMessage(
-      "📣 赤柴を選択してから遠吠えを使ってください。"
+      "📣 あか柴を選択してから遠吠えを使ってください。"
     );
     return;
   }
 
   if(game.dogAction[0]){
     setMessage(
-      "📣 赤柴はこのターンすでに行動済みです。"
+      "📣 あか柴はこのターンすでに行動済みです。"
     );
     return;
   }
@@ -1998,20 +1998,20 @@ function toggleHowl(){
     // 能力使用済み
     game.policeAbilities.howlUsed=true;
 
-    // 赤柴の行動終了
+    // あか柴の行動終了
     game.dogAction[0]="howl";
 
     // 能力モード解除
     game.policeAbilityPending=null;
 
-    // 赤柴選択解除
+    // あか柴選択解除
     game.selectedDog=null;
 
     Audio.haptic([20,30,20]);
 
     if(catInside){
       setMessage(
-        "📣 赤柴の遠吠え！この範囲にネコの気配があります！"
+        "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
       );
 
       showToast(
@@ -2022,7 +2022,7 @@ function toggleHowl(){
 
     }else{
       setMessage(
-        "📣 赤柴の遠吠え！この範囲にネコの気配はありません。"
+        "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
       );
 
       showToast(
@@ -2044,7 +2044,7 @@ function toggleHowl(){
   game.policeAbilityPending="howl";
 
   setMessage(
-    "📣 赤柴の周囲4箱が遠吠え対象です。もう一度「遠吠え」を押すと確定します。"
+    "📣 あか柴の周囲4箱が遠吠え対象です。もう一度「遠吠え」を押すと確定します。"
   );
 
   render();
@@ -2057,17 +2057,17 @@ function toggleDash(){
   if(game.gameOver) return;
   if(game.actionLocked) return;
 
-  // 黒柴だけ
+  // くろ柴だけ
   if(game.selectedDog!==1){
     setMessage(
-      "⚡ 黒柴を選択してからダッシュを使ってください。"
+      "⚡ くろ柴を選択してからダッシュを使ってください。"
     );
     return;
   }
 
   if(game.dogAction[1]){
     setMessage(
-      "⚡ 黒柴はこのターンすでに行動済みです。"
+      "⚡ くろ柴はこのターンすでに行動済みです。"
     );
     return;
   }
@@ -2102,13 +2102,13 @@ function toggleDash(){
     Audio.play("move");
     Audio.haptic([15,25,15]);
 
-    // 黒柴を2マス先へ移動
+    // くろ柴を2マス先へ移動
     game.dogs[1]=target;
 
     // 能力を消費
     game.policeAbilities.dashUsed=true;
 
-    // 黒柴はこのターン行動終了
+    // くろ柴はこのターン行動終了
     game.dogAction[1]="move";
 
     // 状態を解除
@@ -2118,7 +2118,7 @@ function toggleDash(){
     game.selectedDog=null;
 
     setMessage(
-      "⚡ 黒柴ダッシュ！2マス移動しました。"
+      "⚡ くろ柴ダッシュ！2マス移動しました。"
     );
 
     afterDogAction();
@@ -2136,7 +2136,7 @@ function toggleDash(){
     game.dashConfirmed=false;
 
     setMessage(
-      "黒柴ダッシュをキャンセルしました。"
+      "くろ柴ダッシュをキャンセルしました。"
     );
 
   // ---------------------------------
@@ -2148,7 +2148,7 @@ function toggleDash(){
     game.dashConfirmed=false;
 
     setMessage(
-      "⚡ 黒柴ダッシュ！黄色く光っている2マス先から移動先を選んでください。"
+      "⚡ くろ柴ダッシュ！黄色く光っている2マス先から移動先を選んでください。"
     );
   }
 
@@ -2519,18 +2519,18 @@ howlBtn.disabled=
 
 howlBtn.textContent=
   game.policeAbilities.howlUsed
-    ? "📣 赤柴・遠吠え 使用済み"
+    ? "📣 あか柴・遠吠え 使用済み"
 
     : game.selectedDog!==0
-      ? "📣 赤柴・遠吠え｜先に赤柴を選択"
+      ? "📣 あか柴・遠吠え｜先にあか柴を選択"
 
     : game.dogAction[0]
-      ? "📣 赤柴・遠吠え｜赤柴は行動済み"
+      ? "📣 あか柴・遠吠え｜あか柴は行動済み"
 
     : game.policeAbilityPending==="howl"
       ? "✅ 遠吠えを確定"
 
-    : "📣 赤柴・遠吠え";
+    : "📣 あか柴・遠吠え";
      
 const canUseDash=
   game.abilitiesEnabled &&
@@ -2560,13 +2560,13 @@ dashBtn.disabled=
 
 dashBtn.textContent=
   game.policeAbilities.dashUsed
-    ? "⚡ 黒柴ダッシュ 使用済み"
+    ? "⚡ くろ柴ダッシュ 使用済み"
 
     : game.selectedDog!==1
-      ? "⚡ 黒柴ダッシュ｜先に黒柴を選択"
+      ? "⚡ くろ柴ダッシュ｜先にくろ柴を選択"
 
     : game.dogAction[1]
-      ? "⚡ 黒柴ダッシュ｜黒柴は行動済み"
+      ? "⚡ くろ柴ダッシュ｜くろ柴は行動済み"
 
     : game.policeAbilityPending==="dash" &&
       game.dashTarget!==null
@@ -2575,7 +2575,7 @@ dashBtn.textContent=
     : game.policeAbilityPending==="dash"
       ? "⚡ ダッシュ先を選択中"
 
-    : "⚡ 黒柴ダッシュ";
+    : "⚡ くろ柴ダッシュ";
 
 
      document.body.classList.toggle(
@@ -2638,13 +2638,13 @@ doubleSearchBtn.style.display=
 
           doubleSearchBtn.textContent=
   game.policeAbilities.doubleSearchUsed
-    ? "🔍 白柴・一斉捜索 使用済み"
+    ? "🔍 しろ柴・一斉捜索 使用済み"
 
     : game.selectedDog!==2
-      ? "🔍 白柴・一斉捜索｜先に白柴を選択"
+      ? "🔍 しろ柴・一斉捜索｜先にしろ柴を選択"
 
     : game.dogAction[2]
-      ? "🔍 白柴・一斉捜索｜白柴は行動済み"
+      ? "🔍 しろ柴・一斉捜索｜しろ柴は行動済み"
 
 : game.policeAbilityPending==="doubleSearch" &&
   game.doubleSearchTargets.length===2
@@ -2653,7 +2653,7 @@ doubleSearchBtn.style.display=
 : game.policeAbilityPending==="doubleSearch"
   ? `🔍 捜索する箱を選択中 ${game.doubleSearchTargets.length}/2`
 
-    : "🔍 白柴・一斉捜索";
+    : "🔍 しろ柴・一斉捜索";
      
      finishDogTurnBtn.disabled=game.phase!=="waitingEnd"||game.gameOver||game.actionLocked;
   }
