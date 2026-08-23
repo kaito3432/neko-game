@@ -1251,12 +1251,17 @@ sneakBtn.classList.toggle(
 sneakBtn.disabled=
   !canUseSneak;
 
+const isStartBox=
+  game.catHistory.get(game.catPos)===1;
+
 sneakBtn.textContent=
   game.catAbilities.sneakUsed
     ? "🐾 忍び足 使用済み"
-    : game.catAbilityPending==="sneak"
-      ? "✨🐾 忍び足 発動中！"
-      : "🐾 忍び足";
+    : isStartBox
+      ? "🐾 忍び足｜スタート地点では使用できません"
+      : game.catAbilityPending==="sneak"
+        ? "✨🐾 忍び足 発動中！"
+        : "🐾 忍び足";
 
      document.body.classList.toggle(
   "sneak-active",
