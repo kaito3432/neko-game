@@ -256,6 +256,7 @@ function bindPress(el, fn){
     Audio.setBgmMode("normal");
     Audio.play("gamestart");
     initGame(false);
+     game.selectedAbilities.cat="sneak";
     showPrivacy("🐕","0ターン目・警察配置",
       "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。");
     render();
@@ -1271,7 +1272,8 @@ sneakBtn.classList.toggle(
   "show",
   game.abilitiesEnabled &&
   playMode==="local" &&
-  game.phase==="cat"
+  game.phase==="cat" &&
+  game.selectedAbilities.cat==="sneak"
 );
 
 sneakBtn.disabled=
@@ -1319,7 +1321,8 @@ fakePawBtn.classList.toggle(
   "show",
   game.abilitiesEnabled &&
   playMode==="local" &&
-  game.phase==="cat"
+  game.phase==="cat" &&
+  game.selectedAbilities.cat==="fakePaw"
 );
 
 fakePawBtn.disabled=
