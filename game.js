@@ -1223,6 +1223,18 @@ if(
   render();
   return;
 }
+       // 特殊スキル選択中は通常移動禁止
+if(
+  game.policeAbilityPending!==null
+){
+  Audio.play("invalid");
+
+  setMessage(
+    "特殊スキル選択中です。スキルを確定するか、キャンセルしてください。"
+  );
+
+  return;
+}
 
       if(!E.getDogLegalMoves(game,di).includes(i)){
         setMessage("緑色に光っている交差点へ1マス移動できます。");
@@ -1523,6 +1535,22 @@ if(
     render();
     return;
   }
+      // 白柴・一斉捜索
+if(
+  game.policeAbilityPending==="doubleSearch" &&
+  !game.doubleSearchConfirmed
+){
+  game.policeAbilityPending=null;
+  game.doubleSearchTargets=[];
+  game.doubleSearchConfirmed=false;
+
+  setMessage(
+    "白柴・一斉捜索をキャンセルしました。通常の行動に戻ります。"
+  );
+
+  render();
+  return;
+}
 }
 
 function toggleFakePaw(){
@@ -2303,16 +2331,22 @@ const canCancelAbility=
       )
     )
   ) ||
+(
+  game.phase==="dogs" &&
   (
-    game.phase==="dogs" &&
+    game.policeAbilityPending==="howl" ||
+
     (
-      game.policeAbilityPending==="howl" ||
-      (
-        game.policeAbilityPending==="dash" &&
-        !game.dashConfirmed
-      )
+      game.policeAbilityPending==="dash" &&
+      !game.dashConfirmed
+    ) ||
+
+    (
+      game.policeAbilityPending==="doubleSearch" &&
+      !game.doubleSearchConfirmed
     )
-  );
+  )
+);
 
 abilityCancelBtn.style.display=
   canCancelAbility ? "block" : "none";
