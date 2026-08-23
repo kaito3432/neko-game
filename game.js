@@ -1872,13 +1872,14 @@ const canUseSneak=
   !game.catAbilities.sneakUsed &&
   game.catHistory.get(game.catPos)!==1;
 
-sneakBtn.classList.toggle(
-  "show",
+const showSneakBtn=
   game.abilitiesEnabled &&
   playMode==="local" &&
   game.phase==="cat" &&
-  game.selectedAbilities.cat==="sneak"
-);
+  game.selectedAbilities.cat==="sneak";
+
+sneakBtn.style.display=
+  showSneakBtn ? "" : "none";
 
 sneakBtn.disabled=
   !canUseSneak;
@@ -1924,13 +1925,14 @@ const canUseFakePaw=
   !game.actionLocked &&
   !game.catAbilities.fakePawUsed;
 
-fakePawBtn.classList.toggle(
-  "show",
+const showFakePawBtn=
   game.abilitiesEnabled &&
   playMode==="local" &&
   game.phase==="cat" &&
-  game.selectedAbilities.cat==="fakePaw"
-);
+  game.selectedAbilities.cat==="fakePaw";
+
+fakePawBtn.style.display=
+  showFakePawBtn ? "" : "none";
 
 fakePawBtn.disabled=
   !canUseFakePaw;
@@ -2024,13 +2026,14 @@ const canUseHowl=
   !game.gameOver &&
   !game.actionLocked;
 
-howlBtn.classList.toggle(
-  "show",
+const showHowlBtn=
   game.abilitiesEnabled &&
   playMode==="local" &&
   game.phase==="dogs" &&
-  game.selectedAbilities.police==="howl"
-);
+  game.selectedAbilities.police==="howl";
+
+howlBtn.style.display=
+  showHowlBtn ? "" : "none";
 
 howlBtn.disabled=
   !canUseHowl;
@@ -2061,13 +2064,14 @@ const canUseDash=
   !game.actionLocked &&
   !game.policeAbilities.dashUsed;
      
-dashBtn.classList.toggle(
-  "show",
+const showDashBtn=
   game.abilitiesEnabled &&
   playMode==="local" &&
   game.phase==="dogs" &&
-  game.selectedAbilities.police==="dash"
-);
+  game.selectedAbilities.police==="dash";
+
+dashBtn.style.display=
+  showDashBtn ? "" : "none";
 
 dashBtn.disabled=
   !canUseDash;
@@ -2117,10 +2121,8 @@ const canCancelAbility=
     )
   );
 
-abilityCancelBtn.classList.toggle(
-  "show",
-  canCancelAbility
-);
+abilityCancelBtn.style.display=
+  canCancelAbility ? "" : "none";
 
 abilityCancelBtn.disabled=
   !canCancelAbility;
