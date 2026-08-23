@@ -542,6 +542,17 @@ function startLocalMode(){
       if(game.phase==="dogs"&&game.selectedDog!==null&&!game.dogAction[game.selectedDog]&&!game.actionLocked){
         if(E.getBoxesAroundNode(game.dogs[game.selectedDog]).includes(i))b.classList.add("searchable");
       }
+       if(
+  game.phase==="dogs" &&
+  game.selectedDog===0 &&
+  game.policeAbilityPending==="howl" &&
+  !game.policeAbilities.howlUsed &&
+  !game.dogAction[0] &&
+  !game.actionLocked &&
+  E.getBoxesAroundNode(game.dogs[0]).includes(i)
+){
+  b.classList.add("howl-area");
+}
 
 
       if(game.phase!=="cat"&&game.revealedTracks.has(i)){
@@ -1425,6 +1436,43 @@ function toggleFakePaw(){
 
     setMessage(
       "フェイク肉球をキャンセルしました。"
+    );
+  }
+
+  render();
+}
+
+   function toggleHowl(){
+  if(!game.abilitiesEnabled) return;
+  if(playMode!=="local") return;
+  if(game.phase!=="dogs") return;
+  if(game.gameOver) return;
+  if(game.actionLocked) return;
+
+  // 赤柴だけ
+  if(game.selectedDog!==0){
+    setMessage("📣 赤柴を選択してから遠吠えを使ってください。");
+    return;
+  }
+
+  if(game.dogAction[0]){
+    setMessage("📣 赤柴はこのターンすでに行動済みです。");
+    return;
+  }
+
+  if(game.policeAbilities.howlUsed) return;
+
+  if(game.policeAbilityPending==="howl"){
+    game.policeAbilityPending=null;
+
+    setMessage(
+      "赤柴・遠吠えをキャンセルしました。"
+    );
+  }else{
+    game.policeAbilityPending="howl";
+
+    setMessage(
+      "📣 遠吠えの対象範囲を確認してください。赤柴の周囲4箱が対象です。"
     );
   }
 
@@ -4694,6 +4742,7 @@ bindPress(abilityCancelBtn,cancelPendingAbility);
    bindPress(sneakBtn,toggleSneak);
    bindPress(fakePawBtn,toggleFakePaw);
 bindPress(dashBtn,toggleDash);
+   bindPress(howlBtn,toggleHowl);
    
   bindPress(settingsBtn,openSettings);
   bindPress(settingsCloseBtn,closeSettings);
