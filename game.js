@@ -1055,6 +1055,19 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
 
     if(game.selectedDog!==null&&!game.dogAction[game.selectedDog]){
       const di=game.selectedDog;
+if(
+  di===0 &&
+  game.policeAbilityPending==="howl"
+){
+  Audio.play("invalid");
+
+  setMessage(
+    "📣 遠吠えモード中です。「遠吠えを確定」するか、特殊スキルをキャンセルしてください。"
+  );
+
+  return;
+}
+       
 // ---------------------------------
 // 黒柴ダッシュ中
 // 確定するまでは黒柴を移動させない
@@ -1360,6 +1373,19 @@ if(
     render();
     return;
   }
+
+      if(
+  game.policeAbilityPending==="howl"
+){
+  game.policeAbilityPending=null;
+
+  setMessage(
+    "赤柴・遠吠えをキャンセルしました。通常の行動に戻ります。"
+  );
+
+  render();
+  return;
+}
 
   // 黒柴ダッシュ
   if(
@@ -2067,10 +2093,13 @@ dashBtn.textContent=
   "dash-mode",
   game.policeAbilityPending==="dash"
 );
-     const canCancelAbility=
+const canCancelAbility=
   (
     game.catAbilityPending==="fakePaw" &&
     !game.fakePawConfirmed
+  ) ||
+  (
+    game.policeAbilityPending==="howl"
   ) ||
   (
     game.policeAbilityPending==="dash" &&
