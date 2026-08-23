@@ -604,7 +604,8 @@ if(
 ){
   // ダッシュ中は2マス先だけ表示
   if(E.getDogDashMoves(game,1).includes(i)){
-    n.classList.add("dash-move");
+   n.classList.add("move");
+n.classList.add("dash-move");
   }
 
 // 通常移動
