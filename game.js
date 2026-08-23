@@ -1419,6 +1419,11 @@ function toggleFakePaw(){
     game.policeAbilityPending="dash";
     game.dashTarget=null;
     game.dashConfirmed=false;
+     console.log(
+  "DASH:",
+  "現在地", game.dogs[1],
+  "候補", E.getDogDashMoves(game,1)
+);
 
     setMessage(
       "⚡ 黒柴ダッシュ発動中。2マス先の移動先を選んでください。"
