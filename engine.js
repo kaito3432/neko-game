@@ -30,6 +30,10 @@ window.NyanEngine = (() => {
       dogAction:[false,false,false],
       actionLocked:false,
        abilitiesEnabled:false,
+       selectedAbilities:{
+  cat:null,
+  police:null
+},
 
 catAbilities:{
   sneakUsed:false,
