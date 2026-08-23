@@ -55,6 +55,9 @@ let pendingPoliceAbility=null;
 
 const selectSneakBtn=$("selectSneakBtn");
 const selectFakePawBtn=$("selectFakePawBtn");
+   const confirmCatAbilityBtn=$("confirmCatAbilityBtn");
+
+let pendingCatAbility=null;
 
    const dashBtn=$("dashBtn");
    const howlBtn=$("howlBtn");
@@ -4256,8 +4259,54 @@ bindPress(
 
 });
 
-   bindPress(selectSneakBtn,()=>selectCatAbility("sneak"));
-bindPress(selectFakePawBtn,()=>selectCatAbility("fakePaw"));
+function choosePendingCatAbility(ability){
+
+  pendingCatAbility=ability;
+
+  [
+    selectSneakBtn,
+    selectFakePawBtn
+  ].forEach(btn=>{
+    btn.classList.toggle(
+      "selected",
+      btn.dataset.ability===ability
+    );
+  });
+
+  confirmCatAbilityBtn.disabled=false;
+}
+
+   bindPress(
+  selectSneakBtn,
+  ()=>choosePendingCatAbility("sneak")
+);
+
+bindPress(
+  selectFakePawBtn,
+  ()=>choosePendingCatAbility("fakePaw")
+);
+
+   bindPress(confirmCatAbilityBtn,()=>{
+
+  if(!pendingCatAbility) return;
+
+  selectCatAbility(
+    pendingCatAbility
+  );
+
+  pendingCatAbility=null;
+
+  confirmCatAbilityBtn.disabled=true;
+
+  [
+    selectSneakBtn,
+    selectFakePawBtn
+  ].forEach(btn=>{
+    btn.classList.remove("selected");
+  });
+
+});
+   
 
    bindPress(abilityStartBtn,startLocalAfterAbilitySelect);
 
