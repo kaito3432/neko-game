@@ -54,6 +54,8 @@ noTrackBoxes:new Set(),
 fakePawTarget:null,
 fakeTracks:new Map(),
        fakePawConfirmed:false,
+       doubleSearchTargets:[],
+doubleSearchConfirmed:false,
        
 
       cpuSearchedBoxes:new Set(),
