@@ -268,97 +268,172 @@
       <h2>🐕 警察の特殊スキルを選択</h2>
 
       <p>
-        このゲームで使用する特殊スキルを1つ選んでください。
+        スキルをタップすると詳細を確認できます。
       </p>
     </div>
 
 
     <div class="ability-card-grid">
 
+      <!-- あか柴・遠吠え -->
       <button
-        class="ability-card police-card"
+        class="ability-card ability-card-compact police-card"
         id="selectHowlBtn"
         type="button"
         data-ability="howl"
       >
-        <span class="ability-selected-mark">✓ 選択中</span>
 
-        <span class="ability-card-badge">
-          1 GAME / 1 USE
-        </span>
+        <div class="ability-card-summary">
 
-        <span class="ability-card-icon">📣</span>
+          <span class="ability-card-icon">📣</span>
 
-        <span class="ability-card-name">
-          あか柴・遠吠え
-        </span>
+          <span class="ability-card-summary-text">
+            <strong>あか柴・遠吠え</strong>
+            <small>周囲のネコの気配を探知</small>
+          </span>
 
-        <span class="ability-card-desc">
-          あか柴の周囲にネコの気配があるかを探知。
-          正確な箱までは分かりません。
-        </span>
+          <span class="ability-card-arrow">›</span>
 
-        <span class="ability-card-footer">
-          情報探知タイプ
-        </span>
+        </div>
+
+
+        <div class="ability-card-details">
+
+          <div class="ability-card-detail-top">
+            <span class="ability-selected-mark">
+              ✓ 選択中
+            </span>
+
+            <span class="ability-card-badge">
+              1 GAME / 1 USE
+            </span>
+          </div>
+
+          <div class="ability-preview-placeholder">
+            📣
+            <span>スキルプレビュー</span>
+          </div>
+
+          <p class="ability-card-desc">
+            あか柴の周囲4箱にネコがいるかどうかを探知します。
+          </p>
+
+          <ul class="ability-card-points">
+            <li>正確な箱までは分かりません</li>
+            <li>捕獲にはなりません</li>
+            <li>1ゲームに1回使用できます</li>
+          </ul>
+
+        </div>
+
       </button>
 
 
+      <!-- くろ柴・ダッシュ -->
       <button
-        class="ability-card police-card"
+        class="ability-card ability-card-compact police-card"
         id="selectDashBtn"
         type="button"
         data-ability="dash"
       >
-        <span class="ability-selected-mark">✓ 選択中</span>
 
-        <span class="ability-card-badge">
-          1 GAME / 1 USE
-        </span>
+        <div class="ability-card-summary">
 
-        <span class="ability-card-icon">⚡</span>
+          <span class="ability-card-icon">⚡</span>
 
-        <span class="ability-card-name">
-          くろ柴・ダッシュ
-        </span>
+          <span class="ability-card-summary-text">
+            <strong>くろ柴・ダッシュ</strong>
+            <small>一気に2マス移動</small>
+          </span>
 
-        <span class="ability-card-desc">
-          くろ柴が一気に2マス移動。
-          通常では届かない場所へ素早く接近できます。
-        </span>
+          <span class="ability-card-arrow">›</span>
 
-        <span class="ability-card-footer">
-          高速移動タイプ
-        </span>
+        </div>
+
+
+        <div class="ability-card-details">
+
+          <div class="ability-card-detail-top">
+            <span class="ability-selected-mark">
+              ✓ 選択中
+            </span>
+
+            <span class="ability-card-badge">
+              1 GAME / 1 USE
+            </span>
+          </div>
+
+          <div class="ability-preview-placeholder">
+            ⚡
+            <span>スキルプレビュー</span>
+          </div>
+
+          <p class="ability-card-desc">
+            くろ柴が通常の1マス移動ではなく、2マス先まで一気に移動します。
+          </p>
+
+          <ul class="ability-card-points">
+            <li>通常では届かない位置へ移動できます</li>
+            <li>ダッシュすると、そのターンの行動は終了します</li>
+            <li>1ゲームに1回使用できます</li>
+          </ul>
+
+        </div>
+
       </button>
 
 
+      <!-- しろ柴・一斉捜索 -->
       <button
-        class="ability-card police-card"
+        class="ability-card ability-card-compact police-card"
         id="selectDoubleSearchBtn"
         type="button"
         data-ability="doubleSearch"
       >
-        <span class="ability-selected-mark">✓ 選択中</span>
 
-        <span class="ability-card-badge">
-          1 GAME / 1 USE
-        </span>
+        <div class="ability-card-summary">
 
-        <span class="ability-card-icon">🔍</span>
+          <span class="ability-card-icon">🔍</span>
 
-        <span class="ability-card-name">
-          しろ柴・一斉捜索
-        </span>
+          <span class="ability-card-summary-text">
+            <strong>しろ柴・一斉捜索</strong>
+            <small>2箱を一度に探索</small>
+          </span>
 
-        <span class="ability-card-desc">
-          しろ柴の周囲から2箱を選び、
-          一度の行動で2か所を捜索します。
-        </span>
+          <span class="ability-card-arrow">›</span>
 
-        <span class="ability-card-footer">
-          広範囲捜索タイプ
-        </span>
+        </div>
+
+
+        <div class="ability-card-details">
+
+          <div class="ability-card-detail-top">
+            <span class="ability-selected-mark">
+              ✓ 選択中
+            </span>
+
+            <span class="ability-card-badge">
+              1 GAME / 1 USE
+            </span>
+          </div>
+
+          <div class="ability-preview-placeholder">
+            🔍
+            <span>スキルプレビュー</span>
+          </div>
+
+          <p class="ability-card-desc">
+            しろ柴の周囲4箱から2箱を選び、一度の行動で両方を探索します。
+          </p>
+
+          <ul class="ability-card-points">
+            <li>2箱それぞれに通常探索と同じ判定を行います</li>
+            <li>ネコがいれば捕獲できます</li>
+            <li>1ゲームに1回使用できます</li>
+          </ul>
+
+        </div>
+
       </button>
 
     </div>
@@ -376,7 +451,6 @@
   </div>
 
 </section>
-
 <!-- ============================= -->
 <!-- 特殊スキル選択：ネコ -->
 <!-- ============================= -->
