@@ -3539,3 +3539,100 @@ body.fake-paw-mode #fakePawBtn{
     0 0 0 3px rgba(240,181,45,.16),
     0 0 12px rgba(240,181,45,.42);
 }
+/* ========================================
+   特殊スキルプレビュー：スマホ用コンパクト化
+======================================== */
+
+.ability-card.selected .ability-card-details{
+  padding:2px 12px 12px;
+}
+
+/* プレビュー全体を小さく */
+.ability-mini-preview{
+  margin:6px 0 8px;
+  padding:8px 10px;
+  border-radius:13px;
+}
+
+/* 3×3プレビュー */
+.cross-grid{
+  grid-template-columns:30px 30px 30px;
+  grid-template-rows:30px 30px 30px;
+  gap:3px;
+}
+
+.mini-box{
+  width:27px;
+  height:27px;
+  border-radius:7px;
+  border-width:1.5px;
+  font-size:13px;
+}
+
+.mini-dog{
+  width:29px;
+  height:29px;
+  font-size:17px;
+}
+
+/* ダッシュ */
+.dash-line{
+  min-height:52px;
+  gap:7px;
+}
+
+.dash-dog{
+  font-size:22px;
+}
+
+.dash-step{
+  width:25px;
+  height:25px;
+}
+
+.dash-step.active{
+  font-size:14px;
+}
+
+.dash-arrow{
+  font-size:19px;
+}
+
+/* プレビュー下の説明 */
+.mini-preview-label{
+  margin-top:5px;
+  font-size:10px;
+}
+
+/* 詳細説明 */
+.ability-card-desc{
+  margin:6px 0;
+  font-size:11px;
+  line-height:1.45;
+}
+
+/* 箇条書き */
+.ability-card-points{
+  margin:5px 0 0;
+  padding-left:17px;
+  font-size:10px;
+  line-height:1.45;
+}
+
+.ability-card-points li{
+  margin:1px 0;
+}
+
+/* 選択中・1GAME表示も小さく */
+.ability-card-detail-top{
+  margin-bottom:5px;
+}
+
+.ability-card-details .ability-selected-mark{
+  padding:3px 7px;
+  font-size:10px;
+}
+
+.ability-card-details .ability-card-badge{
+  font-size:9px;
+}
