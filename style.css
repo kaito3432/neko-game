@@ -4617,3 +4617,25 @@ body.sneak-mode .board-shell{
       0 0 26px rgba(145,105,235,.7);
   }
 }
+#catAbilityOverlay .ability-select-panel{
+  max-height:88vh;
+  overflow:hidden;
+}
+
+#catAbilityOverlay .ability-card-grid{
+  flex:1 1 auto;
+  min-height:0;
+
+  overflow-y:auto;
+  overflow-x:visible;
+
+  -webkit-overflow-scrolling:touch;
+}
+
+#catAbilityOverlay .ability-confirm-btn{
+  flex:0 0 auto;
+  position:relative;
+  z-index:5;
+
+  margin-top:10px;
+}
