@@ -3636,3 +3636,122 @@ body.fake-paw-mode #fakePawBtn{
 .ability-card-details .ability-card-badge{
   font-size:9px;
 }
+/* ========================================
+   ネコ特殊スキル：ミニプレビュー
+======================================== */
+
+/* 忍び足 */
+.sneak-mini-route{
+  min-height:46px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+}
+
+.sneak-mini-cell{
+  width:34px;
+  height:34px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:9px;
+  background:#f3ecff;
+  border:2px solid rgba(135,95,205,.25);
+  font-size:19px;
+}
+
+.sneak-mini-arrow{
+  font-size:20px;
+  font-weight:900;
+  opacity:.55;
+}
+
+.sneak-track-row{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+  margin-top:4px;
+  font-size:11px;
+}
+
+.sneak-track-old{
+  opacity:.55;
+}
+
+.sneak-track-cross{
+  color:#d44;
+  font-weight:900;
+}
+
+.sneak-track-text{
+  font-weight:800;
+  opacity:.7;
+}
+
+
+/* フェイク肉球 */
+.fakepaw-mini-grid{
+  min-height:58px;
+  display:grid;
+  grid-template-columns:40px 36px 40px;
+  grid-template-rows:28px 28px;
+  justify-content:center;
+  align-items:center;
+  gap:2px 6px;
+}
+
+.fakepaw-start{
+  grid-column:1;
+  grid-row:2;
+  font-size:20px;
+}
+
+.real-path{
+  grid-column:2;
+  grid-row:2;
+}
+
+.fakepaw-real{
+  grid-column:3;
+  grid-row:2;
+  font-size:20px;
+}
+
+.fake-path{
+  grid-column:2;
+  grid-row:1;
+  font-size:18px;
+}
+
+.fakepaw-fake{
+  grid-column:3;
+  grid-row:1;
+  width:30px;
+  height:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  background:#fff1ca;
+  border:2px solid #f0b651;
+  font-size:16px;
+}
+
+.fakepaw-path{
+  text-align:center;
+  font-size:18px;
+  font-weight:900;
+  opacity:.6;
+}
+
+.fakepaw-label-row{
+  display:flex;
+  justify-content:center;
+  gap:30px;
+  margin-top:3px;
+  font-size:9px;
+  font-weight:800;
+  opacity:.6;
+}
