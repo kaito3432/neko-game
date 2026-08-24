@@ -348,6 +348,63 @@ function startLocalMode(){
     </div>
   `;
 
+      function updateAbilityRevealCard(){
+
+  const catName=$("abilityRevealCatName");
+  const catDesc=$("abilityRevealCatDesc");
+  const policeName=$("abilityRevealPoliceName");
+  const policeDesc=$("abilityRevealPoliceDesc");
+
+  const catAbility=game.selectedAbilities.cat;
+  const policeAbility=game.selectedAbilities.police;
+
+
+  const catData={
+    sneak:{
+      name:"忍び足",
+      desc:"足跡を残さず移動"
+    },
+
+    fakePaw:{
+      name:"フェイク肉球",
+      desc:"偽の足跡で警察を惑わせる"
+    }
+  };
+
+
+  const policeData={
+    howl:{
+      name:"あか柴・遠吠え",
+      desc:"周囲のネコの気配を探知"
+    },
+
+    dash:{
+      name:"くろ柴・ダッシュ",
+      desc:"一気に2マス移動"
+    },
+
+    doubleSearch:{
+      name:"しろ柴・一斉捜索",
+      desc:"2箱を一度に探索"
+    }
+  };
+
+
+  const c=catData[catAbility];
+  const p=policeData[policeAbility];
+
+
+  if(c){
+    catName.textContent=c.name;
+    catDesc.textContent=c.desc;
+  }
+
+  if(p){
+    policeName.textContent=p.name;
+    policeDesc.textContent=p.desc;
+  }
+}
+updateAbilityRevealCard();
   abilityRevealOverlay.classList.add("show");
 }
 
