@@ -2552,6 +2552,12 @@ finishDogTurnBtn.classList.toggle(
   ) &&
   game.phase==="waitingEnd"
 );   
+     document.body.classList.toggle(
+  "sneak-mode",
+  game.phase==="cat" &&
+  game.catAbilityPending==="sneak" &&
+  !game.catAbilities.sneakUsed
+);
 
      document.body.classList.toggle(
   "fake-paw-mode",
