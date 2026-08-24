@@ -4108,3 +4108,163 @@ body.fake-paw-mode #fakePawBtn{
   white-space:nowrap;
   opacity:.7;
 }
+/* ========================================
+   フェイク肉球プレビュー
+   忍び足と統一した安定レイアウト
+======================================== */
+
+.fakepaw-grid-preview{
+  width:min(100%,220px);
+  margin:4px auto 0;
+
+  display:grid;
+
+  grid-template-columns:
+    54px
+    72px
+    54px;
+
+  grid-template-rows:
+    38px
+    54px;
+
+  align-items:center;
+  justify-content:center;
+
+  column-gap:5px;
+  row-gap:4px;
+}
+
+
+/* 共通の箱 */
+.fakepaw-box{
+  width:48px;
+  height:48px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  justify-self:center;
+
+  border-radius:12px;
+
+  font-size:22px;
+}
+
+
+/* 本当の猫 */
+.fakepaw-box-cat{
+  background:#f5efff;
+
+  border:
+    2px solid
+    rgba(135,95,205,.25);
+}
+
+
+/* 偽物の足跡 */
+.fakepaw-box-fake{
+  grid-column:3;
+  grid-row:1;
+
+  width:38px;
+  height:38px;
+
+  background:#fff1c9;
+
+  border:
+    2px dashed
+    #e7aa42;
+
+  border-radius:9px;
+
+  font-size:17px;
+}
+
+
+/* 左下の猫 */
+.fakepaw-grid-preview
+.fakepaw-box-cat:first-of-type{
+  grid-column:1;
+  grid-row:2;
+}
+
+
+/* 右下の猫 */
+.fakepaw-grid-preview
+.fakepaw-box-cat:last-of-type{
+  grid-column:3;
+  grid-row:2;
+}
+
+
+/* 本当の移動 */
+.fakepaw-real-arrow{
+  grid-column:2;
+  grid-row:2;
+
+  text-align:center;
+
+  font-size:25px;
+  font-weight:900;
+
+  color:rgba(105,75,60,.62);
+}
+
+
+/* 偽ルートの点線矢印 */
+.fakepaw-dotted-arrow{
+  grid-column:2;
+  grid-row:1;
+
+  text-align:center;
+
+  white-space:nowrap;
+
+  font-size:17px;
+  font-weight:800;
+
+  letter-spacing:-2px;
+
+  color:rgba(155,120,90,.55);
+}
+
+
+/* ニセ */
+.fakepaw-fake-label{
+  grid-column:1;
+  grid-row:1;
+
+  justify-self:end;
+
+  padding-right:2px;
+
+  font-size:9px;
+  font-weight:900;
+
+  opacity:.6;
+}
+
+
+/* 下の説明 */
+.fakepaw-grid-caption{
+  margin-top:5px;
+
+  display:flex;
+  justify-content:center;
+  gap:18px;
+
+  font-size:9px;
+  font-weight:800;
+
+  opacity:.65;
+}
+
+.fakepaw-caption-real{
+  color:rgba(105,75,60,.85);
+}
+
+.fakepaw-caption-fake{
+  color:rgba(175,125,55,.85);
+}
