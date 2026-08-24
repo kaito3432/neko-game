@@ -4285,3 +4285,12 @@ body.fake-paw-mode #fakePawBtn{
 
   transform:none;
 }
+/* スキル選択画面：展開時の見切れ防止 */
+.ability-card-grid{
+  max-height:none;
+  overflow:visible;
+}
+
+.ability-card-compact{
+  overflow:visible;
+}
