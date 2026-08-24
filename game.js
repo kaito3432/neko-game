@@ -5709,5 +5709,7 @@ setMessage(
 
 render();
 
+   }); 
+
 initGame(true);
 })();
