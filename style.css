@@ -3755,3 +3755,217 @@ body.fake-paw-mode #fakePawBtn{
   font-weight:800;
   opacity:.6;
 }
+/* ========================================
+   忍び足プレビュー 改良版
+======================================== */
+
+.sneak-visual{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+
+  min-height:70px;
+}
+
+.sneak-box{
+  position:relative;
+
+  width:50px;
+  height:50px;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  border-radius:12px;
+
+  background:#f5efff;
+  border:2px solid rgba(135,95,205,.25);
+}
+
+.sneak-cat{
+  font-size:23px;
+}
+
+.sneak-move-arrow{
+  font-size:24px;
+  font-weight:900;
+  opacity:.55;
+}
+
+/* 出発地点に残るはずだった足跡 */
+.sneak-fading-paw{
+  position:absolute;
+
+  bottom:-7px;
+  right:-7px;
+
+  font-size:17px;
+
+  opacity:.25;
+
+  filter:grayscale(1);
+
+  animation:
+    sneakPawFade 1.5s ease-in-out infinite;
+}
+
+@keyframes sneakPawFade{
+
+  0%{
+    opacity:.6;
+    transform:scale(1);
+  }
+
+  55%{
+    opacity:.25;
+    transform:scale(.9);
+  }
+
+  100%{
+    opacity:0;
+    transform:scale(.72);
+  }
+}
+
+.sneak-preview-caption{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+
+  gap:2px;
+
+  margin-top:5px;
+
+  text-align:center;
+}
+
+.sneak-preview-caption strong{
+  font-size:11px;
+}
+
+.sneak-preview-caption span{
+  font-size:9px;
+  opacity:.6;
+}/* ========================================
+   フェイク肉球プレビュー 改良版
+======================================== */
+
+.fakepaw-visual{
+  position:relative;
+
+  width:190px;
+  height:90px;
+
+  margin:0 auto;
+}
+
+.fakepaw-origin{
+  position:absolute;
+
+  left:10px;
+  top:42px;
+
+  font-size:24px;
+}
+
+.fakepaw-real-destination{
+  position:absolute;
+
+  right:10px;
+  top:42px;
+
+  font-size:24px;
+}
+
+
+/* 本当の移動＝実線 */
+.fakepaw-real-line{
+  position:absolute;
+
+  left:48px;
+  right:48px;
+  top:47px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.fakepaw-real-arrow{
+  font-size:27px;
+  line-height:1;
+  opacity:.7;
+}
+
+.fakepaw-real-label{
+  margin-top:2px;
+
+  font-size:9px;
+  font-weight:900;
+
+  opacity:.65;
+}
+
+
+/* 偽ルート＝点線イメージ */
+.fakepaw-fake-line{
+  position:absolute;
+
+  left:55px;
+  top:8px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+
+  transform:rotate(-9deg);
+}
+
+.fakepaw-fake-arrow{
+  font-size:25px;
+
+  opacity:.45;
+
+  border-bottom:
+    2px dashed
+    rgba(100,70,50,.35);
+}
+
+.fakepaw-fake-label{
+  margin-top:1px;
+
+  font-size:9px;
+  font-weight:900;
+
+  opacity:.6;
+}
+
+.fakepaw-fake-paw{
+  position:absolute;
+
+  right:18px;
+  top:3px;
+
+  width:34px;
+  height:34px;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  border-radius:9px;
+
+  background:#fff1c9;
+
+  border:
+    2px dashed
+    #e7aa42;
+
+  font-size:18px;
+
+  box-shadow:
+    0 0 10px
+    rgba(231,170,66,.3);
+}
