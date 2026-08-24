@@ -547,40 +547,37 @@
           </div>
 
 
-          <!-- 忍び足プレビュー -->
-          <div class="ability-mini-preview sneak-preview">
+<!-- 忍び足プレビュー -->
+<div class="ability-mini-preview sneak-preview">
 
-            <div class="sneak-mini-route">
+  <div class="sneak-visual">
 
-              <div class="sneak-mini-cell sneak-from">
-                🐱
-              </div>
+    <div class="sneak-box sneak-origin">
 
-              <div class="sneak-mini-arrow">
-                →
-              </div>
+      <span class="sneak-cat">🐱</span>
 
-              <div class="sneak-mini-cell sneak-to">
-                🐱
-              </div>
+      <span class="sneak-fading-paw">
+        🐾
+      </span>
 
-            </div>
+    </div>
 
-            <div class="sneak-track-row">
+    <div class="sneak-move-arrow">
+      →
+    </div>
 
-              <span class="sneak-track-old">
-                🐾
-              </span>
+    <div class="sneak-box sneak-destination">
+      <span class="sneak-cat">🐱</span>
+    </div>
 
-              <span class="sneak-track-cross">
-                ×
-              </span>
+  </div>
 
-              <span class="sneak-track-text">
-                移動前の足跡を残さない
-              </span>
+  <div class="sneak-preview-caption">
+    <strong>移動前の箱の足跡が消える</strong>
+    <span>警察に痕跡を残さず移動</span>
+  </div>
 
-            </div>
+</div>
 
             <div class="mini-preview-label">
               痕跡を隠して移動
@@ -638,59 +635,43 @@
           </div>
 
 
-          <!-- フェイク肉球プレビュー -->
-          <div class="ability-mini-preview fakepaw-preview">
+<!-- フェイク肉球プレビュー -->
+<div class="ability-mini-preview fakepaw-preview">
 
-            <div class="fakepaw-mini-grid">
+  <div class="fakepaw-visual">
 
-              <div class="fakepaw-start">
-                🐱
-              </div>
-
-              <div class="fakepaw-path real-path">
-                →
-              </div>
-
-              <div class="fakepaw-real">
-                🐱
-              </div>
-
-              <div class="fakepaw-path fake-path">
-                ↗
-              </div>
-
-              <div class="fakepaw-fake">
-                🐾
-              </div>
-
-            </div>
-
-            <div class="fakepaw-label-row">
-              <span>本当の移動</span>
-              <span>偽の足跡</span>
-            </div>
-
-            <div class="mini-preview-label">
-              別の箱に偽の痕跡を残す
-            </div>
-
-          </div>
-
-
-          <p class="ability-card-desc">
-            本当の移動先とは別の箱に、偽の足跡を残します。
-          </p>
-
-          <ul class="ability-card-points">
-            <li>警察には本物の足跡と同じように見えます</li>
-            <li>現在いる箱には置けません</li>
-          </ul>
-
-        </div>
-
-      </button>
-
+    <div class="fakepaw-origin">
+      🐱
     </div>
+
+    <!-- 本当の移動 -->
+    <div class="fakepaw-real-line">
+      <span class="fakepaw-real-arrow">→</span>
+      <span class="fakepaw-real-label">本当</span>
+    </div>
+
+    <div class="fakepaw-real-destination">
+      🐱
+    </div>
+
+
+    <!-- 偽の足跡 -->
+    <div class="fakepaw-fake-line">
+      <span class="fakepaw-fake-arrow">↗</span>
+      <span class="fakepaw-fake-label">ニセ</span>
+    </div>
+
+    <div class="fakepaw-fake-paw">
+      🐾
+    </div>
+
+  </div>
+
+  <div class="mini-preview-label">
+    本当の移動とは別の箱に偽の足跡
+  </div>
+
+</div>
 
 
     <button
