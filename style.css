@@ -3910,27 +3910,62 @@ body.fake-paw-mode #fakePawBtn{
 
 
 /* 偽ルート＝点線イメージ */
+/* 偽ルート：猫から偽足跡へ伸びる点線 */
 .fakepaw-fake-line{
   position:absolute;
 
-  left:55px;
-  top:8px;
+  left:42px;
+  top:32px;
 
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  width:105px;
+  height:2px;
 
-  transform:rotate(-9deg);
+  border-top:2px dashed rgba(145,115,95,.55);
+
+  transform:rotate(-25deg);
+  transform-origin:left center;
+
+  pointer-events:none;
 }
 
-.fakepaw-fake-arrow{
-  font-size:25px;
+/* 点線の先端 */
+.fakepaw-fake-line::after{
+  content:"";
 
-  opacity:.45;
+  position:absolute;
+  right:-2px;
+  top:-5px;
 
-  border-bottom:
-    2px dashed
-    rgba(100,70,50,.35);
+  width:8px;
+  height:8px;
+
+  border-top:2px solid rgba(145,115,95,.65);
+  border-right:2px solid rgba(145,115,95,.65);
+
+  transform:rotate(45deg);
+}
+
+/* ニセ表示 */
+.fakepaw-fake-label{
+  position:absolute;
+
+  left:44px;
+  top:-18px;
+
+  padding:1px 5px;
+
+  border-radius:999px;
+
+  background:rgba(255,255,255,.9);
+
+  font-size:9px;
+  font-weight:900;
+
+  white-space:nowrap;
+
+  transform:rotate(25deg);
+
+  opacity:.7;
 }
 
 .fakepaw-fake-label{
