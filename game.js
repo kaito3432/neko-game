@@ -5662,18 +5662,52 @@ bindPress(privacyBtn,()=>{
     return;
   }
 
-  // 通常の対人戦
-  Audio.play("gamestart");
-  initGame(false);
+ // 通常の対人戦
+initGame(false);
 
-  showPrivacy(
-    "🐕",
-    "0ターン目・警察配置",
-    "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。"
-  );
+// 特殊スキル選択を初期化
+game.abilitiesEnabled=true;
 
-  render();
+game.selectedAbilities={
+  cat:null,
+  police:null
+};
+
+pendingPoliceAbility=null;
+pendingCatAbility=null;
+
+
+// 選択表示をリセット
+[
+  selectHowlBtn,
+  selectDashBtn,
+  selectDoubleSearchBtn
+].forEach(btn=>{
+  btn.classList.remove("selected");
 });
+
+[
+  selectSneakBtn,
+  selectFakePawBtn
+].forEach(btn=>{
+  btn.classList.remove("selected");
+});
+
+confirmPoliceAbilityBtn.disabled=true;
+confirmCatAbilityBtn.disabled=true;
+
+
+// 結果画面を閉じる
+resultOverlay.classList.remove("show");
+
+// まず警察スキル選択へ戻す
+policeAbilityOverlay.classList.add("show");
+
+setMessage(
+  "🐕 警察の特殊スキルを選択してください。"
+);
+
+render();
 
 initGame(true);
 })();
