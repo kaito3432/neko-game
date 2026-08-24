@@ -4268,3 +4268,20 @@ body.fake-paw-mode #fakePawBtn{
 .fakepaw-caption-fake{
   color:rgba(175,125,55,.85);
 }
+.fakepaw-dotted-arrow{
+  grid-column:2;
+  grid-row:1;
+
+  justify-self:center;
+  align-self:center;
+
+  font-size:15px;
+  line-height:1;
+
+  letter-spacing:-2px;
+  white-space:nowrap;
+
+  color:rgba(145,110,85,.55);
+
+  transform:none;
+}
