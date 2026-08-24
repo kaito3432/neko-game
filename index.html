@@ -505,69 +505,193 @@
       <h2>🐱 ネコの特殊スキルを選択</h2>
 
       <p>
-        このゲームで使用する特殊スキルを1つ選んでください。
+        スキルをタップすると詳細を確認できます。
       </p>
     </div>
 
+
     <div class="ability-card-grid">
 
+      <!-- 忍び足 -->
       <button
-        class="ability-card cat-card"
+        class="ability-card ability-card-compact cat-card"
         id="selectSneakBtn"
         type="button"
         data-ability="sneak"
       >
-        <span class="ability-selected-mark">✓ 選択中</span>
 
-        <span class="ability-card-badge">
-          1 GAME / 1 USE
-        </span>
+        <div class="ability-card-summary">
 
-        <span class="ability-card-icon">🐾</span>
+          <span class="ability-card-icon">🐾</span>
 
-        <span class="ability-card-name">
-          忍び足
-        </span>
+          <span class="ability-card-summary-text">
+            <strong>忍び足</strong>
+            <small>足跡を残さず移動</small>
+          </span>
 
-        <span class="ability-card-desc">
-          移動前にいた箱の足跡を残さずに移動します。
-          警察から痕跡を隠せます。
-        </span>
+          <span class="ability-card-arrow">›</span>
 
-        <span class="ability-card-footer">
-          痕跡隠蔽タイプ
-        </span>
+        </div>
+
+
+        <div class="ability-card-details">
+
+          <div class="ability-card-detail-top">
+            <span class="ability-selected-mark">
+              ✓ 選択中
+            </span>
+
+            <span class="ability-card-badge">
+              1 GAME / 1 USE
+            </span>
+          </div>
+
+
+          <!-- 忍び足プレビュー -->
+          <div class="ability-mini-preview sneak-preview">
+
+            <div class="sneak-mini-route">
+
+              <div class="sneak-mini-cell sneak-from">
+                🐱
+              </div>
+
+              <div class="sneak-mini-arrow">
+                →
+              </div>
+
+              <div class="sneak-mini-cell sneak-to">
+                🐱
+              </div>
+
+            </div>
+
+            <div class="sneak-track-row">
+
+              <span class="sneak-track-old">
+                🐾
+              </span>
+
+              <span class="sneak-track-cross">
+                ×
+              </span>
+
+              <span class="sneak-track-text">
+                移動前の足跡を残さない
+              </span>
+
+            </div>
+
+            <div class="mini-preview-label">
+              痕跡を隠して移動
+            </div>
+
+          </div>
+
+
+          <p class="ability-card-desc">
+            移動前にいた箱の足跡を残さずに移動します。
+          </p>
+
+          <ul class="ability-card-points">
+            <li>警察にその箱の足跡を残しません</li>
+            <li>スタート地点では使用できません</li>
+          </ul>
+
+        </div>
+
       </button>
 
+
+      <!-- フェイク肉球 -->
       <button
-        class="ability-card cat-card"
+        class="ability-card ability-card-compact cat-card"
         id="selectFakePawBtn"
         type="button"
         data-ability="fakePaw"
       >
-        <span class="ability-selected-mark">✓ 選択中</span>
 
-        <span class="ability-card-badge">
-          1 GAME / 1 USE
-        </span>
+        <div class="ability-card-summary">
 
-        <span class="ability-card-icon">🎭🐾</span>
+          <span class="ability-card-icon">🎭🐾</span>
 
-        <span class="ability-card-name">
-          フェイク肉球
-        </span>
+          <span class="ability-card-summary-text">
+            <strong>フェイク肉球</strong>
+            <small>偽の足跡で警察を惑わせる</small>
+          </span>
 
-        <span class="ability-card-desc">
-          本当の移動先とは別の箱に偽の足跡を残します。
-          警察の推理を惑わせます。
-        </span>
+          <span class="ability-card-arrow">›</span>
 
-        <span class="ability-card-footer">
-          撹乱タイプ
-        </span>
+        </div>
+
+
+        <div class="ability-card-details">
+
+          <div class="ability-card-detail-top">
+            <span class="ability-selected-mark">
+              ✓ 選択中
+            </span>
+
+            <span class="ability-card-badge">
+              1 GAME / 1 USE
+            </span>
+          </div>
+
+
+          <!-- フェイク肉球プレビュー -->
+          <div class="ability-mini-preview fakepaw-preview">
+
+            <div class="fakepaw-mini-grid">
+
+              <div class="fakepaw-start">
+                🐱
+              </div>
+
+              <div class="fakepaw-path real-path">
+                →
+              </div>
+
+              <div class="fakepaw-real">
+                🐱
+              </div>
+
+              <div class="fakepaw-path fake-path">
+                ↗
+              </div>
+
+              <div class="fakepaw-fake">
+                🐾
+              </div>
+
+            </div>
+
+            <div class="fakepaw-label-row">
+              <span>本当の移動</span>
+              <span>偽の足跡</span>
+            </div>
+
+            <div class="mini-preview-label">
+              別の箱に偽の痕跡を残す
+            </div>
+
+          </div>
+
+
+          <p class="ability-card-desc">
+            本当の移動先とは別の箱に、偽の足跡を残します。
+          </p>
+
+          <ul class="ability-card-points">
+            <li>警察には本物の足跡と同じように見えます</li>
+            <li>現在いる箱には置けません</li>
+          </ul>
+
+        </div>
+
       </button>
 
     </div>
+
 
     <button
       class="btn ability-confirm-btn"
@@ -581,7 +705,6 @@
   </div>
 
 </section>
-
 
 <!-- ============================= -->
 <!-- 特殊スキル公開 -->
