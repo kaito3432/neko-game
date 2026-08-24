@@ -4596,3 +4596,24 @@ body.fake-paw-mode #fakePawBtn{
   font-size:15px;
   font-weight:900;
 }
+body.sneak-mode .board-shell{
+  box-shadow:
+    0 0 0 4px rgba(170,135,255,.82),
+    0 0 22px rgba(145,105,235,.58);
+
+  animation:sneakBoardPulse .95s ease-in-out infinite;
+}
+
+@keyframes sneakBoardPulse{
+  0%,100%{
+    box-shadow:
+      0 0 0 4px rgba(170,135,255,.72),
+      0 0 16px rgba(145,105,235,.42);
+  }
+
+  50%{
+    box-shadow:
+      0 0 0 5px rgba(185,150,255,.95),
+      0 0 26px rgba(145,105,235,.7);
+  }
+}
