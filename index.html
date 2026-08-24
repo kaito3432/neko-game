@@ -579,11 +579,7 @@
 
 </div>
 
-            <div class="mini-preview-label">
-              痕跡を隠して移動
-            </div>
 
-          </div>
 
 
           <p class="ability-card-desc">
@@ -638,82 +634,58 @@
 <!-- フェイク肉球プレビュー -->
 <div class="ability-mini-preview fakepaw-preview">
 
-  <div class="fakepaw-diagram">
+<div class="fakepaw-simple-diagram">
 
-    <div class="fakepaw-node fakepaw-origin">
-      🐱
-    </div>
-
-    <div class="fakepaw-node fakepaw-real">
-      🐱
-    </div>
-
-    <div class="fakepaw-node fakepaw-fake">
-      🐾
-    </div>
-
-    <svg
-      class="fakepaw-lines"
-      viewBox="0 0 300 140"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <!-- 本当の移動 -->
-      <line
-        x1="65"
-        y1="100"
-        x2="235"
-        y2="100"
-        class="fakepaw-line-real"
-      />
-
-<!-- 偽の足跡 -->
-<line
-  x1="55"
-  y1="100"
-  x2="205"
-  y2="42"
-  class="fakepaw-line-fake"
-/>
-
-      <!-- 本当の矢印 -->
-      <polyline
-        points="225,92 235,100 225,108"
-        class="fakepaw-arrow-real"
-      />
-
-<!-- 偽物の矢印 -->
-<polyline
-  points="194,37 205,42 198,52"
-  class="fakepaw-arrow-fake"
-/>
-    </svg>
-
-    <span class="fakepaw-label fakepaw-label-real">
-      本当
-    </span>
-
-    <span class="fakepaw-label fakepaw-label-fake">
-      ニセ
-    </span>
-
+  <div class="fakepaw-simple-start">
+    🐱
   </div>
 
-  <div class="mini-preview-label">
-    本当の移動とは別の箱に偽の足跡
+  <div class="fakepaw-simple-routes">
+
+    <div class="fakepaw-simple-route fake-route">
+      <span class="route-label">ニセ</span>
+      <span class="route-arrow">┄┄→</span>
+      <span class="route-target fake-target">🐾</span>
+    </div>
+
+    <div class="fakepaw-simple-route real-route">
+      <span class="route-label">本当</span>
+      <span class="route-arrow">──→</span>
+      <span class="route-target">🐱</span>
+    </div>
+
   </div>
 
 </div>
 
+<div class="mini-preview-label">
+  本当の移動とは別の箱に偽の足跡
+</div>
 
-    <button
-      class="btn ability-confirm-btn"
-      id="confirmCatAbilityBtn"
-      type="button"
-      disabled
-    >
-      このスキルに決定
-    </button>
+</div>
+
+<p class="ability-card-desc">
+  本当の移動先とは別の箱に、偽の足跡を残します。
+</p>
+
+<ul class="ability-card-points">
+  <li>警察には本物の足跡と同じように見えます</li>
+  <li>現在いる箱には置けません</li>
+</ul>
+
+</div>
+
+</button>
+
+
+<button
+  class="btn ability-confirm-btn"
+  id="confirmCatAbilityBtn"
+  type="button"
+  disabled
+>
+  このスキルに決定
+</button>
 
   </div>
 
