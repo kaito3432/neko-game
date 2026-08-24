@@ -3291,3 +3291,133 @@ body.fake-paw-mode #fakePawBtn{
 .ability-confirm-btn:disabled{
   opacity:.45;
 }
+.ability-card-compact{
+  padding:0;
+  overflow:hidden;
+}
+
+.ability-card-summary{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:12px;
+
+  padding:14px 16px;
+}
+
+.ability-card-summary .ability-card-icon{
+  margin:0;
+  font-size:28px;
+}
+
+.ability-card-summary-text{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+
+  text-align:left;
+}
+
+.ability-card-summary-text strong{
+  font-size:17px;
+  font-weight:900;
+}
+
+.ability-card-summary-text small{
+  font-size:12px;
+  opacity:.65;
+}
+
+.ability-card-arrow{
+  font-size:28px;
+  opacity:.45;
+
+  transition:
+    transform .2s ease;
+}
+
+
+/* 初期状態では詳細を隠す */
+.ability-card-details{
+  display:none;
+
+  padding:
+    4px 16px 16px;
+
+  text-align:left;
+}
+
+
+/* 選択したカードだけ展開 */
+.ability-card.selected .ability-card-details{
+  display:block;
+}
+
+.ability-card.selected .ability-card-arrow{
+  transform:rotate(90deg);
+}
+
+
+.ability-card-detail-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:10px;
+}
+
+
+/* この画面では固定配置を解除 */
+.ability-card-details .ability-selected-mark,
+.ability-card-details .ability-card-badge{
+  position:static;
+}
+
+
+.ability-preview-placeholder{
+  min-height:100px;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+
+  margin:8px 0 12px;
+
+  border-radius:16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,244,218,.9),
+      rgba(255,255,255,.9)
+    );
+
+  border:
+    1px dashed
+    rgba(100,70,50,.25);
+
+  font-size:34px;
+}
+
+.ability-preview-placeholder span{
+  font-size:11px;
+  font-weight:800;
+  opacity:.55;
+}
+
+
+.ability-card-points{
+  margin:
+    10px 0 0;
+
+  padding-left:20px;
+
+  font-size:12px;
+  line-height:1.7;
+}
+
+.ability-card-points li{
+  margin:2px 0;
+}
