@@ -702,16 +702,84 @@
 <!-- ============================= -->
 <section class="overlay" id="abilityRevealOverlay">
 
-  <div class="panel">
+  <div class="panel ability-vs-panel">
 
-    <h2>✨ 特殊スキル決定！</h2>
-
-    <div id="abilityRevealText">
-      選択された特殊スキルを表示します
+    <div class="ability-vs-kicker">
+      SPECIAL SKILL MATCHUP
     </div>
 
+    <h2 class="ability-vs-title">
+      ✨ 特殊スキル決定！
+    </h2>
+
+    <div class="ability-vs-stage">
+
+      <!-- ネコ側 -->
+      <div class="ability-vs-side cat-side">
+
+        <div class="ability-vs-side-label">
+          🐱 CAT SIDE
+        </div>
+
+        <div class="ability-vs-character">
+          🐱
+        </div>
+
+        <div class="ability-vs-name" id="abilityRevealCatName">
+          忍び足
+        </div>
+
+        <div class="ability-vs-desc" id="abilityRevealCatDesc">
+          足跡を残さず移動
+        </div>
+
+      </div>
+
+
+      <!-- VS -->
+      <div class="ability-vs-center">
+
+        <div class="ability-vs-line"></div>
+
+        <div class="ability-vs-mark">
+          VS
+        </div>
+
+        <div class="ability-vs-line"></div>
+
+      </div>
+
+
+      <!-- 警察側 -->
+      <div class="ability-vs-side police-side">
+
+        <div class="ability-vs-side-label">
+          🐕 POLICE SIDE
+        </div>
+
+        <div class="ability-vs-character">
+          🐕
+        </div>
+
+        <div class="ability-vs-name" id="abilityRevealPoliceName">
+          あか柴・遠吠え
+        </div>
+
+        <div class="ability-vs-desc" id="abilityRevealPoliceDesc">
+          周囲のネコの気配を探知
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- 既存JSとの互換用 -->
+    <div id="abilityRevealText" hidden></div>
+
+
     <button
-      class="btn"
+      class="btn ability-vs-start-btn"
       id="abilityStartBtn"
       type="button"
     >
