@@ -4366,3 +4366,233 @@ body.fake-paw-mode #fakePawBtn{
   font-weight:900;
   opacity:.45;
 }
+/* ========================================
+   特殊スキル VSカード
+======================================== */
+
+.ability-vs-panel{
+  width:min(92vw,480px);
+
+  padding:24px 18px 20px;
+
+  border-radius:28px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.98),
+      rgba(250,246,240,.98)
+    );
+
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.24);
+
+  overflow:hidden;
+}
+
+.ability-vs-kicker{
+  text-align:center;
+
+  font-size:10px;
+  font-weight:900;
+
+  letter-spacing:.2em;
+
+  opacity:.5;
+}
+
+.ability-vs-title{
+  margin:6px 0 20px;
+
+  text-align:center;
+
+  font-size:24px;
+  font-weight:900;
+}
+
+
+/* VS本体 */
+.ability-vs-stage{
+  display:grid;
+
+  grid-template-columns:
+    1fr
+    58px
+    1fr;
+
+  align-items:stretch;
+
+  gap:8px;
+}
+
+
+/* 左右カード */
+.ability-vs-side{
+  min-height:230px;
+
+  padding:16px 10px;
+
+  display:flex;
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  border-radius:22px;
+
+  text-align:center;
+
+  position:relative;
+
+  overflow:hidden;
+}
+
+
+.ability-vs-side.cat-side{
+  background:
+    linear-gradient(
+      160deg,
+      #f4efff,
+      #e8ddff
+    );
+
+  border:
+    2px solid
+    rgba(130,90,205,.35);
+}
+
+
+.ability-vs-side.police-side{
+  background:
+    linear-gradient(
+      160deg,
+      #fff4e4,
+      #ffe2c5
+    );
+
+  border:
+    2px solid
+    rgba(230,140,65,.38);
+}
+
+
+.ability-vs-side-label{
+  position:absolute;
+
+  top:10px;
+
+  font-size:9px;
+  font-weight:900;
+
+  letter-spacing:.08em;
+
+  opacity:.55;
+}
+
+
+.ability-vs-character{
+  margin-top:8px;
+
+  font-size:50px;
+
+  filter:
+    drop-shadow(
+      0 5px 5px
+      rgba(0,0,0,.15)
+    );
+}
+
+
+.ability-vs-name{
+  margin-top:12px;
+
+  font-size:17px;
+  font-weight:900;
+
+  line-height:1.25;
+}
+
+
+.ability-vs-desc{
+  margin-top:6px;
+
+  font-size:10px;
+  font-weight:800;
+
+  line-height:1.4;
+
+  opacity:.65;
+}
+
+
+/* VS中央 */
+.ability-vs-center{
+  display:flex;
+
+  flex-direction:column;
+
+  justify-content:center;
+  align-items:center;
+
+  gap:8px;
+}
+
+
+.ability-vs-line{
+  width:2px;
+  flex:1;
+
+  min-height:25px;
+
+  background:
+    linear-gradient(
+      transparent,
+      rgba(93,64,55,.25),
+      transparent
+    );
+}
+
+
+.ability-vs-mark{
+  width:52px;
+  height:52px;
+
+  display:flex;
+
+  justify-content:center;
+  align-items:center;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffcf67,
+      #ff9c4a
+    );
+
+  border:
+    3px solid
+    white;
+
+  box-shadow:
+    0 5px 15px
+    rgba(255,140,50,.4);
+
+  font-size:20px;
+  font-weight:1000;
+
+  color:white;
+
+  transform:rotate(-5deg);
+}
+
+
+.ability-vs-start-btn{
+  width:100%;
+
+  margin-top:18px;
+
+  font-size:15px;
+  font-weight:900;
+}
