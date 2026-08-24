@@ -4004,3 +4004,94 @@ body.fake-paw-mode #fakePawBtn{
     0 0 10px
     rgba(231,170,66,.3);
 }
+.fakepaw-diagram{
+  position:relative;
+  width:100%;
+  max-width:260px;
+  height:120px;
+  margin:0 auto;
+}
+
+.fakepaw-lines{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  overflow:visible;
+}
+
+.fakepaw-line-real{
+  stroke:rgba(105,75,60,.65);
+  stroke-width:3;
+}
+
+.fakepaw-line-fake{
+  stroke:rgba(160,125,100,.55);
+  stroke-width:3;
+  stroke-dasharray:8 7;
+}
+
+.fakepaw-arrow-real,
+.fakepaw-arrow-fake{
+  fill:none;
+  stroke-width:3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.fakepaw-arrow-real{
+  stroke:rgba(105,75,60,.65);
+}
+
+.fakepaw-arrow-fake{
+  stroke:rgba(160,125,100,.55);
+}
+
+.fakepaw-node{
+  position:absolute;
+  width:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  z-index:2;
+}
+
+.fakepaw-origin{
+  left:10%;
+  bottom:5px;
+}
+
+.fakepaw-real{
+  right:10%;
+  bottom:5px;
+}
+
+.fakepaw-fake{
+  right:10%;
+  top:2px;
+  border:2px dashed #e7aa42;
+  border-radius:9px;
+  background:#fff1c9;
+}
+
+.fakepaw-label{
+  position:absolute;
+  font-size:9px;
+  font-weight:900;
+  opacity:.65;
+  z-index:3;
+}
+
+.fakepaw-label-real{
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+}
+
+.fakepaw-label-fake{
+  left:52%;
+  top:20px;
+}
