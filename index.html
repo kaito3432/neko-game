@@ -638,31 +638,64 @@
 <!-- フェイク肉球プレビュー -->
 <div class="ability-mini-preview fakepaw-preview">
 
-  <div class="fakepaw-visual">
+  <div class="fakepaw-diagram">
 
-    <div class="fakepaw-origin">
+    <div class="fakepaw-node fakepaw-origin">
       🐱
     </div>
 
-    <!-- 本当の移動 -->
-    <div class="fakepaw-real-line">
-      <span class="fakepaw-real-arrow">→</span>
-      <span class="fakepaw-real-label">本当</span>
-    </div>
-
-    <div class="fakepaw-real-destination">
+    <div class="fakepaw-node fakepaw-real">
       🐱
     </div>
 
-
-    <!-- 偽の足跡 -->
-<div class="fakepaw-fake-line">
-  <span class="fakepaw-fake-label">ニセ</span>
-</div>
-
-    <div class="fakepaw-fake-paw">
+    <div class="fakepaw-node fakepaw-fake">
       🐾
     </div>
+
+    <svg
+      class="fakepaw-lines"
+      viewBox="0 0 300 140"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <!-- 本当の移動 -->
+      <line
+        x1="65"
+        y1="100"
+        x2="235"
+        y2="100"
+        class="fakepaw-line-real"
+      />
+
+      <!-- 偽の足跡 -->
+      <line
+        x1="65"
+        y1="100"
+        x2="235"
+        y2="35"
+        class="fakepaw-line-fake"
+      />
+
+      <!-- 本当の矢印 -->
+      <polyline
+        points="225,92 235,100 225,108"
+        class="fakepaw-arrow-real"
+      />
+
+      <!-- 偽物の矢印 -->
+      <polyline
+        points="224,28 235,35 228,46"
+        class="fakepaw-arrow-fake"
+      />
+    </svg>
+
+    <span class="fakepaw-label fakepaw-label-real">
+      本当
+    </span>
+
+    <span class="fakepaw-label fakepaw-label-fake">
+      ニセ
+    </span>
 
   </div>
 
