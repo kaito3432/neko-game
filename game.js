@@ -3000,29 +3000,13 @@ function closePrivacy(){
   }
 }
 
-function showToast(icon,title,text,duration=900,extraClass=""){
+function showToast(icon,title,text){
   clearTimeout(toastTimer);
-
   toastIcon.textContent=icon;
   toastTitle.textContent=title;
   toastText.textContent=text;
-
-  // 前回の特殊表示を解除
-  toast.classList.remove(
-    "howl-positive",
-    "howl-negative"
-  );
-
-  if(extraClass){
-    toast.classList.add(extraClass);
-  }
-
   toast.classList.add("show");
-
-  toastTimer=setTimeout(
-    hideToast,
-    duration
-  );
+  toastTimer=setTimeout(hideToast,900);
 }
 
   function hideToast(){toast.classList.remove("show");}
