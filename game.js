@@ -5990,7 +5990,6 @@ bindPress(howToCloseBtn,()=>{
   bindPress(cpuHardBtn,()=>beginCpuPoliceGame("hard"));
   bindPress(difficultyBackBtn,closeDifficultyPicker);
   bindPress(titleSettingsBtn,openSettings);
-  bindPress(howToBtn,showHowTo);
   bindPress(soundQuickBtn,toggleQuickSound);
 bindPress(abilityCancelBtn,cancelPendingAbility);
 
