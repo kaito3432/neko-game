@@ -75,6 +75,10 @@ const abilityStartBtn=$("abilityStartBtn");
    const onlineStartGameBtn=$("onlineStartGameBtn");
 const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnlineRoomBtn");
 const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"); 
+
+   const howToOverlay = $("howToOverlay");
+const howToBtn = $("howToBtn");
+const howToCloseBtn = $("howToCloseBtn");
    let onlineAssignedRole=null;
    let onlineSelfReady=false;
 let onlinePeerReady=false;
