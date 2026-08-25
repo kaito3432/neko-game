@@ -5923,6 +5923,24 @@ bindPress(localAbilityRuleBtn,startLocalAbilityMode);
 bindPress(localRuleBackBtn,closeLocalRulePicker);
    
    bindPress(cpuModeBtn,startCpuPoliceMode);
+
+   // ===============================
+// 遊び方
+// ===============================
+bindPress(howToBtn,()=>{
+  Audio.play("button");
+
+  modeOverlay.classList.remove("show");
+  howToOverlay.classList.add("show");
+});
+
+bindPress(howToCloseBtn,()=>{
+  Audio.play("button");
+
+  howToOverlay.classList.remove("show");
+  modeOverlay.classList.add("show");
+});
+   
   bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
   bindPress(playPoliceSideBtn,()=>chooseCpuSide("police"));
   bindPress(cpuSideBackBtn,closeCpuSidePicker);
