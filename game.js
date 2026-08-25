@@ -7,7 +7,7 @@
   const A=NyanAnimation;
   const Audio=NyanAudio;
    // 盤面で頻繁に使う画像を先に読み込んでおく
-[
+[@
   "./assets/images/paw.png",
   "./assets/images/start.png",
   "./assets/images/box.png",
@@ -129,6 +129,16 @@ const fakePawBannerText=$("fakePawBannerText");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
   const victoryCutin=$("victoryCutin"),victoryCutinImage=$("victoryCutinImage");
+   // =====================================
+// 特殊スキル 発動カットイン
+// =====================================
+const skillCutin = $("skillCutin");
+const skillCutinKicker = $("skillCutinKicker");
+const skillCutinImage = $("skillCutinImage");
+const skillCutinName = $("skillCutinName");
+const skillCutinDesc = $("skillCutinDesc");
+
+let skillCutinTimer = null;
   const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon");
   const resultTitle=$("resultTitle"),resultText=$("resultText"),againBtn=$("againBtn");
   const resultRoute=$("resultRoute"),resultRouteBoard=$("resultRouteBoard"),resultRouteNote=$("resultRouteNote");
@@ -150,6 +160,88 @@ const backToTitleBtn=$("backToTitleBtn");
     onlineGameStarted=true;
     startOnlineGame();
   }
+}
+
+   // =====================================
+// 特殊スキル 発動カットイン
+// =====================================
+function showSkillCutin({
+  side,
+  name,
+  desc,
+  image,
+  duration = 1400,
+  onComplete = null
+}){
+
+  if(!skillCutin){
+    if(typeof onComplete === "function"){
+      onComplete();
+    }
+    return;
+  }
+
+  clearTimeout(skillCutinTimer);
+
+  // 前回の状態を完全に解除
+  skillCutin.classList.remove(
+    "show",
+    "cat-skill",
+    "police-skill"
+  );
+
+  skillCutinKicker.textContent =
+    side === "police"
+      ? "POLICE SPECIAL SKILL"
+      : "CAT SPECIAL SKILL";
+
+  skillCutinName.textContent = name;
+  skillCutinDesc.textContent = desc;
+
+  skillCutinImage.src = image;
+  skillCutinImage.alt = name;
+
+  skillCutin.classList.add(
+    side === "police"
+      ? "police-skill"
+      : "cat-skill"
+  );
+
+  skillCutin.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  // CSSアニメーションを確実に再スタート
+  void skillCutin.offsetWidth;
+
+  requestAnimationFrame(()=>{
+    skillCutin.classList.add("show");
+  });
+
+  skillCutinTimer = setTimeout(()=>{
+
+    skillCutin.classList.remove("show");
+
+    setTimeout(()=>{
+
+      skillCutin.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+      skillCutin.classList.remove(
+        "cat-skill",
+        "police-skill"
+      );
+
+      if(typeof onComplete === "function"){
+        onComplete();
+      }
+
+    },220);
+
+  },duration);
 }
 
 function bindPress(el, fn){
@@ -980,13 +1072,20 @@ if(
   !game.catAbilities.fakePawUsed;
 
       // 猫移動中も入力ロック
-      game.actionLocked=true;
-      Audio.haptic(10);
-      Audio.play("cat");
+game.actionLocked=true;
+Audio.haptic(10);
 
-A.animateCatMove(board,from,i,()=>{
 
-  // 忍び足を使った場合、
+// =====================================
+// 実際の猫移動を開始
+// =====================================
+const startCatMove = ()=>{
+
+  Audio.play("cat");
+
+  A.animateCatMove(board,from,i,()=>{
+
+    // 忍び足を使った場合、
   // 移動前にいた箱には痕跡を残さない
   if(useSneak){
     game.noTrackBoxes.add(from);
@@ -1079,7 +1178,34 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
   render();
 }
       
-      });
+            });
+
+};
+
+
+// =====================================
+// 忍び足なら移動前にカットイン
+// =====================================
+if(useSneak){
+
+  showSkillCutin({
+    side:"cat",
+    name:"忍び足",
+    desc:"足跡を残さず移動",
+    image:"./assets/images/vs_sneak.png",
+    duration:1300,
+    onComplete:startCatMove
+  });
+
+}else{
+
+  startCatMove();
+
+}
+
+      render();
+      return;
+    }
       render();
       return;
     }
