@@ -379,19 +379,19 @@ const catData={
 
 const policeData={
   howl:{
-    name:"あか柴・遠吠え",
+    name:"遠吠え",
     desc:"周囲のネコの気配を探知",
     image:"./assets/images/vs_howl.png"
   },
 
   dash:{
-    name:"くろ柴・ダッシュ",
+    name:"ダッシュ",
     desc:"一気に2マス移動",
     image:"./assets/images/vs_dash.png"
   },
 
   doubleSearch:{
-    name:"しろ柴・一斉捜索",
+    name:"一斉捜索",
     desc:"2箱を一度に探索",
     image:"./assets/images/vs_search.png"
   }
