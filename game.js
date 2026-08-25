@@ -2089,8 +2089,20 @@ function toggleFakePaw(){
 
 
   // 1箱目開始
-  searchNext();
-}
+// =====================================
+// 一斉捜索 発動カットイン
+// =====================================
+showSkillCutin({
+  side:"police",
+  name:"一斉捜索",
+  desc:"2つの箱を同時に捜索",
+  image:"./assets/images/vs_search.png",
+  duration:1400,
+
+  onComplete:()=>{
+    searchNext();
+  }
+});}
 
    function toggleDoubleSearch(){
   if(!game.abilitiesEnabled) return;
