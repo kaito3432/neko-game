@@ -129,7 +129,12 @@ const fakePawBannerText=$("fakePawBannerText");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
   const victoryCutin=$("victoryCutin"),victoryCutinImage=$("victoryCutinImage");
-
+   
+const skillCutin = $("skillCutin");
+const skillCutinKicker = $("skillCutinKicker");
+const skillCutinImage = $("skillCutinImage");
+const skillCutinName = $("skillCutinName");
+const skillCutinDesc = $("skillCutinDesc");
 
 let skillCutinTimer = null;
   const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon");
@@ -2108,9 +2113,23 @@ function toggleHowl(){
     // あか柴選択解除
     game.selectedDog=null;
 
-    Audio.haptic([20,30,20]);
+Audio.haptic([20,30,20]);
 
+// =====================================
+// 遠吠え 発動カットイン
+// =====================================
+showSkillCutin({
+  side:"police",
+  name:"遠吠え",
+  desc:"周囲のネコの気配を探知",
+  image:"./assets/images/vs_howl.png",
+  duration:1400,
+
+  onComplete:()=>{
+
+    // カットイン終了後に結果を表示
     if(catInside){
+
       setMessage(
         "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
       );
@@ -2122,6 +2141,7 @@ function toggleHowl(){
       );
 
     }else{
+
       setMessage(
         "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
       );
@@ -2135,7 +2155,11 @@ function toggleHowl(){
 
     afterDogAction();
     render();
-    return;
+  }
+});
+
+render();
+return;
   }
 
 
