@@ -405,7 +405,21 @@ function startLocalMode(){
   }
 }
 updateAbilityRevealCard();
-  abilityRevealOverlay.classList.add("show");
+
+/* VSアニメーションを毎回最初から再生 */
+abilityRevealOverlay.classList.remove("vs-animate");
+
+abilityRevealOverlay.classList.add("show");
+
+/* Safariでも再アニメーションさせる */
+void abilityRevealOverlay.offsetWidth;
+
+requestAnimationFrame(()=>{
+  abilityRevealOverlay.classList.add("vs-animate");
+});
+      setTimeout(()=>{
+  Audio.haptic?.([18,25,30]);
+},600);
 }
 
    function startLocalAfterAbilitySelect(){
