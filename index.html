@@ -190,63 +190,69 @@
   <!-- ============================= -->
 <!-- 遊び方 -->
 <!-- ============================= -->
+<!-- ============================= -->
+<!-- 遊び方 -->
+<!-- ============================= -->
 <div class="overlay" id="howToOverlay">
 
   <div class="modal howto-modal">
 
-    <div class="howto-header">
-      <div class="modal-icon">📖</div>
-      <h2>遊び方</h2>
-      <p>知りたい項目を選んでね！</p>
-    </div>
+    <div class="howto-page show" data-howto-page="0">
 
-    <div class="howto-menu">
+      <div class="howto-page-icon">🎯</div>
 
-      <button class="howto-menu-btn" type="button">
-        <span class="howto-menu-icon">🎯</span>
-        <span class="howto-menu-copy">
-          <strong>基本ルール</strong>
-          <small>勝利条件とゲームの流れ</small>
-        </span>
-        <span class="howto-menu-arrow">›</span>
-      </button>
+      <h2>ゲームの目的</h2>
 
-      <button class="howto-menu-btn cat" type="button">
-        <span class="howto-menu-icon">🐱</span>
-        <span class="howto-menu-copy">
-          <strong>ネコの遊び方</strong>
-          <small>逃げ方と足跡について</small>
-        </span>
-        <span class="howto-menu-arrow">›</span>
-      </button>
+      <div class="howto-goal-grid">
 
-      <button class="howto-menu-btn police" type="button">
-        <span class="howto-menu-icon">🐕</span>
-        <span class="howto-menu-copy">
-          <strong>警察の遊び方</strong>
-          <small>移動・探索・捕獲について</small>
-        </span>
-        <span class="howto-menu-arrow">›</span>
-      </button>
+        <div class="howto-goal-card cat-goal">
+          <div class="howto-goal-emoji">🐱</div>
+          <strong>ネコ</strong>
+          <p>
+            柴犬警察から逃げながら、<br>
+            <b>11ターン逃げ切れば勝ち！</b>
+          </p>
+        </div>
 
-      <button class="howto-menu-btn skill" type="button">
-        <span class="howto-menu-icon">✨</span>
-        <span class="howto-menu-copy">
-          <strong>特殊スキル</strong>
-          <small>5種類のスキルを確認</small>
-        </span>
-        <span class="howto-menu-arrow">›</span>
-      </button>
+        <div class="howto-vs">VS</div>
+
+        <div class="howto-goal-card police-goal">
+          <div class="howto-goal-emoji">🐕</div>
+          <strong>柴犬警察</strong>
+          <p>
+            ダンボールを捜索して、<br>
+            <b>ネコを見つければ勝ち！</b>
+          </p>
+        </div>
+
+      </div>
+
+      <div class="howto-tip">
+        🐾 ネコが残した足跡を手がかりに追いかけよう！
+      </div>
 
     </div>
 
-    <button
-      class="btn"
-      id="howToCloseBtn"
-      type="button"
-    >
-      ← 戻る
-    </button>
+
+    <div class="howto-nav">
+
+      <button
+        class="btn"
+        id="howToCloseBtn"
+        type="button"
+      >
+        ← 戻る
+      </button>
+
+      <button
+        class="btn pink"
+        id="howToNextBtn"
+        type="button"
+      >
+        次へ →
+      </button>
+
+    </div>
 
   </div>
 
