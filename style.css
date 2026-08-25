@@ -6267,3 +6267,55 @@ body.sneak-mode .board-shell{
     line-height:1.3;
   }
 }
+/* =====================================
+   遊び方 3ページ目：柴犬警察
+===================================== */
+
+.howto-step-number.police-number{
+  background:#80bcea;
+}
+
+@media (max-width:600px){
+
+  .howto-page[data-howto-page="2"]{
+    padding:0;
+  }
+
+  .howto-page[data-howto-page="2"] .howto-page-icon{
+    font-size:26px;
+    margin-bottom:2px;
+  }
+
+  .howto-page[data-howto-page="2"] h2{
+    font-size:23px;
+    margin:2px 0 10px;
+  }
+
+  .howto-page[data-howto-page="2"] .howto-steps{
+    gap:7px;
+  }
+
+  .howto-page[data-howto-page="2"] .howto-step{
+    padding:8px 10px;
+    gap:9px;
+    border-radius:14px;
+    border-color:#c9e3f7;
+  }
+
+  .howto-page[data-howto-page="2"] .howto-step-number{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    font-size:17px;
+  }
+
+  .howto-page[data-howto-page="2"] .howto-step-copy strong{
+    font-size:15px;
+    margin-bottom:1px;
+  }
+
+  .howto-page[data-howto-page="2"] .howto-step-copy p{
+    font-size:12.5px;
+    line-height:1.35;
+  }
+}
