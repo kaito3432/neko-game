@@ -4823,3 +4823,33 @@ body.sneak-mode .board-shell{
     transform:translateY(0);
   }
 }
+/* ========================================
+   VSカード 専用スキル画像
+======================================== */
+
+.ability-vs-character{
+  width:100%;
+  height:120px;
+
+  margin-top:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.ability-vs-image{
+  display:block;
+
+  width:100%;
+  height:100%;
+
+  object-fit:contain;
+  object-position:center;
+
+  filter:
+    drop-shadow(
+      0 6px 8px
+      rgba(0,0,0,.16)
+    );
+}
