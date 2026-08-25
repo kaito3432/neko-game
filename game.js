@@ -3003,7 +3003,6 @@ function closePrivacy(){
   if(privacyBtn.dataset.nextAction==="openCatAbility"){
     privacyBtn.dataset.nextAction="";
     catAbilityOverlay.classList.add("show");
-Audio.play("skillSelect");
   }
 }
 
