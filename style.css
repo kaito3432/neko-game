@@ -6214,3 +6214,56 @@ body.sneak-mode .board-shell{
     font-size:14px;
   }
 }
+/* =====================================
+   遊び方 2ページ目を1画面に収める
+===================================== */
+@media (max-width: 600px){
+
+  .howto-page[data-howto-page="1"]{
+    padding:0;
+  }
+
+  .howto-page[data-howto-page="1"] .howto-page-icon{
+    font-size:26px;
+    margin-bottom:2px;
+  }
+
+  .howto-page[data-howto-page="1"] h2{
+    font-size:23px;
+    margin:2px 0 10px;
+  }
+
+  .howto-page[data-howto-page="1"] .howto-steps{
+    gap:7px;
+  }
+
+  .howto-page[data-howto-page="1"] .howto-step{
+    padding:8px 10px;
+    gap:9px;
+    border-radius:14px;
+  }
+
+  .howto-page[data-howto-page="1"] .howto-step-number{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    font-size:17px;
+  }
+
+  .howto-page[data-howto-page="1"] .howto-step-copy strong{
+    font-size:15px;
+    margin-bottom:1px;
+  }
+
+  .howto-page[data-howto-page="1"] .howto-step-copy p{
+    font-size:12.5px;
+    line-height:1.35;
+  }
+
+  .howto-page[data-howto-page="1"] .howto-win-box{
+    margin-top:8px;
+    padding:8px 10px;
+    font-size:13px;
+    line-height:1.3;
+  }
+}
