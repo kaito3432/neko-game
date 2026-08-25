@@ -5760,6 +5760,13 @@ body.sneak-mode .board-shell{
 
 .toast.howl-positive{
   padding:18px 22px;
+
+  /* 背景だけ少し透過 */
+  background:rgba(255, 255, 255, 0.88);
+
+  /* 背景越しでも文字を読みやすく */
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
 }
 
 .toast.howl-positive #toastIcon{
