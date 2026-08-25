@@ -5812,3 +5812,88 @@ body.sneak-mode .board-shell{
 
   color:#5D4037;
 }
+/* =====================================
+   対人戦：ルール選択
+===================================== */
+
+.local-rule-modal{
+  width:min(92vw, 430px);
+  padding:24px 20px 20px;
+}
+
+.local-rule-grid{
+  display:grid;
+  gap:14px;
+  margin:20px 0 18px;
+}
+
+.local-rule-btn{
+  width:100%;
+  border:none;
+  border-radius:20px;
+  padding:16px;
+  background:#fff;
+  box-shadow:
+    0 7px 18px rgba(93,64,55,.13);
+  display:flex;
+  align-items:center;
+  gap:14px;
+  text-align:left;
+  cursor:pointer;
+}
+
+.local-rule-btn:active{
+  transform:scale(.98);
+}
+
+.local-rule-icon{
+  width:58px;
+  height:58px;
+  flex:0 0 58px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:16px;
+  font-size:28px;
+  background:#FFF4D8;
+}
+
+.local-rule-copy{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.local-rule-copy strong{
+  font-size:18px;
+  font-weight:900;
+  color:#5D4037;
+}
+
+.local-rule-copy span{
+  font-size:13px;
+  line-height:1.4;
+  color:#7A6258;
+}
+
+
+/* 通常戦 */
+.local-rule-btn.normal-rule{
+  border:2px solid #9ED5B3;
+}
+
+.local-rule-btn.normal-rule .local-rule-icon{
+  background:#E9F8EF;
+}
+
+
+/* 特殊スキルあり */
+.local-rule-btn.ability-rule{
+  border:2px solid #F1B15A;
+}
+
+.local-rule-btn.ability-rule .local-rule-icon{
+  background:#FFF2CF;
+}
