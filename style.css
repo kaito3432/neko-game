@@ -6085,3 +6085,58 @@ body.sneak-mode .board-shell{
   border:2px solid #f5a5bd;
   color:#704653;
 }
+/* =====================================
+   遊び方：スマホ1画面最適化
+===================================== */
+@media (max-width: 600px) {
+
+  .howto-page {
+    padding: 18px 18px 14px;
+  }
+
+  .howto-page h2 {
+    margin: 6px 0 16px;
+    font-size: 28px;
+  }
+
+  /* ネコ・警察カードを少しコンパクトに */
+  .howto-role-card {
+    padding: 18px 14px;
+    min-height: 0;
+  }
+
+  .howto-role-card .howto-icon {
+    font-size: 34px;
+    margin-bottom: 5px;
+  }
+
+  .howto-role-card h3 {
+    font-size: 22px;
+    margin: 4px 0 8px;
+  }
+
+  .howto-role-card p {
+    font-size: 17px;
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  /* VSの上下余白 */
+  .howto-vs {
+    margin: 10px 0;
+    font-size: 22px;
+  }
+
+  /* 足跡ヒント */
+  .howto-tip {
+    margin-top: 12px;
+    padding: 12px 14px;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  /* 下部ボタン */
+  .howto-actions {
+    margin-top: 12px;
+  }
+}
