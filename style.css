@@ -5884,9 +5884,6 @@ body.sneak-mode .board-shell{
   border:2px solid #9ED5B3;
 }
 
-.local-rule-btn.normal-rule .local-rule-icon{
-  background:#E9F8EF;
-}
 
 
 /* 特殊スキルあり */
@@ -5894,6 +5891,22 @@ body.sneak-mode .board-shell{
   border:2px solid #F1B15A;
 }
 
-.local-rule-btn.ability-rule .local-rule-icon{
-  background:#FFF2CF;
+.local-rule-icon{
+  width:80px;
+  height:80px;
+  flex:0 0 80px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:16px;
+  overflow:hidden;
+}
+
+.local-rule-icon img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
