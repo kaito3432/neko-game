@@ -355,54 +355,68 @@ function startLocalMode(){
   const policeName=$("abilityRevealPoliceName");
   const policeDesc=$("abilityRevealPoliceDesc");
 
+         const catImage=$("abilityRevealCatImage");
+const policeImage=$("abilityRevealPoliceImage");
+
   const catAbility=game.selectedAbilities.cat;
   const policeAbility=game.selectedAbilities.police;
 
 
-  const catData={
-    sneak:{
-      name:"忍び足",
-      desc:"足跡を残さず移動"
-    },
+const catData={
+  sneak:{
+    name:"忍び足",
+    desc:"足跡を残さず移動",
+    image:"./assets/images/vs_sneak.png"
+  },
 
-    fakePaw:{
-      name:"フェイク肉球",
-      desc:"偽の足跡で警察を惑わせる"
-    }
-  };
+  fakePaw:{
+    name:"フェイク肉球",
+    desc:"偽の足跡で警察を惑わせる",
+    image:"./assets/images/vs_fakepaw.png"
+  }
+};
 
 
-  const policeData={
-    howl:{
-      name:"あか柴・遠吠え",
-      desc:"周囲のネコの気配を探知"
-    },
+const policeData={
+  howl:{
+    name:"あか柴・遠吠え",
+    desc:"周囲のネコの気配を探知",
+    image:"./assets/images/vs_howl.png"
+  },
 
-    dash:{
-      name:"くろ柴・ダッシュ",
-      desc:"一気に2マス移動"
-    },
+  dash:{
+    name:"くろ柴・ダッシュ",
+    desc:"一気に2マス移動",
+    image:"./assets/images/vs_dash.png"
+  },
 
-    doubleSearch:{
-      name:"しろ柴・一斉捜索",
-      desc:"2箱を一度に探索"
-    }
-  };
+  doubleSearch:{
+    name:"しろ柴・一斉捜索",
+    desc:"2箱を一度に探索",
+    image:"./assets/images/vs_search.png"
+  }
+};
 
 
   const c=catData[catAbility];
   const p=policeData[policeAbility];
 
 
-  if(c){
-    catName.textContent=c.name;
-    catDesc.textContent=c.desc;
-  }
+if(c){
+  catName.textContent=c.name;
+  catDesc.textContent=c.desc;
 
-  if(p){
-    policeName.textContent=p.name;
-    policeDesc.textContent=p.desc;
-  }
+  catImage.src=c.image;
+  catImage.alt=c.name;
+}
+
+if(p){
+  policeName.textContent=p.name;
+  policeDesc.textContent=p.desc;
+
+  policeImage.src=p.image;
+  policeImage.alt=p.name;
+}
 }
 updateAbilityRevealCard();
 
