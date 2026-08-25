@@ -77,7 +77,6 @@ const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnli
 const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"); 
 
    const howToOverlay = $("howToOverlay");
-const howToBtn = $("howToBtn");
 const howToCloseBtn = $("howToCloseBtn");
    let onlineAssignedRole=null;
    let onlineSelfReady=false;
