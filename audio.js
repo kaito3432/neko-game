@@ -18,6 +18,9 @@ window.NyanAudio = (() => {
   tap:0.12,
   button:0.12,
       skill:0.30,   // ← 追加：特殊スキル共通SE
+    skillSelect:0.22,
+skillVs:0.28,
+skill:0.30,
 
   box:0.18,
   sniff:0.20,
