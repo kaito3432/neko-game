@@ -139,6 +139,7 @@ const fakePawBannerText=$("fakePawBannerText");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
 const victoryCutin=$("victoryCutin"),
       victoryCutinImage=$("victoryCutinImage");
+   const howToNextBtn=$("howToNextBtn");
 
 
 // =====================================
@@ -5923,23 +5924,64 @@ bindPress(localRuleBackBtn,closeLocalRulePicker);
    
    bindPress(cpuModeBtn,startCpuPoliceMode);
 
-   // ===============================
+// ===============================
 // 遊び方
 // ===============================
+let howToPage=0;
+
+function showHowToPage(page){
+
+  const pages=document.querySelectorAll(".howto-page");
+
+  pages.forEach(el=>{
+    el.classList.remove("show");
+  });
+
+  const target=document.querySelector(
+    `.howto-page[data-howto-page="${page}"]`
+  );
+
+  if(target){
+    target.classList.add("show");
+  }
+
+  howToPage=page;
+}
+
+
 bindPress(howToBtn,()=>{
   Audio.play("button");
 
   modeOverlay.classList.remove("show");
+
+  showHowToPage(0);
+
   howToOverlay.classList.add("show");
 });
+
+
+bindPress(howToNextBtn,()=>{
+  Audio.play("button");
+
+  if(howToPage===0){
+    showHowToPage(1);
+
+    // 2ページ目では一旦「次へ」を非表示
+    howToNextBtn.style.display="none";
+  }
+});
+
 
 bindPress(howToCloseBtn,()=>{
   Audio.play("button");
 
   howToOverlay.classList.remove("show");
   modeOverlay.classList.add("show");
+
+  // 次回開いたときのために戻す
+  howToNextBtn.style.display="";
+  showHowToPage(0);
 });
-   
   bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
   bindPress(playPoliceSideBtn,()=>chooseCpuSide("police"));
   bindPress(cpuSideBackBtn,closeCpuSidePicker);
