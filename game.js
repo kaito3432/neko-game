@@ -142,7 +142,87 @@ const skillCutinName=$("skillCutinName");
 const skillCutinDesc=$("skillCutinDesc");
 
 let skillCutinTimer=null;
+// =====================================
+// 特殊スキル 発動カットイン
+// =====================================
+function showSkillCutin({
+  side,
+  name,
+  desc,
+  image,
+  duration = 1400,
+  onComplete = null
+}){
 
+  // HTML側にカットインが無い場合でもゲームは止めない
+  if(
+    !skillCutin ||
+    !skillCutinKicker ||
+    !skillCutinImage ||
+    !skillCutinName ||
+    !skillCutinDesc
+  ){
+    if(typeof onComplete === "function"){
+      onComplete();
+    }
+    return;
+  }
+
+  clearTimeout(skillCutinTimer);
+
+  skillCutin.classList.remove(
+    "show",
+    "cat-skill",
+    "police-skill"
+  );
+
+  skillCutinKicker.textContent =
+    side === "police"
+      ? "POLICE SPECIAL SKILL"
+      : "CAT SPECIAL SKILL";
+
+  skillCutinName.textContent = name;
+  skillCutinDesc.textContent = desc;
+
+  skillCutinImage.src = image;
+  skillCutinImage.alt = name;
+
+  skillCutin.classList.add(
+    side === "police"
+      ? "police-skill"
+      : "cat-skill"
+  );
+
+  skillCutin.setAttribute("aria-hidden","false");
+
+  // アニメーションを毎回最初から再生
+  void skillCutin.offsetWidth;
+
+  requestAnimationFrame(()=>{
+    skillCutin.classList.add("show");
+  });
+
+  skillCutinTimer=setTimeout(()=>{
+
+    skillCutin.classList.remove("show");
+
+    setTimeout(()=>{
+
+      skillCutin.setAttribute("aria-hidden","true");
+
+      skillCutin.classList.remove(
+        "cat-skill",
+        "police-skill"
+      );
+
+      if(typeof onComplete === "function"){
+        onComplete();
+      }
+
+    },220);
+
+  },duration);
+}
 
 const resultOverlay=$("resultOverlay"),
       resultIcon=$("resultIcon");   
