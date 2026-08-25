@@ -6007,3 +6007,81 @@ body.sneak-mode .board-shell{
 .howto-nav .btn{
   flex:1;
 }
+/* =====================================
+   遊び方：ステップ説明
+===================================== */
+
+.howto-steps{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.howto-step{
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  padding:13px;
+  border-radius:18px;
+
+  background:#fff;
+  border:2px solid #f3d5df;
+
+  text-align:left;
+}
+
+.howto-step-number{
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:50%;
+
+  background:#f7a6bd;
+  color:#fff;
+
+  font-size:19px;
+  font-weight:900;
+}
+
+.howto-step-copy{
+  min-width:0;
+}
+
+.howto-step-copy strong{
+  display:block;
+  margin-bottom:3px;
+
+  color:#5d4037;
+  font-size:16px;
+  font-weight:900;
+}
+
+.howto-step-copy p{
+  margin:0;
+
+  color:#765f56;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.howto-win-box{
+  margin-top:15px;
+  padding:13px;
+
+  border-radius:16px;
+
+  text-align:center;
+  font-size:14px;
+}
+
+.howto-win-box.cat-win{
+  background:#fff0f5;
+  border:2px solid #f5a5bd;
+  color:#704653;
+}
