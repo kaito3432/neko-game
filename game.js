@@ -1166,28 +1166,7 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
       
             });
 
-};
 
-
-// =====================================
-// 忍び足なら移動前にカットイン
-// =====================================
-if(useSneak){
-
-  showSkillCutin({
-    side:"cat",
-    name:"忍び足",
-    desc:"足跡を残さず移動",
-    image:"./assets/images/vs_sneak.png",
-    duration:1300,
-    onComplete:startCatMove
-  });
-
-}else{
-
-  startCatMove();
-
-}
 
       render();
       return;
