@@ -1109,6 +1109,7 @@ if(useSneak){
     duration:1300
   });
 
+} 
 
 Audio.play("cat");
 
