@@ -142,6 +142,44 @@ const skillCutinName=$("skillCutinName");
 const skillCutinDesc=$("skillCutinDesc");
 
 let skillCutinTimer=null;
+
+   // =====================================
+// 主要画像プリロード
+// =====================================
+function preloadGameImages(){
+
+  const images = [
+
+    // ホーム画面
+    "./assets/images/home_logo.png",
+    "./assets/images/home_hero.png",
+    "./assets/images/home_vs.png",
+    "./assets/images/home_cpu.png",
+    "./assets/images/home_online.png",
+
+    // スキル選択
+    "./assets/images/skill_icon_howl.png",
+    "./assets/images/skill_icon_dash.png",
+    "./assets/images/skill_icon_search.png",
+    "./assets/images/skill_icon_sneak.png",
+    "./assets/images/skill_icon_fakepaw.png",
+
+    // スキル公開・VS画面
+    "./assets/images/vs_howl.png",
+    "./assets/images/vs_dash.png",
+    "./assets/images/vs_search.png",
+    "./assets/images/vs_sneak.png",
+    "./assets/images/vs_fakepaw.png"
+
+  ];
+
+  images.forEach(src=>{
+    const img=new Image();
+    img.src=src;
+  });
+}
+
+preloadGameImages();
 // =====================================
 // 特殊スキル 発動カットイン
 // =====================================
