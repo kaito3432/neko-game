@@ -1091,9 +1091,7 @@ if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
       render();
       return;
     }
-      render();
-      return;
-    }
+
 
      // =====================================
 // しろ柴・一斉捜索：2箱を仮選択
