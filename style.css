@@ -4639,3 +4639,187 @@ body.sneak-mode .board-shell{
 
   margin-top:10px;
 }
+/* ========================================
+   VSカード 登場アニメーション
+======================================== */
+
+/* 初期状態 */
+#abilityRevealOverlay .cat-side{
+  opacity:0;
+  transform:translateX(-55px) scale(.96);
+}
+
+#abilityRevealOverlay .police-side{
+  opacity:0;
+  transform:translateX(55px) scale(.96);
+}
+
+#abilityRevealOverlay .ability-vs-mark{
+  opacity:0;
+  transform:scale(.25) rotate(-12deg);
+}
+
+#abilityRevealOverlay .ability-vs-title,
+#abilityRevealOverlay .ability-vs-kicker{
+  opacity:0;
+  transform:translateY(-8px);
+}
+
+#abilityRevealOverlay .ability-vs-start-btn{
+  opacity:0;
+  transform:translateY(12px);
+}
+
+
+/* ========================================
+   アニメーション開始
+======================================== */
+
+#abilityRevealOverlay.vs-animate .ability-vs-kicker{
+  animation:
+    vsHeaderIn .25s ease-out
+    .08s forwards;
+}
+
+#abilityRevealOverlay.vs-animate .ability-vs-title{
+  animation:
+    vsHeaderIn .3s ease-out
+    .13s forwards;
+}
+
+
+/* 猫：左から */
+#abilityRevealOverlay.vs-animate .cat-side{
+  animation:
+    vsCatIn .45s
+    cubic-bezier(.2,.9,.3,1.15)
+    .22s forwards;
+}
+
+
+/* 警察：右から */
+#abilityRevealOverlay.vs-animate .police-side{
+  animation:
+    vsPoliceIn .45s
+    cubic-bezier(.2,.9,.3,1.15)
+    .22s forwards;
+}
+
+
+/* VS：最後にポン */
+#abilityRevealOverlay.vs-animate .ability-vs-mark{
+  animation:
+    vsMarkPop .34s
+    cubic-bezier(.2,1.35,.4,1)
+    .60s forwards;
+}
+
+
+/* ゲーム開始 */
+#abilityRevealOverlay.vs-animate .ability-vs-start-btn{
+  animation:
+    vsStartButtonIn .3s ease-out
+    .88s forwards;
+}
+
+
+/* ========================================
+   Keyframes
+======================================== */
+
+@keyframes vsHeaderIn{
+  from{
+    opacity:0;
+    transform:translateY(-8px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+
+@keyframes vsCatIn{
+  0%{
+    opacity:0;
+    transform:
+      translateX(-55px)
+      scale(.96);
+  }
+
+  75%{
+    opacity:1;
+    transform:
+      translateX(4px)
+      scale(1.015);
+  }
+
+  100%{
+    opacity:1;
+    transform:
+      translateX(0)
+      scale(1);
+  }
+}
+
+
+@keyframes vsPoliceIn{
+  0%{
+    opacity:0;
+    transform:
+      translateX(55px)
+      scale(.96);
+  }
+
+  75%{
+    opacity:1;
+    transform:
+      translateX(-4px)
+      scale(1.015);
+  }
+
+  100%{
+    opacity:1;
+    transform:
+      translateX(0)
+      scale(1);
+  }
+}
+
+
+@keyframes vsMarkPop{
+  0%{
+    opacity:0;
+    transform:
+      scale(.25)
+      rotate(-12deg);
+  }
+
+  65%{
+    opacity:1;
+    transform:
+      scale(1.15)
+      rotate(3deg);
+  }
+
+  100%{
+    opacity:1;
+    transform:
+      scale(1)
+      rotate(-5deg);
+  }
+}
+
+
+@keyframes vsStartButtonIn{
+  from{
+    opacity:0;
+    transform:translateY(12px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
