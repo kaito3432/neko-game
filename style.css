@@ -5910,3 +5910,100 @@ body.sneak-mode .board-shell{
   object-fit:cover;
   display:block;
 }
+/* =====================================
+   遊び方
+===================================== */
+
+.howto-modal{
+  width:min(92vw, 430px);
+  max-height:88vh;
+  overflow-y:auto;
+  padding:22px 18px 18px;
+}
+
+.howto-page{
+  display:none;
+}
+
+.howto-page.show{
+  display:block;
+}
+
+.howto-page-icon{
+  font-size:38px;
+  text-align:center;
+  margin-bottom:8px;
+}
+
+.howto-page h2{
+  margin:0 0 18px;
+  text-align:center;
+  font-size:26px;
+}
+
+.howto-goal-grid{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.howto-goal-card{
+  border-radius:20px;
+  padding:16px 14px;
+  text-align:center;
+  background:#fff;
+}
+
+.howto-goal-card.cat-goal{
+  border:2px solid #f5a5bd;
+  background:#fff2f6;
+}
+
+.howto-goal-card.police-goal{
+  border:2px solid #9fc9ef;
+  background:#f0f8ff;
+}
+
+.howto-goal-emoji{
+  font-size:34px;
+  margin-bottom:4px;
+}
+
+.howto-goal-card strong{
+  display:block;
+  font-size:20px;
+  margin-bottom:6px;
+}
+
+.howto-goal-card p{
+  margin:0;
+  font-size:15px;
+  line-height:1.6;
+}
+
+.howto-vs{
+  text-align:center;
+  font-weight:900;
+  font-size:18px;
+  color:#7b5a4f;
+}
+
+.howto-tip{
+  margin-top:16px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:#fff6d9;
+  font-size:14px;
+  line-height:1.5;
+  text-align:center;
+}
+
+.howto-nav{
+  display:flex;
+  gap:10px;
+  margin-top:18px;
+}
+
+.howto-nav .btn{
+  flex:1;
+}
