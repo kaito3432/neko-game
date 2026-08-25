@@ -5754,3 +5754,10 @@ body.sneak-mode .board-shell{
     font-size:10px;
   }
 }
+/* 遠吠え「気配あり」ポップ：背景だけ透過 */
+.toast.howl-positive{
+  background:rgba(255,253,249,0.72) !important;
+
+  -webkit-backdrop-filter:blur(2px);
+  backdrop-filter:blur(2px);
+}
