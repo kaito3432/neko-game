@@ -17,6 +17,8 @@ window.NyanAudio = (() => {
   const SFX_VOLUME={
   tap:0.12,
   button:0.12,
+      skill:0.30,   // ← 追加：特殊スキル共通SE
+
   box:0.18,
   sniff:0.20,
   search:0.20,
@@ -39,6 +41,7 @@ window.NyanAudio = (() => {
   const SFX={
     tap:"./assets/audio/se_button_tap.wav",
     button:"./assets/audio/se_button_tap.wav",
+    skill:"./assets/audio/skill_activate.mp3",
     box:"./assets/audio/se_search.wav",
     sniff:"./assets/audio/se_search.wav",
     search:"./assets/audio/se_search.wav",
