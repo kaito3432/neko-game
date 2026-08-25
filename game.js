@@ -1793,16 +1793,37 @@ function toggleFakePaw(){
     game.fakePawTarget!==null &&
     !game.fakePawConfirmed
   ){
-    game.fakePawConfirmed=true;
+game.fakePawConfirmed=true;
 
-    Audio.haptic(15);
+Audio.haptic(15);
+
+// カットイン中は盤面操作を禁止
+game.actionLocked=true;
+
+// =====================================
+// フェイク肉球 発動カットイン
+// =====================================
+showSkillCutin({
+  side:"cat",
+  name:"フェイク肉球",
+  desc:"別の箱に偽の足跡を残す",
+  image:"./assets/images/vs_fakepaw.png",
+  duration:1300,
+
+  onComplete:()=>{
+
+    game.actionLocked=false;
 
     setMessage(
       `🎭🐾 箱${game.fakePawTarget+1}にフェイク肉球を仕掛けます。本当に逃げる別の箱を選んでください。`
     );
 
     render();
-    return;
+  }
+});
+
+render();
+return;
   }
 
   // ---------------------------------
