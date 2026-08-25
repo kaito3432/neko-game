@@ -224,6 +224,15 @@ function showSkillCutin({
   },duration);
 }
 
+   function waitSkillCutin(options){
+  return new Promise(resolve=>{
+    showSkillCutin({
+      ...options,
+      onComplete:resolve
+    });
+  });
+}
+
 const resultOverlay=$("resultOverlay"),
       resultIcon=$("resultIcon");   
    
@@ -944,7 +953,7 @@ function publicTrackHTML(i){
 }
 
 
-  function handleBoxPress(i){
+  async function handleBoxPress(i){
     if(game.gameOver||game.actionLocked)return;
     A.tapPopBox(board,i);
 
@@ -1079,9 +1088,25 @@ if(
   game.fakePawTarget!==null &&
   !game.catAbilities.fakePawUsed;
 
-      // 猫移動中も入力ロック
+// 猫移動中も入力ロック
 game.actionLocked=true;
 Audio.haptic(10);
+
+// =====================================
+// 忍び足 発動カットイン
+// =====================================
+if(useSneak){
+
+  await waitSkillCutin({
+    side:"cat",
+    name:"忍び足",
+    desc:"足跡を残さず移動",
+    image:"./assets/images/vs_sneak.png",
+    duration:1300
+  });
+
+}
+
 Audio.play("cat");
 
 A.animateCatMove(board,from,i,()=>{
