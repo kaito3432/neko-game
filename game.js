@@ -5827,7 +5827,29 @@ bindPress(privacyBtn,()=>{
   }
 
   closePrivacy();
-}); bindPress(againBtn,()=>{
+}); 
+
+   // =====================================
+// 結果画面 → ホームに戻る
+// =====================================
+bindPress(resultHomeBtn,()=>{
+
+  // 結果画面を閉じる
+  resultOverlay.classList.remove("show");
+
+  // オンライン対戦なら通信も終了
+  if(
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice"
+  ){
+    window.NyanOnline?.disconnect();
+    resetOnlineState();
+  }
+
+  // ゲーム状態を初期化してホームへ
+  initGame(true);
+});
+   bindPress(againBtn,()=>{
   Audio.setBgmMode("normal");
   Audio.startBgm();
 
