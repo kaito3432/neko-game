@@ -4962,78 +4962,86 @@ body.sneak-mode .board-shell{
 
   opacity:.65;
 }
-/* ========================================
-   VSカード 縦型レイアウト
-   猫 → VS → 警察
-======================================== */
+/* ==================================================
+   VSカード 完全縦型
+   専用画像を主役にするレイアウト
+================================================== */
 
+#abilityRevealOverlay{
+  padding:
+    max(10px, env(safe-area-inset-top))
+    12px
+    max(10px, env(safe-area-inset-bottom));
+}
+
+
+/* VS画面全体 */
 #abilityRevealOverlay .ability-vs-panel{
-  width:min(92vw,430px);
-  max-height:92dvh;
+  width:min(94vw,430px);
+  max-height:94dvh;
 
-  padding:20px 18px 18px;
+  padding:15px 16px 14px;
 
   overflow-y:auto;
   overflow-x:hidden;
 }
 
 
-/* タイトル周辺 */
-#abilityRevealOverlay .ability-vs-title{
-  margin:5px 0 14px;
+/* 上部英字 */
+#abilityRevealOverlay .ability-vs-kicker{
+  margin:0 0 2px;
 
-  font-size:clamp(21px,6vw,27px);
+  font-size:9px;
+  letter-spacing:.14em;
 }
 
 
-/* ========================================
-   VS本体を縦並びに変更
-======================================== */
+/* タイトル */
+#abilityRevealOverlay .ability-vs-title{
+  margin:2px 0 10px;
+
+  font-size:clamp(20px,5.8vw,25px);
+  line-height:1.15;
+}
+
+
+/* ==================================================
+   猫 → VS → 警察
+================================================== */
 
 #abilityRevealOverlay .ability-vs-stage{
+  width:100%;
+
   display:grid;
 
   grid-template-columns:1fr;
+  grid-template-rows:auto 42px auto;
 
-  grid-template-rows:
-    auto
-    50px
-    auto;
-
-  gap:8px;
-
-  width:100%;
+  gap:5px;
 }
 
 
-/* ========================================
-   猫・警察カード共通
-======================================== */
+/* ==================================================
+   CAT / POLICE カード
+================================================== */
 
 #abilityRevealOverlay .ability-vs-side{
-  width:100%;
+  position:relative;
 
+  width:100%;
   min-height:0;
 
-  display:grid;
-
-  grid-template-columns:
-    82px
-    minmax(0,1fr);
-
-  grid-template-rows:
-    24px
-    auto
-    auto;
-
-  column-gap:14px;
-  row-gap:3px;
+  display:flex;
+  flex-direction:column;
 
   align-items:center;
+  justify-content:flex-start;
 
-  padding:10px 14px 12px;
+  padding:8px 10px 10px;
 
-  border-radius:22px;
+  border-radius:20px;
+
+  overflow:hidden;
 }
 
 
@@ -5041,224 +5049,245 @@ body.sneak-mode .board-shell{
 #abilityRevealOverlay .ability-vs-side-label{
   position:static;
 
-  grid-column:2;
-  grid-row:1;
+  width:100%;
 
-  justify-self:start;
+  margin:0 0 4px;
+
+  text-align:left;
 
   font-size:9px;
+  font-weight:900;
+
+  line-height:1;
 
   letter-spacing:.1em;
+
+  opacity:.55;
 }
 
 
-/* ========================================
+/* ==================================================
    専用画像
-======================================== */
+================================================== */
 
 #abilityRevealOverlay .ability-vs-character{
-  grid-column:1;
-  grid-row:1 / 4;
-
-  width:82px;
-  height:82px;
+  width:100%;
+  height:clamp(125px,19vh,170px);
 
   margin:0;
 
   display:flex;
   align-items:center;
   justify-content:center;
+
+  overflow:hidden;
+
+  border-radius:15px;
 }
 
 
+/* 画像 */
 #abilityRevealOverlay .ability-vs-image{
+  display:block;
+
   width:100%;
   height:100%;
 
-  object-fit:cover;
+  object-fit:contain;
   object-position:center;
 
   border-radius:15px;
 
   filter:
     drop-shadow(
-      0 5px 7px
-      rgba(0,0,0,.18)
+      0 6px 8px
+      rgba(0,0,0,.16)
     );
 }
 
 
-/* ========================================
+/* ==================================================
    スキル名
-======================================== */
+================================================== */
 
 #abilityRevealOverlay .ability-vs-name{
-  grid-column:2;
-  grid-row:2;
-
   width:100%;
 
-  margin:0;
+  margin:6px 0 0;
 
   display:block;
 
-  text-align:left;
+  text-align:center;
 
-  font-size:clamp(19px,5.3vw,23px);
+  font-size:clamp(18px,5vw,22px);
   font-weight:900;
 
-  line-height:1.15;
+  line-height:1.1;
 
   white-space:nowrap;
 }
 
 
-/* ========================================
+/* ==================================================
    スキル説明
-======================================== */
+================================================== */
 
 #abilityRevealOverlay .ability-vs-desc{
-  grid-column:2;
-  grid-row:3;
-
   width:100%;
 
-  margin:0;
-  padding:0;
+  margin:3px 0 0;
+  padding:0 5px;
 
   display:block;
 
-  text-align:left;
+  text-align:center;
 
-  font-size:clamp(10px,2.8vw,12px);
+  font-size:clamp(10px,2.7vw,12px);
   font-weight:800;
 
-  line-height:1.35;
+  line-height:1.25;
 
   opacity:.65;
 }
 
 
-/* ========================================
-   VS中央
-======================================== */
+/* ==================================================
+   VS
+================================================== */
 
 #abilityRevealOverlay .ability-vs-center{
   width:100%;
-  height:50px;
+  height:42px;
 
   display:flex;
   flex-direction:row;
 
-  justify-content:center;
   align-items:center;
+  justify-content:center;
 
-  gap:10px;
+  gap:8px;
 }
 
 
+/* VS左右のライン */
 #abilityRevealOverlay .ability-vs-line{
-  height:2px;
-  min-height:0;
-
   width:auto;
+  height:2px;
+
   flex:1;
+
+  min-height:0;
 
   background:
     linear-gradient(
       90deg,
       transparent,
-      rgba(93,64,55,.22),
+      rgba(93,64,55,.24),
       transparent
     );
 }
 
 
+/* VSマーク */
 #abilityRevealOverlay .ability-vs-mark{
   flex:0 0 auto;
 
-  width:48px;
-  height:48px;
+  width:42px;
+  height:42px;
 
-  font-size:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:16px;
+  font-weight:900;
 }
 
 
-/* ========================================
+/* ==================================================
    ゲーム開始
-======================================== */
+================================================== */
 
 #abilityRevealOverlay .ability-vs-start-btn{
-  margin-top:12px;
+  width:100%;
 
-  height:52px;
+  height:48px;
 
-  font-size:15px;
+  margin-top:9px;
+
+  font-size:14px;
 }
 
 
-/* ========================================
-   小さいiPhone用
-======================================== */
+/* ==================================================
+   高さが小さいスマホ
+================================================== */
 
 @media(max-height:760px){
 
   #abilityRevealOverlay .ability-vs-panel{
-    padding:
-      14px
-      15px
-      14px;
+    padding:10px 13px;
+  }
+
+  #abilityRevealOverlay .ability-vs-kicker{
+    font-size:8px;
   }
 
   #abilityRevealOverlay .ability-vs-title{
-    margin-bottom:9px;
-    font-size:21px;
+    margin-bottom:6px;
+
+    font-size:19px;
   }
 
   #abilityRevealOverlay .ability-vs-stage{
     grid-template-rows:
       auto
-      42px
+      34px
       auto;
 
-    gap:5px;
+    gap:3px;
   }
 
   #abilityRevealOverlay .ability-vs-side{
-    grid-template-columns:
-      72px
-      minmax(0,1fr);
+    padding:6px 8px 7px;
+  }
 
-    padding:
-      8px
-      12px
-      9px;
+  #abilityRevealOverlay .ability-vs-side-label{
+    margin-bottom:3px;
 
-    column-gap:12px;
+    font-size:8px;
   }
 
   #abilityRevealOverlay .ability-vs-character{
-    width:72px;
-    height:72px;
-  }
-
-  #abilityRevealOverlay .ability-vs-center{
-    height:42px;
-  }
-
-  #abilityRevealOverlay .ability-vs-mark{
-    width:40px;
-    height:40px;
-
-    font-size:16px;
+    height:clamp(100px,16vh,125px);
   }
 
   #abilityRevealOverlay .ability-vs-name{
-    font-size:18px;
+    margin-top:4px;
+
+    font-size:17px;
+  }
+
+  #abilityRevealOverlay .ability-vs-desc{
+    margin-top:2px;
+
+    font-size:9px;
+  }
+
+  #abilityRevealOverlay .ability-vs-center{
+    height:34px;
+  }
+
+  #abilityRevealOverlay .ability-vs-mark{
+    width:34px;
+    height:34px;
+
+    font-size:14px;
   }
 
   #abilityRevealOverlay .ability-vs-start-btn{
-    height:46px;
-    margin-top:9px;
+    height:42px;
+
+    margin-top:6px;
   }
 }
