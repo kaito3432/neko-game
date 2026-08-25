@@ -237,8 +237,11 @@ const resultOverlay=$("resultOverlay"),
       resultIcon=$("resultIcon");   
    
 
-  const resultTitle=$("resultTitle"),resultText=$("resultText"),againBtn=$("againBtn");
-  const resultRoute=$("resultRoute"),resultRouteBoard=$("resultRouteBoard"),resultRouteNote=$("resultRouteNote");
+const resultTitle=$("resultTitle"),
+      resultText=$("resultText"),
+      againBtn=$("againBtn"),
+      resultHomeBtn=$("resultHomeBtn");
+   const resultRoute=$("resultRoute"),resultRouteBoard=$("resultRouteBoard"),resultRouteNote=$("resultRouteNote");
   const settingsOverlay=$("settingsOverlay"),sfxToggleBtn=$("sfxToggleBtn"),bgmToggleBtn=$("bgmToggleBtn");
   const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState"),bgmState=$("bgmState");
   const vibrationState=$("vibrationState"),settingsCloseBtn=$("settingsCloseBtn");
