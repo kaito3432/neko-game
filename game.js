@@ -1109,17 +1109,6 @@ if(useSneak){
     duration:1300
   });
 
-}else if(useFakePaw){
-
-  await waitSkillCutin({
-    side:"cat",
-    name:"フェイク肉球",
-    desc:"別の箱に偽の足跡を残す",
-    image:"./assets/images/vs_fakepaw.png",
-    duration:1300
-  });
-
-}
 
 Audio.play("cat");
 
