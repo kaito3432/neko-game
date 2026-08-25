@@ -2289,11 +2289,13 @@ showSkillCutin({
         "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
       );
 
-      showToast(
-        "👀",
-        "気配あり！",
-        "この範囲のどこかにネコがいるワン！"
-      );
+showToast(
+  "👀",
+  "気配あり！",
+  "この範囲にネコがいる！",
+  2200,
+  "howl-positive"
+);
 
     }else{
 
@@ -2301,11 +2303,13 @@ showSkillCutin({
         "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
       );
 
-      showToast(
-        "💨",
-        "気配なし",
-        "この範囲にはネコはいないみたいだワン。"
-      );
+showToast(
+  "💨",
+  "気配なし",
+  "この範囲にネコはいない",
+  1800,
+  "howl-negative"
+);
     }
 
     afterDogAction();
@@ -2996,14 +3000,30 @@ function closePrivacy(){
   }
 }
 
-  function showToast(icon,title,text){
-    clearTimeout(toastTimer);
-    toastIcon.textContent=icon;
-    toastTitle.textContent=title;
-    toastText.textContent=text;
-    toast.classList.add("show");
-    toastTimer=setTimeout(hideToast,900);
+function showToast(icon,title,text,duration=900,extraClass=""){
+  clearTimeout(toastTimer);
+
+  toastIcon.textContent=icon;
+  toastTitle.textContent=title;
+  toastText.textContent=text;
+
+  // 前回の特殊表示を解除
+  toast.classList.remove(
+    "howl-positive",
+    "howl-negative"
+  );
+
+  if(extraClass){
+    toast.classList.add(extraClass);
   }
+
+  toast.classList.add("show");
+
+  toastTimer=setTimeout(
+    hideToast,
+    duration
+  );
+}
 
   function hideToast(){toast.classList.remove("show");}
 
