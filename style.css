@@ -4853,3 +4853,112 @@ body.sneak-mode .board-shell{
       rgba(0,0,0,.16)
     );
 }
+/* ========================================
+   VSカード 画像位置・文字位置を統一
+======================================== */
+
+.ability-vs-side{
+  display:grid;
+
+  grid-template-rows:
+    30px      /* CAT SIDE / POLICE SIDE */
+    130px     /* 専用画像 */
+    52px      /* スキル名 */
+    42px;     /* 説明 */
+
+  align-items:center;
+  justify-items:center;
+
+  min-height:270px;
+
+  padding:
+    10px
+    10px
+    14px;
+}
+
+
+/* SIDE表示 */
+.ability-vs-side-label{
+  position:static;
+
+  align-self:center;
+
+  font-size:9px;
+  font-weight:900;
+
+  letter-spacing:.08em;
+
+  opacity:.55;
+}
+
+
+/* 専用画像エリア */
+.ability-vs-character{
+  width:100%;
+  height:130px;
+
+  margin:0;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+
+/* 画像そのもの */
+.ability-vs-image{
+  width:100%;
+  height:100%;
+
+  display:block;
+
+  object-fit:contain;
+  object-position:center center;
+
+  filter:
+    drop-shadow(
+      0 6px 8px
+      rgba(0,0,0,.16)
+    );
+}
+
+
+/* スキル名 */
+.ability-vs-name{
+  width:100%;
+
+  margin:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:17px;
+  font-weight:900;
+  line-height:1.2;
+
+  white-space:nowrap;
+}
+
+
+/* 説明 */
+.ability-vs-desc{
+  width:100%;
+
+  margin:0;
+
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+
+  padding:0 4px;
+
+  font-size:10px;
+  font-weight:800;
+  line-height:1.35;
+
+  text-align:center;
+
+  opacity:.65;
+}
