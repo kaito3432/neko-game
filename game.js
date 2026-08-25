@@ -408,6 +408,7 @@ function startLocalMode(){
 
   // まず警察側の特殊スキル選択へ
   policeAbilityOverlay.classList.add("show");
+   Audio.play("skillSelect");
 
   Audio.setBgmMode("normal");
 
@@ -541,6 +542,7 @@ updateAbilityRevealCard();
 abilityRevealOverlay.classList.remove("vs-animate");
 
 abilityRevealOverlay.classList.add("show");
+      Audio.play("skillVs");
 
 /* Safariでも再アニメーションさせる */
 void abilityRevealOverlay.offsetWidth;
@@ -3002,6 +3004,7 @@ function closePrivacy(){
   if(privacyBtn.dataset.nextAction==="openCatAbility"){
     privacyBtn.dataset.nextAction="";
     catAbilityOverlay.classList.add("show");
+Audio.play("skillSelect");
   }
 }
 
