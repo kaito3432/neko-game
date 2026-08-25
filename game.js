@@ -5963,12 +5963,19 @@ bindPress(howToBtn,()=>{
 bindPress(howToNextBtn,()=>{
   Audio.play("button");
 
+bindPress(howToNextBtn,()=>{
+  Audio.play("button");
+
   if(howToPage===0){
     showHowToPage(1);
-
-    // 2ページ目では一旦「次へ」を非表示
-    howToNextBtn.style.display="none";
+    return;
   }
+
+  if(howToPage===1){
+    showHowToPage(2);
+    return;
+  }
+});
 });
 
 
