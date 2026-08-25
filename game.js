@@ -3000,13 +3000,36 @@ function closePrivacy(){
   }
 }
 
-function showToast(icon,title,text){
+function showToast(
+  icon,
+  title,
+  text,
+  duration = 900,
+  extraClass = ""
+){
   clearTimeout(toastTimer);
-  toastIcon.textContent=icon;
-  toastTitle.textContent=title;
-  toastText.textContent=text;
+
+  toastIcon.textContent = icon;
+  toastTitle.textContent = title;
+  toastText.textContent = text;
+
+  // 前回の遠吠え用クラスを消す
+  toast.classList.remove(
+    "howl-positive",
+    "howl-negative"
+  );
+
+  // 今回の特殊クラスを追加
+  if(extraClass){
+    toast.classList.add(extraClass);
+  }
+
   toast.classList.add("show");
-  toastTimer=setTimeout(hideToast,900);
+
+  toastTimer = setTimeout(
+    hideToast,
+    duration
+  );
 }
 
   function hideToast(){toast.classList.remove("show");}
