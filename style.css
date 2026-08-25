@@ -5291,3 +5291,56 @@ body.sneak-mode .board-shell{
     margin-top:6px;
   }
 }
+/* ========================================
+   特殊スキル選択 専用アイコン
+======================================== */
+
+.ability-card-icon{
+  width:54px;
+  height:54px;
+
+  flex:0 0 54px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  overflow:hidden;
+
+  border-radius:14px;
+
+  background:rgba(255,255,255,.72);
+
+  box-shadow:
+    0 3px 8px rgba(93,64,55,.13);
+}
+
+.ability-card-icon img{
+  display:block;
+
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+  object-position:center;
+
+  border-radius:14px;
+}
+
+
+/* 小さいスマホ */
+@media(max-width:380px){
+
+  .ability-card-icon{
+    width:48px;
+    height:48px;
+
+    flex-basis:48px;
+
+    border-radius:12px;
+  }
+
+  .ability-card-icon img{
+    border-radius:12px;
+  }
+}
