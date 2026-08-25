@@ -18,7 +18,6 @@ window.NyanAudio = (() => {
   tap:0.12,
   button:0.12,
       skill:0.30,   // ← 追加：特殊スキル共通SE
-    skillSelect:0.22,
 skillVs:0.28,
 skill:0.30,
 
@@ -44,7 +43,6 @@ skill:0.30,
   const SFX={
     tap:"./assets/audio/se_button_tap.wav",
     button:"./assets/audio/se_button_tap.wav",
-    skillSelect:"./assets/audio/se_skill_select.mp3",
 skillVs:"./assets/audio/se_skill_vs.mp3",
 skill:"./assets/audio/skill_activate.mp3",
     skill:"./assets/audio/skill_activate.mp3",
