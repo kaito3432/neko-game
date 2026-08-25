@@ -7,7 +7,7 @@
   const A=NyanAnimation;
   const Audio=NyanAudio;
    // 盤面で頻繁に使う画像を先に読み込んでおく
-[@
+[
   "./assets/images/paw.png",
   "./assets/images/start.png",
   "./assets/images/box.png",
