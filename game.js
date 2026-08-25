@@ -1095,6 +1095,10 @@ Audio.haptic(10);
 // =====================================
 // 忍び足 発動カットイン
 // =====================================
+// =====================================
+// 猫特殊スキル 発動カットイン
+// =====================================
+
 if(useSneak){
 
   await waitSkillCutin({
@@ -1102,6 +1106,16 @@ if(useSneak){
     name:"忍び足",
     desc:"足跡を残さず移動",
     image:"./assets/images/vs_sneak.png",
+    duration:1300
+  });
+
+}else if(useFakePaw){
+
+  await waitSkillCutin({
+    side:"cat",
+    name:"フェイク肉球",
+    desc:"別の箱に偽の足跡を残す",
+    image:"./assets/images/vs_fakepaw.png",
     duration:1300
   });
 
