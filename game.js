@@ -2324,10 +2324,26 @@ function toggleDash(){
       return;
     }
 
-    game.dashConfirmed=true;
+game.dashConfirmed=true;
+
+// カットイン中の二重操作を防止
+game.actionLocked=true;
+
+Audio.haptic([15,25,15]);
+
+// =====================================
+// ダッシュ 発動カットイン
+// =====================================
+showSkillCutin({
+  side:"police",
+  name:"ダッシュ",
+  desc:"一気に2マス移動",
+  image:"./assets/images/vs_dash.png",
+  duration:1400,
+
+  onComplete:()=>{
 
     Audio.play("move");
-    Audio.haptic([15,25,15]);
 
     // くろ柴を2マス先へ移動
     game.dogs[1]=target;
@@ -2344,13 +2360,20 @@ function toggleDash(){
     game.dashConfirmed=false;
     game.selectedDog=null;
 
+    // 入力ロック解除
+    game.actionLocked=false;
+
     setMessage(
       "⚡ くろ柴ダッシュ！2マス移動しました。"
     );
 
     afterDogAction();
     render();
-    return;
+  }
+});
+
+render();
+return;
   }
 
 
