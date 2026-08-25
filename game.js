@@ -40,6 +40,12 @@
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
+
+   // 対人戦：ルール選択
+const localRuleOverlay=$("localRuleOverlay");
+const localNormalRuleBtn=$("localNormalRuleBtn");
+const localAbilityRuleBtn=$("localAbilityRuleBtn");
+const localRuleBackBtn=$("localRuleBackBtn");
    const policeAbilityOverlay=$("policeAbilityOverlay");
 const catAbilityOverlay=$("catAbilityOverlay");
 const abilityRevealOverlay=$("abilityRevealOverlay");
@@ -431,6 +437,76 @@ function bindPress(el, fn){
   }
 
   render();
+}
+
+   // =====================================
+// 対人戦：ルール選択
+// =====================================
+function openLocalRulePicker(){
+
+  Audio.play("button");
+
+  modeOverlay.classList.remove("show");
+  localRuleOverlay.classList.add("show");
+}
+
+
+// 通常戦
+function startLocalNormalMode(){
+
+  Audio.play("gamestart");
+
+  localRuleOverlay.classList.remove("show");
+
+  playMode="local";
+
+  initGame(false);
+
+  // 特殊スキルを完全OFF
+  game.abilitiesEnabled=false;
+
+  game.selectedAbilities={
+    cat:null,
+    police:null
+  };
+
+  pendingPoliceAbility=null;
+  pendingCatAbility=null;
+
+  game.phase="dogSetup";
+  game.turn=0;
+
+  showPrivacy(
+    "🐕",
+    "0ターン目・警察配置",
+    "まず柴犬警察3匹を中央16交差点に配置してください。配置後にネコがスタート地点を選びます。"
+  );
+
+  setMessage(
+    "🐕 柴犬警察3匹を配置してください。"
+  );
+
+  render();
+}
+
+
+// 特殊スキルあり
+function startLocalAbilityMode(){
+
+  localRuleOverlay.classList.remove("show");
+
+  // 今まで完成させた対人戦をそのまま開始
+  startLocalMode();
+}
+
+
+// 戻る
+function closeLocalRulePicker(){
+
+  Audio.play("button");
+
+  localRuleOverlay.classList.remove("show");
+  modeOverlay.classList.add("show");
 }
 function startLocalMode(){
   playMode="local";
@@ -5836,8 +5912,13 @@ if(isNewTrack){
   }
 });
    
-  bindPress(localModeBtn,startLocalMode);
-  bindPress(cpuModeBtn,startCpuPoliceMode);
+bindPress(localModeBtn,openLocalRulePicker);
+
+bindPress(localNormalRuleBtn,startLocalNormalMode);
+bindPress(localAbilityRuleBtn,startLocalAbilityMode);
+bindPress(localRuleBackBtn,closeLocalRulePicker);
+   
+   bindPress(cpuModeBtn,startCpuPoliceMode);
   bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
   bindPress(playPoliceSideBtn,()=>chooseCpuSide("police"));
   bindPress(cpuSideBackBtn,closeCpuSidePicker);
