@@ -147,13 +147,7 @@ let skillCutinTimer=null;
 const resultOverlay=$("resultOverlay"),
       resultIcon=$("resultIcon");   
    
-const skillCutin = $("skillCutin");
-const skillCutinKicker = $("skillCutinKicker");
-const skillCutinImage = $("skillCutinImage");
-const skillCutinName = $("skillCutinName");
-const skillCutinDesc = $("skillCutinDesc");
 
-let skillCutinTimer = null;
   const resultOverlay=$("resultOverlay"),resultIcon=$("resultIcon");
   const resultTitle=$("resultTitle"),resultText=$("resultText"),againBtn=$("againBtn");
   const resultRoute=$("resultRoute"),resultRouteBoard=$("resultRouteBoard"),resultRouteNote=$("resultRouteNote");
