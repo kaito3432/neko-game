@@ -408,7 +408,6 @@ function startLocalMode(){
 
   // まず警察側の特殊スキル選択へ
   policeAbilityOverlay.classList.add("show");
-   Audio.play("skillSelect");
 
   Audio.setBgmMode("normal");
 
