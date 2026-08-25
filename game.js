@@ -3013,13 +3013,13 @@ function showToast(
   toastTitle.textContent = title;
   toastText.textContent = text;
 
-  // 前回の遠吠え用クラスを消す
+  // 前回の遠吠え結果用クラスを解除
   toast.classList.remove(
     "howl-positive",
     "howl-negative"
   );
 
-  // 今回の特殊クラスを追加
+  // 今回だけ特殊クラスを付ける
   if(extraClass){
     toast.classList.add(extraClass);
   }
