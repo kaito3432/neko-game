@@ -1067,16 +1067,9 @@ if(
       // 猫移動中も入力ロック
 game.actionLocked=true;
 Audio.haptic(10);
+Audio.play("cat");
 
-
-// =====================================
-// 実際の猫移動を開始
-// =====================================
-const startCatMove = ()=>{
-
-  Audio.play("cat");
-
-  A.animateCatMove(board,from,i,()=>{
+A.animateCatMove(board,from,i,()=>{
 
     // 忍び足を使った場合、
   // 移動前にいた箱には痕跡を残さない
