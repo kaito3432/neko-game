@@ -128,7 +128,24 @@ const fakePawBannerText=$("fakePawBannerText");
    const finishDogTurnBtn=$("finishDogTurnBtn");
   const privacyOverlay=$("privacyOverlay"),privacyIcon=$("privacyIcon");
   const privacyTitle=$("privacyTitle"),privacyText=$("privacyText"),privacyBtn=$("privacyBtn");
-  const victoryCutin=$("victoryCutin"),victoryCutinImage=$("victoryCutinImage");
+const victoryCutin=$("victoryCutin"),
+      victoryCutinImage=$("victoryCutinImage");
+
+
+// =====================================
+// 特殊スキル 発動カットイン
+// =====================================
+const skillCutin=$("skillCutin");
+const skillCutinKicker=$("skillCutinKicker");
+const skillCutinImage=$("skillCutinImage");
+const skillCutinName=$("skillCutinName");
+const skillCutinDesc=$("skillCutinDesc");
+
+let skillCutinTimer=null;
+
+
+const resultOverlay=$("resultOverlay"),
+      resultIcon=$("resultIcon");   
    
 const skillCutin = $("skillCutin");
 const skillCutinKicker = $("skillCutinKicker");
