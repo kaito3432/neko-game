@@ -154,6 +154,11 @@ function showSkillCutin({
   onComplete = null
 }){
 
+     // 警察スキルだけ共通SE
+  if(side === "police"){
+    Audio.play("skill");
+  }
+
   // HTML側にカットインが無い場合でもゲームは止めない
   if(
     !skillCutin ||
