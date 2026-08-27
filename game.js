@@ -76,6 +76,19 @@ const abilityStartBtn=$("abilityStartBtn");
 const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnlineRoomBtn");
 const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"); 
 
+   // =====================================
+// オンライン：ルール選択
+// =====================================
+const onlineRuleOverlay=$("onlineRuleOverlay");
+
+const onlineNormalRuleBtn=$("onlineNormalRuleBtn");
+const onlineAbilityRuleBtn=$("onlineAbilityRuleBtn");
+
+const onlineRuleBackBtn=$("onlineRuleBackBtn");
+
+let onlineRule=null;
+// null | "normal" | "ability"
+
    const howToOverlay = $("howToOverlay");
 const howToCloseBtn = $("howToCloseBtn");
    let onlineAssignedRole=null;
@@ -384,6 +397,9 @@ function returnHomeFromOverlay(){
   // 対人戦ルール選択
   localRuleOverlay?.classList.remove("show");
 
+   // オンラインルール選択
+onlineRuleOverlay?.classList.remove("show");
+
   // 特殊スキル選択
   policeAbilityOverlay?.classList.remove("show");
   catAbilityOverlay?.classList.remove("show");
@@ -398,6 +414,8 @@ function returnHomeFromOverlay(){
   // 途中選択も破棄
   pendingPoliceAbility=null;
   pendingCatAbility=null;
+
+   onlineRule=null;
 
   // ホーム状態へ初期化
   initGame(true);
@@ -447,6 +465,80 @@ function returnHomeFromOverlay(){
     }
     render();
   }
+
+// =====================================
+// オンライン：ルール選択
+// =====================================
+
+function openOnlineRulePicker(){
+
+  if(!onlineAssignedRole){
+    onlineStatus.textContent=
+      "相手との接続と役割決定を待っています。";
+    return;
+  }
+
+  onlineOverlay.classList.remove("show");
+  onlineRuleOverlay.classList.add("show");
+}
+
+
+function closeOnlineRulePicker(){
+
+  onlineRuleOverlay.classList.remove("show");
+  onlineOverlay.classList.add("show");
+}
+
+
+// =====================================
+// オンライン：通常戦
+// =====================================
+function startOnlineNormalRule(){
+
+  onlineRule="normal";
+
+  onlineRuleOverlay.classList.remove("show");
+
+  // 元のオンライン画面を戻して
+  // 「相手を待っています」を表示
+  onlineOverlay.classList.add("show");
+
+  if(onlineGameStarted) return;
+
+  onlineSelfReady=true;
+
+  onlineStartGameBtn.disabled=true;
+  onlineStartGameBtn.textContent=
+    "相手を待っています…";
+
+  window.NyanOnline.sendGame({
+    type:"ready"
+  });
+
+  tryStartOnlineGame();
+}
+
+
+// =====================================
+// オンライン：特殊スキルあり
+// Phase2で通信同期を追加
+// =====================================
+function startOnlineAbilityRule(){
+
+  onlineRule="ability";
+
+  onlineStatus.innerHTML=
+    `✨ <strong>特殊スキルあり</strong><br>`+
+    `<span style="font-size:14px">`+
+    `次に自分の特殊スキルを選択します`+
+    `</span>`;
+
+  // Phase2でここから
+  // ネコ → ネコスキル選択
+  // 警察 → 警察スキル選択
+  // に分岐させる
+}
+   
    function startOnlineGame(){
   if(!onlineAssignedRole)return;
 
@@ -4814,19 +4906,25 @@ bindPress(
 
    bindPress(abilityStartBtn,startLocalAfterAbilitySelect);
 
-   bindPress(onlineStartGameBtn,()=>{
-  if(onlineGameStarted)return;
+bindPress(
+  onlineStartGameBtn,
+  openOnlineRulePicker
+);
 
-  onlineSelfReady=true;
-  onlineStartGameBtn.disabled=true;
-  onlineStartGameBtn.textContent="相手を待っています…";
+   bindPress(
+  onlineNormalRuleBtn,
+  startOnlineNormalRule
+);
 
-  window.NyanOnline.sendGame({
-    type:"ready"
-  });
+bindPress(
+  onlineAbilityRuleBtn,
+  startOnlineAbilityRule
+);
 
-  tryStartOnlineGame();
-});
+bindPress(
+  onlineRuleBackBtn,
+  closeOnlineRulePicker
+);
 
    bindPress(createOnlineRoomBtn,async()=>{
   if(!window.NyanOnline){
