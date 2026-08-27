@@ -2866,7 +2866,7 @@ function toggleHowl(){
     const catInside=
       howlBoxes.includes(game.catPos);
 
-     if(playMode==="onlinePolice"){
+if(playMode==="onlinePolice"){
 
   // オンラインではネコ位置を警察端末で判定しない
   game.policeAbilities.howlUsed=true;
@@ -2875,35 +2875,73 @@ function toggleHowl(){
   game.selectedDog=null;
   game.actionLocked=true;
 
-Audio.haptic([20,30,20]);
+  // 今回の遠吠え状態を初期化
+  onlineHowlCutinDone=false;
+  onlinePendingHowlResult=null;
 
-// ネコ側へ遠吠え発動を通知
-window.NyanOnline.sendGame({
-  type:"policeSkillUsed",
-  skill:"howl"
-});
+  Audio.haptic([20,30,20]);
 
-// 警察側でカットイン表示
-showSkillCutin({
-  side:"police",
-  name:"遠吠え",
-  desc:"周囲のネコの気配を探知",
-  image:"./assets/images/vs_howl.png",
-  duration:1400,
+  // ネコ側へ遠吠え発動を通知
+  const skillSent=
+    window.NyanOnline.sendGame({
+      type:"policeSkillUsed",
+      skill:"howl"
+    });
 
-  // カットイン終了後に判定要求を送る
-  onComplete:()=>{
-
-    const sent = window.NyanOnline.sendGame({
+  // Workerへ判定要求をすぐ送る
+  const howlSent=
+    window.NyanOnline.sendGame({
       type:"howl",
       dogIndex:0,
       node:game.dogs[0]
     });
 
+  console.log("📣 HOWL SEND", {
+    skillSent,
+    howlSent,
+    node:game.dogs[0]
+  });
+
+  if(!howlSent){
+
+    game.actionLocked=false;
+    game.policeAbilities.howlUsed=false;
+    game.dogAction[0]=false;
+    game.policeAbilityPending=null;
+
+    onlineHowlCutinDone=false;
+    onlinePendingHowlResult=null;
+
+    setMessage(
+      "⚠️ 遠吠えの送信に失敗しました。もう一度試してください。"
+    );
+
+    render();
+    return;
   }
-});
 
+  // 警察側カットイン
+  showSkillCutin({
+    side:"police",
+    name:"遠吠え",
+    desc:"周囲のネコの気配を探知",
+    image:"./assets/images/vs_howl.png",
+    duration:1400,
 
+    onComplete:()=>{
+
+      onlineHowlCutinDone=true;
+
+      // 結果がすでに届いていればここで表示
+      if(onlinePendingHowlResult!==null){
+
+        const result=
+          onlinePendingHowlResult;
+
+        finishOnlineHowlResult(result);
+      }
+    }
+  });
 
   setMessage(
     "📣 あか柴が遠吠え中…ネコの気配を確認しています。"
