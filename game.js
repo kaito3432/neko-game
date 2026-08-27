@@ -89,6 +89,12 @@ const onlineRuleBackBtn=$("onlineRuleBackBtn");
 let onlineRule=null;
 // null | "normal" | "ability"
 
+   // =====================================
+// オンライン：特殊スキル選択状態
+// =====================================
+let onlineSelfAbility=null;
+let onlinePeerAbilityReady=false;
+
    const howToOverlay = $("howToOverlay");
 const howToCloseBtn = $("howToCloseBtn");
    let onlineAssignedRole=null;
@@ -542,36 +548,78 @@ function startOnlineNormalRule(){
 
 
 // =====================================
-// オンライン：特殊スキルあり
-// Phase2で通信同期を追加
+// オンライン：自分のスキル選択へ
 // =====================================
+function beginOnlineAbilitySelection(){
+
+  if(onlineRule!=="ability") return;
+  if(!onlineAssignedRole) return;
+
+  onlineOverlay.classList.remove("show");
+  onlineRuleOverlay?.classList.remove("show");
+
+  onlineSelfAbility=null;
+  onlinePeerAbilityReady=false;
+
+  pendingPoliceAbility=null;
+  pendingCatAbility=null;
+
+
+  // =============================
+  // 警察プレイヤー
+  // =============================
+  if(onlineAssignedRole==="police"){
+
+    [
+      selectHowlBtn,
+      selectDashBtn,
+      selectDoubleSearchBtn
+    ].forEach(btn=>{
+      btn?.classList.remove("selected");
+    });
+
+    confirmPoliceAbilityBtn.disabled=true;
+
+    policeAbilityOverlay.classList.add("show");
+
+    return;
+  }
+
+
+  // =============================
+  // ネコプレイヤー
+  // =============================
+  if(onlineAssignedRole==="cat"){
+
+    [
+      selectSneakBtn,
+      selectFakePawBtn
+    ].forEach(btn=>{
+      btn?.classList.remove("selected");
+    });
+
+    confirmCatAbilityBtn.disabled=true;
+
+    catAbilityOverlay.classList.add("show");
+  }
+}
+   
 function startOnlineAbilityRule(){
 
-  // ホスト以外は選択不可
   if(!onlineIsHost) return;
 
   onlineRule="ability";
 
-
-  // ゲストへルールを通知
+  // ゲストへルール通知
   window.NyanOnline.sendGame({
     type:"ruleSelect",
     rule:"ability"
   });
 
-
   onlineRuleOverlay.classList.remove("show");
-  onlineOverlay.classList.add("show");
 
-
-  onlineStatus.innerHTML=
-    `✨ <strong>特殊スキルあり</strong><br>`+
-    `<span style="font-size:14px">`+
-    `特殊スキル選択へ進みます`+
-    `</span>`;
-
-  // 次のPhaseでここから
-  // beginOnlineAbilitySelection();
+  // ホスト自身も自分のスキル選択へ
+  beginOnlineAbilitySelection();
 }
    
    function startOnlineGame(){
@@ -5083,19 +5131,18 @@ if(data.payload?.type==="ruleSelect"){
   // =============================
   // 特殊スキルあり
   // =============================
-  if(rule==="ability"){
+if(rule==="ability"){
 
-    onlineStatus.innerHTML=
-      `✨ <strong>特殊スキルあり</strong><br>`+
-      `<span style="font-size:14px">`+
-      `ホストが特殊スキルありを選択しました`+
-      `</span>`;
+  onlineStatus.innerHTML=
+    `✨ <strong>特殊スキルあり</strong><br>`+
+    `<span style="font-size:14px">`+
+    `ホストが特殊スキルありを選択しました`+
+    `</span>`;
 
-    // 次のPhaseで
-    // beginOnlineAbilitySelection();
+  beginOnlineAbilitySelection();
 
-    return;
-  }
+  return;
+}
 }        
          
 
@@ -5715,19 +5762,18 @@ if(data.payload?.type==="ruleSelect"){
   // =============================
   // 特殊スキルあり
   // =============================
-  if(rule==="ability"){
+if(rule==="ability"){
 
-    onlineStatus.innerHTML=
-      `✨ <strong>特殊スキルあり</strong><br>`+
-      `<span style="font-size:14px">`+
-      `ホストが特殊スキルありを選択しました`+
-      `</span>`;
+  onlineStatus.innerHTML=
+    `✨ <strong>特殊スキルあり</strong><br>`+
+    `<span style="font-size:14px">`+
+    `ホストが特殊スキルありを選択しました`+
+    `</span>`;
 
-    // 次のPhaseで
-    // beginOnlineAbilitySelection();
+  beginOnlineAbilitySelection();
 
-    return;
-  }
+  return;
+}
 }
         
        if(
