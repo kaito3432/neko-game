@@ -2947,8 +2947,11 @@ return;
 
 function toggleDash(){
   if(!game.abilitiesEnabled) return;
-  if(playMode!=="local") return;
-  if(game.phase!=="dogs") return;
+if(
+  playMode!=="local" &&
+  playMode!=="onlinePolice"
+) return;
+   if(game.phase!=="dogs") return;
   if(game.gameOver) return;
   if(game.actionLocked) return;
 
@@ -3016,11 +3019,21 @@ showSkillCutin({
     // くろ柴を2マス先へ移動
     game.dogs[1]=target;
 
+     if(playMode==="onlinePolice"){
+  window.NyanOnline.sendGame({
+    type:"dogMove",
+    dogIndex:1,
+    node:target
+  });
+}
+
     // 能力を消費
     game.policeAbilities.dashUsed=true;
 
     // くろ柴はこのターン行動終了
     game.dogAction[1]="move";
+
+     
 
     // 状態を解除
     game.policeAbilityPending=null;
@@ -3484,7 +3497,10 @@ howlBtn.textContent=
      
 const canUseDash=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlinePolice"
+  ) &&
   game.phase==="dogs" &&
   game.selectedAbilities.police==="dash" &&
   game.selectedDog===1 &&
@@ -3498,7 +3514,10 @@ const canUseDash=
      
 const showDashBtn=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlinePolice"
+  ) &&
   game.phase==="dogs" &&
   game.selectedAbilities.police==="dash";
 
