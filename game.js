@@ -2860,8 +2860,6 @@ console.log("📣 HOWL SEND", {
     game.dogAction[0]=false;
     game.policeAbilityPending=null;
 
-    onlineHowlCutinDone=false;
-    onlinePendingHowlResult=null;
 
     setMessage(
       "⚠️ 遠吠えの送信に失敗しました。もう一度試してください。"
@@ -2870,23 +2868,12 @@ console.log("📣 HOWL SEND", {
     render();
     return;
   }
-
-showSkillCutin({
+   showSkillCutin({
   side:"police",
   name:"遠吠え",
   desc:"周囲のネコの気配を探知",
   image:"./assets/images/vs_howl.png",
-  duration:1400,
-
-  onComplete:()=>{
-
-    onlineHowlCutinDone=true;
-
-    if(onlinePendingHowlResult!==null){
-      const result=onlinePendingHowlResult;
-      finishOnlineHowlResult(result);
-    }
-  }
+  duration:1400
 });
 
   setMessage(
