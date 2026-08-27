@@ -2831,9 +2831,19 @@ function toggleHowl(){
   game.selectedDog=null;
   game.actionLocked=true;
 
-  Audio.haptic([20,30,20]);
+Audio.haptic([20,30,20]);
 
-        window.NyanOnline.sendGame({
+// 警察側にも遠吠えカットイン
+showSkillCutin({
+  side:"police",
+  name:"遠吠え",
+  desc:"周囲のネコの気配を探知",
+  image:"./assets/images/vs_howl.png",
+  duration:1400
+});
+
+// ネコ側にも遠吠え発動を通知
+window.NyanOnline.sendGame({
   type:"policeSkillUsed",
   skill:"howl"
 });
@@ -6778,57 +6788,46 @@ if(result==="track"){
   render();
 }
 
-        if(
+if(
   data.payload?.type==="howlResult" &&
   onlineAssignedRole==="police"
 ){
   const catInside =
     data.payload.inside === true;
 
-  showSkillCutin({
-    side:"police",
-    name:"遠吠え",
-    desc:"周囲のネコの気配を探知",
-    image:"./assets/images/vs_howl.png",
-    duration:1400,
+  if(catInside){
 
-    onComplete:()=>{
+    setMessage(
+      "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
+    );
 
-      if(catInside){
+    showToast(
+      "👀",
+      "気配あり！",
+      "この範囲にネコがいる！",
+      2200,
+      "howl-positive"
+    );
 
-        setMessage(
-          "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
-        );
+  }else{
 
-        showToast(
-          "👀",
-          "気配あり！",
-          "この範囲にネコがいる！",
-          2200,
-          "howl-positive"
-        );
+    setMessage(
+      "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
+    );
 
-      }else{
+    showToast(
+      "💨",
+      "気配なし",
+      "この範囲にネコはいない",
+      1800,
+      "howl-negative"
+    );
+  }
 
-        setMessage(
-          "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
-        );
+  game.actionLocked=false;
 
-        showToast(
-          "💨",
-          "気配なし",
-          "この範囲にネコはいない",
-          1800,
-          "howl-negative"
-        );
-      }
-
-      game.actionLocked=false;
-
-      afterDogAction();
-      render();
-    }
-  });
+  afterDogAction();
+  render();
 
   return;
 }
