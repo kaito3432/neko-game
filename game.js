@@ -523,7 +523,6 @@ function startLocalAbilityMode(){
 // 戻る
 function closeLocalRulePicker(){
 
-  Audio.play("button");
 
   localRuleOverlay.classList.remove("show");
   modeOverlay.classList.add("show");
