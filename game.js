@@ -123,6 +123,9 @@ onlinePeerDisconnected=false;
 onlineSelfAbility=null;
 onlinePeerAbilityReady=false;
 
+      onlinePeerAbility=null;
+onlineAbilityRevealSent=false;
+
 
   if(onlineStartGameBtn){
     onlineStartGameBtn.hidden=true;
@@ -554,10 +557,93 @@ function startOnlineNormalRule(){
   startOnlineReadyFlow();
 }
 
+   // =====================================
+// オンライン：VSカード内容更新
+// =====================================
+function updateOnlineAbilityRevealCard(){
 
+  const catName=$("abilityRevealCatName");
+  const catDesc=$("abilityRevealCatDesc");
+  const policeName=$("abilityRevealPoliceName");
+  const policeDesc=$("abilityRevealPoliceDesc");
+
+  const catImage=$("abilityRevealCatImage");
+  const policeImage=$("abilityRevealPoliceImage");
+
+  const catData={
+    sneak:{
+      name:"忍び足",
+      desc:"足跡を残さず移動",
+      image:"./assets/images/vs_sneak.png"
+    },
+
+    fakePaw:{
+      name:"フェイク肉球",
+      desc:"偽の足跡で警察を惑わせる",
+      image:"./assets/images/vs_fakepaw.png"
+    }
+  };
+
+  const policeData={
+    howl:{
+      name:"遠吠え",
+      desc:"周囲のネコの気配を探知",
+      image:"./assets/images/vs_howl.png"
+    },
+
+    dash:{
+      name:"ダッシュ",
+      desc:"一気に2マス移動",
+      image:"./assets/images/vs_dash.png"
+    },
+
+    doubleSearch:{
+      name:"一斉捜索",
+      desc:"2箱を一度に探索",
+      image:"./assets/images/vs_search.png"
+    }
+  };
+
+  const c=
+    catData[game.selectedAbilities.cat];
+
+  const p=
+    policeData[game.selectedAbilities.police];
+
+  if(c){
+    catName.textContent=c.name;
+    catDesc.textContent=c.desc;
+    catImage.src=c.image;
+    catImage.alt=c.name;
+  }
+
+  if(p){
+    policeName.textContent=p.name;
+    policeDesc.textContent=p.desc;
+    policeImage.src=p.image;
+    policeImage.alt=p.name;
+  }
+}
+
+
+
+   // =====================================
+// オンライン：自分のスキルを公開
 // =====================================
-// オンライン：自分のスキル選択へ
-// =====================================
+function sendOnlineAbilityReveal(){
+
+  if(!onlineSelfAbility) return;
+  if(onlineAbilityRevealSent) return;
+
+  onlineAbilityRevealSent=true;
+
+  window.NyanOnline.sendGame({
+    type:"abilityReveal",
+    ability:onlineSelfAbility
+  });
+
+  tryShowOnlineAbilityReveal();
+}
 
    function tryShowOnlineAbilityReveal(){
 
@@ -589,7 +675,7 @@ function startOnlineNormalRule(){
   onlineOverlay.classList.remove("show");
 
   // 既存VS表示を更新
-  updateAbilityRevealCard();
+  updateOnlineAbilityRevealCard();
 
 
   // アニメーションを最初から
@@ -617,8 +703,11 @@ function beginOnlineAbilitySelection(){
   onlineOverlay.classList.remove("show");
   onlineRuleOverlay?.classList.remove("show");
 
-  onlineSelfAbility=null;
-  onlinePeerAbilityReady=false;
+onlineSelfAbility=null;
+onlinePeerAbility=null;
+
+onlinePeerAbilityReady=false;
+onlineAbilityRevealSent=false;
 
   pendingPoliceAbility=null;
   pendingCatAbility=null;
@@ -5130,22 +5219,21 @@ bindPress(confirmCatAbilityBtn,()=>{
 
 
     // 相手には選択完了だけ通知
-    window.NyanOnline.sendGame({
-      type:"abilityReady"
+window.NyanOnline.sendGame({
+  type:"abilityReady"
+});
 
-       // 相手が先に選択済みだった場合
+// 相手が先に選択済みだった場合
 if(
   onlinePeerAbilityReady &&
   onlineIsHost
 ){
-
   window.NyanOnline.sendGame({
     type:"abilityRevealRequest"
   });
 
   sendOnlineAbilityReveal();
 }
-    });
 
 
     onlineOverlay.classList.add("show");
@@ -5192,7 +5280,41 @@ if(onlinePeerAbilityReady){
 });
    
 
-   bindPress(abilityStartBtn,startLocalAfterAbilitySelect);
+   bindPress(abilityStartBtn,()=>{
+
+  // =====================================
+  // オンライン特殊スキル戦
+  // =====================================
+  if(
+    onlineRule==="ability" &&
+    (
+      onlineAssignedRole==="cat" ||
+      onlineAssignedRole==="police"
+    )
+  ){
+
+    abilityRevealOverlay.classList.remove("show");
+    abilityRevealOverlay.classList.remove("vs-animate");
+
+    onlineOverlay.classList.add("show");
+
+    onlineStatus.innerHTML=
+      `✨ <strong>特殊スキルあり</strong><br>`+
+      `<span style="font-size:14px">`+
+      `相手のゲーム開始を待っています…`+
+      `</span>`;
+
+    startOnlineReadyFlow();
+
+    return;
+  }
+
+
+  // =====================================
+  // 対人戦
+  // =====================================
+  startLocalAfterAbilitySelect();
+});
 
 bindPress(onlineStartGameBtn,()=>{
 
