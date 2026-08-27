@@ -1623,13 +1623,21 @@ const useSneak=
   game.catAbilityPending==="sneak" &&
   !game.catAbilities.sneakUsed;
 
-       const useFakePaw=
+const useFakePaw=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.catAbilityPending==="fakePaw" &&
   game.fakePawConfirmed &&
   game.fakePawTarget!==null &&
   !game.catAbilities.fakePawUsed;
+
+       const fakePawBox =
+  useFakePaw
+    ? game.fakePawTarget
+    : null;
 
 // 猫移動中も入力ロック
 game.actionLocked=true;
@@ -1688,16 +1696,18 @@ if(useFakePaw){
 
 if(playMode==="onlineCat"){
   window.NyanOnline.sendGame({
-    type:"catMove",
-    catPos:i,
-    turn:game.turn,
+  type:"catMove",
+  catPos:i,
+  turn:game.turn,
 
-    // 忍び足を使用したか
-    sneakUsed:useSneak,
+  // 忍び足
+  sneakUsed:useSneak,
+  noTrackBox:useSneak ? from : null,
 
-    // 忍び足で消した移動元
-    noTrackBox:useSneak ? from : null
-  });
+  // フェイク肉球
+  fakePawUsed:useFakePaw,
+  fakePawBox:fakePawBox
+});
 }
          
          if(playMode==="onlineCat"){
@@ -2332,8 +2342,12 @@ if(
 
 function toggleFakePaw(){
   if(!game.abilitiesEnabled) return;
-  if(playMode!=="local") return;
-  if(game.phase!=="cat") return;
+if(
+  playMode!=="local" &&
+  playMode!=="onlineCat"
+) return;
+   
+   if(game.phase!=="cat") return;
   if(game.gameOver) return;
   if(game.actionLocked) return;
   if(game.catAbilities.fakePawUsed) return;
@@ -3262,16 +3276,22 @@ sneakBanner.classList.toggle(
 
 const canUseFakePaw=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.phase==="cat" &&
-   game.catVisible &&
+  game.catVisible &&
   !game.gameOver &&
   !game.actionLocked &&
   !game.catAbilities.fakePawUsed;
 
 const showFakePawBtn=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.phase==="cat" &&
   game.selectedAbilities.cat==="fakePaw";
 
@@ -3301,9 +3321,12 @@ fakePawBtn.textContent=
       ? "🎭🐾 フェイク肉球｜場所を選択中"
 
     : "🐾 フェイク肉球";
-     const showFakePawBanner=
+const showFakePawBanner=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.phase==="cat" &&
   game.catVisible &&
   game.catAbilityPending==="fakePaw" &&
