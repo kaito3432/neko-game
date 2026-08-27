@@ -2785,7 +2785,10 @@ if(
 
 function toggleHowl(){
   if(!game.abilitiesEnabled) return;
-  if(playMode!=="local") return;
+  if(
+  playMode!=="local" &&
+  playMode!=="onlinePolice"
+) return;
   if(game.phase!=="dogs") return;
   if(game.gameOver) return;
   if(game.actionLocked) return;
@@ -2818,6 +2821,31 @@ function toggleHowl(){
 
     const catInside=
       howlBoxes.includes(game.catPos);
+
+     if(playMode==="onlinePolice"){
+
+  // オンラインではネコ位置を警察端末で判定しない
+  game.policeAbilities.howlUsed=true;
+  game.dogAction[0]="howl";
+  game.policeAbilityPending=null;
+  game.selectedDog=null;
+  game.actionLocked=true;
+
+  Audio.haptic([20,30,20]);
+
+  window.NyanOnline.sendGame({
+    type:"howl",
+    dogIndex:0,
+    node:game.dogs[0]
+  });
+
+  setMessage(
+    "📣 あか柴が遠吠え中…ネコの気配を確認しています。"
+  );
+
+  render();
+  return;
+}
 
     // 能力使用済み
     game.policeAbilities.howlUsed=true;
@@ -3390,7 +3418,17 @@ finishDogTurnBtn.classList.toggle(
 );
 const canUseHowl=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlinePolice"
+  ) &&
+  game.phase==="dogs" &&
+  game.selectedAbilities.police==="howl" &&
+  game.selectedDog===0 &&
+  !game.dogAction[0] &&
+  !game.policeAbilities.howlUsed &&
+  !game.gameOver &&
+  !game.actionLocked;
   game.phase==="dogs" &&
   game.selectedAbilities.police==="howl" &&
   game.selectedDog===0 &&
@@ -3401,7 +3439,12 @@ const canUseHowl=
 
 const showHowlBtn=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlinePolice"
+  ) &&
+  game.phase==="dogs" &&
+  game.selectedAbilities.police==="howl";
   game.phase==="dogs" &&
   game.selectedAbilities.police==="howl";
 
