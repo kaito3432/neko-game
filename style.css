@@ -6814,3 +6814,210 @@ body.sneak-mode .board-shell{
 
   color:#654b42;
 }
+/* =====================================
+   遊び方：残りスキル図解
+===================================== */
+
+.skill-demo-title{
+  margin-bottom:10px;
+  font-size:12px;
+  font-weight:900;
+  color:#765f56;
+}
+
+
+/* ---------- フェイク肉球 ---------- */
+
+.fake-demo{
+  width:100%;
+  text-align:center;
+}
+
+.fake-demo-normal{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:14px;
+  font-size:26px;
+}
+
+.fake-demo-special{
+  display:flex;
+  justify-content:center;
+  gap:16px;
+}
+
+.fake-route{
+  display:flex;
+  align-items:center;
+  gap:5px;
+
+  padding:8px 10px;
+
+  border-radius:12px;
+  background:#f7f3ef;
+
+  font-size:22px;
+}
+
+.fake-route.fake{
+  border:2px dashed #ef9db9;
+  background:#fff0f5;
+}
+
+.fake-foot{
+  font-size:23px;
+}
+
+
+/* ---------- 遠吠え ---------- */
+
+.howl-demo{
+  width:100%;
+  text-align:center;
+}
+
+.howl-grid{
+  display:grid;
+
+  grid-template-columns:repeat(3,52px);
+  grid-template-rows:repeat(3,52px);
+
+  justify-content:center;
+  align-items:center;
+
+  gap:5px;
+
+  margin:0 auto 10px;
+}
+
+.howl-box{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  position:relative;
+
+  width:52px;
+  height:52px;
+
+  border-radius:12px;
+  background:#fff3cf;
+
+  font-size:25px;
+}
+
+.howl-box.detect{
+  border:2px solid #f0ad43;
+
+  box-shadow:
+    0 0 0 4px rgba(240,173,67,.12);
+}
+
+.howl-dog{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:52px;
+  height:52px;
+
+  font-size:29px;
+}
+
+.cat-box span{
+  position:absolute;
+
+  right:-7px;
+  top:-9px;
+
+  font-size:18px;
+}
+
+.howl-result{
+  margin-top:8px;
+
+  padding:7px 10px;
+
+  border-radius:12px;
+
+  background:#fff1cc;
+
+  font-size:11px;
+  font-weight:900;
+}
+
+
+/* ---------- 一斉捜索 ---------- */
+
+.search-demo{
+  width:100%;
+  text-align:center;
+}
+
+.search-demo-row{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  gap:13px;
+
+  margin:6px 0;
+}
+
+.search-dog{
+  width:48px;
+
+  display:flex;
+  flex-direction:column;
+
+  align-items:center;
+
+  font-size:25px;
+}
+
+.search-dog small{
+  margin-top:-2px;
+
+  font-size:9px;
+  font-weight:800;
+
+  color:#765f56;
+}
+
+.search-arrow{
+  font-size:20px;
+}
+
+.search-box{
+  position:relative;
+
+  display:flex;
+  justify-content:center;
+  align-items:center;
+
+  width:48px;
+  height:48px;
+
+  border-radius:11px;
+
+  background:#fff4d7;
+
+  font-size:25px;
+
+  border:2px solid #e9c887;
+}
+
+.search-box.cat-found{
+  border-color:#ef9db9;
+  background:#fff0f5;
+}
+
+.search-box.cat-found span{
+  position:absolute;
+
+  right:-8px;
+  top:-10px;
+
+  font-size:18px;
+}
