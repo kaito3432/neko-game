@@ -5933,6 +5933,10 @@ function showHowToPage(page){
 
   const pages=document.querySelectorAll(".howto-page");
 
+  // 範囲外には進ませない
+  if(page<0) page=0;
+  if(page>2) page=2;
+
   pages.forEach(el=>{
     el.classList.remove("show");
   });
@@ -5946,47 +5950,66 @@ function showHowToPage(page){
   }
 
   howToPage=page;
+
+  // 次へボタン
+  // 今は3ページ目が最後なので、3ページ目だけ隠す
+  if(howToNextBtn){
+    howToNextBtn.style.display=
+      howToPage===2 ? "none" : "";
+
+    howToNextBtn.disabled=false;
+  }
+
+  // 戻るボタンの表示
+  if(howToCloseBtn){
+    howToCloseBtn.textContent=
+      howToPage===0
+        ? "← ホームに戻る"
+        : "← 前へ";
+  }
 }
 
 
+// 遊び方を開く
 bindPress(howToBtn,()=>{
+
   Audio.play("button");
 
   modeOverlay.classList.remove("show");
 
+  // 必ず1ページ目から
   showHowToPage(0);
 
   howToOverlay.classList.add("show");
 });
 
 
+// 次へ
 bindPress(howToNextBtn,()=>{
+
   Audio.play("button");
 
-bindPress(howToNextBtn,()=>{
-  Audio.play("button");
-
-  if(howToPage===0){
-    showHowToPage(1);
-    return;
-  }
-
-  if(howToPage===1){
-    showHowToPage(2);
-    return;
+  if(howToPage<2){
+    showHowToPage(howToPage+1);
   }
 });
-});
 
 
+// 戻る
 bindPress(howToCloseBtn,()=>{
+
   Audio.play("button");
 
+  // 2ページ目以降なら1ページ戻る
+  if(howToPage>0){
+    showHowToPage(howToPage-1);
+    return;
+  }
+
+  // 1ページ目ならホームへ戻る
   howToOverlay.classList.remove("show");
   modeOverlay.classList.add("show");
 
-  // 次回開いたときのために戻す
-  howToNextBtn.style.display="";
   showHowToPage(0);
 });
   bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
