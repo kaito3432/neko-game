@@ -97,6 +97,9 @@ let onlinePeerReady=false;
 let onlineGameStarted=false;
    let onlinePeerDisconnected = false;
    let onlineFoundTrackCount=0;
+   
+// 部屋を作った人=true / 入った人=false
+let onlineIsHost=false;
 
    function resetOnlineState(){
   onlineAssignedRole=null;
@@ -105,6 +108,7 @@ let onlineGameStarted=false;
   onlineGameStarted=false;
   onlineFoundTrackCount=0;
 onlinePeerDisconnected=false;
+      onlineIsHost=false;
 
   if(onlineStartGameBtn){
     onlineStartGameBtn.hidden=true;
@@ -493,29 +497,47 @@ function closeOnlineRulePicker(){
 // =====================================
 // オンライン：通常戦
 // =====================================
-function startOnlineNormalRule(){
-
-  onlineRule="normal";
-
-  onlineRuleOverlay.classList.remove("show");
-
-  // 元のオンライン画面を戻して
-  // 「相手を待っています」を表示
-  onlineOverlay.classList.add("show");
+function startOnlineReadyFlow(){
 
   if(onlineGameStarted) return;
 
   onlineSelfReady=true;
 
   onlineStartGameBtn.disabled=true;
+
   onlineStartGameBtn.textContent=
     "相手を待っています…";
+
 
   window.NyanOnline.sendGame({
     type:"ready"
   });
 
+
   tryStartOnlineGame();
+}
+   
+function startOnlineNormalRule(){
+
+  // ホスト以外は選択不可
+  if(!onlineIsHost) return;
+
+  onlineRule="normal";
+
+
+  // ゲストへルールを通知
+  window.NyanOnline.sendGame({
+    type:"ruleSelect",
+    rule:"normal"
+  });
+
+
+  onlineRuleOverlay.classList.remove("show");
+  onlineOverlay.classList.add("show");
+
+
+  // ホスト自身も通常戦の開始待機へ
+  startOnlineReadyFlow();
 }
 
 
@@ -4906,10 +4928,36 @@ bindPress(
 
    bindPress(abilityStartBtn,startLocalAfterAbilitySelect);
 
-bindPress(
-  onlineStartGameBtn,
-  openOnlineRulePicker
-);
+bindPress(onlineStartGameBtn,()=>{
+
+  if(onlineGameStarted) return;
+  if(!onlineAssignedRole) return;
+
+  // =============================
+  // ホスト
+  // =============================
+  if(onlineIsHost){
+
+    openOnlineRulePicker();
+    return;
+  }
+
+
+  // =============================
+  // ゲスト
+  // =============================
+
+  onlineStartGameBtn.disabled=true;
+
+  onlineStartGameBtn.textContent=
+    "ホストがルールを選んでいます…";
+
+  onlineStatus.innerHTML=
+    `🌐 <strong>対戦ルール待機中</strong><br>`+
+    `<span style="font-size:14px">`+
+    `ホストがルールを選んでいます…`+
+    `</span>`;
+});
 
    bindPress(
   onlineNormalRuleBtn,
@@ -4937,6 +4985,8 @@ bindPress(
 
   try{
     const room=await window.NyanOnline.createRoom();
+
+     onlineIsHost=true;
 
     onlineStatus.innerHTML=
       `合言葉コード<br><strong style="font-size:32px">${room.roomCode}</strong><br>`+
@@ -5505,6 +5555,8 @@ if(isNewTrack){
 
   try{
     const room=await window.NyanOnline.joinRoom(code);
+
+     onlineIsHost=false;
 
     onlineStatus.innerHTML=
       `合言葉コード<br>`+
