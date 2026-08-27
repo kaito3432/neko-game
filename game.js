@@ -2834,9 +2834,6 @@ if(playMode==="onlinePolice"){
   game.selectedDog=null;
   game.actionLocked=true;
 
-  // 今回の遠吠え状態を初期化
-  onlineHowlCutinDone=false;
-  onlinePendingHowlResult=null;
 
   Audio.haptic([20,30,20]);
 
