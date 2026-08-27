@@ -373,6 +373,42 @@ function bindPress(el, fn){
   el.addEventListener("click", fire, { passive:false });
 }
 
+   // =====================================
+// 各画面から一発でホームへ戻る
+// =====================================
+function returnHomeFromOverlay(){
+
+  // 遊び方
+  howToOverlay?.classList.remove("show");
+
+  // 対人戦ルール選択
+  localRuleOverlay?.classList.remove("show");
+
+  // 特殊スキル選択
+  policeAbilityOverlay?.classList.remove("show");
+  catAbilityOverlay?.classList.remove("show");
+
+  // スキル公開・VS
+  abilityRevealOverlay?.classList.remove("show");
+  abilityRevealOverlay?.classList.remove("vs-animate");
+
+  // 遊び方スキルプレビュー
+  howToSkillPreviewOverlay?.classList.remove("show");
+
+  // 途中選択も破棄
+  pendingPoliceAbility=null;
+  pendingCatAbility=null;
+
+  // ホーム状態へ初期化
+  initGame(true);
+}
+
+   document
+  .querySelectorAll("[data-home-close]")
+  .forEach(btn=>{
+    bindPress(btn,returnHomeFromOverlay);
+  });
+
   function initGame(showMode=false){
     game=E.createState();
      game.abilitiesEnabled=
