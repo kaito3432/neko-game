@@ -2833,6 +2833,11 @@ function toggleHowl(){
 
   Audio.haptic([20,30,20]);
 
+        window.NyanOnline.sendGame({
+  type:"policeSkillUsed",
+  skill:"howl"
+});
+
 const sent = window.NyanOnline.sendGame({
   type:"howl",
   dogIndex:0,
@@ -6832,6 +6837,16 @@ if(
   onlineAssignedRole==="cat"
 ){
   const skill=data.payload.skill;
+
+   if(skill==="howl"){
+  showSkillCutin({
+    side:"police",
+    name:"遠吠え",
+    desc:"周囲のネコの気配を探知",
+    image:"./assets/images/vs_howl.png",
+    duration:1400
+  });
+}
 
   if(skill==="dash"){
     showSkillCutin({
