@@ -6487,3 +6487,99 @@ body.sneak-mode .board-shell{
   }
 
 }
+/* =====================================
+   遊び方：スキルプレビュー
+===================================== */
+
+.howto-skill-preview-overlay{
+  position:absolute;
+  inset:0;
+  z-index:20;
+
+  display:none;
+  align-items:center;
+  justify-content:center;
+
+  padding:18px;
+
+  background:rgba(55,38,31,.48);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+
+.howto-skill-preview-overlay.show{
+  display:flex;
+}
+
+.howto-skill-preview-card{
+  width:min(88%, 330px);
+
+  padding:18px 16px 16px;
+
+  border:3px solid #6b4b3e;
+  border-radius:24px;
+
+  background:#fffaf6;
+
+  box-shadow:
+    0 12px 30px rgba(63,42,34,.28);
+
+  text-align:center;
+}
+
+.howto-skill-preview-side{
+  margin-bottom:8px;
+
+  font-size:14px;
+  font-weight:900;
+  color:#7a5d52;
+}
+
+.howto-skill-preview-image{
+  width:150px;
+  height:150px;
+
+  object-fit:cover;
+
+  border-radius:24px;
+
+  display:block;
+  margin:0 auto 12px;
+
+  box-shadow:
+    0 7px 16px rgba(80,55,45,.16);
+}
+
+.howto-skill-preview-name{
+  font-size:22px;
+  font-weight:900;
+  color:#5d4037;
+
+  margin-bottom:5px;
+}
+
+.howto-skill-preview-desc{
+  font-size:15px;
+  font-weight:800;
+  color:#765f56;
+
+  margin-bottom:9px;
+}
+
+.howto-skill-preview-detail{
+  padding:10px 12px;
+  margin-bottom:13px;
+
+  border-radius:14px;
+
+  background:#fff2d2;
+
+  color:#6d574e;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.howto-skill-preview-card .btn{
+  width:100%;
+  min-height:44px;
+}
