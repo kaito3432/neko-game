@@ -106,6 +106,10 @@ let onlinePeerReady=false;
 let onlineGameStarted=false;
    let onlinePeerDisconnected = false;
    let onlineFoundTrackCount=0;
+
+   // オンライン遠吠え演出の同期用
+let onlineHowlCutinDone=false;
+let onlinePendingHowlResult=null;
    
 // 部屋を作った人=true / 入った人=false
 let onlineIsHost=false;
@@ -2780,6 +2784,46 @@ if(
     `🔍 あと${2-game.doubleSearchTargets.length}箱選んでください。`
   );
 
+  render();
+}
+
+   function finishOnlineHowlResult(catInside){
+
+  if(catInside){
+
+    setMessage(
+      "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
+    );
+
+    showToast(
+      "👀",
+      "気配あり！",
+      "この範囲にネコがいる！",
+      2200,
+      "howl-positive"
+    );
+
+  }else{
+
+    setMessage(
+      "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
+    );
+
+    showToast(
+      "💨",
+      "気配なし",
+      "この範囲にネコはいない",
+      1800,
+      "howl-negative"
+    );
+  }
+
+  onlinePendingHowlResult=null;
+  onlineHowlCutinDone=false;
+
+  game.actionLocked=false;
+
+  afterDogAction();
   render();
 }
 
@@ -6782,39 +6826,21 @@ if(
   const catInside =
     data.payload.inside === true;
 
-  if(catInside){
+  // =====================================
+  // Workerの判定結果を一旦保存
+  // =====================================
+  onlinePendingHowlResult=
+    catInside;
 
-    setMessage(
-      "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
-    );
-
-    showToast(
-      "👀",
-      "気配あり！",
-      "この範囲にネコがいる！",
-      2200,
-      "howl-positive"
-    );
-
-  }else{
-
-    setMessage(
-      "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
-    );
-
-    showToast(
-      "💨",
-      "気配なし",
-      "この範囲にネコはいない",
-      1800,
-      "howl-negative"
-    );
+  // 警察側カットインがまだ表示中なら
+  // ここでは何もしない
+  if(!onlineHowlCutinDone){
+    return;
   }
 
-  game.actionLocked=false;
-
-  afterDogAction();
-  render();
+  // カットインがすでに終わっている場合だけ
+  // 結果ポップを表示
+  finishOnlineHowlResult(catInside);
 
   return;
 }
