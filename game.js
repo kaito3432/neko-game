@@ -6094,18 +6094,43 @@ visual:`
     desc:"ニセの足跡で警察を惑わせる",
     image:"./assets/images/skill_icon_fakepaw.png",
 
-    visual:`
-      <div style="
-        text-align:center;
-        font-size:14px;
-        line-height:1.7;
-      ">
-        <div style="font-size:34px;">🐱　　🎭🐾</div>
-        <div style="margin-top:5px;">
-          本当の移動先とは別の場所に足跡
-        </div>
+visual:`
+  <div class="fake-demo">
+
+    <div class="skill-demo-title">
+      通常は本物の足跡だけ
+    </div>
+
+    <div class="fake-demo-normal">
+      <span class="fake-box">📦</span>
+      <span class="fake-foot">🐾</span>
+      <span class="fake-cat">🐱</span>
+    </div>
+
+    <div class="skill-demo-arrow">
+      ↓ フェイク肉球を使うと
+    </div>
+
+    <div class="fake-demo-special">
+      <div class="fake-route">
+        <span>📦</span>
+        <span>🐾</span>
+        <span>🐱</span>
       </div>
-    `,
+
+      <div class="fake-route fake">
+        <span>📦</span>
+        <span>🐾</span>
+        <span>❓</span>
+      </div>
+    </div>
+
+    <div class="skill-demo-caption">
+      🐾 ニセの足跡で警察を惑わせる！
+    </div>
+
+  </div>
+`,
 
     detail:`
       移動可能な別の箱にニセの足跡を残して、
@@ -6124,34 +6149,39 @@ visual:`
     desc:"周囲のネコの気配を探知",
     image:"./assets/images/skill_icon_howl.png",
 
-    visual:`
-      <div style="text-align:center;">
-        <div style="
-          display:grid;
-          grid-template-columns:42px 42px 42px;
-          grid-template-rows:42px 42px 42px;
-          gap:4px;
-          justify-content:center;
-          align-items:center;
-        ">
-          <span></span>
-          <span>📦</span>
-          <span></span>
+visual:`
+  <div class="howl-demo">
 
-          <span>📦</span>
-          <strong style="font-size:26px;">🐕</strong>
-          <span>📦</span>
+    <div class="skill-demo-title">
+      あか柴の周囲を探知
+    </div>
 
-          <span></span>
-          <span>📦</span>
-          <span></span>
-        </div>
+    <div class="howl-grid">
 
-        <div style="margin-top:8px;font-size:13px;">
-          周囲4箱の「気配」を探知
-        </div>
-      </div>
-    `,
+      <div class="howl-empty"></div>
+      <div class="howl-box detect">📦</div>
+      <div class="howl-empty"></div>
+
+      <div class="howl-box detect">📦</div>
+      <div class="howl-dog">🐕</div>
+      <div class="howl-box detect cat-box">📦<span>🐱</span></div>
+
+      <div class="howl-empty"></div>
+      <div class="howl-box detect">📦</div>
+      <div class="howl-empty"></div>
+
+    </div>
+
+    <div class="howl-result">
+      📡 周囲4箱にネコの気配があるか探知
+    </div>
+
+    <div class="skill-demo-caption">
+      「いる / いない」だけが分かる！
+    </div>
+
+  </div>
+`,
 
     detail:`
       あか柴の周囲4箱にネコがいるかどうかを探知します。
@@ -6230,17 +6260,58 @@ visual:`
     desc:"2箱を一度に探索",
     image:"./assets/images/skill_icon_search.png",
 
-    visual:`
-      <div style="text-align:center;">
-        <div style="font-size:35px;">
-          📦🔍　🐕　🔍📦
-        </div>
+visual:`
+  <div class="search-demo">
 
-        <div style="margin-top:8px;font-size:13px;">
-          周囲から2箱を選んで探索
-        </div>
+    <div class="skill-demo-title">
+      3匹で一斉に捜索！
+    </div>
+
+    <div class="search-demo-row">
+
+      <div class="search-dog">
+        <span>🐕</span>
+        <small>あか</small>
       </div>
-    `,
+
+      <div class="search-arrow">➡️</div>
+
+      <div class="search-box">📦</div>
+
+    </div>
+
+    <div class="search-demo-row">
+
+      <div class="search-dog">
+        <span>🐕</span>
+        <small>くろ</small>
+      </div>
+
+      <div class="search-arrow">➡️</div>
+
+      <div class="search-box">📦</div>
+
+    </div>
+
+    <div class="search-demo-row">
+
+      <div class="search-dog">
+        <span>🐕</span>
+        <small>しろ</small>
+      </div>
+
+      <div class="search-arrow">➡️</div>
+
+      <div class="search-box cat-found">📦<span>🐱</span></div>
+
+    </div>
+
+    <div class="skill-demo-caption">
+      🔎 3匹がそれぞれ1箱を同時に捜索！
+    </div>
+
+  </div>
+`,
 
     detail:`
       しろ柴の周囲にある箱から2箱を選び、
