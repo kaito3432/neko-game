@@ -95,6 +95,9 @@ let onlineRule=null;
 let onlineSelfAbility=null;
 let onlinePeerAbilityReady=false;
 
+   let onlinePeerAbility=null;
+let onlineAbilityRevealSent=false;
+
    const howToOverlay = $("howToOverlay");
 const howToCloseBtn = $("howToCloseBtn");
    let onlineAssignedRole=null;
@@ -119,6 +122,7 @@ onlinePeerDisconnected=false;
       onlineRule=null;
 onlineSelfAbility=null;
 onlinePeerAbilityReady=false;
+
 
   if(onlineStartGameBtn){
     onlineStartGameBtn.hidden=true;
@@ -554,6 +558,57 @@ function startOnlineNormalRule(){
 // =====================================
 // オンライン：自分のスキル選択へ
 // =====================================
+
+   function tryShowOnlineAbilityReveal(){
+
+  if(!onlineSelfAbility) return;
+  if(!onlinePeerAbility) return;
+  if(!onlineAssignedRole) return;
+
+
+  // 自分と相手のスキルを
+  // ネコ / 警察へ正しく振り分ける
+  if(onlineAssignedRole==="cat"){
+
+    game.selectedAbilities.cat=
+      onlineSelfAbility;
+
+    game.selectedAbilities.police=
+      onlinePeerAbility;
+
+  }else{
+
+    game.selectedAbilities.police=
+      onlineSelfAbility;
+
+    game.selectedAbilities.cat=
+      onlinePeerAbility;
+  }
+
+
+  onlineOverlay.classList.remove("show");
+
+  // 既存VS表示を更新
+  updateAbilityRevealCard();
+
+
+  // アニメーションを最初から
+  abilityRevealOverlay.classList.remove("vs-animate");
+
+  abilityRevealOverlay.classList.add("show");
+
+  Audio.play("skillVs");
+
+  void abilityRevealOverlay.offsetWidth;
+
+  requestAnimationFrame(()=>{
+    abilityRevealOverlay.classList.add("vs-animate");
+  });
+
+  setTimeout(()=>{
+    Audio.haptic?.([18,25,30]);
+  },600);
+}
 function beginOnlineAbilitySelection(){
 
   if(onlineRule!=="ability") return;
@@ -4958,6 +5013,19 @@ bindPress(confirmPoliceAbilityBtn,()=>{
       type:"abilityReady"
     });
 
+     // 相手が先に選択済みだった場合
+if(
+  onlinePeerAbilityReady &&
+  onlineIsHost
+){
+
+  window.NyanOnline.sendGame({
+    type:"abilityRevealRequest"
+  });
+
+  sendOnlineAbilityReveal();
+}
+
 
     onlineOverlay.classList.add("show");
 
@@ -5064,6 +5132,19 @@ bindPress(confirmCatAbilityBtn,()=>{
     // 相手には選択完了だけ通知
     window.NyanOnline.sendGame({
       type:"abilityReady"
+
+       // 相手が先に選択済みだった場合
+if(
+  onlinePeerAbilityReady &&
+  onlineIsHost
+){
+
+  window.NyanOnline.sendGame({
+    type:"abilityRevealRequest"
+  });
+
+  sendOnlineAbilityReveal();
+}
     });
 
 
@@ -5276,16 +5357,80 @@ if(data.payload?.type==="abilityReady"){
 
   onlinePeerAbilityReady=true;
 
-  // 自分もすでに選択済みなら
+
   if(onlineSelfAbility){
 
     onlineStatus.innerHTML=
       `✨ <strong>2人ともスキルを決定しました！</strong><br>`+
       `<span style="font-size:14px">`+
-      `スキル公開を待っています…`+
+      `スキルを公開します…`+
       `</span>`;
 
+
+    // ホストが公開開始の合図を出す
+    if(onlineIsHost){
+
+      window.NyanOnline.sendGame({
+        type:"abilityRevealRequest"
+      });
+
+      sendOnlineAbilityReveal();
+    }
   }
+
+  return;
+}
+
+         // =====================================
+// ホストからスキル公開開始
+// =====================================
+if(
+  data.payload?.type==="abilityRevealRequest"
+){
+
+  sendOnlineAbilityReveal();
+
+  return;
+}
+         // =====================================
+// 相手のスキルを受信
+// =====================================
+if(
+  data.payload?.type==="abilityReveal"
+){
+
+  const ability=data.payload.ability;
+
+
+  // ネコから届く場合
+  if(onlineAssignedRole==="police"){
+
+    if(
+      ability!=="sneak" &&
+      ability!=="fakePaw"
+    ){
+      return;
+    }
+
+  }
+
+
+  // 警察から届く場合
+  if(onlineAssignedRole==="cat"){
+
+    if(
+      ability!=="howl" &&
+      ability!=="dash" &&
+      ability!=="doubleSearch"
+    ){
+      return;
+    }
+  }
+
+
+  onlinePeerAbility=ability;
+
+  tryShowOnlineAbilityReveal();
 
   return;
 }
@@ -5928,16 +6073,81 @@ if(data.payload?.type==="abilityReady"){
 
   onlinePeerAbilityReady=true;
 
-  // 自分もすでに選択済みなら
+
   if(onlineSelfAbility){
 
     onlineStatus.innerHTML=
       `✨ <strong>2人ともスキルを決定しました！</strong><br>`+
       `<span style="font-size:14px">`+
-      `スキル公開を待っています…`+
+      `スキルを公開します…`+
       `</span>`;
 
+
+    // ホストが公開開始の合図を出す
+    if(onlineIsHost){
+
+      window.NyanOnline.sendGame({
+        type:"abilityRevealRequest"
+      });
+
+      sendOnlineAbilityReveal();
+    }
   }
+
+  return;
+}
+
+        // =====================================
+// ホストからスキル公開開始
+// =====================================
+if(
+  data.payload?.type==="abilityRevealRequest"
+){
+
+  sendOnlineAbilityReveal();
+
+  return;
+}
+
+        // =====================================
+// 相手のスキルを受信
+// =====================================
+if(
+  data.payload?.type==="abilityReveal"
+){
+
+  const ability=data.payload.ability;
+
+
+  // ネコから届く場合
+  if(onlineAssignedRole==="police"){
+
+    if(
+      ability!=="sneak" &&
+      ability!=="fakePaw"
+    ){
+      return;
+    }
+
+  }
+
+
+  // 警察から届く場合
+  if(onlineAssignedRole==="cat"){
+
+    if(
+      ability!=="howl" &&
+      ability!=="dash" &&
+      ability!=="doubleSearch"
+    ){
+      return;
+    }
+  }
+
+
+  onlinePeerAbility=ability;
+
+  tryShowOnlineAbilityReveal();
 
   return;
 }
