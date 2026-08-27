@@ -3439,8 +3439,7 @@ const showHowlBtn=
   ) &&
   game.phase==="dogs" &&
   game.selectedAbilities.police==="howl";
-  game.phase==="dogs" &&
-  game.selectedAbilities.police==="howl";
+
 
 howlBtn.style.display=
   showHowlBtn ? "block" : "none";
