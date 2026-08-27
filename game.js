@@ -2871,28 +2871,23 @@ console.log("📣 HOWL SEND", {
     return;
   }
 
-  // 警察側カットイン
-  showSkillCutin({
-    side:"police",
-    name:"遠吠え",
-    desc:"周囲のネコの気配を探知",
-    image:"./assets/images/vs_howl.png",
-    duration:1400,
+showSkillCutin({
+  side:"police",
+  name:"遠吠え",
+  desc:"周囲のネコの気配を探知",
+  image:"./assets/images/vs_howl.png",
+  duration:1400,
 
-    onComplete:()=>{
+  onComplete:()=>{
 
-      onlineHowlCutinDone=true;
+    onlineHowlCutinDone=true;
 
-      // 結果がすでに届いていればここで表示
-      if(onlinePendingHowlResult!==null){
-
-        const result=
-          onlinePendingHowlResult;
-
-        finishOnlineHowlResult(result);
-      }
+    if(onlinePendingHowlResult!==null){
+      const result=onlinePendingHowlResult;
+      finishOnlineHowlResult(result);
     }
-  });
+  }
+});
 
   setMessage(
     "📣 あか柴が遠吠え中…ネコの気配を確認しています。"
