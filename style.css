@@ -6488,13 +6488,13 @@ body.sneak-mode .board-shell{
 
 }
 /* =====================================
-   遊び方：スキルプレビュー
+   遊び方：スキル選択画面風プレビュー
 ===================================== */
 
 .howto-skill-preview-overlay{
   position:absolute;
   inset:0;
-  z-index:20;
+  z-index:30;
 
   display:none;
   align-items:center;
@@ -6502,84 +6502,156 @@ body.sneak-mode .board-shell{
 
   padding:18px;
 
-  background:rgba(55,38,31,.48);
-  backdrop-filter:blur(3px);
-  -webkit-backdrop-filter:blur(3px);
+  background:rgba(68,48,40,.58);
+
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
 }
 
 .howto-skill-preview-overlay.show{
   display:flex;
 }
 
-.howto-skill-preview-card{
-  width:min(88%, 330px);
 
-  padding:18px 16px 16px;
+/* 全体 */
+.howto-ability-preview{
+  width:min(92%, 370px);
+  max-height:82vh;
 
-  border:3px solid #6b4b3e;
-  border-radius:24px;
+  overflow-y:auto;
 
-  background:#fffaf6;
+  padding:18px 16px 15px;
+
+  border:3px solid #6a493d;
+  border-radius:26px;
+
+  background:#fffaf5;
 
   box-shadow:
-    0 12px 30px rgba(63,42,34,.28);
+    0 14px 35px rgba(54,34,27,.32);
+
+  -webkit-overflow-scrolling:touch;
+}
+
+
+/* CAT / POLICE */
+.howto-ability-kicker{
+  margin-bottom:12px;
 
   text-align:center;
-}
 
-.howto-skill-preview-side{
-  margin-bottom:8px;
-
-  font-size:14px;
+  font-size:12px;
   font-weight:900;
-  color:#7a5d52;
+
+  letter-spacing:.18em;
+
+  color:#a88c81;
 }
 
-.howto-skill-preview-image{
-  width:150px;
-  height:150px;
+
+/* 上部 */
+.howto-ability-head{
+  display:flex;
+  align-items:center;
+  gap:13px;
+
+  padding:11px;
+
+  border-radius:18px;
+
+  background:#fff3e6;
+  border:2px solid #f5c989;
+}
+
+
+.howto-ability-icon{
+  width:70px;
+  height:70px;
+
+  flex:0 0 70px;
 
   object-fit:cover;
 
-  border-radius:24px;
+  border-radius:17px;
 
-  display:block;
-  margin:0 auto 12px;
+  background:#fff;
 
   box-shadow:
-    0 7px 16px rgba(80,55,45,.16);
+    0 5px 12px rgba(80,50,38,.13);
 }
 
-.howto-skill-preview-name{
-  font-size:22px;
+
+.howto-ability-head-copy{
+  flex:1;
+  min-width:0;
+
+  text-align:left;
+}
+
+
+.howto-ability-name{
+  margin-bottom:4px;
+
+  font-size:20px;
   font-weight:900;
-  color:#5d4037;
 
-  margin-bottom:5px;
+  color:#604238;
 }
 
-.howto-skill-preview-desc{
-  font-size:15px;
-  font-weight:800;
-  color:#765f56;
 
-  margin-bottom:9px;
-}
-
-.howto-skill-preview-detail{
-  padding:10px 12px;
-  margin-bottom:13px;
-
-  border-radius:14px;
-
-  background:#fff2d2;
-
-  color:#6d574e;
+.howto-ability-desc{
   font-size:13px;
-  line-height:1.45;
+  line-height:1.4;
+
+  color:#836c62;
 }
 
-.howto-skill-preview-card .btn{
+
+/* 図解エリア */
+.howto-ability-visual{
+  margin-top:12px;
+
+  min-height:125px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:13px;
+
+  border:1.5px solid #e7ddd5;
+  border-radius:18px;
+
+  background:#fffefa;
+}
+
+
+/* 詳細 */
+.howto-ability-detail{
+  margin-top:10px;
+
+  padding:10px 12px;
+
+  text-align:left;
+
+  font-size:12.5px;
+  line-height:1.55;
+
+  color:#674d43;
+}
+
+
+.howto-ability-detail ul{
+  margin:6px 0 0;
+  padding-left:20px;
+}
+
+
+/* 閉じる */
+.howto-ability-close{
   width:100%;
-  min-height:44px;
+
+  margin-top:10px;
+
+  min-height:48px;
 }
