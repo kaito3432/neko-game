@@ -6251,74 +6251,52 @@ visual:`
   },
 
 
-  search:{
-    side:"POLICE SPECIAL SKILL",
-    name:"しろ柴・一斉捜索",
-    desc:"2箱を一度に探索",
-    image:"./assets/images/skill_icon_search.png",
+search:{
+  side:"POLICE SPECIAL SKILL",
+  name:"しろ柴・一斉捜索",
+  desc:"周囲4箱から2箱を一度に探索",
+  image:"./assets/images/skill_icon_search.png",
 
-visual:`
-  <div class="search-demo">
+  visual:`
+    <div class="search-demo">
 
-    <div class="skill-demo-title">
-      3匹で一斉に捜索！
-    </div>
-
-    <div class="search-demo-row">
-
-      <div class="search-dog">
-        <span>🐕</span>
-        <small>あか</small>
+      <div class="skill-demo-title">
+        しろ柴の周囲4箱から2箱を選択
       </div>
 
-      <div class="search-arrow">➡️</div>
+      <div class="search-grid">
 
-      <div class="search-box">📦</div>
+        <div class="search-empty"></div>
+        <div class="search-box selected">📦</div>
+        <div class="search-empty"></div>
 
-    </div>
+        <div class="search-box">📦</div>
+        <div class="search-dog-center">🐕</div>
+        <div class="search-box selected">📦</div>
 
-    <div class="search-demo-row">
+        <div class="search-empty"></div>
+        <div class="search-box">📦</div>
+        <div class="search-empty"></div>
 
-      <div class="search-dog">
-        <span>🐕</span>
-        <small>くろ</small>
       </div>
 
-      <div class="search-arrow">➡️</div>
-
-      <div class="search-box">📦</div>
-
-    </div>
-
-    <div class="search-demo-row">
-
-      <div class="search-dog">
-        <span>🐕</span>
-        <small>しろ</small>
+      <div class="skill-demo-caption">
+        🔎 4箱の中から好きな2箱を一度に探索！
       </div>
 
-      <div class="search-arrow">➡️</div>
-
-      <div class="search-box cat-found">📦<span>🐱</span></div>
-
     </div>
+  `,
 
-    <div class="skill-demo-caption">
-      🔎 3匹がそれぞれ1箱を同時に捜索！
-    </div>
-
-  </div>
-`,
-
-    detail:`
-      しろ柴の周囲にある箱から2箱を選び、
-      一度に探索します。
-      <ul>
-        <li>2箱を選んでから確定します</li>
-        <li>1ゲームに1回使用できます</li>
-      </ul>
-    `
-  }
+  detail:`
+    しろ柴の周囲にある4つのダンボールから、
+    好きな2箱を選んで一度に探索できます。
+    <ul>
+      <li>周囲4箱の中から2箱を選びます</li>
+      <li>2箱を選んでから確定します</li>
+      <li>1ゲームに1回使用できます</li>
+    </ul>
+  `
+}
 
 };
 
