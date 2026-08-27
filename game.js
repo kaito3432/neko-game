@@ -141,6 +141,15 @@ const victoryCutin=$("victoryCutin"),
       victoryCutinImage=$("victoryCutinImage");
    const howToNextBtn=$("howToNextBtn");
 
+   const howToSkillCatTab=$("howToSkillCatTab");
+const howToSkillPoliceTab=$("howToSkillPoliceTab");
+
+const howToCatSkills=$("howToCatSkills");
+const howToPoliceSkills=$("howToPoliceSkills");
+
+const howToSkillDetailName=$("howToSkillDetailName");
+const howToSkillDetailText=$("howToSkillDetailText");
+
 
 // =====================================
 // 特殊スキル 発動カットイン
@@ -5935,8 +5944,8 @@ function showHowToPage(page){
 
   // 範囲外には進ませない
   if(page<0) page=0;
-  if(page>2) page=2;
-
+if(page>3) page=3;
+   
   pages.forEach(el=>{
     el.classList.remove("show");
   });
@@ -5955,7 +5964,7 @@ function showHowToPage(page){
   // 今は3ページ目が最後なので、3ページ目だけ隠す
   if(howToNextBtn){
     howToNextBtn.style.display=
-      howToPage===2 ? "none" : "";
+      howToPage===3 ? "none" : "";
 
     howToNextBtn.disabled=false;
   }
@@ -5968,6 +5977,105 @@ function showHowToPage(page){
         : "← 前へ";
   }
 }
+
+   // =====================================
+// 遊び方：特殊スキルプレビュー
+// =====================================
+
+function showHowToSkillSide(side){
+
+  const isCat=side==="cat";
+
+  howToCatSkills?.classList.toggle("show",isCat);
+  howToPoliceSkills?.classList.toggle("show",!isCat);
+
+  howToSkillCatTab?.classList.toggle("active",isCat);
+  howToSkillPoliceTab?.classList.toggle("active",!isCat);
+
+  // 切り替え時は選択状態を解除
+  document
+    .querySelectorAll(".howto-preview-card")
+    .forEach(card=>{
+      card.classList.remove("selected");
+    });
+
+  if(howToSkillDetailName){
+    howToSkillDetailName.textContent="スキルを選んでね！";
+  }
+
+  if(howToSkillDetailText){
+    howToSkillDetailText.textContent=
+      "カードをタップすると詳しい説明を確認できます。";
+  }
+}
+
+
+// ネコ
+bindPress(howToSkillCatTab,()=>{
+  showHowToSkillSide("cat");
+});
+
+
+// 警察
+bindPress(howToSkillPoliceTab,()=>{
+  showHowToSkillSide("police");
+});
+
+
+const howToSkillDescriptions={
+
+  sneak:{
+    name:"🐱 忍び足",
+    text:"使用したターンは、ネコが移動しても足跡を残しません。"
+  },
+
+  fakepaw:{
+    name:"🐾 フェイク肉球",
+    text:"ニセの足跡を使って、柴犬警察を惑わせます。"
+  },
+
+  howl:{
+    name:"🐕 あか柴・遠吠え",
+    text:"遠吠えで周囲を探り、近くにネコの気配があるか確認できます。"
+  },
+
+  dash:{
+    name:"🐕 くろ柴・ダッシュ",
+    text:"通常の移動より遠くまで、一気に移動できます。"
+  },
+
+  search:{
+    name:"🐕 しろ柴・一斉捜索",
+    text:"特殊な捜索を行い、ネコを追い詰めます。"
+  }
+
+};
+
+
+document
+  .querySelectorAll(".howto-preview-card")
+  .forEach(card=>{
+
+    bindPress(card,()=>{
+
+      const skill=card.dataset.skillPreview;
+      const info=howToSkillDescriptions[skill];
+
+      if(!info) return;
+
+      document
+        .querySelectorAll(".howto-preview-card")
+        .forEach(el=>{
+          el.classList.remove("selected");
+        });
+
+      card.classList.add("selected");
+
+      howToSkillDetailName.textContent=info.name;
+      howToSkillDetailText.textContent=info.text;
+    });
+
+  });
 
 
 // 遊び方を開く
@@ -5987,7 +6095,7 @@ bindPress(howToBtn,()=>{
 bindPress(howToNextBtn,()=>{
 
 
-  if(howToPage<2){
+  if(howToPage<3){
     showHowToPage(howToPage+1);
   }
 });
