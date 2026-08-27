@@ -2833,11 +2833,31 @@ function toggleHowl(){
 
   Audio.haptic([20,30,20]);
 
-  window.NyanOnline.sendGame({
-    type:"howl",
-    dogIndex:0,
-    node:game.dogs[0]
-  });
+const sent = window.NyanOnline.sendGame({
+  type:"howl",
+  dogIndex:0,
+  node:game.dogs[0]
+});
+
+console.log("📣 HOWL SEND", {
+  sent,
+  node:game.dogs[0],
+  dogIndex:0
+});
+
+if(!sent){
+  game.actionLocked=false;
+  game.policeAbilities.howlUsed=false;
+  game.dogAction[0]=false;
+  game.policeAbilityPending=null;
+
+  setMessage(
+    "⚠️ 遠吠えの送信に失敗しました。もう一度試してください。"
+  );
+
+  render();
+  return;
+}
 
   setMessage(
     "📣 あか柴が遠吠え中…ネコの気配を確認しています。"
