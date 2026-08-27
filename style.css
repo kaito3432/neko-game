@@ -7021,3 +7021,62 @@ body.sneak-mode .board-shell{
 
   font-size:18px;
 }
+/* =====================================
+   しろ柴・一斉捜索 図解
+===================================== */
+
+.search-grid{
+  display:grid;
+
+  grid-template-columns:repeat(3,52px);
+  grid-template-rows:repeat(3,52px);
+
+  justify-content:center;
+  align-items:center;
+
+  gap:5px;
+
+  margin:0 auto 10px;
+}
+
+.search-dog-center{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:52px;
+  height:52px;
+
+  font-size:29px;
+}
+
+.search-grid .search-box{
+  position:relative;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  width:52px;
+  height:52px;
+
+  border-radius:12px;
+
+  background:#fff4d7;
+  border:2px solid #e7c98e;
+
+  font-size:25px;
+}
+
+.search-grid .search-box.selected{
+  background:#e9f7ff;
+  border-color:#65b7e8;
+
+  box-shadow:
+    0 0 0 4px rgba(101,183,232,.16);
+}
+
+.search-empty{
+  width:52px;
+  height:52px;
+}
