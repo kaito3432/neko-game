@@ -150,6 +150,14 @@ const howToPoliceSkills=$("howToPoliceSkills");
 const howToSkillDetailName=$("howToSkillDetailName");
 const howToSkillDetailText=$("howToSkillDetailText");
 
+   const howToSkillPreviewOverlay=$("howToSkillPreviewOverlay");
+const howToSkillPreviewSide=$("howToSkillPreviewSide");
+const howToSkillPreviewImage=$("howToSkillPreviewImage");
+const howToSkillPreviewName=$("howToSkillPreviewName");
+const howToSkillPreviewDesc=$("howToSkillPreviewDesc");
+const howToSkillPreviewDetail=$("howToSkillPreviewDetail");
+const howToSkillPreviewCloseBtn=$("howToSkillPreviewCloseBtn");
+
 
 // =====================================
 // 特殊スキル 発動カットイン
@@ -6022,34 +6030,87 @@ bindPress(howToSkillPoliceTab,()=>{
 });
 
 
+// =====================================
+// 遊び方：特殊スキルプレビュー
+// =====================================
+
 const howToSkillDescriptions={
 
   sneak:{
-    name:"🐱 忍び足",
-    text:"使用したターンは、ネコが移動しても足跡を残しません。"
+    side:"🐱 ネコ",
+    name:"忍び足",
+    desc:"足跡を残さず移動",
+    detail:"使用したターンは、ネコが移動しても足跡を残しません。",
+    image:"./assets/images/skill_icon_sneak.png"
   },
 
   fakepaw:{
-    name:"🐾 フェイク肉球",
-    text:"ニセの足跡を使って、柴犬警察を惑わせます。"
+    side:"🐱 ネコ",
+    name:"フェイク肉球",
+    desc:"ニセの足跡で警察を惑わせる",
+    detail:"本物とは別の場所にニセの足跡を残し、柴犬警察を惑わせます。",
+    image:"./assets/images/skill_icon_fakepaw.png"
   },
 
   howl:{
-    name:"🐕 あか柴・遠吠え",
-    text:"遠吠えで周囲を探り、近くにネコの気配があるか確認できます。"
+    side:"🐕 柴犬警察",
+    name:"あか柴・遠吠え",
+    desc:"周囲のネコの気配を探知",
+    detail:"あか柴の周囲を調べて、近くにネコの気配があるか確認できます。",
+    image:"./assets/images/skill_icon_howl.png"
   },
 
   dash:{
-    name:"🐕 くろ柴・ダッシュ",
-    text:"通常の移動より遠くまで、一気に移動できます。"
+    side:"🐕 柴犬警察",
+    name:"くろ柴・ダッシュ",
+    desc:"一気に2マス移動",
+    detail:"くろ柴が通常より遠く、2マス先の交差点まで一気に移動できます。",
+    image:"./assets/images/skill_icon_dash.png"
   },
 
   search:{
-    name:"🐕 しろ柴・一斉捜索",
-    text:"特殊な捜索を行い、ネコを追い詰めます。"
+    side:"🐕 柴犬警察",
+    name:"しろ柴・一斉捜索",
+    desc:"2箱を一度に探索",
+    detail:"しろ柴の周囲から2つのダンボールを選び、一度に探索できます。",
+    image:"./assets/images/skill_icon_search.png"
   }
 
 };
+
+
+function openHowToSkillPreview(skill){
+
+  const info=howToSkillDescriptions[skill];
+
+  if(!info) return;
+
+  howToSkillPreviewSide.textContent=info.side;
+
+  howToSkillPreviewImage.src=info.image;
+  howToSkillPreviewImage.alt=info.name;
+
+  howToSkillPreviewName.textContent=info.name;
+  howToSkillPreviewDesc.textContent=info.desc;
+  howToSkillPreviewDetail.textContent=info.detail;
+
+  howToSkillPreviewOverlay.classList.add("show");
+  howToSkillPreviewOverlay.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+}
+
+
+function closeHowToSkillPreview(){
+
+  howToSkillPreviewOverlay.classList.remove("show");
+
+  howToSkillPreviewOverlay.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+}
 
 
 document
@@ -6058,24 +6119,19 @@ document
 
     bindPress(card,()=>{
 
-      const skill=card.dataset.skillPreview;
-      const info=howToSkillDescriptions[skill];
+      const skill=
+        card.dataset.skillPreview;
 
-      if(!info) return;
-
-      document
-        .querySelectorAll(".howto-preview-card")
-        .forEach(el=>{
-          el.classList.remove("selected");
-        });
-
-      card.classList.add("selected");
-
-      howToSkillDetailName.textContent=info.name;
-      howToSkillDetailText.textContent=info.text;
+      openHowToSkillPreview(skill);
     });
 
   });
+
+
+bindPress(
+  howToSkillPreviewCloseBtn,
+  closeHowToSkillPreview
+);
 
 
 // 遊び方を開く
