@@ -6824,6 +6824,13 @@ if(
 ){
   const skill=data.payload.skill;
 
+  console.log("🐱 POLICE SKILL RECEIVED", {
+    skill,
+    role:onlineAssignedRole,
+    playMode,
+    phase:game?.phase
+  });
+
    if(skill==="howl"){
   showSkillCutin({
     side:"police",
