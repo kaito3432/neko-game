@@ -4916,10 +4916,60 @@ bindPress(
   selectDoubleSearchBtn,
   ()=>choosePendingPoliceAbility("doubleSearch")
 );
-   bindPress(confirmPoliceAbilityBtn,()=>{
+bindPress(confirmPoliceAbilityBtn,()=>{
 
   if(!pendingPoliceAbility) return;
 
+
+  // =====================================
+  // オンライン
+  // =====================================
+  if(
+    onlineRule==="ability" &&
+    onlineAssignedRole==="police"
+  ){
+
+    onlineSelfAbility=pendingPoliceAbility;
+
+    game.selectedAbilities.police=
+      pendingPoliceAbility;
+
+    policeAbilityOverlay.classList.remove("show");
+
+    pendingPoliceAbility=null;
+    confirmPoliceAbilityBtn.disabled=true;
+
+    [
+      selectHowlBtn,
+      selectDashBtn,
+      selectDoubleSearchBtn
+    ].forEach(btn=>{
+      btn.classList.remove("selected");
+    });
+
+
+    // 相手には「選択完了」だけ通知
+    // スキル内容はまだ秘密
+    window.NyanOnline.sendGame({
+      type:"abilityReady"
+    });
+
+
+    onlineOverlay.classList.add("show");
+
+    onlineStatus.innerHTML=
+      `🐕 <strong>警察スキルを決定しました</strong><br>`+
+      `<span style="font-size:14px">`+
+      `相手のスキル選択を待っています…`+
+      `</span>`;
+
+    return;
+  }
+
+
+  // =====================================
+  // 対人戦
+  // =====================================
   selectPoliceAbility(
     pendingPoliceAbility
   );
@@ -4965,10 +5015,58 @@ bindPress(
   ()=>choosePendingCatAbility("fakePaw")
 );
 
-   bindPress(confirmCatAbilityBtn,()=>{
+bindPress(confirmCatAbilityBtn,()=>{
 
   if(!pendingCatAbility) return;
 
+
+  // =====================================
+  // オンライン
+  // =====================================
+  if(
+    onlineRule==="ability" &&
+    onlineAssignedRole==="cat"
+  ){
+
+    onlineSelfAbility=pendingCatAbility;
+
+    game.selectedAbilities.cat=
+      pendingCatAbility;
+
+    catAbilityOverlay.classList.remove("show");
+
+    pendingCatAbility=null;
+    confirmCatAbilityBtn.disabled=true;
+
+    [
+      selectSneakBtn,
+      selectFakePawBtn
+    ].forEach(btn=>{
+      btn.classList.remove("selected");
+    });
+
+
+    // 相手には選択完了だけ通知
+    window.NyanOnline.sendGame({
+      type:"abilityReady"
+    });
+
+
+    onlineOverlay.classList.add("show");
+
+    onlineStatus.innerHTML=
+      `🐱 <strong>ネコスキルを決定しました</strong><br>`+
+      `<span style="font-size:14px">`+
+      `相手のスキル選択を待っています…`+
+      `</span>`;
+
+    return;
+  }
+
+
+  // =====================================
+  // 対人戦
+  // =====================================
   selectCatAbility(
     pendingCatAbility
   );
@@ -5144,6 +5242,27 @@ if(rule==="ability"){
   return;
 }
 }        
+
+         // =====================================
+// 相手の特殊スキル選択完了
+// =====================================
+if(data.payload?.type==="abilityReady"){
+
+  onlinePeerAbilityReady=true;
+
+  // 自分もすでに選択済みなら
+  if(onlineSelfAbility){
+
+    onlineStatus.innerHTML=
+      `✨ <strong>2人ともスキルを決定しました！</strong><br>`+
+      `<span style="font-size:14px">`+
+      `スキル公開を待っています…`+
+      `</span>`;
+
+  }
+
+  return;
+}
          
 
  if(
@@ -5774,6 +5893,27 @@ if(rule==="ability"){
 
   return;
 }
+}
+
+        // =====================================
+// 相手の特殊スキル選択完了
+// =====================================
+if(data.payload?.type==="abilityReady"){
+
+  onlinePeerAbilityReady=true;
+
+  // 自分もすでに選択済みなら
+  if(onlineSelfAbility){
+
+    onlineStatus.innerHTML=
+      `✨ <strong>2人ともスキルを決定しました！</strong><br>`+
+      `<span style="font-size:14px">`+
+      `スキル公開を待っています…`+
+      `</span>`;
+
+  }
+
+  return;
 }
         
        if(
