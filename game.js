@@ -1614,9 +1614,12 @@ if(
       const dead=E.isCatDeadEnd(game,i);
       const from=game.catPos;
 
-       const useSneak=
+const useSneak=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.catAbilityPending==="sneak" &&
   !game.catAbilities.sneakUsed;
 
@@ -1683,13 +1686,19 @@ if(useFakePaw){
   game.catHistory.set(i,game.turn);
   game.catVisible=false;
 
-        if(playMode==="onlineCat"){
+if(playMode==="onlineCat"){
   window.NyanOnline.sendGame({
     type:"catMove",
     catPos:i,
-    turn:game.turn
+    turn:game.turn,
+
+    // 忍び足を使用したか
+    sneakUsed:useSneak,
+
+    // 忍び足で消した移動元
+    noTrackBox:useSneak ? from : null
   });
-} 
+}
          
          if(playMode==="onlineCat"){
   game.phase="onlineWaitingPolice";
@@ -2232,8 +2241,11 @@ if(
   }
    function toggleSneak(){
   if(!game.abilitiesEnabled) return;
-  if(playMode!=="local") return;
-  if(game.phase!=="cat") return;
+if(
+  playMode!=="local" &&
+  playMode!=="onlineCat"
+) return;
+      if(game.phase!=="cat") return;
   if(game.gameOver) return;
   if(game.actionLocked) return;
   if(game.catAbilities.sneakUsed) return;
@@ -3187,9 +3199,12 @@ tracksFoundCount.textContent=String(
     catViewBtn.textContent=game.catVisible?"🙈 ネコ位置を隠す":"👀 ネコ位置を見る";
 const canUseSneak=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.phase==="cat" &&
-   game.catVisible &&
+  game.catVisible &&
   !game.gameOver &&
   !game.actionLocked &&
   !game.catAbilities.sneakUsed &&
@@ -3197,7 +3212,10 @@ const canUseSneak=
 
 const showSneakBtn=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.phase==="cat" &&
   game.selectedAbilities.cat==="sneak";
 
@@ -3226,9 +3244,12 @@ sneakBtn.textContent=
   game.catAbilityPending==="sneak"
 );
 
-     const showSneakBanner=
+const showSneakBanner=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlineCat"
+  ) &&
   game.phase==="cat" &&
   game.catVisible &&
   game.catAbilityPending==="sneak" &&
