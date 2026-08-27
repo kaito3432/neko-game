@@ -5986,7 +5986,7 @@ function showHowToPage(page){
 
   // 範囲外には進ませない
   if(page<0) page=0;
-if(page>3) page=3;
+if(page>4) page=4;
    
   pages.forEach(el=>{
     el.classList.remove("show");
@@ -6005,8 +6005,8 @@ if(page>3) page=3;
   // 次へボタン
   // 今は3ページ目が最後なので、3ページ目だけ隠す
   if(howToNextBtn){
-    howToNextBtn.style.display=
-      howToPage===3 ? "none" : "";
+howToNextBtn.style.display=
+  howToPage===4 ? "none" : "";
 
     howToNextBtn.disabled=false;
   }
@@ -6409,7 +6409,7 @@ bindPress(howToBtn,()=>{
 bindPress(howToNextBtn,()=>{
 
 
-  if(howToPage<3){
+  if(howToPage<4){
     showHowToPage(howToPage+1);
   }
 });
