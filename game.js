@@ -5041,6 +5041,9 @@ onlineStartGameBtn.hidden=false;
 // =====================================
 if(data.payload?.type==="ruleSelect"){
 
+     // ホスト自身は自分が送ったルール通知を処理しない
+  if(onlineIsHost) return;
+
   const rule=data.payload.rule;
 
   // 不正な値は無視
@@ -5669,6 +5672,9 @@ if(isNewTrack){
 // ホストが選択したルールを受信
 // =====================================
 if(data.payload?.type==="ruleSelect"){
+
+     // ホスト自身は自分が送ったルール通知を処理しない
+  if(onlineIsHost) return;
 
   const rule=data.payload.rule;
 
