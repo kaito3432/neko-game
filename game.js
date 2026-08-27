@@ -5973,7 +5973,6 @@ function showHowToPage(page){
 // 遊び方を開く
 bindPress(howToBtn,()=>{
 
-  Audio.play("button");
 
   modeOverlay.classList.remove("show");
 
@@ -5987,7 +5986,6 @@ bindPress(howToBtn,()=>{
 // 次へ
 bindPress(howToNextBtn,()=>{
 
-  Audio.play("button");
 
   if(howToPage<2){
     showHowToPage(howToPage+1);
@@ -5998,7 +5996,6 @@ bindPress(howToNextBtn,()=>{
 // 戻る
 bindPress(howToCloseBtn,()=>{
 
-  Audio.play("button");
 
   // 2ページ目以降なら1ページ戻る
   if(howToPage>0){
