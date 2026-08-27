@@ -3017,9 +3017,17 @@ showSkillCutin({
     Audio.play("move");
 
     // くろ柴を2マス先へ移動
-    game.dogs[1]=target;
+game.dogs[1]=target;
 
-     if(playMode==="onlinePolice"){
+if(playMode==="onlinePolice"){
+
+  // ネコ側にもダッシュ発動を通知
+  window.NyanOnline.sendGame({
+    type:"policeSkillUsed",
+    skill:"dash"
+  });
+
+  // くろ柴の移動位置を同期
   window.NyanOnline.sendGame({
     type:"dogMove",
     dogIndex:1,
@@ -6819,6 +6827,26 @@ if(result==="track"){
 
   return;
 }
+if(
+  data.payload?.type==="policeSkillUsed" &&
+  onlineAssignedRole==="cat"
+){
+  const skill=data.payload.skill;
+
+  if(skill==="dash"){
+    showSkillCutin({
+      side:"police",
+      name:"ダッシュ",
+      desc:"一気に2マス移動",
+      image:"./assets/images/vs_dash.png",
+      duration:1400
+    });
+  }
+
+  return;
+}
+        
+        
 if(
   data.payload?.type==="captured" &&
   onlineAssignedRole==="cat"
