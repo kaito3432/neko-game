@@ -770,7 +770,7 @@ function startOnlineAbilityRule(){
   beginOnlineAbilitySelection();
 }
    
-   function startOnlineGame(){
+function startOnlineGame(){
   if(!onlineAssignedRole)return;
 
   playMode=
@@ -784,7 +784,46 @@ function startOnlineAbilityRule(){
   Audio.setBgmMode("normal");
   Audio.play("gamestart");
 
+
+  // =============================
+  // スキルを一時保存
+  // =============================
+  const savedCatAbility =
+    onlineRule==="ability"
+      ? game.selectedAbilities.cat
+      : null;
+
+  const savedPoliceAbility =
+    onlineRule==="ability"
+      ? game.selectedAbilities.police
+      : null;
+
+
+  // ゲーム本体を初期化
   initGame(false);
+
+
+  // =============================
+  // オンラインルールを反映
+  // =============================
+  if(onlineRule==="ability"){
+
+    game.abilitiesEnabled=true;
+
+    game.selectedAbilities.cat=
+      savedCatAbility;
+
+    game.selectedAbilities.police=
+      savedPoliceAbility;
+
+  }else{
+
+    // 通常戦
+    game.abilitiesEnabled=false;
+
+    game.selectedAbilities.cat=null;
+    game.selectedAbilities.police=null;
+  }
 
   if(onlineAssignedRole==="police"){
     // 自分が柴犬警察
