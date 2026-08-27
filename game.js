@@ -116,6 +116,10 @@ let onlineIsHost=false;
 onlinePeerDisconnected=false;
       onlineIsHost=false;
 
+      onlineRule=null;
+onlineSelfAbility=null;
+onlinePeerAbilityReady=false;
+
   if(onlineStartGameBtn){
     onlineStartGameBtn.hidden=true;
     onlineStartGameBtn.disabled=false;
@@ -4957,11 +4961,22 @@ bindPress(confirmPoliceAbilityBtn,()=>{
 
     onlineOverlay.classList.add("show");
 
-    onlineStatus.innerHTML=
-      `🐕 <strong>警察スキルを決定しました</strong><br>`+
-      `<span style="font-size:14px">`+
-      `相手のスキル選択を待っています…`+
-      `</span>`;
+if(onlinePeerAbilityReady){
+
+  onlineStatus.innerHTML=
+    `✨ <strong>2人ともスキルを決定しました！</strong><br>`+
+    `<span style="font-size:14px">`+
+    `スキル公開を待っています…`+
+    `</span>`;
+
+}else{
+
+  onlineStatus.innerHTML=
+    `🐕 <strong>警察スキルを決定しました</strong><br>`+
+    `<span style="font-size:14px">`+
+    `相手のスキル選択を待っています…`+
+    `</span>`;
+}
 
     return;
   }
@@ -5054,11 +5069,22 @@ bindPress(confirmCatAbilityBtn,()=>{
 
     onlineOverlay.classList.add("show");
 
-    onlineStatus.innerHTML=
-      `🐱 <strong>ネコスキルを決定しました</strong><br>`+
-      `<span style="font-size:14px">`+
-      `相手のスキル選択を待っています…`+
-      `</span>`;
+if(onlinePeerAbilityReady){
+
+  onlineStatus.innerHTML=
+    `✨ <strong>2人ともスキルを決定しました！</strong><br>`+
+    `<span style="font-size:14px">`+
+    `スキル公開を待っています…`+
+    `</span>`;
+
+}else{
+
+  onlineStatus.innerHTML=
+    `🐱 <strong>ネコスキルを決定しました</strong><br>`+
+    `<span style="font-size:14px">`+
+    `相手のスキル選択を待っています…`+
+    `</span>`;
+}
 
     return;
   }
