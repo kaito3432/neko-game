@@ -147,8 +147,7 @@ const howToSkillPoliceTab=$("howToSkillPoliceTab");
 const howToCatSkills=$("howToCatSkills");
 const howToPoliceSkills=$("howToPoliceSkills");
 
-const howToSkillDetailName=$("howToSkillDetailName");
-const howToSkillDetailText=$("howToSkillDetailText");
+
 
    const howToSkillPreviewOverlay=$("howToSkillPreviewOverlay");
 const howToSkillPreviewSide=$("howToSkillPreviewSide");
@@ -6007,14 +6006,7 @@ function showHowToSkillSide(side){
       card.classList.remove("selected");
     });
 
-  if(howToSkillDetailName){
-    howToSkillDetailName.textContent="スキルを選んでね！";
-  }
 
-  if(howToSkillDetailText){
-    howToSkillDetailText.textContent=
-      "カードをタップすると詳しい説明を確認できます。";
-  }
 }
 
 
