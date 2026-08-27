@@ -2881,12 +2881,6 @@ if(playMode==="onlinePolice"){
 
   Audio.haptic([20,30,20]);
 
-  // ネコ側へ遠吠え発動を通知
-  const skillSent=
-    window.NyanOnline.sendGame({
-      type:"policeSkillUsed",
-      skill:"howl"
-    });
 
   // Workerへ判定要求をすぐ送る
   const howlSent=
@@ -2896,12 +2890,10 @@ if(playMode==="onlinePolice"){
       node:game.dogs[0]
     });
 
-  console.log("📣 HOWL SEND", {
-    skillSent,
-    howlSent,
-    node:game.dogs[0]
-  });
-
+console.log("📣 HOWL SEND", {
+  howlSent,
+  node:game.dogs[0]
+});
   if(!howlSent){
 
     game.actionLocked=false;
