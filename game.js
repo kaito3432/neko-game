@@ -3429,13 +3429,7 @@ const canUseHowl=
   !game.policeAbilities.howlUsed &&
   !game.gameOver &&
   !game.actionLocked;
-  game.phase==="dogs" &&
-  game.selectedAbilities.police==="howl" &&
-  game.selectedDog===0 &&
-  !game.dogAction[0] &&
-  !game.policeAbilities.howlUsed &&
-  !game.gameOver &&
-  !game.actionLocked;
+
 
 const showHowlBtn=
   game.abilitiesEnabled &&
