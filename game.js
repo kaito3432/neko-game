@@ -547,18 +547,31 @@ function startOnlineNormalRule(){
 // =====================================
 function startOnlineAbilityRule(){
 
+  // ホスト以外は選択不可
+  if(!onlineIsHost) return;
+
   onlineRule="ability";
+
+
+  // ゲストへルールを通知
+  window.NyanOnline.sendGame({
+    type:"ruleSelect",
+    rule:"ability"
+  });
+
+
+  onlineRuleOverlay.classList.remove("show");
+  onlineOverlay.classList.add("show");
+
 
   onlineStatus.innerHTML=
     `✨ <strong>特殊スキルあり</strong><br>`+
     `<span style="font-size:14px">`+
-    `次に自分の特殊スキルを選択します`+
+    `特殊スキル選択へ進みます`+
     `</span>`;
 
-  // Phase2でここから
-  // ネコ → ネコスキル選択
-  // 警察 → 警察スキル選択
-  // に分岐させる
+  // 次のPhaseでここから
+  // beginOnlineAbilitySelection();
 }
    
    function startOnlineGame(){
@@ -5023,6 +5036,66 @@ onlineStartGameBtn.hidden=false;
     tryStartOnlineGame();
   }
 
+ // =====================================
+// ホストが選択したルールを受信
+// =====================================
+if(data.payload?.type==="ruleSelect"){
+
+  const rule=data.payload.rule;
+
+  // 不正な値は無視
+  if(
+    rule!=="normal" &&
+    rule!=="ability"
+  ){
+    return;
+  }
+
+  onlineRule=rule;
+
+
+  // 念のためルール選択画面を閉じる
+  onlineRuleOverlay?.classList.remove("show");
+
+  onlineOverlay.classList.add("show");
+
+
+  // =============================
+  // 通常戦
+  // =============================
+  if(rule==="normal"){
+
+    onlineStatus.innerHTML=
+      `🐱🐕 <strong>通常戦</strong><br>`+
+      `<span style="font-size:14px">`+
+      `ホストが通常戦を選択しました`+
+      `</span>`;
+
+    startOnlineReadyFlow();
+
+    return;
+  }
+
+
+  // =============================
+  // 特殊スキルあり
+  // =============================
+  if(rule==="ability"){
+
+    onlineStatus.innerHTML=
+      `✨ <strong>特殊スキルあり</strong><br>`+
+      `<span style="font-size:14px">`+
+      `ホストが特殊スキルありを選択しました`+
+      `</span>`;
+
+    // 次のPhaseで
+    // beginOnlineAbilitySelection();
+
+    return;
+  }
+}        
+         
+
  if(
   data.payload?.type==="catNoEscape" &&
   onlineAssignedRole==="police"
@@ -5591,6 +5664,66 @@ if(isNewTrack){
     onlinePeerReady=true;
     tryStartOnlineGame();
   }
+
+// =====================================
+// ホストが選択したルールを受信
+// =====================================
+if(data.payload?.type==="ruleSelect"){
+
+  const rule=data.payload.rule;
+
+  // 不正な値は無視
+  if(
+    rule!=="normal" &&
+    rule!=="ability"
+  ){
+    return;
+  }
+
+  onlineRule=rule;
+
+
+  // 念のためルール選択画面を閉じる
+  onlineRuleOverlay?.classList.remove("show");
+
+  onlineOverlay.classList.add("show");
+
+
+  // =============================
+  // 通常戦
+  // =============================
+  if(rule==="normal"){
+
+    onlineStatus.innerHTML=
+      `🐱🐕 <strong>通常戦</strong><br>`+
+      `<span style="font-size:14px">`+
+      `ホストが通常戦を選択しました`+
+      `</span>`;
+
+    startOnlineReadyFlow();
+
+    return;
+  }
+
+
+  // =============================
+  // 特殊スキルあり
+  // =============================
+  if(rule==="ability"){
+
+    onlineStatus.innerHTML=
+      `✨ <strong>特殊スキルあり</strong><br>`+
+      `<span style="font-size:14px">`+
+      `ホストが特殊スキルありを選択しました`+
+      `</span>`;
+
+    // 次のPhaseで
+    // beginOnlineAbilitySelection();
+
+    return;
+  }
+}
+        
        if(
   data.payload?.type==="catNoEscape" &&
   onlineAssignedRole==="police"
