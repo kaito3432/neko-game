@@ -6036,18 +6036,47 @@ const howToSkillDescriptions={
     desc:"足跡を残さず移動",
     image:"./assets/images/skill_icon_sneak.png",
 
-    visual:`
-      <div style="
-        text-align:center;
-        font-size:14px;
-        line-height:1.7;
-      ">
-        <div style="font-size:35px;">📦　🐱　➡️　📦</div>
-        <div style="margin-top:5px;">
-          🐾を残さず移動
+visual:`
+  <div class="skill-demo sneak-demo">
+
+    <div class="skill-demo-row">
+
+      <div class="skill-demo-case">
+        <b>通常移動</b>
+
+        <div class="skill-demo-move">
+          <span>🐱</span>
+          <span>➡️</span>
+          <span>📦</span>
+        </div>
+
+        <div class="skill-demo-result bad">
+          🐾 足跡が残る
         </div>
       </div>
-    `,
+
+
+      <div class="skill-demo-vs">→</div>
+
+
+      <div class="skill-demo-case special">
+        <b>忍び足</b>
+
+        <div class="skill-demo-move">
+          <span>🐱</span>
+          <span>➡️</span>
+          <span>📦</span>
+        </div>
+
+        <div class="skill-demo-result good">
+          ✨ 足跡なし
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+`,
 
     detail:`
       使用したターンは、ネコが移動しても足跡を残しません。
@@ -6141,17 +6170,49 @@ const howToSkillDescriptions={
     desc:"一気に2マス移動",
     image:"./assets/images/skill_icon_dash.png",
 
-    visual:`
-      <div style="text-align:center;">
-        <div style="font-size:35px;">
-          🐕　➡️　○　➡️　○
-        </div>
+visual:`
+  <div class="dash-demo">
 
-        <div style="margin-top:8px;font-size:13px;">
-          2マス先の交差点まで移動
-        </div>
-      </div>
-    `,
+    <div class="dash-demo-title">
+      通常は1マス
+    </div>
+
+    <div class="dash-demo-line">
+      <span class="dash-dog">🐕</span>
+
+      <span class="dash-path short"></span>
+
+      <span class="dash-node active"></span>
+
+      <span class="dash-path"></span>
+
+      <span class="dash-node"></span>
+    </div>
+
+
+    <div class="dash-demo-arrow">
+      ↓ ダッシュを使うと
+    </div>
+
+
+    <div class="dash-demo-line">
+      <span class="dash-dog">🐕</span>
+
+      <span class="dash-path long"></span>
+
+      <span class="dash-node passed"></span>
+
+      <span class="dash-path long"></span>
+
+      <span class="dash-node target"></span>
+    </div>
+
+    <div class="dash-demo-caption">
+      ⚡ 2マス先の交差点まで一気に移動！
+    </div>
+
+  </div>
+`,
 
     detail:`
       くろ柴が一度に2マス先の交差点まで移動できます。
