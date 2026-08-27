@@ -7114,3 +7114,165 @@ body.sneak-mode .board-shell{
 
   box-shadow:0 4px 12px rgba(70,45,35,.14);
 }
+/* =====================================
+   遊び方 5ページ目：勝敗
+===================================== */
+
+.howto-result-intro{
+  margin:0 0 12px;
+
+  text-align:center;
+
+  font-size:12.5px;
+  line-height:1.4;
+
+  color:#806b62;
+}
+
+
+/* 勝利カード */
+.howto-result-card{
+  position:relative;
+
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  padding:13px 12px;
+
+  border:2px solid;
+  border-radius:18px;
+
+  text-align:left;
+}
+
+.howto-result-card.cat-win{
+  background:#fff2f6;
+  border-color:#f1b0c4;
+}
+
+.howto-result-card.police-win{
+  background:#eef8ff;
+  border-color:#a9d4ef;
+}
+
+
+.howto-result-character{
+  flex:0 0 48px;
+
+  font-size:38px;
+  text-align:center;
+}
+
+
+.howto-result-copy{
+  flex:1;
+  min-width:0;
+}
+
+.howto-result-copy > strong{
+  display:block;
+
+  margin-bottom:4px;
+
+  font-size:16px;
+  color:#5d4037;
+}
+
+.howto-result-copy p{
+  margin:0;
+
+  font-size:12px;
+  line-height:1.45;
+
+  color:#765f56;
+}
+
+.howto-result-copy p strong{
+  color:#5d4037;
+}
+
+
+/* ESCAPE / CAPTURE */
+.howto-result-badge{
+  position:absolute;
+
+  top:8px;
+  right:9px;
+
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.08em;
+
+  opacity:.55;
+}
+
+.cat-win .howto-result-badge{
+  color:#d45f84;
+}
+
+.police-win .howto-result-badge{
+  color:#4b98cb;
+}
+
+
+/* VS */
+.howto-result-vs{
+  margin:5px 0;
+
+  text-align:center;
+
+  font-size:12px;
+  font-weight:900;
+
+  color:#ad9b93;
+}
+
+
+/* 最後のポイント */
+.howto-result-tip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+
+  margin-top:12px;
+  padding:10px 11px;
+
+  border-radius:14px;
+
+  background:#fff5d8;
+
+  color:#715b52;
+}
+
+.howto-result-tip > span{
+  flex:0 0 auto;
+  font-size:20px;
+}
+
+.howto-result-tip p{
+  margin:0;
+
+  font-size:11.5px;
+  line-height:1.45;
+}
+
+
+/* スマホ */
+@media (max-width:600px){
+
+  .howto-page[data-howto-page="4"]{
+    padding:0;
+  }
+
+  .howto-page[data-howto-page="4"] .howto-page-icon{
+    margin-bottom:0;
+    font-size:25px;
+  }
+
+  .howto-page[data-howto-page="4"] h2{
+    margin:1px 0 7px;
+    font-size:22px;
+  }
+
+}
