@@ -7080,3 +7080,37 @@ body.sneak-mode .board-shell{
   width:52px;
   height:52px;
 }
+/* =====================================
+   Overlay共通：ホームへ戻る ×
+===================================== */
+
+.overlay-home-close{
+  position:absolute;
+
+  top:calc(env(safe-area-inset-top, 0px) + 14px);
+  right:16px;
+
+  z-index:100;
+
+  width:42px;
+  height:42px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:0;
+
+  border:2px solid rgba(105,75,62,.22);
+  border-radius:50%;
+
+  background:rgba(255,255,255,.92);
+
+  color:#694b3e;
+
+  font-size:25px;
+  font-weight:900;
+  line-height:1;
+
+  box-shadow:0 4px 12px rgba(70,45,35,.14);
+}
