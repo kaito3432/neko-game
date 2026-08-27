@@ -157,6 +157,8 @@ const howToSkillPreviewDesc=$("howToSkillPreviewDesc");
 const howToSkillPreviewDetail=$("howToSkillPreviewDetail");
 const howToSkillPreviewCloseBtn=$("howToSkillPreviewCloseBtn");
 
+   const howToSkillPreviewVisual=$("howToSkillPreviewVisual");
+
 
 // =====================================
 // 特殊スキル 発動カットイン
@@ -6029,43 +6031,164 @@ bindPress(howToSkillPoliceTab,()=>{
 const howToSkillDescriptions={
 
   sneak:{
-    side:"🐱 ネコ",
+    side:"CAT SPECIAL SKILL",
     name:"忍び足",
     desc:"足跡を残さず移動",
-    detail:"使用したターンは、ネコが移動しても足跡を残しません。",
-    image:"./assets/images/skill_icon_sneak.png"
+    image:"./assets/images/skill_icon_sneak.png",
+
+    visual:`
+      <div style="
+        text-align:center;
+        font-size:14px;
+        line-height:1.7;
+      ">
+        <div style="font-size:35px;">📦　🐱　➡️　📦</div>
+        <div style="margin-top:5px;">
+          🐾を残さず移動
+        </div>
+      </div>
+    `,
+
+    detail:`
+      使用したターンは、ネコが移動しても足跡を残しません。
+      <ul>
+        <li>移動前に使用します</li>
+        <li>1ゲームに1回使用できます</li>
+      </ul>
+    `
   },
+
 
   fakepaw:{
-    side:"🐱 ネコ",
+    side:"CAT SPECIAL SKILL",
     name:"フェイク肉球",
     desc:"ニセの足跡で警察を惑わせる",
-    detail:"本物とは別の場所にニセの足跡を残し、柴犬警察を惑わせます。",
-    image:"./assets/images/skill_icon_fakepaw.png"
+    image:"./assets/images/skill_icon_fakepaw.png",
+
+    visual:`
+      <div style="
+        text-align:center;
+        font-size:14px;
+        line-height:1.7;
+      ">
+        <div style="font-size:34px;">🐱　　🎭🐾</div>
+        <div style="margin-top:5px;">
+          本当の移動先とは別の場所に足跡
+        </div>
+      </div>
+    `,
+
+    detail:`
+      移動可能な別の箱にニセの足跡を残して、
+      柴犬警察を惑わせます。
+      <ul>
+        <li>フェイクを置く箱を選んでから移動します</li>
+        <li>1ゲームに1回使用できます</li>
+      </ul>
+    `
   },
+
 
   howl:{
-    side:"🐕 柴犬警察",
+    side:"POLICE SPECIAL SKILL",
     name:"あか柴・遠吠え",
     desc:"周囲のネコの気配を探知",
-    detail:"あか柴の周囲を調べて、近くにネコの気配があるか確認できます。",
-    image:"./assets/images/skill_icon_howl.png"
+    image:"./assets/images/skill_icon_howl.png",
+
+    visual:`
+      <div style="text-align:center;">
+        <div style="
+          display:grid;
+          grid-template-columns:42px 42px 42px;
+          grid-template-rows:42px 42px 42px;
+          gap:4px;
+          justify-content:center;
+          align-items:center;
+        ">
+          <span></span>
+          <span>📦</span>
+          <span></span>
+
+          <span>📦</span>
+          <strong style="font-size:26px;">🐕</strong>
+          <span>📦</span>
+
+          <span></span>
+          <span>📦</span>
+          <span></span>
+        </div>
+
+        <div style="margin-top:8px;font-size:13px;">
+          周囲4箱の「気配」を探知
+        </div>
+      </div>
+    `,
+
+    detail:`
+      あか柴の周囲4箱にネコがいるかどうかを探知します。
+      <ul>
+        <li>正確な箱までは分かりません</li>
+        <li>捕獲にはなりません</li>
+        <li>1ゲームに1回使用できます</li>
+      </ul>
+    `
   },
+
 
   dash:{
-    side:"🐕 柴犬警察",
+    side:"POLICE SPECIAL SKILL",
     name:"くろ柴・ダッシュ",
     desc:"一気に2マス移動",
-    detail:"くろ柴が通常より遠く、2マス先の交差点まで一気に移動できます。",
-    image:"./assets/images/skill_icon_dash.png"
+    image:"./assets/images/skill_icon_dash.png",
+
+    visual:`
+      <div style="text-align:center;">
+        <div style="font-size:35px;">
+          🐕　➡️　○　➡️　○
+        </div>
+
+        <div style="margin-top:8px;font-size:13px;">
+          2マス先の交差点まで移動
+        </div>
+      </div>
+    `,
+
+    detail:`
+      くろ柴が一度に2マス先の交差点まで移動できます。
+      <ul>
+        <li>ダッシュ先を選んでから確定します</li>
+        <li>1ゲームに1回使用できます</li>
+      </ul>
+    `
   },
 
+
   search:{
-    side:"🐕 柴犬警察",
+    side:"POLICE SPECIAL SKILL",
     name:"しろ柴・一斉捜索",
     desc:"2箱を一度に探索",
-    detail:"しろ柴の周囲から2つのダンボールを選び、一度に探索できます。",
-    image:"./assets/images/skill_icon_search.png"
+    image:"./assets/images/skill_icon_search.png",
+
+    visual:`
+      <div style="text-align:center;">
+        <div style="font-size:35px;">
+          📦🔍　🐕　🔍📦
+        </div>
+
+        <div style="margin-top:8px;font-size:13px;">
+          周囲から2箱を選んで探索
+        </div>
+      </div>
+    `,
+
+    detail:`
+      しろ柴の周囲にある箱から2箱を選び、
+      一度に探索します。
+      <ul>
+        <li>2箱を選んでから確定します</li>
+        <li>1ゲームに1回使用できます</li>
+      </ul>
+    `
   }
 
 };
@@ -6084,8 +6207,8 @@ function openHowToSkillPreview(skill){
 
   howToSkillPreviewName.textContent=info.name;
   howToSkillPreviewDesc.textContent=info.desc;
-  howToSkillPreviewDetail.textContent=info.detail;
-
+howToSkillPreviewVisual.innerHTML=info.visual;
+howToSkillPreviewDetail.innerHTML=info.detail;
   howToSkillPreviewOverlay.classList.add("show");
   howToSkillPreviewOverlay.setAttribute(
     "aria-hidden",
