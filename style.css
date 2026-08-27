@@ -6655,3 +6655,162 @@ body.sneak-mode .board-shell{
 
   min-height:48px;
 }
+/* =====================================
+   遊び方：スキル図解
+===================================== */
+
+.skill-demo-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+}
+
+.skill-demo-case{
+  flex:1;
+  min-width:0;
+
+  padding:10px 6px;
+
+  border-radius:14px;
+  background:#f7f3ef;
+
+  text-align:center;
+}
+
+.skill-demo-case.special{
+  background:#fff2d8;
+  border:2px solid #f2b14a;
+}
+
+.skill-demo-case b{
+  display:block;
+  margin-bottom:7px;
+
+  font-size:12px;
+  color:#654b42;
+}
+
+.skill-demo-move{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:4px;
+
+  font-size:23px;
+}
+
+.skill-demo-result{
+  margin-top:7px;
+
+  font-size:11px;
+  font-weight:900;
+}
+
+.skill-demo-result.bad{
+  color:#8b7770;
+}
+
+.skill-demo-result.good{
+  color:#b57200;
+}
+
+.skill-demo-vs{
+  flex:0 0 auto;
+
+  font-size:17px;
+  font-weight:900;
+
+  color:#876f65;
+}
+
+
+/* =====================================
+   ダッシュ図解
+===================================== */
+
+.dash-demo{
+  width:100%;
+  text-align:center;
+}
+
+.dash-demo-title{
+  margin-bottom:8px;
+
+  font-size:12px;
+  font-weight:800;
+
+  color:#765f56;
+}
+
+.dash-demo-line{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.dash-dog{
+  flex:0 0 auto;
+
+  margin-right:4px;
+
+  font-size:26px;
+}
+
+.dash-node{
+  width:32px;
+  height:32px;
+  flex:0 0 32px;
+
+  border:2px solid #6b4b3e;
+  border-radius:50%;
+
+  background:#fff;
+}
+
+.dash-node.active{
+  background:#e4f5df;
+}
+
+.dash-node.target{
+  background:#fff0be;
+
+  border-color:#efa82e;
+
+  box-shadow:
+    0 0 0 4px rgba(239,168,46,.15);
+}
+
+.dash-node.passed{
+  opacity:.38;
+}
+
+.dash-path{
+  width:28px;
+  height:4px;
+
+  background:#d2c5bf;
+}
+
+.dash-path.long{
+  background:#efa82e;
+}
+
+.dash-demo-arrow{
+  margin:9px 0;
+
+  font-size:11px;
+  font-weight:900;
+
+  color:#b27920;
+}
+
+.dash-demo-caption{
+  margin-top:9px;
+
+  font-size:12px;
+  font-weight:900;
+
+  color:#654b42;
+}
