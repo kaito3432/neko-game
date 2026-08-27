@@ -2833,25 +2833,30 @@ function toggleHowl(){
 
 Audio.haptic([20,30,20]);
 
-// 警察側にも遠吠えカットイン
-showSkillCutin({
-  side:"police",
-  name:"遠吠え",
-  desc:"周囲のネコの気配を探知",
-  image:"./assets/images/vs_howl.png",
-  duration:1400
-});
-
-// ネコ側にも遠吠え発動を通知
+// ネコ側へ遠吠え発動を通知
 window.NyanOnline.sendGame({
   type:"policeSkillUsed",
   skill:"howl"
 });
 
-const sent = window.NyanOnline.sendGame({
-  type:"howl",
-  dogIndex:0,
-  node:game.dogs[0]
+// 警察側でカットイン表示
+showSkillCutin({
+  side:"police",
+  name:"遠吠え",
+  desc:"周囲のネコの気配を探知",
+  image:"./assets/images/vs_howl.png",
+  duration:1400,
+
+  // カットイン終了後に判定要求を送る
+  onComplete:()=>{
+
+    const sent = window.NyanOnline.sendGame({
+      type:"howl",
+      dogIndex:0,
+      node:game.dogs[0]
+    });
+
+  }
 });
 
 console.log("📣 HOWL SEND", {
