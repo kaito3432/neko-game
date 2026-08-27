@@ -466,8 +466,6 @@ function bindPress(el, fn){
 // =====================================
 function openLocalRulePicker(){
 
-  Audio.play("button");
-
   modeOverlay.classList.remove("show");
   localRuleOverlay.classList.add("show");
 }
