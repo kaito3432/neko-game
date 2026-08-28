@@ -791,12 +791,25 @@ function startOnlineAbilityRule(){
    
 function startOnlineGame(){
 
+  if(!onlineAssignedRole) return;
+
+  // オンラインの役割をゲームモードへ反映
+  playMode=
     onlineAssignedRole==="cat"
       ? "onlineCat"
       : "onlinePolice";
 
+  // VS画面を閉じる
+  abilityRevealOverlay.classList.remove("show");
+  abilityRevealOverlay.classList.remove("vs-animate");
+
+  // オンラインルーム画面も閉じる
   onlineOverlay.classList.remove("show");
   modeOverlay.classList.remove("show");
+
+  // 次回用にVS開始ボタンを戻す
+  abilityStartBtn.disabled=false;
+  abilityStartBtn.textContent="ゲーム開始";
 
   Audio.setBgmMode("normal");
   Audio.play("gamestart");
