@@ -2352,6 +2352,20 @@ if(
 
    function cancelPendingAbility(){
 
+        // =====================================
+  // 忍び足
+  // =====================================
+  if(game.catAbilityPending==="sneak"){
+    game.catAbilityPending=null;
+
+    setMessage(
+      "忍び足をキャンセルしました。通常の移動に戻ります。"
+    );
+
+    render();
+    return;
+  }
+
   // フェイク肉球
   if(
     game.catAbilityPending==="fakePaw" &&
@@ -2416,27 +2430,6 @@ if(
 }
 }
 
-   function cancelPendingAbility(){
-
-  // =====================================
-  // 忍び足
-  // =====================================
-  if(game.catAbilityPending==="sneak"){
-    game.catAbilityPending=null;
-
-    setMessage(
-      "忍び足をキャンセルしました。通常の移動に戻ります。"
-    );
-
-    render();
-    return;
-  }
-
-  // フェイク肉球
-  if(
-    game.catAbilityPending==="fakePaw" &&
-    !game.fakePawConfirmed
-  ){
 
 function toggleFakePaw(){
   if(!game.abilitiesEnabled) return;
