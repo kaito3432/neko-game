@@ -7447,3 +7447,72 @@ body.sneak-mode .board-shell{
   font-weight:900;
   white-space:nowrap;
 }
+/* ==================================================
+   iPhone SE 専用レイアウト調整
+   375 × 667 前後の小型画面だけに適用
+   通常サイズのiPhoneには影響させない
+================================================== */
+
+@media (max-width: 375px) and (max-height: 700px){
+
+  /* ホーム全体 */
+  .vu3-home{
+    grid-template-rows:
+      minmax(0,23dvh)
+      auto
+      minmax(0,1fr)
+      auto!important;
+
+    gap:3px!important;
+
+    padding-top:max(4px,env(safe-area-inset-top))!important;
+    padding-bottom:max(4px,env(safe-area-inset-bottom))!important;
+  }
+
+  /* ロゴ */
+  .vu3-logo{
+    height:52px!important;
+    flex-basis:52px!important;
+  }
+
+  /* メインキャラクター画像 */
+  .vu3-hero{
+    max-height:calc(100% - 54px)!important;
+  }
+
+  /* キャッチコピー */
+  .vu3-sub{
+    font-size:13px!important;
+  }
+
+  /* 対戦モードの文字 */
+  .vu3-copy strong{
+    font-size:18px!important;
+  }
+
+  .vu3-copy span{
+    font-size:8px!important;
+    margin-top:1px!important;
+  }
+
+  /* 対戦モードカード */
+  .vu3-mode{
+    min-height:0!important;
+    padding-top:4px!important;
+    padding-bottom:4px!important;
+  }
+
+  /* 下3ボタン */
+  .vu3-mini{
+    height:36px!important;
+    min-height:36px!important;
+    font-size:9px!important;
+    gap:3px!important;
+    padding:2px!important;
+  }
+
+  .vu3-svg{
+    width:19px!important;
+    height:19px!important;
+  }
+}
