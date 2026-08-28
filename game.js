@@ -6083,6 +6083,7 @@ if(game.turn>=E.MAX_TURNS){
   render();
 }
 
+
          // =====================================
 // しろ柴・一斉捜索開始
 // 警察・ネコ両方にカットイン表示
@@ -6106,23 +6107,210 @@ if(data.payload?.type==="doubleSearchStarted"){
 }
 
          // =====================================
-// しろ柴・一斉捜索開始
-// 警察・ネコ両方にカットイン表示
+// しろ柴・一斉捜索 結果受信
 // =====================================
-if(data.payload?.type==="doubleSearchStarted"){
+if(data.payload?.type==="doubleSearchResult"){
 
-  console.log("🔍 DOUBLE SEARCH STARTED", {
+  const results=Array.isArray(data.payload.results)
+    ? data.payload.results
+    : [];
+
+  console.log("🔍 DOUBLE SEARCH RESULT", {
     role:onlineAssignedRole,
-    targets:data.payload.targets
+    results
   });
 
-  showSkillCutin({
-    side:"police",
-    name:"一斉捜索",
-    desc:"2つの箱を同時に捜索",
-    image:"./assets/images/vs_search.png",
-    duration:1400
-  });
+  // 2箱を順番に結果表示
+  let index=0;
+
+  function showNextDoubleSearchResult(){
+
+    if(index>=results.length){
+
+      game.actionLocked=false;
+      game.doubleSearchTargets=[];
+      game.doubleSearchConfirmed=false;
+
+      // 警察側だけターン処理を進める
+      if(onlineAssignedRole==="police"){
+        afterDogAction();
+      }
+
+      render();
+      return;
+    }
+
+    const item=results[index];
+    const bi=Number(item.box);
+    const result=item.result;
+    const trackTurn=Number(item.trackTurn);
+
+    // ------------------------------
+    // 捕獲
+    // ------------------------------
+    if(result==="capture"){
+
+      Audio.play("capture");
+      Audio.haptic([35,45,70]);
+
+      A.burstAtBox(
+        board,
+        bi,
+        "🐱✨"
+      );
+
+      game.actionLocked=false;
+      game.doubleSearchTargets=[];
+      game.doubleSearchConfirmed=false;
+
+      endGame(
+        "dogs",
+        `しろ柴の一斉捜索！箱${bi+1}でネコを発見！`
+      );
+
+      return;
+    }
+
+    // ------------------------------
+    // 足跡
+    // ------------------------------
+    if(result==="track"){
+
+      const isNewTrack=
+        !game.revealedTracks.has(bi);
+
+      game.revealedTracks.set(
+        bi,
+        trackTurn
+      );
+
+      if(isNewTrack){
+
+        const foundBox=
+          board.querySelector(
+            `.box[data-box-index="${bi}"]`
+          );
+
+        if(foundBox){
+          foundBox.classList.remove("found-track");
+          void foundBox.offsetWidth;
+          foundBox.classList.add("found-track");
+
+          setTimeout(()=>{
+            foundBox.classList.remove("found-track");
+          },700);
+        }
+
+        Audio.haptic([15,35,25]);
+      }
+
+      // スタート地点
+      if(trackTurn===1){
+
+        Audio.duckBgm(900);
+
+        setTimeout(()=>{
+          Audio.play("start");
+        },60);
+
+        A.burstAtBox(
+          board,
+          bi,
+          "🚩✨"
+        );
+
+        showToast(
+          "🚩",
+          "スタート地点を発見！",
+          `箱${bi+1}から逃げ始めたみたいだワン！`
+        );
+
+      }else{
+
+        Audio.duckBgm(900);
+
+        setTimeout(()=>{
+          Audio.play("paw");
+        },60);
+
+        A.burstAtBox(
+          board,
+          bi,
+          "🐾✨"
+        );
+
+        showToast(
+          "🐕🐾",
+          "足跡を発見！",
+          `箱${bi+1}にネコの痕跡があるワン！`
+        );
+      }
+
+      render();
+
+      index++;
+
+      setTimeout(
+        showNextDoubleSearchResult,
+        700
+      );
+
+      return;
+    }
+
+    // ------------------------------
+    // 何もなし
+    // ------------------------------
+    if(result==="empty"){
+
+      const emptyBox=
+        board.querySelector(
+          `.box[data-box-index="${bi}"]`
+        );
+
+      if(emptyBox){
+        emptyBox.classList.remove("empty-search");
+        void emptyBox.offsetWidth;
+        emptyBox.classList.add("empty-search");
+      }
+
+      Audio.play("empty");
+      Audio.haptic(10);
+
+      A.burstAtBox(
+        board,
+        bi,
+        "💨"
+      );
+
+      showToast(
+        "💨",
+        "クンクン……",
+        `箱${bi+1}には何もないワン！`
+      );
+
+      render();
+
+      index++;
+
+      setTimeout(
+        showNextDoubleSearchResult,
+        700
+      );
+
+      return;
+    }
+
+    // 想定外でも次へ
+    index++;
+
+    setTimeout(
+      showNextDoubleSearchResult,
+      500
+    );
+  }
+
+  showNextDoubleSearchResult();
 
   return;
 }
@@ -6934,6 +7122,237 @@ if(result==="track"){
 
   afterDogAction();
   render();
+}
+
+        // =====================================
+// しろ柴・一斉捜索開始
+// 警察・ネコ両方にカットイン表示
+// =====================================
+if(data.payload?.type==="doubleSearchStarted"){
+
+  console.log("🔍 DOUBLE SEARCH STARTED", {
+    role:onlineAssignedRole,
+    targets:data.payload.targets
+  });
+
+  showSkillCutin({
+    side:"police",
+    name:"一斉捜索",
+    desc:"2つの箱を同時に捜索",
+    image:"./assets/images/vs_search.png",
+    duration:1400
+  });
+
+  return;
+}
+
+        // =====================================
+// しろ柴・一斉捜索 結果受信
+// =====================================
+if(data.payload?.type==="doubleSearchResult"){
+
+  const results=Array.isArray(data.payload.results)
+    ? data.payload.results
+    : [];
+
+  console.log("🔍 DOUBLE SEARCH RESULT", {
+    role:onlineAssignedRole,
+    results
+  });
+
+  // 2箱を順番に結果表示
+  let index=0;
+
+  function showNextDoubleSearchResult(){
+
+    if(index>=results.length){
+
+      game.actionLocked=false;
+      game.doubleSearchTargets=[];
+      game.doubleSearchConfirmed=false;
+
+      // 警察側だけターン処理を進める
+      if(onlineAssignedRole==="police"){
+        afterDogAction();
+      }
+
+      render();
+      return;
+    }
+
+    const item=results[index];
+    const bi=Number(item.box);
+    const result=item.result;
+    const trackTurn=Number(item.trackTurn);
+
+    // ------------------------------
+    // 捕獲
+    // ------------------------------
+    if(result==="capture"){
+
+      Audio.play("capture");
+      Audio.haptic([35,45,70]);
+
+      A.burstAtBox(
+        board,
+        bi,
+        "🐱✨"
+      );
+
+      game.actionLocked=false;
+      game.doubleSearchTargets=[];
+      game.doubleSearchConfirmed=false;
+
+      endGame(
+        "dogs",
+        `しろ柴の一斉捜索！箱${bi+1}でネコを発見！`
+      );
+
+      return;
+    }
+
+    // ------------------------------
+    // 足跡
+    // ------------------------------
+    if(result==="track"){
+
+      const isNewTrack=
+        !game.revealedTracks.has(bi);
+
+      game.revealedTracks.set(
+        bi,
+        trackTurn
+      );
+
+      if(isNewTrack){
+
+        const foundBox=
+          board.querySelector(
+            `.box[data-box-index="${bi}"]`
+          );
+
+        if(foundBox){
+          foundBox.classList.remove("found-track");
+          void foundBox.offsetWidth;
+          foundBox.classList.add("found-track");
+
+          setTimeout(()=>{
+            foundBox.classList.remove("found-track");
+          },700);
+        }
+
+        Audio.haptic([15,35,25]);
+      }
+
+      // スタート地点
+      if(trackTurn===1){
+
+        Audio.duckBgm(900);
+
+        setTimeout(()=>{
+          Audio.play("start");
+        },60);
+
+        A.burstAtBox(
+          board,
+          bi,
+          "🚩✨"
+        );
+
+        showToast(
+          "🚩",
+          "スタート地点を発見！",
+          `箱${bi+1}から逃げ始めたみたいだワン！`
+        );
+
+      }else{
+
+        Audio.duckBgm(900);
+
+        setTimeout(()=>{
+          Audio.play("paw");
+        },60);
+
+        A.burstAtBox(
+          board,
+          bi,
+          "🐾✨"
+        );
+
+        showToast(
+          "🐕🐾",
+          "足跡を発見！",
+          `箱${bi+1}にネコの痕跡があるワン！`
+        );
+      }
+
+      render();
+
+      index++;
+
+      setTimeout(
+        showNextDoubleSearchResult,
+        700
+      );
+
+      return;
+    }
+
+    // ------------------------------
+    // 何もなし
+    // ------------------------------
+    if(result==="empty"){
+
+      const emptyBox=
+        board.querySelector(
+          `.box[data-box-index="${bi}"]`
+        );
+
+      if(emptyBox){
+        emptyBox.classList.remove("empty-search");
+        void emptyBox.offsetWidth;
+        emptyBox.classList.add("empty-search");
+      }
+
+      Audio.play("empty");
+      Audio.haptic(10);
+
+      A.burstAtBox(
+        board,
+        bi,
+        "💨"
+      );
+
+      showToast(
+        "💨",
+        "クンクン……",
+        `箱${bi+1}には何もないワン！`
+      );
+
+      render();
+
+      index++;
+
+      setTimeout(
+        showNextDoubleSearchResult,
+        700
+      );
+
+      return;
+    }
+
+    // 想定外でも次へ
+    index++;
+
+    setTimeout(
+      showNextDoubleSearchResult,
+      500
+    );
+  }
+
+  showNextDoubleSearchResult();
+
+  return;
 }
 
         if(
