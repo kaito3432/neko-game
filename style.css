@@ -7374,3 +7374,76 @@ body.sneak-mode .board-shell{
   }
 
 }
+/* =====================================
+   結果画面：特殊スキル表示 最終調整
+   ===================================== */
+
+/* 忍び足 */
+.result-route-sneak-mark{
+  width:30px;
+  height:30px;
+}
+
+.result-route-sneak-mark img{
+  width:17px;
+  height:17px;
+}
+
+.result-route-sneak-mark span{
+  position:absolute;
+  left:50%;
+  top:100%;
+  transform:translate(-50%,2px);
+
+  padding:1px 4px;
+
+  border:1.5px solid #8D6E63;
+  border-radius:999px;
+
+  background:rgba(255,255,255,.96);
+
+  color:#6D5148;
+
+  font-size:6px;
+  line-height:1.2;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+
+/* フェイク肉球 */
+.result-route-fake-mark{
+  width:30px;
+  height:30px;
+}
+
+.result-route-fake-mark img{
+  width:17px;
+  height:17px;
+}
+
+/* 以前の「？」丸から文字タグへ変更 */
+.result-route-fake-mark span{
+  left:50%;
+  right:auto;
+  top:100%;
+
+  width:auto;
+  height:auto;
+
+  transform:translate(-50%,2px);
+
+  padding:1px 4px;
+
+  border:1.5px solid #D96B5F;
+  border-radius:999px;
+
+  background:#fff;
+
+  color:#C84F49;
+
+  font-size:6px;
+  line-height:1.2;
+  font-weight:900;
+  white-space:nowrap;
+}
