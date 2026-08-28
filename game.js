@@ -6080,9 +6080,8 @@ if(game.turn>=E.MAX_TURNS){
   return;
 }
 
-         if(
-  data.payload?.type==="howlResult" &&
-  onlineAssignedRole==="police"
+if(
+  data.payload?.type==="howlResult"
 ){
   const catInside =
     data.payload.inside === true;
@@ -6122,10 +6121,13 @@ if(game.turn>=E.MAX_TURNS){
       );
     }
 
-    game.actionLocked=false;
+game.actionLocked=false;
 
-    afterDogAction();
-    render();
+if(onlineAssignedRole==="police"){
+  afterDogAction();
+}
+
+render();
 
   },1700);
 
@@ -6862,8 +6864,7 @@ if(result==="track"){
 }
 
 if(
-  data.payload?.type==="howlResult" &&
-  onlineAssignedRole==="police"
+  data.payload?.type==="howlResult"
 ){
   const catInside =
     data.payload.inside === true;
@@ -6904,10 +6905,13 @@ if(
       );
     }
 
-    game.actionLocked=false;
+game.actionLocked=false;
 
-    afterDogAction();
-    render();
+if(onlineAssignedRole==="police"){
+  afterDogAction();
+}
+
+render();
 
   },1700);
 
