@@ -37,6 +37,44 @@
   };
   let cpuCatRoute=[];
 
+   // =====================================
+// 結果画面：ネコ特殊スキルの答え合わせ
+// =====================================
+let resultSneakBoxes=[];
+let resultFakeTracks=[];
+
+   function saveResultRouteSkills(routeSkills){
+
+  resultSneakBoxes=[];
+  resultFakeTracks=[];
+
+  if(!routeSkills) return;
+
+  if(Array.isArray(routeSkills.sneakBoxes)){
+    resultSneakBoxes=routeSkills.sneakBoxes
+      .map(Number)
+      .filter(box=>
+        Number.isInteger(box) &&
+        box>=0 &&
+        box<E.BOX_COUNT
+      );
+  }
+
+  if(Array.isArray(routeSkills.fakeTracks)){
+    resultFakeTracks=routeSkills.fakeTracks
+      .map(step=>({
+        box:Number(step.box),
+        turn:Number(step.turn)
+      }))
+      .filter(step=>
+        Number.isInteger(step.box) &&
+        step.box>=0 &&
+        step.box<E.BOX_COUNT &&
+        Number.isInteger(step.turn)
+      );
+  }
+}
+
   const $=id=>document.getElementById(id);
   const board=$("board");
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
@@ -471,6 +509,8 @@ onlineRuleOverlay?.classList.remove("show");
       thoughtText:""
     };
     cpuCatRoute=[];
+     resultSneakBoxes=[];
+resultFakeTracks=[];
     lastTurnStingerPlayed=false;
     privacyOverlay.classList.remove("show");
     resultOverlay.classList.remove("show");
@@ -6015,7 +6055,8 @@ if(game.turn>=E.MAX_TURNS){
   const box=Number(data.payload.box);
   const result=data.payload.result;
   const trackTurn=data.payload.trackTurn;
-  const route=data.payload.route;          
+  const route=data.payload.route;
+   const routeSkills=data.payload.routeSkills;
 
   if(
     !Number.isInteger(dogIndex) ||
@@ -6044,6 +6085,8 @@ if(game.turn>=E.MAX_TURNS){
     )
     .sort((a,b)=>a.turn-b.turn);
 }
+       saveResultRouteSkills(routeSkills);
+
     Audio.haptic([35,45,70]);
     A.burstAtBox(board,box,"🐱✨");
     A.shakeBoxSoon(board,box);
@@ -7082,7 +7125,8 @@ if(game.turn>=E.MAX_TURNS){
   const box=Number(data.payload.box);
   const result=data.payload.result;
   const trackTurn=data.payload.trackTurn;
-  const route=data.payload.route;         
+  const route=data.payload.route;     
+           const routeSkills=data.payload.routeSkills;
 
   if(
     !Number.isInteger(dogIndex) ||
@@ -7111,6 +7155,9 @@ if(game.turn>=E.MAX_TURNS){
     )
     .sort((a,b)=>a.turn-b.turn);
 }
+  saveResultRouteSkills(routeSkills);
+
+     
     Audio.haptic([35,45,70]);
     A.burstAtBox(board,box,"🐱✨");
     A.shakeBoxSoon(board,box);
@@ -7287,6 +7334,7 @@ if(result==="capture"){
       )
       .sort((a,b)=>a.turn-b.turn);
   }
+
 
   Audio.play("capture");
   Audio.haptic([35,45,70]);
