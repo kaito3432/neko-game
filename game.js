@@ -5254,12 +5254,10 @@ function renderResultCpuCatRoute(){
     mark.style.left=`${x}%`;
     mark.style.top=`${y}%`;
 
-    mark.innerHTML=`
-      <img
-        src="./assets/images/paw.png"
-        alt="忍び足"
-      >
-    `;
+mark.innerHTML=`
+  <img src="./assets/images/paw.png" alt="忍び足">
+  <span>忍び足</span>
+`;
 
     resultRouteBoard?.appendChild(mark);
   });
@@ -5281,13 +5279,10 @@ function renderResultCpuCatRoute(){
     mark.style.left=`${10+c*20}%`;
     mark.style.top=`${10+r*20}%`;
 
-    mark.innerHTML=`
-      <img
-        src="./assets/images/paw.png"
-        alt="フェイク肉球"
-      >
-      <span>?</span>
-    `;
+mark.innerHTML=`
+  <img src="./assets/images/paw.png" alt="フェイク肉球">
+  <span>フェイク</span>
+`;
 
     resultRouteBoard?.appendChild(mark);
   });
@@ -5298,18 +5293,75 @@ function renderResultCpuCatRoute(){
   // =====================================
   if(resultRouteNote){
 
-    let note=
-      `STARTから最終地点まで ${ordered.length}地点`;
+// =====================================
+// 特殊スキルの答え合わせ
+// =====================================
+let noteHTML=`
+  <div class="result-skill-summary-title">
+    🐾 特殊スキルの答え合わせ
+  </div>
 
-    if(resultSneakBoxes.length){
-      note+=" ／ 点線🐾＝忍び足";
-    }
+  <div class="result-skill-route-count">
+    STARTから最終地点まで ${ordered.length}地点
+  </div>
+`;
 
-    if(resultFakeTracks.length){
-      note+=" ／ ◌🐾?＝フェイク肉球";
-    }
 
-    resultRouteNote.textContent=note;
+// -----------------------------
+// 忍び足
+// -----------------------------
+resultSneakBoxes.forEach(fromBox=>{
+
+  const index=
+    ordered.findIndex(step=>step.box===fromBox);
+
+  if(index<0 || index>=ordered.length-1) return;
+
+  const toBox=ordered[index+1].box;
+
+  noteHTML+=`
+    <div class="result-skill-summary-row sneak">
+      <strong>🐾 忍び足</strong>
+      <span>
+        箱${fromBox+1} → 箱${toBox+1}
+      </span>
+    </div>
+  `;
+});
+
+
+// -----------------------------
+// フェイク肉球
+// -----------------------------
+resultFakeTracks.forEach(step=>{
+
+  noteHTML+=`
+    <div class="result-skill-summary-row fake">
+      <strong>🎭 フェイク肉球</strong>
+      <span>
+        箱${step.box+1}の足跡はフェイク
+      </span>
+    </div>
+  `;
+});
+
+
+// スキル未使用の場合
+if(
+  resultSneakBoxes.length===0 &&
+  resultFakeTracks.length===0
+){
+  noteHTML+=`
+    <div class="result-skill-summary-none">
+      特殊スキルによる足跡操作なし
+    </div>
+  `;
+}
+
+
+if(resultRouteNote){
+  resultRouteNote.innerHTML=noteHTML;
+}
   }
 
 
