@@ -1437,15 +1437,16 @@ if(E.getDogDashMoves(game,1).includes(i)){
      renderTrackLayer();
   }
 
-  function privateHistoryHTML(i){
-    if(playMode==="cpuCat")return"";
-    if(game.phase!=="cat"||!game.catVisible||!game.catHistory.has(i))return"";
-if(turn===1){
-   return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
-    }
-    return'<span class="private-foot"><img src="./assets/images/paw.png" alt="足跡"></span>';
+function privateHistoryHTML(i){
+  if(playMode==="cpuCat")return"";
+  if(game.phase!=="cat"||!game.catVisible||!game.catHistory.has(i))return"";
+
+  if(game.catHistory.get(i)===1){
+    return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
   }
 
+  return'<span class="private-foot"><img src="./assets/images/paw.png" alt="足跡"></span>';
+}
   function shouldShowTrackTurn(turn){
     // ターン数字は「プレイヤー＝警察 / CPUネコ戦」の難易度ヒントだけ。
     if(playMode!=="cpuCat") return false;
@@ -1465,7 +1466,7 @@ function publicTrackHTML(i){
     ? `<b class="track-turn">${turn}</b>`
     : "";
 
-  if(game.catHistory.get(i) === 1){
+  if(turn === 1){
     return `
       <span class="track-badge">
         <img
