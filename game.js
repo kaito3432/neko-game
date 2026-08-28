@@ -6423,6 +6423,17 @@ if(game.turn>=E.MAX_TURNS){
     );
   }
 
+// =====================================
+// オンライン探索演出が終わるまで操作禁止
+// =====================================
+setMessage(
+  `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} がクンクン調査中…`
+);
+
+render();
+
+setTimeout(()=>{
+
   game.actionLocked=false;
 
   setMessage(
@@ -6431,7 +6442,8 @@ if(game.turn>=E.MAX_TURNS){
 
   afterDogAction();
   render();
-}
+
+},700);
 
 
          // =====================================
@@ -7501,6 +7513,17 @@ if(result==="track"){
   );
 }
 
+// =====================================
+// オンライン探索演出が終わるまで操作禁止
+// =====================================
+setMessage(
+  `${E.DOGS[dogIndex].label} ${E.DOGS[dogIndex].name} がクンクン調査中…`
+);
+
+render();
+
+setTimeout(()=>{
+
   game.actionLocked=false;
 
   setMessage(
@@ -7509,7 +7532,8 @@ if(result==="track"){
 
   afterDogAction();
   render();
-}
+
+},700);
 
         // =====================================
 // しろ柴・一斉捜索開始
