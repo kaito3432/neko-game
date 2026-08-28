@@ -6066,6 +6066,72 @@ if(game.turn>=E.MAX_TURNS){
   render();
 }
 
+         if(
+  data.payload?.type==="howlStarted"
+){
+  showSkillCutin({
+    side:"police",
+    name:"遠吠え",
+    desc:"周囲のネコの気配を探知",
+    image:"./assets/images/vs_howl.png",
+    duration:1400
+  });
+
+  return;
+}
+
+         if(
+  data.payload?.type==="howlResult" &&
+  onlineAssignedRole==="police"
+){
+  const catInside =
+    data.payload.inside === true;
+
+  console.log("📣 HOWL RESULT RECEIVED", {
+    catInside
+  });
+
+  setTimeout(()=>{
+
+    if(catInside){
+
+      setMessage(
+        "📣 あか柴の遠吠え！この範囲にネコの気配があります！"
+      );
+
+      showToast(
+        "👀",
+        "気配あり！",
+        "この範囲にネコがいる！",
+        2200,
+        "howl-positive"
+      );
+
+    }else{
+
+      setMessage(
+        "📣 あか柴の遠吠え！この範囲にネコの気配はありません。"
+      );
+
+      showToast(
+        "💨",
+        "気配なし",
+        "この範囲にネコはいない",
+        1800,
+        "howl-negative"
+      );
+    }
+
+    game.actionLocked=false;
+
+    afterDogAction();
+    render();
+
+  },1700);
+
+  return;
+}
+
          
 if(
   data.payload?.type==="captured" &&
