@@ -1487,12 +1487,110 @@ body.turn-last .turn-pill{
   z-index:4;
   pointer-events:none;
 }
-.result-route-svg polyline{
-  fill:none;
+/* 通常の逃走ルート */
+.result-route-line{
   stroke:#D35E45;
   stroke-width:2.2;
   stroke-linecap:round;
-  stroke-linejoin:round;
+}
+
+/* 忍び足を使った区間 */
+.result-route-line.sneak{
+  stroke:#8D6E63;
+  stroke-width:2.4;
+  stroke-dasharray:2.2 3.2;
+  opacity:.8;
+}
+
+
+/* =====================================
+   忍び足マーク
+   点線区間の中央に表示
+   ===================================== */
+.result-route-sneak-mark{
+  position:absolute;
+  z-index:8;
+
+  width:25px;
+  height:25px;
+
+  transform:translate(-50%,-50%);
+
+  display:grid;
+  place-items:center;
+
+  border:2px dashed #8D6E63;
+  border-radius:999px;
+
+  background:rgba(255,255,255,.92);
+
+  pointer-events:none;
+}
+
+.result-route-sneak-mark img{
+  width:16px;
+  height:16px;
+
+  object-fit:contain;
+
+  opacity:.58;
+}
+
+
+/* =====================================
+   フェイク肉球
+   本物ルートとは独立して表示
+   ===================================== */
+.result-route-fake-mark{
+  position:absolute;
+  z-index:9;
+
+  width:29px;
+  height:29px;
+
+  transform:translate(-50%,-50%);
+
+  display:grid;
+  place-items:center;
+
+  border:2px dashed #D96B5F;
+  border-radius:999px;
+
+  background:rgba(255,245,243,.96);
+
+  pointer-events:none;
+}
+
+.result-route-fake-mark img{
+  width:17px;
+  height:17px;
+
+  object-fit:contain;
+
+  opacity:.72;
+}
+
+.result-route-fake-mark span{
+  position:absolute;
+
+  right:-4px;
+  top:-7px;
+
+  width:15px;
+  height:15px;
+
+  display:grid;
+  place-items:center;
+
+  border:1.5px solid #D96B5F;
+  border-radius:999px;
+
+  background:#fff;
+
+  color:#C84F49;
+
+  font-size:10px;
+  font-weight:900;
 }
 .result-route-badge{
   position:absolute;
