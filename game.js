@@ -2865,13 +2865,7 @@ console.log("📣 HOWL SEND", {
     render();
     return;
   }
-   showSkillCutin({
-  side:"police",
-  name:"遠吠え",
-  desc:"周囲のネコの気配を探知",
-  image:"./assets/images/vs_howl.png",
-  duration:1400
-});
+
 
   setMessage(
     "📣 あか柴が遠吠え中…ネコの気配を確認しています。"
@@ -6787,6 +6781,20 @@ if(result==="track"){
   render();
 }
 
+        if(
+  data.payload?.type==="howlStarted"
+){
+  showSkillCutin({
+    side:"police",
+    name:"遠吠え",
+    desc:"周囲のネコの気配を探知",
+    image:"./assets/images/vs_howl.png",
+    duration:1400
+  });
+
+  return;
+}
+
 if(
   data.payload?.type==="howlResult" &&
   onlineAssignedRole==="police"
@@ -6852,15 +6860,6 @@ if(
     phase:game?.phase
   });
 
-   if(skill==="howl"){
-  showSkillCutin({
-    side:"police",
-    name:"遠吠え",
-    desc:"周囲のネコの気配を探知",
-    image:"./assets/images/vs_howl.png",
-    duration:1400
-  });
-}
 
   if(skill==="dash"){
     showSkillCutin({
