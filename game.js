@@ -6134,6 +6134,32 @@ render();
   return;
 }
 
+         if(
+  data.payload?.type==="policeSkillUsed" &&
+  onlineAssignedRole==="cat"
+){
+  const skill=data.payload.skill;
+
+  console.log("🐱 POLICE SKILL RECEIVED", {
+    skill,
+    role:onlineAssignedRole,
+    playMode,
+    phase:game?.phase
+  });
+
+  if(skill==="dash"){
+    showSkillCutin({
+      side:"police",
+      name:"ダッシュ",
+      desc:"一気に2マス移動",
+      image:"./assets/images/vs_dash.png",
+      duration:1400
+    });
+  }
+
+  return;
+}
+
          
 if(
   data.payload?.type==="captured" &&
