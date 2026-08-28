@@ -6650,6 +6650,7 @@ if(isNewTrack){
   onlineAssignedRole==="police"
 ){
   const route=data.payload.route;
+             const routeSkills=data.payload.routeSkills;
 
   if(Array.isArray(route)){
     cpuCatRoute=route
@@ -6665,6 +6666,7 @@ if(isNewTrack){
       )
       .sort((a,b)=>a.turn-b.turn);
   }
+           saveResultRouteSkills(routeSkills);
 
   game.actionLocked=false;
 
@@ -7724,6 +7726,7 @@ if(isNewTrack){
   onlineAssignedRole==="police"
 ){
   const route=data.payload.route;
+           const routeSkills=data.payload.routeSkills;
 
   if(Array.isArray(route)){
     cpuCatRoute=route
@@ -7739,6 +7742,7 @@ if(isNewTrack){
       )
       .sort((a,b)=>a.turn-b.turn);
   }
+           saveResultRouteSkills(routeSkills);
 
   game.actionLocked=false;
 
