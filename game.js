@@ -2416,6 +2416,28 @@ if(
 }
 }
 
+   function cancelPendingAbility(){
+
+  // =====================================
+  // 忍び足
+  // =====================================
+  if(game.catAbilityPending==="sneak"){
+    game.catAbilityPending=null;
+
+    setMessage(
+      "忍び足をキャンセルしました。通常の移動に戻ります。"
+    );
+
+    render();
+    return;
+  }
+
+  // フェイク肉球
+  if(
+    game.catAbilityPending==="fakePaw" &&
+    !game.fakePawConfirmed
+  ){
+
 function toggleFakePaw(){
   if(!game.abilitiesEnabled) return;
 if(
@@ -3324,17 +3346,32 @@ return;
       const pos=game.dogs[i];
       let status="未配置";
 
-      if(pos!==null){
-        if(game.dogAction[i]==="move"){
-          status="移動済み ✓";
-          c.classList.add("done");
-        }else if(game.dogAction[i]==="search"){
-          status=game.actionLocked?"探索中…":"探索済み ✓";
-          c.classList.add("done");
-        }else{
-          status="行動できます";
-        }
-      }
+if(pos!==null){
+
+  if(game.dogAction[i]==="move"){
+    status="移動済み ✓";
+    c.classList.add("done");
+
+  }else if(game.dogAction[i]==="search"){
+    status=game.actionLocked
+      ? "探索中…"
+      : "探索済み ✓";
+    c.classList.add("done");
+
+  }else if(game.dogAction[i]==="howl"){
+    status="遠吠え使用済み ✓";
+    c.classList.add("done");
+
+  }else if(game.dogAction[i]==="doubleSearch"){
+    status=game.actionLocked
+      ? "一斉捜索中…"
+      : "一斉捜索済み ✓";
+    c.classList.add("done");
+
+  }else{
+    status="行動できます";
+  }
+}
 
       const dogImg=["dog_card_red.png","dog_card_green.png","dog_card_blue.png"][i];
       const role=playMode==="cpuPolice" ? ["探索に強い","バランス型","移動に強い"][i] : "";
