@@ -1220,8 +1220,8 @@ requestAnimationFrame(()=>{
       ? `<b class="track-turn">${turn}</b>`
       : "";
 
-    if(game.catHistory.get(i)===1){
-      mark.innerHTML=`
+if(turn===1){
+   mark.innerHTML=`
         <span class="track-badge">
           <img
             class="start-art"
@@ -1326,7 +1326,7 @@ if(
 
       if(game.phase!=="cat"&&game.revealedTracks.has(i)){
         b.classList.add("revealed");
-        if(game.catHistory.get(i)===1)b.classList.add("start-track");
+        if(game.revealedTracks.get(i)===1)b.classList.add("start-track");
       }
 
       b.innerHTML=`<span class="boxnum">${i+1}</span>
@@ -1440,8 +1440,8 @@ if(E.getDogDashMoves(game,1).includes(i)){
   function privateHistoryHTML(i){
     if(playMode==="cpuCat")return"";
     if(game.phase!=="cat"||!game.catVisible||!game.catHistory.has(i))return"";
-    if(game.catHistory.get(i)===1){
-      return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
+if(turn===1){
+   return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
     }
     return'<span class="private-foot"><img src="./assets/images/paw.png" alt="足跡"></span>';
   }
@@ -6148,31 +6148,34 @@ if(data.payload?.type==="doubleSearchResult"){
     const result=item.result;
     const trackTurn=Number(item.trackTurn);
 
-    // ------------------------------
-    // 捕獲
-    // ------------------------------
-    if(result==="capture"){
+// ------------------------------
+// 捕獲
+// ------------------------------
+if(result==="capture"){
 
-      Audio.play("capture");
-      Audio.haptic([35,45,70]);
+  Audio.play("capture");
+  Audio.haptic([35,45,70]);
 
-      A.burstAtBox(
-        board,
-        bi,
-        "🐱✨"
-      );
+  A.burstAtBox(
+    board,
+    bi,
+    "🐱✨"
+  );
 
-      game.actionLocked=false;
-      game.doubleSearchTargets=[];
-      game.doubleSearchConfirmed=false;
+  game.actionLocked=false;
+  game.doubleSearchTargets=[];
+  game.doubleSearchConfirmed=false;
 
-      endGame(
-        "dogs",
-        `しろ柴の一斉捜索！箱${bi+1}でネコを発見！`
-      );
+  // 一斉捜索で発見した箱をネコの最終位置として反映
+  game.catPos=bi;
 
-      return;
-    }
+  endGame(
+    "dogs",
+    `しろ柴の一斉捜索！箱${bi+1}でネコを発見！`
+  );
+
+  return;
+}
 
     // ------------------------------
     // 足跡
@@ -6313,9 +6316,13 @@ if(data.payload?.type==="doubleSearchResult"){
     );
   }
 
+// 一斉捜索カットインが完全に終わってから
+// 2箱の捜索結果を表示する
+setTimeout(()=>{
   showNextDoubleSearchResult();
+},1700);
 
-  return;
+return;
 }
 
          if(
@@ -7188,31 +7195,34 @@ if(data.payload?.type==="doubleSearchResult"){
     const result=item.result;
     const trackTurn=Number(item.trackTurn);
 
-    // ------------------------------
-    // 捕獲
-    // ------------------------------
-    if(result==="capture"){
+// ------------------------------
+// 捕獲
+// ------------------------------
+if(result==="capture"){
 
-      Audio.play("capture");
-      Audio.haptic([35,45,70]);
+  Audio.play("capture");
+  Audio.haptic([35,45,70]);
 
-      A.burstAtBox(
-        board,
-        bi,
-        "🐱✨"
-      );
+  A.burstAtBox(
+    board,
+    bi,
+    "🐱✨"
+  );
 
-      game.actionLocked=false;
-      game.doubleSearchTargets=[];
-      game.doubleSearchConfirmed=false;
+  game.actionLocked=false;
+  game.doubleSearchTargets=[];
+  game.doubleSearchConfirmed=false;
 
-      endGame(
-        "dogs",
-        `しろ柴の一斉捜索！箱${bi+1}でネコを発見！`
-      );
+  // 一斉捜索で発見した箱をネコの最終位置として反映
+  game.catPos=bi;
 
-      return;
-    }
+  endGame(
+    "dogs",
+    `しろ柴の一斉捜索！箱${bi+1}でネコを発見！`
+  );
+
+  return;
+}
 
     // ------------------------------
     // 足跡
@@ -7353,9 +7363,13 @@ if(data.payload?.type==="doubleSearchResult"){
     );
   }
 
+// 一斉捜索カットインが完全に終わってから
+// 2箱の捜索結果を表示する
+setTimeout(()=>{
   showNextDoubleSearchResult();
+},1700);
 
-  return;
+return;
 }
 
         if(
