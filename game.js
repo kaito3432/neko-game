@@ -5433,6 +5433,35 @@ function renderResultCpuCatRoute(){
 
   function endGame(winner,reason){
     game.gameOver=true;
+  // =====================================
+  // ネコ側：特殊スキルの使用場所を
+  // 結果画面用データへ保存
+  // =====================================
+  if(
+    playMode==="onlineCat" ||
+    playMode==="local"
+  ){
+    saveResultRouteSkills({
+
+      // 忍び足を使った移動元
+      sneakBoxes:
+        game.noTrackBoxes instanceof Set
+          ? [...game.noTrackBoxes]
+          : [],
+
+      // フェイク肉球を置いた場所
+      fakeTracks:
+        game.fakeTracks instanceof Map
+          ? [...game.fakeTracks.entries()].map(
+              ([box,turn])=>({
+                box:Number(box),
+                turn:Number(turn)
+              })
+            )
+          : []
+    });
+  }
+     
     if(resultRoute) resultRoute.classList.remove("show");
     if(resultRouteBoard) if(resultRouteBoard) resultRouteBoard.innerHTML="";
     if(resultRouteNote) resultRouteNote.textContent="";
