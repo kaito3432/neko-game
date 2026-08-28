@@ -2724,8 +2724,12 @@ showSkillCutin({
 
    function toggleDoubleSearch(){
   if(!game.abilitiesEnabled) return;
-  if(playMode!=="local") return;
-  if(game.phase!=="dogs") return;
+if(
+  playMode!=="local" &&
+  playMode!=="onlinePolice"
+) return;
+      
+      if(game.phase!=="dogs") return;
   if(game.gameOver) return;
   if(game.actionLocked) return;
 
