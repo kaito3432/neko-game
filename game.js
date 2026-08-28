@@ -490,6 +490,11 @@ onlineRuleOverlay?.classList.remove("show");
 
   function initGame(showMode=false){
     game=E.createState();
+
+     // 「もう一度あそぶ」を通常状態へ戻す
+if(againBtn){
+  againBtn.hidden=false;
+}
      game.abilitiesEnabled=
   playMode==="local" ||
   playMode==="onlineCat" ||
@@ -5518,6 +5523,15 @@ if(resultRouteNote){
     game.catVisible=true;
     game.selectedDog=null;
     game.actionLocked=false;
+
+     // =====================================
+// オンライン対戦では「もう一度あそぶ」を表示しない
+// =====================================
+if(againBtn){
+  againBtn.hidden =
+    playMode==="onlineCat" ||
+    playMode==="onlinePolice";
+}
 
     if(winner==="dogs"){
       resultIcon.textContent="🐕🐕🐕✨";
