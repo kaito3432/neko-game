@@ -6168,6 +6168,8 @@ if(data.payload?.type==="doubleSearchResult"){
     ? data.payload.results
     : [];
 
+  const route=data.payload.route;
+
   console.log("🔍 DOUBLE SEARCH RESULT", {
     role:onlineAssignedRole,
     results
@@ -6202,6 +6204,23 @@ if(data.payload?.type==="doubleSearchResult"){
 // 捕獲
 // ------------------------------
 if(result==="capture"){
+
+  // 一斉捜索で捕獲した場合も
+  // ネコの完全な逃走ルートを保存
+  if(Array.isArray(route)){
+    cpuCatRoute=route
+      .map(step=>({
+        box:Number(step.box),
+        turn:Number(step.turn)
+      }))
+      .filter(step=>
+        Number.isInteger(step.box) &&
+        step.box>=0 &&
+        step.box<E.BOX_COUNT &&
+        Number.isInteger(step.turn)
+      )
+      .sort((a,b)=>a.turn-b.turn);
+  }
 
   Audio.play("capture");
   Audio.haptic([35,45,70]);
@@ -7215,6 +7234,8 @@ if(data.payload?.type==="doubleSearchResult"){
     ? data.payload.results
     : [];
 
+  const route=data.payload.route;
+
   console.log("🔍 DOUBLE SEARCH RESULT", {
     role:onlineAssignedRole,
     results
@@ -7249,6 +7270,23 @@ if(data.payload?.type==="doubleSearchResult"){
 // 捕獲
 // ------------------------------
 if(result==="capture"){
+
+  // 一斉捜索で捕獲した場合も
+  // ネコの完全な逃走ルートを保存
+  if(Array.isArray(route)){
+    cpuCatRoute=route
+      .map(step=>({
+        box:Number(step.box),
+        turn:Number(step.turn)
+      }))
+      .filter(step=>
+        Number.isInteger(step.box) &&
+        step.box>=0 &&
+        step.box<E.BOX_COUNT &&
+        Number.isInteger(step.turn)
+      )
+      .sort((a,b)=>a.turn-b.turn);
+  }
 
   Audio.play("capture");
   Audio.haptic([35,45,70]);
