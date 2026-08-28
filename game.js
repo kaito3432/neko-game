@@ -5234,18 +5234,9 @@ function renderResultCpuCatRoute(){
     const toR=E.boxRow(to.box);
     const toC=E.boxCol(to.box);
 
-    // 点線区間の中央に表示
-    const x=
-      (
-        (10+fromC*20) +
-        (10+toC*20)
-      ) / 2;
-
-    const y=
-      (
-        (10+fromR*20) +
-        (10+toR*20)
-      ) / 2;
+// 忍び足を使ったダンボールの中央に表示
+const x=10+fromC*20;
+const y=10+fromR*20;
 
     const mark=document.createElement("div");
 
