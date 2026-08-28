@@ -674,10 +674,27 @@ function sendOnlineAbilityReveal(){
   }
 
 
-  onlineOverlay.classList.remove("show");
+// スキル選択・オンラインルーム画面をすべて閉じてVSへ
+onlineOverlay.classList.remove("show");
+policeAbilityOverlay.classList.remove("show");
+catAbilityOverlay.classList.remove("show");
 
-  // 既存VS表示を更新
-  updateOnlineAbilityRevealCard();
+// ボタンを次回用に戻す
+[
+  selectHowlBtn,
+  selectDashBtn,
+  selectDoubleSearchBtn,
+  selectSneakBtn,
+  selectFakePawBtn
+].forEach(btn=>{
+  if(btn) btn.disabled=false;
+});
+
+confirmPoliceAbilityBtn.textContent="このスキルに決定";
+confirmCatAbilityBtn.textContent="このスキルに決定";
+
+// 既存VS表示を更新
+updateOnlineAbilityRevealCard();
 
 
   // アニメーションを最初から
@@ -773,9 +790,7 @@ function startOnlineAbilityRule(){
 }
    
 function startOnlineGame(){
-  if(!onlineAssignedRole)return;
 
-  playMode=
     onlineAssignedRole==="cat"
       ? "onlineCat"
       : "onlinePolice";
@@ -5311,7 +5326,20 @@ if(
 }
 
 
-    onlineOverlay.classList.add("show");
+// 相手が決定するまで警察スキル画面で待機
+policeAbilityOverlay.classList.add("show");
+
+[
+  selectHowlBtn,
+  selectDashBtn,
+  selectDoubleSearchBtn
+].forEach(btn=>{
+  btn.disabled=true;
+});
+
+confirmPoliceAbilityBtn.disabled=true;
+confirmPoliceAbilityBtn.textContent=
+  "相手のスキル選択を待っています…";
 
 if(onlinePeerAbilityReady){
 
@@ -5431,7 +5459,19 @@ if(
 }
 
 
-    onlineOverlay.classList.add("show");
+// 相手が決定するまでネコスキル画面で待機
+catAbilityOverlay.classList.add("show");
+
+[
+  selectSneakBtn,
+  selectFakePawBtn
+].forEach(btn=>{
+  btn.disabled=true;
+});
+
+confirmCatAbilityBtn.disabled=true;
+confirmCatAbilityBtn.textContent=
+  "相手のスキル選択を待っています…";
 
 if(onlinePeerAbilityReady){
 
@@ -5488,18 +5528,14 @@ if(onlinePeerAbilityReady){
     )
   ){
 
-    abilityRevealOverlay.classList.remove("show");
-    abilityRevealOverlay.classList.remove("vs-animate");
+// VS画面のまま相手を待つ
+abilityStartBtn.disabled=true;
+abilityStartBtn.textContent=
+  "相手のゲーム開始を待っています…";
 
-    onlineOverlay.classList.add("show");
+startOnlineReadyFlow();
 
-    onlineStatus.innerHTML=
-      `✨ <strong>特殊スキルあり</strong><br>`+
-      `<span style="font-size:14px">`+
-      `相手のゲーム開始を待っています…`+
-      `</span>`;
-
-    startOnlineReadyFlow();
+return;
 
     return;
   }
