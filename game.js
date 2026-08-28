@@ -6266,6 +6266,8 @@ if(result==="capture"){
       .sort((a,b)=>a.turn-b.turn);
   }
 
+   saveResultRouteSkills(routeSkills);
+
   Audio.play("capture");
   Audio.haptic([35,45,70]);
 
@@ -7336,7 +7338,7 @@ if(result==="capture"){
       )
       .sort((a,b)=>a.turn-b.turn);
   }
-
+saveResultRouteSkills(routeSkills);
 
   Audio.play("capture");
   Audio.haptic([35,45,70]);
