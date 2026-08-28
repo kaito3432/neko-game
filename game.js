@@ -5084,59 +5084,239 @@ return score;
   }
 
 
-  function renderResultCpuCatRoute(){
+function renderResultCpuCatRoute(){
 
-    const ordered=cpuCatRoute.length
-      ? cpuCatRoute.slice().sort((a,b)=>a.turn-b.turn)
-      : [...game.catHistory.entries()]
-          .sort((a,b)=>a[1]-b[1])
-          .map(([box,turn])=>({box,turn}));
+  const ordered=cpuCatRoute.length
+    ? cpuCatRoute.slice().sort((a,b)=>a.turn-b.turn)
+    : [...game.catHistory.entries()]
+        .sort((a,b)=>a[1]-b[1])
+        .map(([box,turn])=>({box,turn}));
 
-    if(!ordered.length)return;
+  if(!ordered.length)return;
 
-    if(resultRouteBoard) if(resultRouteBoard) resultRouteBoard.innerHTML="";
+  if(resultRouteBoard){
+    resultRouteBoard.innerHTML="";
+  }
 
-    // Draw all 25 cardboard cells.
-    for(let b=0;b<E.BOX_COUNT;b++){
-      const r=E.boxRow(b),c=E.boxCol(b);
-      const cell=document.createElement("div");
-      cell.className="result-route-cell";
-      cell.style.left=`${10+c*20}%`;
-      cell.style.top=`${10+r*20}%`;
-      cell.textContent=b+1;
-      if(resultRouteBoard) resultRouteBoard.appendChild(cell);
+  // =====================================
+  // 25個の箱を表示
+  // =====================================
+  for(let b=0;b<E.BOX_COUNT;b++){
+
+    const r=E.boxRow(b);
+    const c=E.boxCol(b);
+
+    const cell=document.createElement("div");
+
+    cell.className="result-route-cell";
+
+    cell.style.left=`${10+c*20}%`;
+    cell.style.top=`${10+r*20}%`;
+
+    cell.textContent=b+1;
+
+    resultRouteBoard?.appendChild(cell);
+  }
+
+
+  // =====================================
+  // 逃走ルート
+  // 区間ごとに線を描く
+  // =====================================
+  const svg=document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "svg"
+  );
+
+  svg.setAttribute("viewBox","0 0 100 100");
+  svg.setAttribute("preserveAspectRatio","none");
+
+  svg.classList.add("result-route-svg");
+
+
+  for(let i=0;i<ordered.length-1;i++){
+
+    const from=ordered[i];
+    const to=ordered[i+1];
+
+    const fromR=E.boxRow(from.box);
+    const fromC=E.boxCol(from.box);
+
+    const toR=E.boxRow(to.box);
+    const toC=E.boxCol(to.box);
+
+    const line=document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "line"
+    );
+
+    line.setAttribute("x1",10+fromC*20);
+    line.setAttribute("y1",10+fromR*20);
+
+    line.setAttribute("x2",10+toC*20);
+    line.setAttribute("y2",10+toR*20);
+
+    line.classList.add("result-route-line");
+
+
+    // =====================================
+    // 忍び足
+    // 移動元の箱がnoTrackBoxなら
+    // この区間を点線にする
+    // =====================================
+    if(resultSneakBoxes.includes(from.box)){
+
+      line.classList.add("sneak");
+
     }
 
-    // SVG route line.
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    svg.setAttribute("viewBox","0 0 100 100");
-    svg.setAttribute("preserveAspectRatio","none");
-    svg.classList.add("result-route-svg");
-
-    const polyline=document.createElementNS("http://www.w3.org/2000/svg","polyline");
-    const points=ordered.map(step=>{
-      const r=E.boxRow(step.box),c=E.boxCol(step.box);
-      return `${10+c*20},${10+r*20}`;
-    }).join(" ");
-    polyline.setAttribute("points",points);
-    svg.appendChild(polyline);
-    if(resultRouteBoard) resultRouteBoard.appendChild(svg);
-
-    ordered.forEach((step,idx)=>{
-      const r=E.boxRow(step.box),c=E.boxCol(step.box);
-      const badge=document.createElement("div");
-      badge.className="result-route-badge";
-      if(idx===0)badge.classList.add("start");
-      if(idx===ordered.length-1)badge.classList.add("final");
-      badge.style.left=`${10+c*20}%`;
-      badge.style.top=`${10+r*20}%`;
-      badge.textContent=idx===0?"S":String(step.turn);
-      if(resultRouteBoard) resultRouteBoard.appendChild(badge);
-    });
-
-    if(resultRouteNote) resultRouteNote.textContent=`STARTから最終地点まで ${ordered.length}地点`;
-    if(resultRoute) resultRoute.classList.add("show");
+    svg.appendChild(line);
   }
+
+
+  resultRouteBoard?.appendChild(svg);
+
+
+  // =====================================
+  // 本物の逃走ルート番号
+  // =====================================
+  ordered.forEach((step,idx)=>{
+
+    const r=E.boxRow(step.box);
+    const c=E.boxCol(step.box);
+
+    const badge=document.createElement("div");
+
+    badge.className="result-route-badge";
+
+    if(idx===0){
+      badge.classList.add("start");
+    }
+
+    if(idx===ordered.length-1){
+      badge.classList.add("final");
+    }
+
+    badge.style.left=`${10+c*20}%`;
+    badge.style.top=`${10+r*20}%`;
+
+    badge.textContent=
+      idx===0
+        ? "S"
+        : String(step.turn);
+
+    resultRouteBoard?.appendChild(badge);
+  });
+
+
+  // =====================================
+  // 忍び足マーク
+  // =====================================
+  resultSneakBoxes.forEach(box=>{
+
+    const routeIndex=
+      ordered.findIndex(step=>step.box===box);
+
+    // 次の移動先が存在しない場合は表示しない
+    if(
+      routeIndex<0 ||
+      routeIndex>=ordered.length-1
+    ){
+      return;
+    }
+
+    const from=ordered[routeIndex];
+    const to=ordered[routeIndex+1];
+
+    const fromR=E.boxRow(from.box);
+    const fromC=E.boxCol(from.box);
+
+    const toR=E.boxRow(to.box);
+    const toC=E.boxCol(to.box);
+
+    // 点線区間の中央に表示
+    const x=
+      (
+        (10+fromC*20) +
+        (10+toC*20)
+      ) / 2;
+
+    const y=
+      (
+        (10+fromR*20) +
+        (10+toR*20)
+      ) / 2;
+
+    const mark=document.createElement("div");
+
+    mark.className="result-route-sneak-mark";
+
+    mark.style.left=`${x}%`;
+    mark.style.top=`${y}%`;
+
+    mark.innerHTML=`
+      <img
+        src="./assets/images/paw.png"
+        alt="忍び足"
+      >
+    `;
+
+    resultRouteBoard?.appendChild(mark);
+  });
+
+
+  // =====================================
+  // フェイク肉球
+  // 本物ルートとは接続しない
+  // =====================================
+  resultFakeTracks.forEach(step=>{
+
+    const r=E.boxRow(step.box);
+    const c=E.boxCol(step.box);
+
+    const mark=document.createElement("div");
+
+    mark.className="result-route-fake-mark";
+
+    mark.style.left=`${10+c*20}%`;
+    mark.style.top=`${10+r*20}%`;
+
+    mark.innerHTML=`
+      <img
+        src="./assets/images/paw.png"
+        alt="フェイク肉球"
+      >
+      <span>?</span>
+    `;
+
+    resultRouteBoard?.appendChild(mark);
+  });
+
+
+  // =====================================
+  // 結果画面下部の説明
+  // =====================================
+  if(resultRouteNote){
+
+    let note=
+      `STARTから最終地点まで ${ordered.length}地点`;
+
+    if(resultSneakBoxes.length){
+      note+=" ／ 点線🐾＝忍び足";
+    }
+
+    if(resultFakeTracks.length){
+      note+=" ／ ◌🐾?＝フェイク肉球";
+    }
+
+    resultRouteNote.textContent=note;
+  }
+
+
+  if(resultRoute){
+    resultRoute.classList.add("show");
+  }
+}
 
   function revealCpuCatRoute(){
 
