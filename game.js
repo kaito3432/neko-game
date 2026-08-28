@@ -3618,9 +3618,12 @@ abilityCancelBtn.style.display=
 abilityCancelBtn.disabled=
   !canCancelAbility;
 
-     const showDoubleSearchBtn=
+const showDoubleSearchBtn=
   game.abilitiesEnabled &&
-  playMode==="local" &&
+  (
+    playMode==="local" ||
+    playMode==="onlinePolice"
+  ) &&
   game.phase==="dogs" &&
   game.selectedAbilities.police==="doubleSearch";
 
