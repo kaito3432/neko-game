@@ -6212,6 +6212,7 @@ if(data.payload?.type==="doubleSearchResult"){
     : [];
 
   const route=data.payload.route;
+   const routeSkills=data.payload.routeSkills;
 
   console.log("🔍 DOUBLE SEARCH RESULT", {
     role:onlineAssignedRole,
@@ -7282,6 +7283,7 @@ if(data.payload?.type==="doubleSearchResult"){
     : [];
 
   const route=data.payload.route;
+   const routeSkills=data.payload.routeSkills;
 
   console.log("🔍 DOUBLE SEARCH RESULT", {
     role:onlineAssignedRole,
