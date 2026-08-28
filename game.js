@@ -2475,6 +2475,19 @@ return;
 
   render();
 
+      // =====================================
+// オンライン警察：Workerへ一斉捜索を送信
+// =====================================
+if(playMode==="onlinePolice"){
+
+  window.NyanOnline.sendGame({
+    type:"doubleSearch",
+    targets:[...targets]
+  });
+
+  return;
+}
+
 
   // ---------------------------------
   // 1箱ずつ順番に探索
@@ -6068,6 +6081,50 @@ if(game.turn>=E.MAX_TURNS){
 
   afterDogAction();
   render();
+}
+
+         // =====================================
+// しろ柴・一斉捜索開始
+// 警察・ネコ両方にカットイン表示
+// =====================================
+if(data.payload?.type==="doubleSearchStarted"){
+
+  console.log("🔍 DOUBLE SEARCH STARTED", {
+    role:onlineAssignedRole,
+    targets:data.payload.targets
+  });
+
+  showSkillCutin({
+    side:"police",
+    name:"一斉捜索",
+    desc:"2つの箱を同時に捜索",
+    image:"./assets/images/vs_search.png",
+    duration:1400
+  });
+
+  return;
+}
+
+         // =====================================
+// しろ柴・一斉捜索開始
+// 警察・ネコ両方にカットイン表示
+// =====================================
+if(data.payload?.type==="doubleSearchStarted"){
+
+  console.log("🔍 DOUBLE SEARCH STARTED", {
+    role:onlineAssignedRole,
+    targets:data.payload.targets
+  });
+
+  showSkillCutin({
+    side:"police",
+    name:"一斉捜索",
+    desc:"2つの箱を同時に捜索",
+    image:"./assets/images/vs_search.png",
+    duration:1400
+  });
+
+  return;
 }
 
          if(
