@@ -3892,7 +3892,7 @@ function openSettings(){
       return true;
     }
 
-    const blocked=new Set(game.catHistory);
+    const blocked=new Set(game.catHistory.keys());
     blocked.add(target);
 
     function dfs(pos,stepsLeft){
