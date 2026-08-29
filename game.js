@@ -5007,49 +5007,32 @@ if(remainingDogs<=searchesNeeded){
     // ==========================================
 if(cpuDifficulty==="normal"){
 
-  if(canCpuCatFinishRoute(boxIndex)){
-    score+=35;
-  }else{
-    score-=45;
+  score+=dogDist*4.4;
+  score+=freedom*5.2;
+  score-=pressure*3.8;
+
+  if(freedom===0){
+    score-=40;
   }
 
-      score+=dogDist*6.2;
-      score+=freedom*8.5;
-      score-=pressure*8.0;
+  if(freedom===1){
+    score-=10;
+  }
 
-      if(freedom===0){
-        score-=150;
-      }
+  const lookahead=cpuCatSecondStepValue(
+    game.catPos,
+    boxIndex
+  );
 
-      if(freedom===1){
-        score-=55;
-      }
+  if(lookahead>-999){
+    score+=lookahead*.28;
+  }
 
-      if(freedom===2){
-        score-=10;
-      }
+  // つよいより判断に迷いを持たせる
+  score+=Math.random()*15;
 
-      const lookahead=cpuCatSecondStepValue(
-        game.catPos,
-        boxIndex
-      );
-
-      if(lookahead>-999){
-        score+=lookahead*1.15;
-      }
-
-      if(isEdgeBox(boxIndex)){
-        if(freedom<=2){
-          score-=22;
-        }else{
-          score-=4;
-        }
-      }
-
-      score+=Math.random()*0.08;
-
-      return score;
-    }
+  return score;
+}
 
 
     // ==========================================
