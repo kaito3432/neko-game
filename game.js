@@ -4620,7 +4620,7 @@ if(
     cpuMemory.emptyBoxes.has(search.target) &&
     game.turn - cpuMemory.emptyBoxes.get(search.target) <= 1;
 
-  if(!recentlyEmpty && cpuDifficulty!=="easy"){
+  if(!recentlyEmpty && policeDifficulty!=="easy"){
     return search;
   }
 }
@@ -4634,7 +4634,7 @@ if(
       if(!move || search.score+profile.searchBias>=move.score) return search;
     }
 
-    if(cpuDifficulty==="easy" && Math.random()<0.2 && search && move){
+    if(policeDifficulty==="easy" && Math.random()<0.2 && search && move){
       return Math.random()<.5 ? search : move;
     }
 
@@ -4745,6 +4745,8 @@ function cpuSetupDogs(){
   function runCpuPoliceTurn(){
     if(playMode!=="cpuPolice" || game.gameOver || game.phase!=="dogs") return;
 
+     const policeDifficulty=cpuPoliceDifficulty();
+
     // New turn begins before any dog has acted.
     if(game.dogAction.every(a=>a===false) && !game.actionLocked){
       game.cpuSearchesThisTurn=0;
@@ -4801,7 +4803,7 @@ if(availableDogs.length){
 
     let action=chooseCpuAction(di);
 
-    if(cpuDifficulty!=="easy" && game.cpuSearchesThisTurn<cpuProfile().targetSearches){
+    if(policeDifficulty!=="easy" && game.cpuSearchesThisTurn<cpuProfile().targetSearches){
       const remainingDogs=game.dogAction.filter(a=>a===false).length;
       const searchesNeeded=cpuProfile().targetSearches-game.cpuSearchesThisTurn;
 
