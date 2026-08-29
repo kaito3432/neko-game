@@ -5005,13 +5005,13 @@ if(remainingDogs<=searchesNeeded){
     // 旧「つよい」をベースにする
     // + 11ターンまで逃げ切れるルートを優先
     // ==========================================
-    if(cpuDifficulty==="normal"){
+if(cpuDifficulty==="normal"){
 
-      if(canCpuCatFinishRoute(boxIndex)){
-        score+=120;
-      }else{
-        score-=180;
-      }
+  if(canCpuCatFinishRoute(boxIndex)){
+    score+=35;
+  }else{
+    score-=45;
+  }
 
       score+=dogDist*6.2;
       score+=freedom*8.5;
