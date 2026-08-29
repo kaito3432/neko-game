@@ -4147,16 +4147,24 @@ if(!tracks.length){
     return di===1 ? "searcher" : (di===2 ? "blocker" : "tracker");
   }
 
-  function cpuProfile(){
-    if(cpuDifficulty==="easy"){
+   function cpuPoliceDifficulty(){
+  if(cpuDifficulty==="normal") return "hard";
+  if(cpuDifficulty==="hard") return "normal";
+  return cpuDifficulty;
+}
+
+function cpuProfile(){
+  const policeDifficulty=cpuPoliceDifficulty();
+
+  if(policeDifficulty==="easy"){
       return {
         fresh:5.5, track:1.35, spread:.45, backtrack:3, role:1.5,
         endgame:1.5, noise:7.5, forceSearch:.72, think:260,
         targetSearches:1, searchBias:0
       };
     }
-if(cpuDifficulty==="hard"){
-  return {
+if(policeDifficulty==="hard"){
+   return {
     fresh:15.5,
     track:6.5,
     spread:1.5,
@@ -4569,13 +4577,14 @@ function hardBestProbabilitySearch(di){
   }
 
   function chooseCpuAction(di){
+     const policeDifficulty=cpuPoliceDifficulty();
     const profile=cpuProfile();
     let search=bestSearchAction(di);
     let move=bestMoveAction(di);
     const role=dogRole(di);
     const remaining=Math.max(0,E.MAX_TURNS-game.turn+1);
 
-    if(cpuDifficulty==="hard"){
+    if(policeDifficulty==="hard"){
       const ps=hardBestProbabilitySearch(di);
       const cm=hardBestContainmentMove(di);
       if(ps && (!search || ps.score>search.score)) search=ps;
@@ -4598,7 +4607,7 @@ if(
 }
 
     if(knownTrackBoxes().length && search && search.target!==null){
-      const evidenceBonus=cpuDifficulty==="hard" ? 8 : (cpuDifficulty==="normal" ? 6 : 2);
+      const evidenceBonus=policeDifficulty==="hard" ? 8 : (policeDifficulty==="normal" ? 6 : 2);
       if(!move || search.score+evidenceBonus>=move.score) return search;
     }
 
@@ -4617,7 +4626,7 @@ if(
 }
 
     if(remaining<=3 && role==="blocker" && move && move.target!==null){
-      const bonus=cpuDifficulty==="hard" ? 7 : (cpuDifficulty==="normal" ? 2.5 : 0);
+      const bonus=policeDifficulty==="hard" ? 7 : (policeDifficulty==="normal" ? 2.5 : 0);
       if(!search || move.score+bonus>=search.score+profile.searchBias) return move;
     }
 
