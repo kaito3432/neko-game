@@ -3879,6 +3879,51 @@ function openSettings(){
     return r===0||r===4||c===0||c===4;
   }
 
+     // CPUネコ用：
+  // このマスへ進んだあと、11ターンまで逃げ切れるルートが残っているか確認
+  function canCpuCatFinishRoute(target){
+
+    const remaining=Math.max(
+      0,
+      E.MAX_TURNS-game.turn
+    );
+
+    if(remaining===0){
+      return true;
+    }
+
+    const blocked=new Set(game.catHistory);
+    blocked.add(target);
+
+    function dfs(pos,stepsLeft){
+
+      if(stepsLeft===0){
+        return true;
+      }
+
+      const neighbors=E.getBoxNeighbors(pos);
+
+      for(const next of neighbors){
+
+        if(blocked.has(next)){
+          continue;
+        }
+
+        blocked.add(next);
+
+        if(dfs(next,stepsLeft-1)){
+          return true;
+        }
+
+        blocked.delete(next);
+      }
+
+      return false;
+    }
+
+    return dfs(target,remaining);
+  }
+
   function catEscapeDegree(boxIndex){
     return E.getBoxNeighbors(boxIndex).filter(n=>!game.catHistory.has(n)).length;
   }
@@ -4927,60 +4972,105 @@ if(remainingDogs<=searchesNeeded){
 
     let score=0;
 
+    // ==========================================
+    // やさしい
+    // ==========================================
     if(cpuDifficulty==="easy"){
       score+=dogDist*1.6;
       score+=freedom*1.4;
       score-=pressure*.8;
       score+=Math.random()*8;
-      if(freedom===0) score-=8;
+
+      if(freedom===0){
+        score-=8;
+      }
+
       return score;
     }
 
+
+    // ==========================================
+    // ふつう
+    // 旧「つよい」をベースにする
+    // + 11ターンまで逃げ切れるルートを優先
+    // ==========================================
     if(cpuDifficulty==="normal"){
-      score+=dogDist*4.4;
-      score+=freedom*5.2;
-      score-=pressure*3.8;
-      if(freedom===0) score-=40;
-      if(freedom===1) score-=10;
 
-      const lookahead=cpuCatSecondStepValue(game.catPos,boxIndex);
-      if(lookahead>-999) score+=lookahead*.28;
+      if(canCpuCatFinishRoute(boxIndex)){
+        score+=120;
+      }else{
+        score-=180;
+      }
 
-      score+=Math.random()*1.5;
+      score+=dogDist*6.2;
+      score+=freedom*8.5;
+      score-=pressure*8.0;
+
+      if(freedom===0){
+        score-=150;
+      }
+
+      if(freedom===1){
+        score-=55;
+      }
+
+      if(freedom===2){
+        score-=10;
+      }
+
+      const lookahead=cpuCatSecondStepValue(
+        game.catPos,
+        boxIndex
+      );
+
+      if(lookahead>-999){
+        score+=lookahead*1.15;
+      }
+
+      if(isEdgeBox(boxIndex)){
+        if(freedom<=2){
+          score-=22;
+        }else{
+          score-=4;
+        }
+      }
+
+      score+=Math.random()*0.08;
+
       return score;
     }
 
-  // Hard: stronger 2-step escape planning + police pressure avoidance.
-score += dogDist * 6.2;
-score += freedom * 8.5;
-score -= pressure * 8.0;
 
-if(freedom === 0) score -= 150;
-if(freedom === 1) score -= 55;
-if(freedom === 2) score -= 10;
+    // ==========================================
+    // つよい
+    // 旧「ふつう」のロジック
+    // シミュレーション上はこちらの方が強かった
+    // ==========================================
 
-const lookahead = cpuCatSecondStepValue(
-  game.catPos,
-  boxIndex
-);
+    score+=dogDist*4.4;
+    score+=freedom*5.2;
+    score-=pressure*3.8;
 
-if(lookahead > -999){
-  score += lookahead * 1.15;
-}
+    if(freedom===0){
+      score-=40;
+    }
 
-/* 端に追い詰められる動きをかなり嫌う */
-if(isEdgeBox(boxIndex)){
-  if(freedom <= 2){
-    score -= 22;
-  }else{
-    score -= 4;
-  }
-}
+    if(freedom===1){
+      score-=10;
+    }
 
-/* ほぼ判断ミスしない */
-score += Math.random() * 0.08;
+    const lookahead=cpuCatSecondStepValue(
+      game.catPos,
+      boxIndex
+    );
 
-return score;
+    if(lookahead>-999){
+      score+=lookahead*.28;
+    }
+
+    score+=Math.random()*1.5;
+
+    return score;
   }
   function cpuChooseStartBox(){
     let best=0,bestScore=-Infinity;
