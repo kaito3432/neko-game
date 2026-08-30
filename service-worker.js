@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v2-phase5-20260816";
+const CACHE_NAME = "nyan-chase-v2-phase1-player-data-20260830";
 const PRECACHE = [
   "./",
   "./README.md",
@@ -53,6 +53,7 @@ const PRECACHE = [
   "./game.js",
   "./index.html",
   "./manifest.webmanifest",
+  "./player-data.js",
   "./style.css"
 ];
 

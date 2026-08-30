@@ -1,0 +1,21 @@
+{
+  "name": "neko-game-online-beta-2",
+  "version": "1.0.0",
+  "description": "現在の Ver1.5.2 を、今後の CPU 対戦・オンライン対戦に向けて複数ファイルへ整理した版です。",
+  "main": "animation.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0"
+  }
+}
