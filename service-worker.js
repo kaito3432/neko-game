@@ -1,9 +1,8 @@
-const CACHE_NAME = "nyan-chase-v2-phase1-player-data-20260830";
+const CACHE_NAME = "nyan-chase-v2-phase2a-collection-20260830";
 const PRECACHE = [
   "./",
   "./README.md",
   "./animation.js",
-  "./assets/audio/.gitkeep",
   "./assets/audio/bgm_game.wav",
   "./assets/audio/bgm_home.wav",
   "./assets/audio/bgm_tension.wav",
@@ -17,7 +16,6 @@ const PRECACHE = [
   "./assets/audio/se_move.wav",
   "./assets/audio/se_search.wav",
   "./assets/audio/se_turn_change.wav",
-  "./assets/images/.gitkeep",
   "./assets/images/bg_day.png",
   "./assets/images/box.png",
   "./assets/images/cat.png",
@@ -49,6 +47,8 @@ const PRECACHE = [
   "./assets/images/pwa/icon-maskable-512.png",
   "./assets/images/start.png",
   "./audio.js",
+  "./collection-catalog.js",
+  "./collection.js",
   "./engine.js",
   "./game.js",
   "./index.html",

@@ -22,6 +22,13 @@
 
   const DEFAULT_ITEM_ID="default";
   const PLAYER_ID_PATTERN=/^ncp_[a-zA-Z0-9_-]{16,128}$/;
+  const EQUIPMENT_CATEGORIES=Object.freeze({
+    catSkin:Object.freeze({ownedField:"ownedCatSkins",equippedField:"catSkinId"}),
+    dogSkin:Object.freeze({ownedField:"ownedDogSkins",equippedField:"dogSkinId"}),
+    cardboard:Object.freeze({ownedField:"ownedCardboards",equippedField:"cardboardId"}),
+    paw:Object.freeze({ownedField:"ownedPaws",equippedField:"pawId"}),
+    boardTheme:Object.freeze({ownedField:"ownedBoardThemes",equippedField:"boardThemeId"})
+  });
 
   function isPlainObject(value){
     if(!value || typeof value!=="object" || Array.isArray(value)) return false;
@@ -50,6 +57,11 @@
       : [];
 
     return [...new Set([DEFAULT_ITEM_ID,...items])];
+  }
+
+  function safeEquippedItem(value,ownedItems){
+    const itemId=safeString(value,DEFAULT_ITEM_ID);
+    return ownedItems.includes(itemId) ? itemId : DEFAULT_ITEM_ID;
   }
 
   function safeProgressObject(value){
@@ -118,22 +130,27 @@
     const equipped=isPlainObject(source.equippedAppearance)
       ? source.equippedAppearance
       : {};
+    const ownedCatSkins=safeOwnedItems(source.ownedCatSkins);
+    const ownedDogSkins=safeOwnedItems(source.ownedDogSkins);
+    const ownedCardboards=safeOwnedItems(source.ownedCardboards);
+    const ownedPaws=safeOwnedItems(source.ownedPaws);
+    const ownedBoardThemes=safeOwnedItems(source.ownedBoardThemes);
 
     return {
       version:CURRENT_VERSION,
       playerId,
       nyanCoins:safeNonNegativeInteger(source.nyanCoins),
-      ownedCatSkins:safeOwnedItems(source.ownedCatSkins),
-      ownedDogSkins:safeOwnedItems(source.ownedDogSkins),
-      ownedCardboards:safeOwnedItems(source.ownedCardboards),
-      ownedPaws:safeOwnedItems(source.ownedPaws),
-      ownedBoardThemes:safeOwnedItems(source.ownedBoardThemes),
+      ownedCatSkins,
+      ownedDogSkins,
+      ownedCardboards,
+      ownedPaws,
+      ownedBoardThemes,
       equippedAppearance:{
-        catSkinId:safeString(equipped.catSkinId,defaults.equippedAppearance.catSkinId),
-        dogSkinId:safeString(equipped.dogSkinId,defaults.equippedAppearance.dogSkinId),
-        cardboardId:safeString(equipped.cardboardId,defaults.equippedAppearance.cardboardId),
-        pawId:safeString(equipped.pawId,defaults.equippedAppearance.pawId),
-        boardThemeId:safeString(equipped.boardThemeId,defaults.equippedAppearance.boardThemeId)
+        catSkinId:safeEquippedItem(equipped.catSkinId,ownedCatSkins),
+        dogSkinId:safeEquippedItem(equipped.dogSkinId,ownedDogSkins),
+        cardboardId:safeEquippedItem(equipped.cardboardId,ownedCardboards),
+        pawId:safeEquippedItem(equipped.pawId,ownedPaws),
+        boardThemeId:safeEquippedItem(equipped.boardThemeId,ownedBoardThemes)
       },
       dailyMissionProgress:normalizeDailyMissionProgress(source.dailyMissionProgress),
       challengeProgress:safeProgressObject(source.challengeProgress),
@@ -290,6 +307,29 @@
       return cache(candidate,"local");
     }
 
+    async function updateEquipment(category,itemId){
+      const definition=EQUIPMENT_CATEGORIES[category];
+      if(!definition) throw new Error("invalid_equipment_category");
+      if(typeof itemId!=="string" || itemId.length===0){
+        throw new Error("invalid_equipment_item");
+      }
+
+      const base=currentData || await load();
+      if(!base[definition.ownedField].includes(itemId)){
+        throw new Error("equipment_item_not_owned");
+      }
+
+      const candidate={
+        ...base,
+        equippedAppearance:{
+          ...base.equippedAppearance,
+          [definition.equippedField]:itemId
+        }
+      };
+
+      return save(candidate);
+    }
+
     function setRemoteProvider(provider){
       remote=provider || null;
     }
@@ -302,7 +342,7 @@
       return {...lastStatus};
     }
 
-    return {load,save,setRemoteProvider,getSnapshot,getStatus};
+    return {load,save,updateEquipment,setRemoteProvider,getSnapshot,getStatus};
   }
 
   let browserStorage=null;
@@ -318,6 +358,7 @@
   return Object.freeze({
     CURRENT_VERSION,
     STORAGE_KEYS,
+    EQUIPMENT_CATEGORIES,
     createDefaultData,
     normalizeData,
     migrateData,
@@ -328,6 +369,7 @@
     ready,
     load:defaultStore.load,
     save:defaultStore.save,
+    updateEquipment:defaultStore.updateEquipment,
     setRemoteProvider:defaultStore.setRemoteProvider,
     getSnapshot:defaultStore.getSnapshot,
     getStatus:defaultStore.getStatus

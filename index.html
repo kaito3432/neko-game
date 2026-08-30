@@ -11,7 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=2.0.phase5">
+<link rel="stylesheet" href="./style.css?v=2.0.phase2a">
 </head>
 <body>
 <div class="app">
@@ -159,6 +159,11 @@
 
     </div>
 
+    <button class="collection-entry-btn" id="collectionOpenBtn" type="button">
+      <span aria-hidden="true">📚</span>
+      <span>コレクション</span>
+    </button>
+
     <div class="vu3-bottom">
       <button class="vu3-mini" id="howToBtn" type="button">
         <svg class="vu3-svg" viewBox="0 0 64 64" aria-hidden="true">
@@ -184,6 +189,28 @@
       </button>
     </div>
 
+  </div>
+</div>
+
+<div class="collection-overlay" id="collectionOverlay" aria-hidden="true">
+  <div class="collection-shell">
+    <header class="collection-header">
+      <button class="collection-back-btn" id="collectionBackBtn" type="button" aria-label="タイトルへ戻る">←</button>
+      <h1>コレクション</h1>
+      <div class="collection-balance" aria-label="にゃんコイン残高">
+        <span aria-hidden="true">🪙</span>
+        <strong id="collectionCoinBalance">0</strong>
+      </div>
+    </header>
+
+    <nav class="collection-tabs" aria-label="コレクション区分" role="tablist">
+      <button class="collection-tab selected" type="button" role="tab" aria-selected="true" data-collection-section="cat">ネコ図鑑</button>
+      <button class="collection-tab" type="button" role="tab" aria-selected="false" data-collection-section="police">柴犬警察手帳</button>
+      <button class="collection-tab" type="button" role="tab" aria-selected="false" data-collection-section="town">街のきせかえ</button>
+    </nav>
+
+    <main class="collection-content" id="collectionContent"></main>
+    <div class="collection-status" id="collectionStatus" role="status" aria-live="polite"></div>
   </div>
 </div>
 
@@ -1683,7 +1710,9 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./player-data.js?v=1.0.phase1"></script>
+<script src="./player-data.js?v=1.0.phase2a"></script>
+<script src="./collection-catalog.js?v=1.0.phase2a"></script>
+<script src="./collection.js?v=1.0.phase2a"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>

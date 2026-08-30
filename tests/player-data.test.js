@@ -27,7 +27,82 @@ test("新規プレイヤーIDと初期データを作成する",async()=>{
   assert.equal(data.version,PlayerData.CURRENT_VERSION);
   assert.equal(data.nyanCoins,0);
   assert.deepEqual(data.ownedCatSkins,["default"]);
+  assert.deepEqual(data.ownedDogSkins,["default"]);
+  assert.deepEqual(data.ownedCardboards,["default"]);
+  assert.deepEqual(data.ownedPaws,["default"]);
+  assert.deepEqual(data.ownedBoardThemes,["default"]);
+  assert.deepEqual(data.equippedAppearance,{
+    catSkinId:"default",
+    dogSkinId:"default",
+    cardboardId:"default",
+    pawId:"default",
+    boardThemeId:"default"
+  });
   assert.equal(storage.getItem(PlayerData.STORAGE_KEYS.playerId),data.playerId);
+});
+
+test("所持していない不正な装備IDをdefaultへ復旧する",async()=>{
+  const playerId="ncp_badbadbadbadbad1";
+  const storage=new MemoryStorage({
+    [PlayerData.STORAGE_KEYS.playerId]:playerId,
+    [PlayerData.STORAGE_KEYS.playerData]:JSON.stringify({
+      ...PlayerData.createDefaultData(playerId),
+      ownedCatSkins:["default","known-future"],
+      equippedAppearance:{
+        catSkinId:"not-owned",
+        dogSkinId:"not-owned",
+        cardboardId:"not-owned",
+        pawId:"not-owned",
+        boardThemeId:"not-owned"
+      }
+    })
+  });
+  const store=PlayerData.createStore({storage});
+  const data=await store.load();
+
+  assert.deepEqual(data.ownedCatSkins,["default","known-future"]);
+  assert.deepEqual(data.equippedAppearance,{
+    catSkinId:"default",
+    dogSkinId:"default",
+    cardboardId:"default",
+    pawId:"default",
+    boardThemeId:"default"
+  });
+});
+
+test("装備更新は該当カテゴリだけを変更し他データを維持する",async()=>{
+  const storage=new MemoryStorage();
+  const store=PlayerData.createStore({storage});
+  const data=await store.load();
+  const prepared={
+    ...data,
+    nyanCoins:37,
+    ownedCatSkins:["default","cat-test"],
+    challengeProgress:{safe:true}
+  };
+  await store.save(prepared);
+
+  const saved=await store.updateEquipment("catSkin","cat-test");
+
+  assert.equal(saved.equippedAppearance.catSkinId,"cat-test");
+  assert.equal(saved.equippedAppearance.dogSkinId,"default");
+  assert.equal(saved.nyanCoins,37);
+  assert.deepEqual(saved.ownedCatSkins,["default","cat-test"]);
+  assert.deepEqual(saved.challengeProgress,{safe:true});
+});
+
+test("未所持アイテムと別カテゴリ名の装備更新を拒否する",async()=>{
+  const store=PlayerData.createStore({storage:new MemoryStorage()});
+  await store.load();
+
+  await assert.rejects(
+    store.updateEquipment("catSkin","not-owned"),
+    /equipment_item_not_owned/
+  );
+  await assert.rejects(
+    store.updateEquipment("specialSkill","default"),
+    /invalid_equipment_category/
+  );
 });
 
 test("保存後の再読み込みでもIDとデータを維持する",async()=>{
@@ -152,5 +227,36 @@ test("サーバー導入時はサーバー応答を正としてキャッシュ�
   assert.equal(loaded.nyanCoins,50);
   assert.equal(saved.nyanCoins,45);
   assert.equal(JSON.parse(storage.getItem(PlayerData.STORAGE_KEYS.playerData)).nyanCoins,45);
+  assert.equal(store.getStatus().source,"server");
+});
+
+test("装備更新でもremoteProviderの応答を正とする",async()=>{
+  const storage=new MemoryStorage();
+  const remoteProvider={
+    async load(playerId){
+      return {
+        ...PlayerData.createDefaultData(playerId),
+        nyanCoins:40,
+        ownedCatSkins:["default","server-cat"]
+      };
+    },
+    async save(playerId){
+      return {
+        ...PlayerData.createDefaultData(playerId),
+        nyanCoins:41,
+        ownedCatSkins:["default","server-cat"],
+        equippedAppearance:{
+          ...PlayerData.createDefaultData(playerId).equippedAppearance,
+          catSkinId:"default"
+        }
+      };
+    }
+  };
+  const store=PlayerData.createStore({storage,remoteProvider});
+  await store.load();
+  const saved=await store.updateEquipment("catSkin","server-cat");
+
+  assert.equal(saved.equippedAppearance.catSkinId,"default");
+  assert.equal(saved.nyanCoins,41);
   assert.equal(store.getStatus().source,"server");
 });
