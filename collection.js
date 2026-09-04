@@ -1,5 +1,5 @@
-/* にゃんチェイス - Phase 2A コレクション画面
-   プレイヤーデータの表示と安全な装備変更だけを担当する。
+/* にゃんチェイス - Phase 2 コレクション画面
+   プレイヤーデータの表示と安全な装備・ホーム推し変更だけを担当する。
 */
 (function(root,factory){
   const catalog=typeof module==="object" && module.exports
@@ -57,8 +57,23 @@
       }
     });
 
+    let favoriteCharacter=data.favoriteCharacter || null;
+    if(favoriteCharacter){
+      const favoriteCategory=catalog.getCategory(favoriteCharacter.category);
+      const ownedItems=favoriteCategory && Array.isArray(data[favoriteCategory.ownedField])
+        ? data[favoriteCategory.ownedField]
+        : [];
+      const valid=(favoriteCharacter.category==="catSkin" || favoriteCharacter.category==="dogSkin") &&
+        ownedItems.includes(favoriteCharacter.itemId) &&
+        Boolean(catalog.getItem(favoriteCharacter.category,favoriteCharacter.itemId)?.homeImage);
+      if(!valid){
+        favoriteCharacter=null;
+        changed=true;
+      }
+    }
+
     return {
-      data:changed ? {...data,equippedAppearance} : data,
+      data:changed ? {...data,equippedAppearance,favoriteCharacter} : data,
       changed
     };
   }
@@ -82,13 +97,26 @@
     return {ok:true,category,item};
   }
 
+  function validateFavorite(data,categoryId,itemId,catalog=defaultCatalog){
+    if(categoryId!=="catSkin" && categoryId!=="dogSkin"){
+      return {ok:false,reason:"invalid_category"};
+    }
+    const validation=validateEquip(data,categoryId,itemId,catalog);
+    if(!validation.ok) return validation;
+    if(!validation.item.homeImage || validation.item.id==="default"){
+      return {ok:false,reason:"home_image_unavailable"};
+    }
+    return validation;
+  }
+
   function createController({playerData,catalog=defaultCatalog,view={}}={}){
     let currentData=null;
     let activeSection="cat";
+    let selectedItem=null;
     let saving=false;
 
     function render(){
-      view.render?.({data:currentData,activeSection,saving});
+      view.render?.({data:currentData,activeSection,selectedItem,saving});
     }
 
     async function load(){
@@ -115,6 +143,18 @@
       return true;
     }
 
+    function selectItem(categoryId,itemId){
+      if(!catalog.getItem(categoryId,itemId)) return false;
+      selectedItem={categoryId,itemId};
+      render();
+      return true;
+    }
+
+    function closeDetail(){
+      selectedItem=null;
+      render();
+    }
+
     async function equip(categoryId,itemId){
       if(saving) return {ok:false,reason:"busy",data:currentData};
 
@@ -132,6 +172,7 @@
       try{
         const saved=await playerData.updateEquipment(categoryId,itemId);
         currentData=sanitizeCatalogEquipment(saved,catalog).data;
+        root?.dispatchEvent?.(new root.CustomEvent("nyan-player-appearance-changed"));
         render();
         return {ok:true,data:currentData};
       }catch(error){
@@ -146,18 +187,49 @@
       }
     }
 
-    function getState(){
-      return {data:currentData,activeSection,saving};
+    async function setFavorite(categoryId,itemId){
+      if(saving) return {ok:false,reason:"busy",data:currentData};
+      const validation=validateFavorite(currentData,categoryId,itemId,catalog);
+      if(!validation.ok) return {...validation,data:currentData};
+      if(currentData.favoriteCharacter?.category===categoryId &&
+        currentData.favoriteCharacter?.itemId===itemId){
+        return {ok:true,reason:"already_favorite",data:currentData};
+      }
+
+      saving=true;
+      view.setBusy?.(true);
+      render();
+      try{
+        const saved=await playerData.updateFavoriteCharacter(categoryId,itemId);
+        currentData=sanitizeCatalogEquipment(saved,catalog).data;
+        root?.dispatchEvent?.(new root.CustomEvent("nyan-player-appearance-changed"));
+        render();
+        return {ok:true,data:currentData};
+      }catch(error){
+        currentData=playerData.getSnapshot?.() || currentData;
+        view.showError?.("ホーム推しキャラを保存できませんでした");
+        render();
+        return {ok:false,reason:"save_failed",data:currentData,error};
+      }finally{
+        saving=false;
+        view.setBusy?.(false);
+        render();
+      }
     }
 
-    return {load,setSection,equip,getState};
+    function getState(){
+      return {data:currentData,activeSection,selectedItem,saving};
+    }
+
+    return {load,setSection,selectItem,closeDetail,equip,setFavorite,getState};
   }
 
-  function createDomView(document,catalog,onEquip){
+  function createDomView(document,catalog,actions){
     const balance=document.getElementById("collectionCoinBalance");
     const content=document.getElementById("collectionContent");
     const status=document.getElementById("collectionStatus");
     const tabs=[...document.querySelectorAll("[data-collection-section]")];
+    const detail=document.getElementById("collectionDetail");
 
     function setText(element,text){
       if(element) element.textContent=text;
@@ -168,6 +240,9 @@
       const state=getItemState(data,item,catalog);
       const card=document.createElement("article");
       card.className=`collection-item is-${state}`;
+      card.tabIndex=0;
+      card.setAttribute("role","button");
+      card.setAttribute("aria-label",`${item.name}の詳細を表示`);
 
       const preview=document.createElement("div");
       preview.className="collection-item-preview";
@@ -190,13 +265,80 @@
       button.className="collection-equip-btn";
       button.textContent=state==="equipped" ? "装備中" : state==="owned" ? "装備する" : "未所持";
       button.disabled=saving || state!=="owned";
-      button.addEventListener("click",()=>onEquip(item.category,item.id));
+      button.addEventListener("click",event=>{
+        event.stopPropagation();
+        actions.onEquip(item.category,item.id);
+      });
+
+      const open=()=>actions.onSelect(item.category,item.id);
+      card.addEventListener("click",open);
+      card.addEventListener("keydown",event=>{
+        if(event.key==="Enter" || event.key===" "){
+          event.preventDefault();
+          open();
+        }
+      });
 
       card.append(preview,copy,button);
       return card;
     }
 
-    function render({data,activeSection,saving}){
+    function renderDetail(data,selectedItem,saving){
+      if(!detail) return;
+      if(!selectedItem){
+        detail.classList.remove("show");
+        detail.setAttribute("aria-hidden","true");
+        return;
+      }
+      const item=catalog.getItem(selectedItem.categoryId,selectedItem.itemId);
+      if(!item) return;
+      const state=getItemState(data,item,catalog);
+      const collectionImage=detail.querySelector("[data-detail-collection-image]");
+      const profileImage=detail.querySelector("[data-detail-profile-image]");
+      const names=[...detail.querySelectorAll("[data-detail-name]")];
+      const stateLabel=detail.querySelector("[data-detail-state]");
+      const equipButton=detail.querySelector("[data-detail-equip]");
+      const favoriteButton=detail.querySelector("[data-detail-favorite]");
+      const isFavorite=data.favoriteCharacter?.category===item.category &&
+        data.favoriteCharacter?.itemId===item.id;
+
+      detail.classList.toggle("is-unowned",state==="unowned");
+      if(collectionImage){
+        collectionImage.onerror=()=>{
+          collectionImage.onerror=null;
+          collectionImage.src=item.preview;
+        };
+        collectionImage.src=item.collectionImage || item.preview;
+        collectionImage.alt=item.name;
+      }
+      if(profileImage){
+        profileImage.onerror=()=>{
+          profileImage.onerror=null;
+          profileImage.src=item.preview;
+        };
+        profileImage.src=item.profileImage || item.preview;
+        profileImage.alt=`${item.name} プロフィール画像`;
+      }
+      names.forEach(name=>setText(name,item.name));
+      setText(stateLabel,state==="equipped" ? "装備中" : state==="owned" ? "所持" : "🔒 未所持");
+      if(equipButton){
+        equipButton.textContent=state==="equipped" ? "装備中" : state==="owned" ? "装備する" : "未所持";
+        equipButton.disabled=saving || state!=="owned";
+        equipButton.onclick=()=>actions.onEquip(item.category,item.id);
+      }
+      if(favoriteButton){
+        const canFavorite=(item.category==="catSkin" || item.category==="dogSkin") &&
+          state!=="unowned" && item.id!=="default" && Boolean(item.homeImage);
+        favoriteButton.hidden=item.category!=="catSkin" && item.category!=="dogSkin";
+        favoriteButton.textContent=isFavorite ? "ホーム表示中" : "ホームに表示";
+        favoriteButton.disabled=saving || !canFavorite || isFavorite;
+        favoriteButton.onclick=()=>actions.onFavorite(item.category,item.id);
+      }
+      detail.classList.add("show");
+      detail.setAttribute("aria-hidden","false");
+    }
+
+    function render({data,activeSection,selectedItem,saving}){
       if(!data || !content) return;
       setText(balance,String(data.nyanCoins));
 
@@ -221,6 +363,7 @@
         group.append(heading,grid);
         content.appendChild(group);
       });
+      renderDetail(data,selectedItem,saving);
     }
 
     function setBusy(isBusy){
@@ -248,8 +391,10 @@
     if(!overlay || !openButton || !backButton) return null;
 
     let controller=null;
-    const view=createDomView(document,catalog,(categoryId,itemId)=>{
-      controller?.equip(categoryId,itemId);
+    const view=createDomView(document,catalog,{
+      onEquip(categoryId,itemId){controller?.equip(categoryId,itemId);},
+      onSelect(categoryId,itemId){controller?.selectItem(categoryId,itemId);},
+      onFavorite(categoryId,itemId){controller?.setFavorite(categoryId,itemId);}
     });
     controller=createController({playerData,catalog,view});
 
@@ -260,9 +405,17 @@
     });
 
     backButton.addEventListener("click",()=>{
+      if(controller.getState().selectedItem){
+        controller.closeDetail();
+        return;
+      }
       overlay.classList.remove("show");
       overlay.setAttribute("aria-hidden","true");
       openButton.focus();
+    });
+
+    document.getElementById("collectionDetailBackBtn")?.addEventListener("click",()=>{
+      controller.closeDetail();
     });
 
     document.querySelectorAll("[data-collection-section]").forEach(tab=>{
@@ -277,6 +430,7 @@
     getItemState,
     sanitizeCatalogEquipment,
     validateEquip,
+    validateFavorite,
     createController,
     initializeBrowser
   });

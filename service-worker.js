@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v2-phase2a-collection-20260830";
+const CACHE_NAME = "nyan-chase-v2-phase2b-visualfix1-20260904";
 const PRECACHE = [
   "./",
   "./README.md",
@@ -46,6 +46,30 @@ const PRECACHE = [
   "./assets/images/pwa/icon-512.png",
   "./assets/images/pwa/icon-maskable-512.png",
   "./assets/images/start.png",
+  "./assets/home-animation/kaito-nyan/kaito-nyan-home-01.png",
+  "./assets/home-animation/detective-shiba/detective-shiba-home-01.png",
+  "./assets/home-skins/kaito-nyan/kaito-nyan-home-treasure.png",
+  "./assets/home-skins/kaito-nyan/kaito-nyan-home-character.png",
+  "./assets/home-skins/detective-shiba/detective-shiba-home-clues.png",
+  "./assets/home-skins/detective-shiba/detective-shiba-home-character.png",
+  "./assets/images/skins/mystery01/cat_kaitou_collection.png",
+  "./assets/images/skins/mystery01/cat_kaitou_effect_cards.png",
+  "./assets/images/skins/mystery01/cat_kaitou_effect_gem.png",
+  "./assets/images/skins/mystery01/cat_kaitou_home.png",
+  "./assets/images/skins/mystery01/cat_kaitou_piece.png",
+  "./assets/images/skins/mystery01/cat_kaitou_profile.png",
+  "./assets/images/skins/mystery01/cat_kaitou_result_lose.png",
+  "./assets/images/skins/mystery01/cat_kaitou_result_win.png",
+  "./assets/images/skins/mystery01/dog_detective_black_piece.png",
+  "./assets/images/skins/mystery01/dog_detective_collection.png",
+  "./assets/images/skins/mystery01/dog_detective_effect_clue.png",
+  "./assets/images/skins/mystery01/dog_detective_effect_search.png",
+  "./assets/images/skins/mystery01/dog_detective_home.png",
+  "./assets/images/skins/mystery01/dog_detective_profile.png",
+  "./assets/images/skins/mystery01/dog_detective_red_piece.png",
+  "./assets/images/skins/mystery01/dog_detective_result_lose.png",
+  "./assets/images/skins/mystery01/dog_detective_result_win.png",
+  "./assets/images/skins/mystery01/dog_detective_white_piece.png",
   "./audio.js",
   "./collection-catalog.js",
   "./collection.js",
@@ -54,6 +78,7 @@ const PRECACHE = [
   "./index.html",
   "./manifest.webmanifest",
   "./player-data.js",
+  "./skin-presentation.js",
   "./style.css"
 ];
 

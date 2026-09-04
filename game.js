@@ -6,6 +6,37 @@
   const E=NyanEngine;
   const A=NyanAnimation;
   const Audio=NyanAudio;
+  const Skins=NyanSkinPresentation;
+
+  function playerAppearance(){
+    return window.NyanPlayerData?.getSnapshot?.() || null;
+  }
+
+  function applySkinFallbacks(scope){
+    scope?.querySelectorAll?.("img[data-skin-fallback]").forEach(image=>{
+      Skins.setImageWithFallback(image,image.getAttribute("src"),image.dataset.skinFallback);
+    });
+  }
+
+  function showMoveSkinEffect(type,index,dogIndex=0){
+    if(Skins.isOnlineMode(playMode)) return;
+    const category=type==="box" ? "catSkin" : "dogSkin";
+    const src=Skins.effectSource(playerAppearance(),category,"move",{playMode});
+    const target=type==="box"
+      ? board.querySelector(`.box[data-box-index="${index}"]`)
+      : board.querySelectorAll(".node")[index];
+    Skins.showEffectAtElement(target,src,type==="box" ? "cat-move" : `dog-move-${dogIndex}`);
+  }
+
+  function showFoundFootprintSkinEffects(boxIndex){
+    if(Skins.isOnlineMode(playMode)) return;
+    const target=board.querySelector(`.box[data-box-index="${boxIndex}"]`);
+    const data=playerAppearance();
+    ["catSkin","dogSkin"].forEach(category=>{
+      const src=Skins.effectSource(data,category,"found",{playMode});
+      Skins.showEffectAtElement(target,src,category==="catSkin" ? "found-cat" : "found-dog");
+    });
+  }
    // 盤面で頻繁に使う画像を先に読み込んでおく
 [
   "./assets/images/paw.png",
@@ -1402,9 +1433,10 @@ if(
         if(game.revealedTracks.get(i)===1)b.classList.add("start-track");
       }
 
+      const catPiece=Skins.resolveCatPiece(playerAppearance(),{playMode});
       b.innerHTML=`<span class="boxnum">${i+1}</span>
         <img class="box-art" src="./assets/images/box.png" alt="">
-        ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?'<span class="cat"><img class="cat-art" src="./assets/images/cat_play_normal.png" alt="ネコ"></span>':""}
+        ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?`<span class="cat"><img class="cat-art" src="${catPiece.src}" data-skin-id="${catPiece.itemId}" data-skin-fallback="${catPiece.fallback}" alt="ネコ"></span>`:""}
         ${privateHistoryHTML(i)}
         ${game.phase==="cat" &&
   game.catVisible &&
@@ -1496,9 +1528,9 @@ if(E.getDogDashMoves(game,1).includes(i)){
         s.className="dogstack";
         here.forEach(j=>{
           const t=document.createElement("span");
-          t.className=`dogtoken ${E.DOGS[j].token}`;
-          const dogImg=["dog_red.png","dog_green.png","dog_blue.png"][j];
-          t.innerHTML=`<img src="./assets/images/${dogImg}" alt="${E.DOGS[j].name}">`;
+          const dogPiece=Skins.resolveDogPiece(playerAppearance(),j,{playMode});
+          t.className=`dogtoken ${E.DOGS[j].token}${dogPiece.itemId!=="default" ? " skin-piece-custom" : ""}`;
+          t.innerHTML=`<img src="${dogPiece.src}" data-skin-id="${dogPiece.itemId}" data-skin-fallback="${dogPiece.fallback}" alt="${E.DOGS[j].name}">`;
           s.appendChild(t);
         });
         n.appendChild(s);
@@ -1508,6 +1540,7 @@ if(E.getDogDashMoves(game,1).includes(i)){
       board.appendChild(n);
     }
      renderTrackLayer();
+     applySkinFallbacks(board);
   }
 
 function privateHistoryHTML(i){
@@ -1741,6 +1774,8 @@ if(useSneak){
 Audio.play("cat");
 
 A.animateCatMove(board,from,i,()=>{
+
+  showMoveSkinEffect("box",i);
 
     // 忍び足を使った場合、
   // 移動前にいた箱には痕跡を残さない
@@ -2103,6 +2138,7 @@ if(
  // 移動は即時確定。以後この犬は行動不可。
 Audio.play("move");
 game.dogs[di]=i;
+showMoveSkinEffect("node",i,di);
 
 if(playMode==="onlinePolice"){
   window.NyanOnline.sendGame({
@@ -2213,6 +2249,7 @@ game.revealedTracks.set(
 
   // ★ 初めて発見した瞬間だけ演出
 if(isNewTrack){
+  showFoundFootprintSkinEffects(bi);
   const foundBox=board.querySelector(
     `.box[data-box-index="${bi}"]`
   );
@@ -2674,6 +2711,7 @@ if(playMode==="onlinePolice"){
 
           // 初めて見つけた足跡
           if(isNewTrack){
+            showFoundFootprintSkinEffects(bi);
 
             const foundBox=
               board.querySelector(
@@ -3132,6 +3170,7 @@ showSkillCutin({
 
     // くろ柴を2マス先へ移動
 game.dogs[1]=target;
+showMoveSkinEffect("node",target,1);
 
 if(playMode==="onlinePolice"){
 
@@ -3366,11 +3405,12 @@ if(pos!==null){
   }
 }
 
-      const dogImg=["dog_card_red.png","dog_card_green.png","dog_card_blue.png"][i];
+      const dogCard=Skins.resolveDogCard(playerAppearance(),i,{playMode});
       const role=playMode==="cpuPolice" ? ["探索に強い","バランス型","移動に強い"][i] : "";
-      c.innerHTML=`<span class="dog-name"><img class="character-img" src="./assets/images/${dogImg}" alt="">${E.DOGS[i].name}</span>
+      c.innerHTML=`<span class="dog-name"><img class="character-img" src="${dogCard.src}" data-skin-id="${dogCard.itemId}" data-skin-fallback="${dogCard.fallback}" alt="">${E.DOGS[i].name}</span>
         ${role?`<span class="dog-role">${role}</span>`:""}
         <span class="dog-status">${status}</span>`;
+      applySkinFallbacks(c);
       if(game.selectedDog===i)c.classList.add("selected");
 
 c.disabled=!(
@@ -4841,6 +4881,7 @@ if(remainingDogs<=searchesNeeded){
         cpuMemory.lastDogNodes[di]=previous;
 
         game.dogs[di]=action.target;
+        showMoveSkinEffect("node",action.target,di);
         game.dogAction[di]="move";
         game.actionLocked=false;
 
@@ -5566,9 +5607,8 @@ if(resultRouteNote){
 
     clearTimeout(victoryCutinTimer);
     victoryCutin.classList.remove("closing");
-    victoryCutinImage.src=winner==="cat"
-      ? "./assets/images/cutin_cat_win.jpg"
-      : "./assets/images/cutin_police_win.jpg";
+    const resultImage=Skins.resolveResultImage(playerAppearance(),winner,playMode);
+    Skins.setImageWithFallback(victoryCutinImage,resultImage.src,resultImage.fallback);
     victoryCutinImage.alt=winner==="cat"
       ? "いたずらネコ勝利カットイン"
       : "柴犬警察勝利カットイン";

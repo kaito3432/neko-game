@@ -11,7 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=2.0.phase2a">
+<link rel="stylesheet" href="./style.css?v=2.0.phase2b-visualfix1">
 </head>
 <body>
 <div class="app">
@@ -138,7 +138,16 @@
 
     <section class="vu3-brand">
       <img class="vu3-logo" src="./assets/images/home_logo.png" alt="にゃんチェイス">
-      <img class="vu3-hero" src="./assets/images/home_hero.png" alt="ネコと柴犬警察">
+      <div class="vu3-hero-stage">
+        <div class="vu3-home-layered-skin" aria-hidden="true">
+          <img class="vu3-home-layer vu3-home-layer-treasure" alt="">
+          <img class="vu3-home-layer vu3-home-layer-character" alt="">
+          <div class="vu3-home-layer-sparkles" aria-hidden="true"></div>
+        </div>
+        <img class="vu3-hero" src="./assets/images/home_hero.png" alt="ネコと柴犬警察">
+        <img class="vu3-hero-blend" src="./assets/images/home_hero.png" alt="" aria-hidden="true">
+        <div class="vu3-home-motion-effects" aria-hidden="true"></div>
+      </div>
     </section>
 
     <div class="vu3-sub">遊び方を選んでね</div>
@@ -210,6 +219,27 @@
     </nav>
 
     <main class="collection-content" id="collectionContent"></main>
+    <section class="collection-detail" id="collectionDetail" aria-hidden="true" aria-label="スキン詳細">
+      <header class="collection-detail-header">
+        <button class="collection-back-btn" id="collectionDetailBackBtn" type="button" aria-label="一覧へ戻る">←</button>
+        <h2 data-detail-name>スキン詳細</h2>
+        <span class="collection-detail-state" data-detail-state></span>
+      </header>
+      <div class="collection-detail-scroll">
+        <div class="collection-detail-main-image">
+          <span class="collection-lock" aria-hidden="true">🔒</span>
+          <img data-detail-collection-image src="" alt="">
+        </div>
+        <div class="collection-profile-preview">
+          <img data-detail-profile-image src="" alt="">
+          <div><small>PROFILE PREVIEW</small><strong data-detail-name>スキン詳細</strong></div>
+        </div>
+        <div class="collection-detail-actions">
+          <button class="collection-equip-btn" data-detail-equip type="button">装備する</button>
+          <button class="collection-favorite-btn" data-detail-favorite type="button">ホームに表示</button>
+        </div>
+      </div>
+    </section>
     <div class="collection-status" id="collectionStatus" role="status" aria-live="polite"></div>
   </div>
 </div>
@@ -1710,14 +1740,15 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./player-data.js?v=1.0.phase2a"></script>
-<script src="./collection-catalog.js?v=1.0.phase2a"></script>
-<script src="./collection.js?v=1.0.phase2a"></script>
+<script src="./player-data.js?v=1.0.phase2b"></script>
+<script src="./collection-catalog.js?v=1.0.phase2b-visualfix1"></script>
+<script src="./collection.js?v=1.0.phase2b"></script>
+<script src="./skin-presentation.js?v=1.0.phase2b-visualfix1"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./online.js?v=2.0.online-beta1"></script>
-<script src="./game.js?v=2.0.phase5"></script>
+<script src="./game.js?v=2.0.phase2b-visualfix1"></script>
 
 <script>
 if ("serviceWorker" in navigator) {

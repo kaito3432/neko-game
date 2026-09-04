@@ -14,7 +14,7 @@
 })(typeof globalThis!=="undefined" ? globalThis : this, root=>{
   "use strict";
 
-  const CURRENT_VERSION=1;
+  const CURRENT_VERSION=2;
   const STORAGE_KEYS=Object.freeze({
     playerId:"nyanChasePlayerId",
     playerData:"nyanChasePlayerData"
@@ -64,6 +64,21 @@
     return ownedItems.includes(itemId) ? itemId : DEFAULT_ITEM_ID;
   }
 
+  function safeFavoriteCharacter(value,ownedCatSkins,ownedDogSkins){
+    if(!isPlainObject(value)) return null;
+    const category=value.category;
+    const itemId=value.itemId;
+    const ownedItems=category==="catSkin"
+      ? ownedCatSkins
+      : category==="dogSkin"
+        ? ownedDogSkins
+        : null;
+    if(!ownedItems || typeof itemId!=="string" || !ownedItems.includes(itemId)){
+      return null;
+    }
+    return {category,itemId};
+  }
+
   function safeProgressObject(value){
     if(!isPlainObject(value)) return {};
 
@@ -92,6 +107,7 @@
         pawId:DEFAULT_ITEM_ID,
         boardThemeId:DEFAULT_ITEM_ID
       },
+      favoriteCharacter:null,
       dailyMissionProgress:{
         date:null,
         missions:[],
@@ -152,6 +168,11 @@
         pawId:safeEquippedItem(equipped.pawId,ownedPaws),
         boardThemeId:safeEquippedItem(equipped.boardThemeId,ownedBoardThemes)
       },
+      favoriteCharacter:safeFavoriteCharacter(
+        source.favoriteCharacter,
+        ownedCatSkins,
+        ownedDogSkins
+      ),
       dailyMissionProgress:normalizeDailyMissionProgress(source.dailyMissionProgress),
       challengeProgress:safeProgressObject(source.challengeProgress),
       rankPoints:safeNonNegativeInteger(source.rankPoints),
@@ -330,6 +351,23 @@
       return save(candidate);
     }
 
+    async function updateFavoriteCharacter(category,itemId){
+      if(category!=="catSkin" && category!=="dogSkin"){
+        throw new Error("invalid_favorite_category");
+      }
+      if(typeof itemId!=="string" || itemId.length===0){
+        throw new Error("invalid_favorite_item");
+      }
+
+      const definition=EQUIPMENT_CATEGORIES[category];
+      const base=currentData || await load();
+      if(!base[definition.ownedField].includes(itemId)){
+        throw new Error("favorite_item_not_owned");
+      }
+
+      return save({...base,favoriteCharacter:{category,itemId}});
+    }
+
     function setRemoteProvider(provider){
       remote=provider || null;
     }
@@ -342,7 +380,7 @@
       return {...lastStatus};
     }
 
-    return {load,save,updateEquipment,setRemoteProvider,getSnapshot,getStatus};
+    return {load,save,updateEquipment,updateFavoriteCharacter,setRemoteProvider,getSnapshot,getStatus};
   }
 
   let browserStorage=null;
@@ -370,6 +408,7 @@
     load:defaultStore.load,
     save:defaultStore.save,
     updateEquipment:defaultStore.updateEquipment,
+    updateFavoriteCharacter:defaultStore.updateFavoriteCharacter,
     setRemoteProvider:defaultStore.setRemoteProvider,
     getSnapshot:defaultStore.getSnapshot,
     getStatus:defaultStore.getStatus

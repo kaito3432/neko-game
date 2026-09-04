@@ -38,6 +38,7 @@ test("新規プレイヤーIDと初期データを作成する",async()=>{
     pawId:"default",
     boardThemeId:"default"
   });
+  assert.equal(data.favoriteCharacter,null);
   assert.equal(storage.getItem(PlayerData.STORAGE_KEYS.playerId),data.playerId);
 });
 
@@ -258,5 +259,55 @@ test("装備更新でもremoteProviderの応答を正とする",async()=>{
 
   assert.equal(saved.equippedAppearance.catSkinId,"default");
   assert.equal(saved.nyanCoins,41);
+  assert.equal(store.getStatus().source,"server");
+});
+
+test("ホーム推しキャラは装備と独立して保存・復元する",async()=>{
+  const storage=new MemoryStorage();
+  const store=PlayerData.createStore({storage});
+  const initial=await store.load();
+  await store.save({...initial,ownedCatSkins:["default","cat_kaitou"]});
+  const saved=await store.updateFavoriteCharacter("catSkin","cat_kaitou");
+
+  assert.deepEqual(saved.favoriteCharacter,{category:"catSkin",itemId:"cat_kaitou"});
+  assert.equal(saved.equippedAppearance.catSkinId,"default");
+  assert.equal(saved.nyanCoins,0);
+
+  const restored=await PlayerData.createStore({storage}).load();
+  assert.deepEqual(restored.favoriteCharacter,{category:"catSkin",itemId:"cat_kaitou"});
+});
+
+test("未所持・非キャラカテゴリのホーム推し設定を拒否する",async()=>{
+  const store=PlayerData.createStore({storage:new MemoryStorage()});
+  await store.load();
+  await assert.rejects(store.updateFavoriteCharacter("catSkin","cat_kaitou"),/favorite_item_not_owned/);
+  await assert.rejects(store.updateFavoriteCharacter("boardTheme","default"),/invalid_favorite_category/);
+});
+
+test("古いデータの不正なホーム推し設定を安全に解除する",()=>{
+  const playerId="ncp_favoritebad1234";
+  const normalized=PlayerData.normalizeData({
+    version:1,
+    ownedDogSkins:["default"],
+    favoriteCharacter:{category:"dogSkin",itemId:"dog_detective"}
+  },playerId);
+  assert.equal(normalized.favoriteCharacter,null);
+  assert.equal(normalized.version,PlayerData.CURRENT_VERSION);
+});
+
+test("ホーム推し更新でもremoteProviderの応答を正とする",async()=>{
+  const storage=new MemoryStorage();
+  const remoteProvider={
+    async load(playerId){
+      return {...PlayerData.createDefaultData(playerId),ownedDogSkins:["default","dog_detective"]};
+    },
+    async save(playerId){
+      return {...PlayerData.createDefaultData(playerId),ownedDogSkins:["default","dog_detective"],favoriteCharacter:null};
+    }
+  };
+  const store=PlayerData.createStore({storage,remoteProvider});
+  await store.load();
+  const saved=await store.updateFavoriteCharacter("dogSkin","dog_detective");
+  assert.equal(saved.favoriteCharacter,null);
   assert.equal(store.getStatus().source,"server");
 });

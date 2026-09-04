@@ -322,8 +322,11 @@ body{
 }
 
 .app{
-  height:100dvh;
-  max-height:100dvh;
+  width:min(100%,540px);
+  min-height:100dvh;
+  height:auto;
+  max-height:none;
+  margin-inline:auto;
   display:grid;
   grid-template-rows:auto auto auto minmax(0,1fr) auto auto auto;
   gap:clamp(3px,.65vh,7px);
@@ -7649,6 +7652,7 @@ body.sneak-mode .board-shell{
 .collection-overlay.show{display:flex}
 
 .collection-shell{
+  position:relative;
   box-sizing:border-box;
   width:min(100%,500px);
   height:100dvh;
@@ -7661,6 +7665,194 @@ body.sneak-mode .board-shell{
   grid-template-rows:auto auto minmax(0,1fr);
   gap:8px;
   overflow:hidden;
+}
+
+/* Phase 2B: 一覧を保ったまま重ねるスキン詳細。 */
+.collection-detail{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  display:none;
+  box-sizing:border-box;
+  padding:max(8px,env(safe-area-inset-top)) 10px max(8px,env(safe-area-inset-bottom));
+  background:
+    linear-gradient(rgba(255,251,238,.97),rgba(255,247,222,.99)),
+    url("./assets/images/bg_day.png") center/cover no-repeat;
+  grid-template-rows:auto minmax(0,1fr);
+  gap:8px;
+}
+.collection-detail.show{display:grid}
+.collection-detail-header{
+  min-height:44px;
+  display:grid;
+  grid-template-columns:42px minmax(0,1fr) auto;
+  align-items:center;
+  gap:7px;
+}
+.collection-detail-header h2{
+  margin:0;
+  overflow:hidden;
+  color:var(--brown);
+  font-size:clamp(18px,5vw,23px);
+  line-height:1.1;
+  text-align:center;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.collection-detail-state{
+  min-width:55px;
+  padding:5px 7px;
+  border-radius:999px;
+  background:#efe4d8;
+  color:#735d53;
+  font-size:10px;
+  font-weight:900;
+  text-align:center;
+}
+.collection-detail-scroll{
+  min-height:0;
+  overflow:auto;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto auto;
+  gap:9px;
+}
+.collection-detail-main-image{
+  position:relative;
+  min-height:190px;
+  overflow:hidden;
+  border:2px solid #d9bd9e;
+  border-radius:20px;
+  background:rgba(255,255,255,.88);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.collection-detail-main-image img{
+  width:100%;height:100%;object-fit:contain;display:block;
+}
+.collection-lock{
+  position:absolute;
+  z-index:1;
+  left:50%;top:50%;
+  display:none;
+  font-size:32px;
+  transform:translate(-50%,-50%);
+}
+.collection-detail.is-unowned .collection-detail-main-image img,
+.collection-detail.is-unowned .collection-profile-preview img{filter:brightness(.38) saturate(.35)}
+.collection-detail.is-unowned .collection-lock{display:block}
+.collection-profile-preview{
+  min-height:68px;
+  padding:7px 10px;
+  border:2px solid #d9bd9e;
+  border-radius:16px;
+  background:rgba(255,255,255,.9);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.collection-profile-preview img{
+  width:58px;height:58px;flex:0 0 auto;object-fit:contain;border-radius:50%;background:#fff8e8;
+}
+.collection-profile-preview small,.collection-profile-preview strong{display:block}
+.collection-profile-preview small{color:#a17b69;font-size:9px;font-weight:900;letter-spacing:.08em}
+.collection-profile-preview strong{margin-top:3px;color:var(--brown);font-size:15px}
+.collection-detail-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.collection-detail-actions button{min-height:40px}
+.collection-favorite-btn{
+  padding:5px 8px;border:2px solid #d16f77;border-radius:10px;background:#fff0f2;color:#7a3f45;font-size:11px;font-weight:900;
+}
+.collection-favorite-btn:disabled{border-color:#cfc2b7;background:#eee9e4;color:#8d817a}
+
+/* ゲーム情報を覆わない、0.4秒未満の装飾専用レイヤー。 */
+.skin-decorative-effect{
+  position:fixed;
+  z-index:4600;
+  width:34px;
+  height:34px;
+  object-fit:contain;
+  pointer-events:none;
+  opacity:0;
+  transform:translate(-50%,-50%) scale(.55) rotate(-8deg);
+  transition:opacity .08s ease,transform .24s ease;
+  filter:drop-shadow(0 2px 3px rgba(70,45,35,.18));
+}
+.skin-decorative-effect.show{opacity:.78;transform:translate(-50%,-70%) scale(1) rotate(5deg)}
+.skin-effect-found-cat,.skin-effect-found-dog{z-index:4590;width:27px;height:27px;opacity:0}
+.skin-effect-found-cat{transform:translate(-90%,-55%) scale(.5)}
+.skin-effect-found-dog{transform:translate(-10%,-55%) scale(.5)}
+.skin-effect-found-cat.show{opacity:.56;transform:translate(-105%,-95%) scale(.84)}
+.skin-effect-found-dog.show{opacity:.56;transform:translate(5%,-95%) scale(.84)}
+
+/* 固定3:1ステージ上で、2枚のキーポーズをGPU合成して滑らかに補間する。 */
+.vu3-hero-stage{
+  position:relative;
+  flex:1 1 0!important;
+  width:100%!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0 auto!important;
+  overflow:visible;
+}
+.vu3-hero-stage .vu3-hero,
+.vu3-hero-stage .vu3-hero-blend{
+  position:absolute!important;
+  inset:0!important;
+  display:block;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  border-radius:0;
+  transform:translateZ(0);
+  pointer-events:none;
+}
+.vu3-hero-stage .vu3-hero{z-index:1;opacity:1}
+.vu3-hero-stage .vu3-hero-blend{z-index:0;opacity:0}
+.vu3-hero-stage.skin-favorite-active{
+  flex:0 0 auto!important;
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:3 / 1;
+  margin:var(--home-stage-margin-top,clamp(-20px,-2.5dvh,-12px)) auto 0!important;
+  cursor:pointer;
+  touch-action:manipulation;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.vu3-hero-stage.skin-favorite-playing{
+  cursor:progress;
+  will-change:transform;
+}
+.vu3-home-motion-effects{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  overflow:visible;
+  pointer-events:none;
+}
+.vu3-home-particle{
+  position:absolute;
+  left:0;
+  top:0;
+  opacity:0;
+  font-size:clamp(10px,3.6vw,17px);
+  line-height:1;
+  color:#ffd84a;
+  text-shadow:0 1px 2px rgba(72,35,20,.28);
+  will-change:transform,opacity;
+}
+.vu3-home-particle.is-ruby{color:#ec4f68}
+.vu3-home-particle.is-sapphire{color:#49a8e8}
+.vu3-home-particle.is-paw{color:#9a6544;font-size:clamp(9px,3vw,14px)}
+.vu3-hero-stage.skin-favorite-dog-detective{
+  --home-stage-margin-top:clamp(-20px,calc(10dvh - 76.8px),14px);
+}
+@media(max-height:740px){
+  .vu3-hero-stage.skin-favorite-active{margin-top:var(--home-stage-margin-top,-20px)!important}
 }
 
 .collection-header{
@@ -7892,6 +8084,11 @@ body.sneak-mode .board-shell{
   .collection-tabs{gap:4px}
   .collection-tab{min-height:36px;padding:3px 2px}
   .collection-item-preview{height:72px}
+  .collection-detail{gap:5px;padding-top:max(5px,env(safe-area-inset-top))}
+  .collection-detail-header{min-height:38px}
+  .collection-detail-main-image{min-height:145px}
+  .collection-profile-preview{min-height:58px}
+  .collection-profile-preview img{width:48px;height:48px}
 }
 
 @media (max-width:340px){
@@ -7908,4 +8105,95 @@ body.sneak-mode .board-shell{
   .visual-update3 .vu3-home{
     grid-template-rows:minmax(0,29dvh) auto minmax(0,1fr) auto auto!important;
   }
+}
+
+/* Phase 2B: 通常背景上に透過PNG 2枚を同一座標系で重ねる。 */
+.vu3-home-layered-skin{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:none;
+  overflow:visible;
+  pointer-events:none;
+}
+.skin-home-layered-active .vu3-home-layered-skin{
+  display:block;
+}
+.skin-home-layered-active > .vu3-hero,
+.skin-home-layered-active > .vu3-hero-blend{
+  visibility:hidden!important;
+}
+.vu3-home-layer{
+  position:absolute!important;
+  inset:0!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  margin:0!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  transform:translateZ(0);
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.vu3-home-layer-treasure{
+  z-index:1;
+}
+.vu3-home-layer-character{
+  z-index:2;
+  pointer-events:auto;
+  cursor:pointer;
+  touch-action:manipulation;
+  transform-origin:50% 62%;
+}
+.skin-home-layered-playing .vu3-home-layer-character{
+  cursor:progress;
+  will-change:transform;
+}
+.vu3-home-layer-sparkles{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  overflow:visible;
+  pointer-events:none;
+}
+.vu3-home-layer-sparkle{
+  position:absolute;
+  color:#ffe58a;
+  font-size:clamp(9px,3vw,14px);
+  line-height:1;
+  opacity:0;
+  text-shadow:0 0 5px rgba(255,191,67,.8);
+  will-change:transform,opacity;
+}
+@media (prefers-reduced-motion:reduce){
+  .vu3-home-layer-character,
+  .vu3-home-layer-sparkle{
+    animation:none!important;
+    transition:none!important;
+  }
+}
+
+/* Phase 2B: 丸い駒素材は盤面の丸枠を使い切る。標準駒の寸法は維持する。 */
+.cat-art[data-skin-id="cat_kaitou"]{
+  width:94%;
+  height:auto;
+  aspect-ratio:1 / 1;
+  padding:0;
+  object-fit:cover!important;
+}
+.dogtoken.skin-piece-custom{
+  width:100%;
+  min-width:0;
+  height:100%;
+  padding:0;
+  border:0;
+  background:transparent;
+}
+.dogtoken.skin-piece-custom img,
+.dog-card .character-img[data-skin-id="dog_detective"]{
+  width:100%;
+  height:100%;
+  object-fit:cover!important;
 }

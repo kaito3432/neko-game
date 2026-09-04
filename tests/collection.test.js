@@ -44,26 +44,42 @@ function createFutureCatalog(){
   };
 }
 
-test("本番カタログは5カテゴリのdefaultだけを持つ",()=>{
-  assert.equal(Catalog.ITEMS.length,5);
+test("本番カタログはdefaultと第1弾スキンだけを持つ",()=>{
+  assert.equal(Catalog.ITEMS.length,7);
   assert.deepEqual(
-    Catalog.ITEMS.map(item=>item.category).sort(),
+    Catalog.ITEMS.filter(item=>item.id==="default").map(item=>item.category).sort(),
     ["boardTheme","cardboard","catSkin","dogSkin","paw"]
   );
   Catalog.ITEMS.forEach(item=>{
-    assert.equal(item.id,"default");
     assert.equal(typeof item.preview,"string");
     ["price","rarity","limited","shop","skill","ability"].forEach(field=>{
       assert.equal(Object.hasOwn(item,field),false);
     });
   });
+  assert.equal(Catalog.getItem("catSkin","cat_kaitou").name,"怪盗にゃん");
+  assert.equal(Catalog.getItem("dogSkin","dog_detective").name,"探偵しば");
 });
 
 test("defaultアイテムを全カテゴリで装備中と判定する",()=>{
   const data=createData();
-  Catalog.ITEMS.forEach(item=>{
+  Catalog.ITEMS.filter(item=>item.id==="default").forEach(item=>{
     assert.equal(Collection.getItemState(data,item,Catalog),"equipped");
   });
+});
+
+test("第1弾スキンは初期所持にならず猫と犬を混同しない",()=>{
+  const data=createData();
+  assert.equal(Collection.getItemState(data,Catalog.getItem("catSkin","cat_kaitou"),Catalog),"unowned");
+  assert.equal(Collection.getItemState(data,Catalog.getItem("dogSkin","dog_detective"),Catalog),"unowned");
+  assert.equal(Collection.validateEquip(data,"dogSkin","cat_kaitou",Catalog).reason,"unknown_item");
+});
+
+test("ホーム推しキャラは所持済みキャラスキンだけを許可する",()=>{
+  const data=createData();
+  assert.equal(Collection.validateFavorite(data,"catSkin","cat_kaitou",Catalog).reason,"not_owned");
+  data.ownedCatSkins.push("cat_kaitou");
+  assert.equal(Collection.validateFavorite(data,"catSkin","cat_kaitou",Catalog).ok,true);
+  assert.equal(Collection.validateFavorite(data,"cardboard","default",Catalog).reason,"invalid_category");
 });
 
 test("所持・未所持・装備中を保存フラグなしで算出する",()=>{
@@ -211,4 +227,26 @@ test("カタログ外装備の復旧結果を保存して描画する",async()=>
   assert.equal(savedCandidate.equippedAppearance.catSkinId,"default");
   assert.deepEqual(savedCandidate.ownedCatSkins,["default","unknown-future-id"]);
   assert.equal(loaded.equippedAppearance.catSkinId,"default");
+});
+
+test("ホーム推し変更も保存結果を正とし、装備やコインを変えない",async()=>{
+  const initial=createData();
+  initial.ownedDogSkins.push("dog_detective");
+  const authoritative={...initial,nyanCoins:8,favoriteCharacter:{category:"dogSkin",itemId:"dog_detective"}};
+  const playerData={
+    async load(){return initial;},
+    async updateFavoriteCharacter(category,itemId){
+      assert.equal(category,"dogSkin");
+      assert.equal(itemId,"dog_detective");
+      return authoritative;
+    },
+    getSnapshot(){return authoritative;}
+  };
+  const controller=Collection.createController({playerData,catalog:Catalog});
+  await controller.load();
+  const result=await controller.setFavorite("dogSkin","dog_detective");
+  assert.equal(result.ok,true);
+  assert.deepEqual(result.data.favoriteCharacter,{category:"dogSkin",itemId:"dog_detective"});
+  assert.equal(result.data.equippedAppearance.dogSkinId,"default");
+  assert.equal(result.data.nyanCoins,8);
 });
