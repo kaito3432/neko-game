@@ -8197,3 +8197,141 @@ body.sneak-mode .board-shell{
   height:100%;
   object-fit:cover!important;
 }
+
+/* =========================================================
+   2026-09-04 Home favorite responsive stage fix
+   怪盗にゃん / 探偵しばの座標系を端末高さではなく横幅基準に統一
+   ========================================================= */
+
+/*
+  ホーム上段を d(vh) の割合で決めると、SE / Pro Max / 横長端末で
+  ロゴと3:1ステージの実寸関係が変わるため、上段だけ auto にする。
+*/
+.visual-update3 .vu3-home{
+  grid-template-rows:
+    auto
+    auto
+    minmax(0,1fr)
+    auto
+    auto!important;
+}
+
+/* ロゴ + 推しキャラ領域は内容の実寸で高さを決める */
+.visual-update3 .vu3-brand{
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  flex:none!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  overflow:visible!important;
+}
+
+/* ロゴも端末高さ依存を弱め、横幅基準で安定させる */
+.visual-update3 .vu3-logo{
+  flex:0 0 auto!important;
+  width:min(64%,300px)!important;
+  height:auto!important;
+  max-height:76px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  margin:0 auto 2px!important;
+}
+
+/*
+  ここがレスポンシブの基準座標系。
+  推しキャラ表示時は常にモードカードと同じ横幅の3:1ボックスにする。
+*/
+.visual-update3 .vu3-hero-stage.skin-favorite-active{
+  position:relative!important;
+  flex:0 0 auto!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:3 / 1!important;
+  margin:-2px auto 0!important;
+  overflow:visible!important;
+}
+
+/* 端末高さに応じて探偵しばだけ位置を変える旧補正を無効化 */
+.visual-update3 .vu3-hero-stage.skin-favorite-dog-detective{
+  --home-stage-margin-top:-2px!important;
+}
+
+/* 3:1ステージ内の全レイヤーは同一座標系を100%使用 */
+.visual-update3 .vu3-hero-stage .vu3-hero,
+.visual-update3 .vu3-hero-stage .vu3-hero-blend,
+.visual-update3 .vu3-home-layered-skin,
+.visual-update3 .vu3-home-layer{
+  box-sizing:border-box!important;
+}
+
+.visual-update3 .vu3-home-layered-skin{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:visible!important;
+}
+
+.visual-update3 .vu3-home-layer{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+}
+
+/*
+  既存の max-height:740px / min-height:900px でホーム上段だけ
+  再び d(vh) に戻らないよう、最後の上書きで統一する。
+*/
+@media (max-height:740px){
+  .visual-update3 .vu3-home{
+    grid-template-rows:
+      auto
+      auto
+      minmax(0,1fr)
+      auto
+      auto!important;
+  }
+
+  .visual-update3 .vu3-logo{
+    width:min(60%,260px)!important;
+    height:auto!important;
+    max-height:58px!important;
+  }
+
+  .visual-update3 .vu3-hero-stage.skin-favorite-active{
+    margin-top:-3px!important;
+  }
+}
+
+@media (min-height:900px){
+  .visual-update3 .vu3-home{
+    grid-template-rows:
+      auto
+      auto
+      minmax(0,1fr)
+      auto
+      auto!important;
+  }
+}
+
+/*
+  横長・タブレット系でもホーム本体を不自然に横へ広げず、
+  ただし推しキャラの3:1比率は維持する。
+*/
+@media (min-width:700px){
+  .visual-update3 .vu3-home{
+    width:min(100%,540px)!important;
+  }
+
+  .visual-update3 .vu3-logo{
+    width:min(58%,300px)!important;
+  }
+}
+

@@ -49,8 +49,8 @@
     "catSkin:cat_kaitou":Object.freeze({
       treasure:"./assets/home-skins/kaito-nyan/kaito-nyan-home-treasure.png",
       character:"./assets/home-skins/kaito-nyan/kaito-nyan-home-character.png",
-      supportLayout:Object.freeze({translate:"2% 38%",scale:".93"}),
-      characterLayout:Object.freeze({translate:"-4.5% 42%",scale:"1.05"}),
+      supportLayout:Object.freeze({translate:"3% 4%",scale:".95"}),
+      characterLayout:Object.freeze({translate:"-5% 6%",scale:"1.08"}),
       durationMs:HOME_REACTION_DURATION_MS,
       reaction:freezeTimeline([
         {offset:0,transform:"translate3d(0,0,0) scale(1) rotate(0deg)",easing:"ease-out"},
@@ -63,8 +63,8 @@
     "dogSkin:dog_detective":Object.freeze({
       treasure:"./assets/home-skins/detective-shiba/detective-shiba-home-clues.png",
       character:"./assets/home-skins/detective-shiba/detective-shiba-home-character.png",
-      supportLayout:Object.freeze({translate:"26% 8%",scale:".50"}),
-      characterLayout:Object.freeze({translate:"-13% 12%",scale:".88"}),
+      supportLayout:Object.freeze({translate:"25% 6%",scale:".50"}),
+      characterLayout:Object.freeze({translate:"-14% 8%",scale:".90"}),
       durationMs:480,
       reaction:freezeTimeline([
         {offset:0,transform:"translate3d(0,0,0) scale(1) rotate(0deg)",easing:"ease-out"},
