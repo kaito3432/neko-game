@@ -2,6 +2,8 @@
 
 const test=require("node:test");
 const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
 const Catalog=require("../collection-catalog.js");
 const Collection=require("../collection.js");
 
@@ -60,6 +62,36 @@ test("本番カタログはdefaultと第1弾スキンだけを持つ",()=>{
   assert.equal(Catalog.getItem("dogSkin","dog_detective").name,"探偵しば");
 });
 
+test("デフォルト猫は立ち絵と盤面駒の画像を分離する",()=>{
+  const defaultCat=Catalog.getItem("catSkin","default");
+  assert.equal(defaultCat.preview,"./assets/images/cpu_select_cat.png");
+  assert.equal(defaultCat.collectionImage,"./assets/images/cpu_select_cat.png");
+  assert.equal(defaultCat.pieceImage,"./assets/images/cat_play_normal.png");
+  assert.equal(defaultCat.profileImage,defaultCat.pieceImage);
+});
+
+test("デフォルト柴犬は3匹セットのプロフィール画像を使う",()=>{
+  const defaultDog=Catalog.getItem("dogSkin","default");
+  assert.equal(defaultDog.profileImage,"./assets/images/dog_default_profile.png");
+  assert.equal(fs.existsSync(path.resolve(__dirname,"..",defaultDog.profileImage)),true);
+});
+
+test("コレクション操作ラベルは状態と用途を明示する",()=>{
+  assert.equal(Collection.getEquipLabel("catSkin","owned"),"スキンを装備する");
+  assert.equal(Collection.getEquipLabel("dogSkin","equipped"),"スキン装備中");
+  assert.equal(Collection.getEquipLabel("cardboard","owned"),"装備する");
+  assert.equal(Collection.getEquipLabel("catSkin","unowned"),"🔒 未所持");
+});
+
+test("未所持立ち絵内は中央の疑問符だけを表示する",()=>{
+  const collectionSource=fs.readFileSync(path.resolve(__dirname,"..","collection.js"),"utf8");
+  const detailSource=fs.readFileSync(path.resolve(__dirname,"..","index.html"),"utf8");
+  assert.match(collectionSource,/unownedCover\.appendChild\(question\)/);
+  assert.doesNotMatch(collectionSource,/unownedLabel/);
+  assert.match(detailSource,/class="collection-lock"[\s\S]*?<strong>\?<\/strong>[\s\S]*?<\/span>/);
+  assert.doesNotMatch(detailSource,/collection-lock[\s\S]{0,180}🔒 未所持/);
+});
+
 test("defaultアイテムを全カテゴリで装備中と判定する",()=>{
   const data=createData();
   Catalog.ITEMS.filter(item=>item.id==="default").forEach(item=>{
@@ -80,6 +112,14 @@ test("ホーム推しキャラは所持済みキャラスキンだけを許可�
   data.ownedCatSkins.push("cat_kaitou");
   assert.equal(Collection.validateFavorite(data,"catSkin","cat_kaitou",Catalog).ok,true);
   assert.equal(Collection.validateFavorite(data,"cardboard","default",Catalog).reason,"invalid_category");
+});
+
+test("プロフィール設定は所持済みキャラスキンだけを許可する",()=>{
+  const data=createData();
+  assert.equal(Collection.validateProfile(data,"dogSkin","dog_detective",Catalog).reason,"not_owned");
+  data.ownedDogSkins.push("dog_detective");
+  assert.equal(Collection.validateProfile(data,"dogSkin","dog_detective",Catalog).ok,true);
+  assert.equal(Collection.validateProfile(data,"boardTheme","default",Catalog).reason,"invalid_category");
 });
 
 test("所持・未所持・装備中を保存フラグなしで算出する",()=>{
@@ -249,4 +289,83 @@ test("ホーム推し変更も保存結果を正とし、装備やコインを�
   assert.deepEqual(result.data.favoriteCharacter,{category:"dogSkin",itemId:"dog_detective"});
   assert.equal(result.data.equippedAppearance.dogSkinId,"default");
   assert.equal(result.data.nyanCoins,8);
+});
+
+test("プロフィール変更も保存結果を正とし、装備・ホーム・コインを変えない",async()=>{
+  const initial=createData();
+  initial.ownedCatSkins.push("cat_kaitou");
+  initial.favoriteCharacter={category:"dogSkin",itemId:"default"};
+  const authoritative={
+    ...initial,
+    nyanCoins:11,
+    profileCharacter:{category:"catSkin",itemId:"cat_kaitou"}
+  };
+  const playerData={
+    async load(){return initial;},
+    async updateProfileCharacter(category,itemId){
+      assert.equal(category,"catSkin");
+      assert.equal(itemId,"cat_kaitou");
+      return authoritative;
+    },
+    getSnapshot(){return authoritative;}
+  };
+  const controller=Collection.createController({playerData,catalog:Catalog});
+  await controller.load();
+  const result=await controller.setProfile("catSkin","cat_kaitou");
+  assert.equal(result.ok,true);
+  assert.deepEqual(result.data.profileCharacter,{category:"catSkin",itemId:"cat_kaitou"});
+  assert.equal(result.data.equippedAppearance.catSkinId,"default");
+  assert.deepEqual(result.data.favoriteCharacter,{category:"dogSkin",itemId:"default"});
+  assert.equal(result.data.nyanCoins,11);
+});
+
+test("選択中のホーム推しを再タップするとデフォルト表示へ戻す",async()=>{
+  const initial=createData();
+  initial.ownedCatSkins.push("cat_kaitou");
+  initial.favoriteCharacter={category:"catSkin",itemId:"cat_kaitou"};
+  let received="not-called";
+  const cleared={...initial,favoriteCharacter:null};
+  const playerData={
+    async load(){return initial;},
+    async updateFavoriteCharacter(category,itemId){
+      assert.equal(category,"catSkin");
+      received=itemId;
+      return cleared;
+    },
+    getSnapshot(){return cleared;}
+  };
+  const controller=Collection.createController({playerData,catalog:Catalog});
+  await controller.load();
+  const result=await controller.setFavorite("catSkin","cat_kaitou");
+  assert.equal(received,null);
+  assert.equal(result.data.favoriteCharacter,null);
+});
+
+test("選択中のプロフィールを再タップするとデフォルト画像へ戻す",async()=>{
+  const initial=createData();
+  initial.ownedDogSkins.push("dog_detective");
+  initial.profileCharacter={category:"dogSkin",itemId:"dog_detective"};
+  let received="not-called";
+  const cleared={...initial,profileCharacter:null};
+  const playerData={
+    async load(){return initial;},
+    async updateProfileCharacter(category,itemId){
+      assert.equal(category,"dogSkin");
+      received=itemId;
+      return cleared;
+    },
+    getSnapshot(){return cleared;}
+  };
+  const controller=Collection.createController({playerData,catalog:Catalog});
+  await controller.load();
+  const result=await controller.setProfile("dogSkin","dog_detective");
+  assert.equal(received,null);
+  assert.equal(result.data.profileCharacter,null);
+});
+
+test("詳細用途カードは操作ボタンで、バイブ設定は表示しない",()=>{
+  const html=fs.readFileSync(path.resolve(__dirname,"..","index.html"),"utf8");
+  assert.match(html,/<button class="collection-usage-item" data-detail-usage-home type="button">/);
+  assert.match(html,/<button class="collection-usage-item" data-detail-usage-profile type="button">/);
+  assert.match(html,/id="vibrationToggleBtn" type="button" hidden aria-hidden="true"/);
 });

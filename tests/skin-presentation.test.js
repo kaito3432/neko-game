@@ -19,7 +19,7 @@ function data(){
 test("第1弾スキンの全カタログ画像が実在する",()=>{
   [Catalog.getItem("catSkin","cat_kaitou"),Catalog.getItem("dogSkin","dog_detective")]
     .forEach(item=>{
-      ["collectionImage","profileImage","homeImage","resultWinImage","resultLoseImage","moveEffect","foundFootprintEffect"]
+      ["collectionImage","silhouetteImage","profileImage","homeImage","resultWinImage","resultLoseImage","moveEffect","foundFootprintEffect"]
         .forEach(field=>assert.equal(fs.existsSync(path.resolve(__dirname,"..",item[field])),true,`${item.id}.${field}`));
       const pieces=typeof item.pieceImage==="string" ? [item.pieceImage] : Object.values(item.pieceImage);
       pieces.forEach(piece=>assert.equal(fs.existsSync(path.resolve(__dirname,"..",piece)),true,piece));
@@ -190,8 +190,8 @@ test("怪盗にゃんのホーム描画は前景と猫の2レイヤーだけを�
   assert.equal("homeFrame" in hero.dataset,false);
   assert.match(view.treasureImage.src,/kaito-nyan-home-treasure\.png$/);
   assert.match(view.characterImage.src,/kaito-nyan-home-character\.png$/);
-  assert.equal(view.treasureImage.style.translate,"2% 38%");
-  assert.equal(view.characterImage.style.translate,"-4.5% 42%");
+  assert.equal(view.treasureImage.style.translate,"2% 4%");
+  assert.equal(view.characterImage.style.translate,"-4.5% 5px");
   assert.equal(view.stage.classList.contains("skin-home-layered-active"),true);
   assert.equal(Skins.renderedHomeFavorite(hero).item.id,"cat_kaitou");
   assert.equal(JSON.stringify(state),before);
@@ -233,6 +233,15 @@ test("怪盗にゃん2レイヤー素材は指定順で実在する",()=>{
   assert.equal(layered.reaction.length,5);
 });
 
+test("怪盗にゃんの未所持立ち絵は透過専用素材を使う",()=>{
+  const item=Catalog.getItem("catSkin","cat_kaitou");
+  assert.match(item.silhouetteImage,/cat_kaitou_collection_cutout\.png$/);
+  const buffer=fs.readFileSync(path.resolve(__dirname,"..",item.silhouetteImage));
+  assert.equal(buffer.readUInt32BE(16),1254);
+  assert.equal(buffer.readUInt32BE(20),1254);
+  assert.equal(buffer[25],6,"cutout must be RGBA");
+});
+
 test("探偵しば2レイヤー素材とスキン別配置が実在する",()=>{
   const layered=Skins.HOME_LAYERED_SKINS["dogSkin:dog_detective"];
   assert.match(layered.treasure,/detective-shiba-home-clues\.png$/);
@@ -244,7 +253,7 @@ test("探偵しば2レイヤー素材とスキン別配置が実在する",()=>{
     assert.equal(buffer[25],6,`${src} must be RGBA`);
   });
   assert.deepEqual(layered.supportLayout,{translate:"26% 8%",scale:".50"});
-  assert.deepEqual(layered.characterLayout,{translate:"-13% 12%",scale:".88"});
+  assert.deepEqual(layered.characterLayout,{translate:"-13% 7%",scale:".88"});
   assert.doesNotMatch(layered.supportLayout.translate,/px/);
   assert.doesNotMatch(layered.characterLayout.translate,/px/);
   assert.equal(layered.durationMs,480);

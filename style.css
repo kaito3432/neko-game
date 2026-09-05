@@ -7965,13 +7965,17 @@ body.sneak-mode .board-shell{
   gap:5px;
 }
 .collection-usage-item{
+  appearance:none;
+  width:100%;
   min-width:0;
   padding:6px 3px;
   border:1px solid #e2cfbc;
   border-radius:11px;
   background:#fff;
   color:#72584d;
+  font:inherit;
   text-align:center;
+  cursor:pointer;
 }
 .collection-usage-item>span{font-size:18px;line-height:1}
 .collection-usage-item strong,
@@ -7991,6 +7995,19 @@ body.sneak-mode .board-shell{
   border-color:#e2868c;
   background:#fff0f2;
 }
+.collection-usage-item.is-reset{
+  border-color:#d49b39;
+  background:#fff1b8;
+  color:#68471f;
+  box-shadow:0 2px 0 rgba(164,112,30,.14);
+}
+.collection-usage-item.is-unavailable{
+  border-color:#d1c9c2;
+  background:#eeeae6;
+  color:#918780;
+  cursor:default;
+}
+.collection-usage-item:disabled{opacity:1}
 .collection-profile-preview{
   min-height:68px;
   padding:7px 10px;
@@ -8013,6 +8030,11 @@ body.sneak-mode .board-shell{
   padding:5px 8px;border:2px solid #d16f77;border-radius:10px;background:#fff0f2;color:#7a3f45;font-size:11px;font-weight:900;
 }
 .collection-favorite-btn:disabled{border-color:#cfc2b7;background:#eee9e4;color:#8d817a}
+.collection-favorite-btn.is-reset{
+  border-color:#d49b39;
+  background:#fff1b8;
+  color:#68471f;
+}
 .collection-profile-btn{
   padding:5px 6px;
   border:2px solid #7fa2c8;
@@ -8023,6 +8045,12 @@ body.sneak-mode .board-shell{
   font-weight:900;
 }
 .collection-profile-btn:disabled{border-color:#cfc2b7;background:#eee9e4;color:#8d817a}
+.collection-profile-btn.is-reset{
+  border-color:#d49b39;
+  background:#fff1b8;
+  color:#68471f;
+}
+.setting-row[hidden]{display:none!important}
 
 /* ゲーム情報を覆わない、0.4秒未満の装飾専用レイヤー。 */
 .skin-decorative-effect{

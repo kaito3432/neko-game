@@ -39,6 +39,7 @@ test("新規プレイヤーIDと初期データを作成する",async()=>{
     boardThemeId:"default"
   });
   assert.equal(data.favoriteCharacter,null);
+  assert.equal(data.profileCharacter,null);
   assert.equal(storage.getItem(PlayerData.STORAGE_KEYS.playerId),data.playerId);
 });
 
@@ -157,6 +158,7 @@ test("古いデータと欠損フィールドを現行モデルで補完する",
   assert.deepEqual(data.ownedCatSkins,["default","calico"]);
   assert.deepEqual(data.ownedDogSkins,["default"]);
   assert.equal(data.currentRank,"bronze");
+  assert.equal(data.profileCharacter,null);
   assert.equal(data.playerId,playerId);
 });
 
@@ -277,6 +279,25 @@ test("ホーム推しキャラは装備と独立して保存・復元する",asy
   assert.deepEqual(restored.favoriteCharacter,{category:"catSkin",itemId:"cat_kaitou"});
 });
 
+test("ホーム推しキャラを解除してもコイン・装備・他データを変えない",async()=>{
+  const storage=new MemoryStorage();
+  const store=PlayerData.createStore({storage});
+  const initial=await store.load();
+  await store.save({
+    ...initial,
+    nyanCoins:23,
+    ownedCatSkins:["default","cat_kaitou"],
+    favoriteCharacter:{category:"catSkin",itemId:"cat_kaitou"},
+    challengeProgress:{kept:true}
+  });
+  const saved=await store.updateFavoriteCharacter("catSkin",null);
+  assert.equal(saved.favoriteCharacter,null);
+  assert.equal(saved.nyanCoins,23);
+  assert.equal(saved.equippedAppearance.catSkinId,"default");
+  assert.deepEqual(saved.challengeProgress,{kept:true});
+  assert.equal((await PlayerData.createStore({storage}).load()).favoriteCharacter,null);
+});
+
 test("未所持・非キャラカテゴリのホーム推し設定を拒否する",async()=>{
   const store=PlayerData.createStore({storage:new MemoryStorage()});
   await store.load();
@@ -309,5 +330,83 @@ test("ホーム推し更新でもremoteProviderの応答を正とする",async()
   await store.load();
   const saved=await store.updateFavoriteCharacter("dogSkin","dog_detective");
   assert.equal(saved.favoriteCharacter,null);
+  assert.equal(store.getStatus().source,"server");
+});
+
+test("プロフィール設定は装備・ホーム・コインと独立して保存する",async()=>{
+  const storage=new MemoryStorage();
+  const store=PlayerData.createStore({storage});
+  const initial=await store.load();
+  await store.save({
+    ...initial,
+    nyanCoins:17,
+    ownedCatSkins:["default","cat_kaitou"],
+    favoriteCharacter:{category:"catSkin",itemId:"cat_kaitou"}
+  });
+
+  const saved=await store.updateProfileCharacter("catSkin","cat_kaitou");
+  assert.deepEqual(saved.profileCharacter,{category:"catSkin",itemId:"cat_kaitou"});
+  assert.equal(saved.equippedAppearance.catSkinId,"default");
+  assert.deepEqual(saved.favoriteCharacter,{category:"catSkin",itemId:"cat_kaitou"});
+  assert.equal(saved.nyanCoins,17);
+
+  const restored=await PlayerData.createStore({storage}).load();
+  assert.deepEqual(restored.profileCharacter,{category:"catSkin",itemId:"cat_kaitou"});
+});
+
+test("プロフィール設定を解除してもコイン・装備・ホームを変えない",async()=>{
+  const storage=new MemoryStorage();
+  const store=PlayerData.createStore({storage});
+  const initial=await store.load();
+  await store.save({
+    ...initial,
+    nyanCoins:29,
+    ownedDogSkins:["default","dog_detective"],
+    favoriteCharacter:{category:"dogSkin",itemId:"dog_detective"},
+    profileCharacter:{category:"dogSkin",itemId:"dog_detective"}
+  });
+  const saved=await store.updateProfileCharacter("dogSkin",null);
+  assert.equal(saved.profileCharacter,null);
+  assert.equal(saved.nyanCoins,29);
+  assert.equal(saved.equippedAppearance.dogSkinId,"default");
+  assert.deepEqual(saved.favoriteCharacter,{category:"dogSkin",itemId:"dog_detective"});
+});
+
+test("未所持・非キャラカテゴリのプロフィール設定を拒否する",async()=>{
+  const store=PlayerData.createStore({storage:new MemoryStorage()});
+  await store.load();
+  await assert.rejects(store.updateProfileCharacter("dogSkin","dog_detective"),/profile_item_not_owned/);
+  await assert.rejects(store.updateProfileCharacter("paw","default"),/invalid_profile_category/);
+});
+
+test("古いデータの不正なプロフィール設定を安全に解除する",()=>{
+  const playerId="ncp_profilebad12345";
+  const normalized=PlayerData.normalizeData({
+    version:2,
+    ownedCatSkins:["default"],
+    profileCharacter:{category:"catSkin",itemId:"cat_kaitou"}
+  },playerId);
+  assert.equal(normalized.profileCharacter,null);
+  assert.equal(normalized.version,PlayerData.CURRENT_VERSION);
+});
+
+test("プロフィール更新でもremoteProviderの応答を正とする",async()=>{
+  const storage=new MemoryStorage();
+  const remoteProvider={
+    async load(playerId){
+      return {...PlayerData.createDefaultData(playerId),ownedDogSkins:["default","dog_detective"]};
+    },
+    async save(playerId){
+      return {
+        ...PlayerData.createDefaultData(playerId),
+        ownedDogSkins:["default","dog_detective"],
+        profileCharacter:null
+      };
+    }
+  };
+  const store=PlayerData.createStore({storage,remoteProvider});
+  await store.load();
+  const saved=await store.updateProfileCharacter("dogSkin","dog_detective");
+  assert.equal(saved.profileCharacter,null);
   assert.equal(store.getStatus().source,"server");
 });

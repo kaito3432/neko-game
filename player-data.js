@@ -361,12 +361,15 @@
       if(category!=="catSkin" && category!=="dogSkin"){
         throw new Error("invalid_favorite_category");
       }
+      const base=currentData || await load();
+      if(itemId===null){
+        return save({...base,favoriteCharacter:null});
+      }
       if(typeof itemId!=="string" || itemId.length===0){
         throw new Error("invalid_favorite_item");
       }
 
       const definition=EQUIPMENT_CATEGORIES[category];
-      const base=currentData || await load();
       if(!base[definition.ownedField].includes(itemId)){
         throw new Error("favorite_item_not_owned");
       }
@@ -378,12 +381,15 @@
       if(category!=="catSkin" && category!=="dogSkin"){
         throw new Error("invalid_profile_category");
       }
+      const base=currentData || await load();
+      if(itemId===null){
+        return save({...base,profileCharacter:null});
+      }
       if(typeof itemId!=="string" || itemId.length===0){
         throw new Error("invalid_profile_item");
       }
 
       const definition=EQUIPMENT_CATEGORIES[category];
-      const base=currentData || await load();
       if(!base[definition.ownedField].includes(itemId)){
         throw new Error("profile_item_not_owned");
       }

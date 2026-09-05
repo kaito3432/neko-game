@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v2-collection-ui3-20260905";
+const CACHE_NAME = "nyan-chase-v2-collection-ui4-20260905";
 const PRECACHE = [
   "./",
   "./README.md",
@@ -27,6 +27,7 @@ const PRECACHE = [
   "./assets/images/cpu_select_cat.png",
   "./assets/images/cpu_select_dogs.png",
   "./assets/images/dog_blue.png",
+  "./assets/images/dog_default_profile.png",
   "./assets/images/dog_blue_play.png",
   "./assets/images/dog_card_blue.png",
   "./assets/images/dog_card_green.png",

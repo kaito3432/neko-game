@@ -54,7 +54,7 @@
 
   const DEFAULT_CAT_IMAGES=Object.freeze({
     collectionImage:"./assets/images/cpu_select_cat.png",
-    profileImage:"./assets/images/cat.png",
+    profileImage:"./assets/images/cat_play_normal.png",
     pieceImage:"./assets/images/cat_play_normal.png",
     homeImage:"./assets/images/home_hero.png",
     resultWinImage:"./assets/images/cutin_cat_win.jpg",
@@ -71,7 +71,7 @@
 
   const DEFAULT_DOG_IMAGES=Object.freeze({
     collectionImage:"./assets/images/cpu_select_dogs.png",
-    profileImage:"./assets/images/cpu_select_dogs.png",
+    profileImage:"./assets/images/dog_default_profile.png",
     pieceImage:DEFAULT_DOG_PIECES,
     homeImage:"./assets/images/home_hero.png",
     resultWinImage:"./assets/images/cutin_police_win.jpg",

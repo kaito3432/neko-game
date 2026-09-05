@@ -228,18 +228,19 @@
 
     async function setFavorite(categoryId,itemId){
       if(saving) return {ok:false,reason:"busy",data:currentData};
-      const validation=validateFavorite(currentData,categoryId,itemId,catalog);
-      if(!validation.ok) return {...validation,data:currentData};
-      if(currentData.favoriteCharacter?.category===categoryId &&
-        currentData.favoriteCharacter?.itemId===itemId){
-        return {ok:true,reason:"already_favorite",data:currentData};
+      const isCurrent=currentData.favoriteCharacter?.category===categoryId &&
+        currentData.favoriteCharacter?.itemId===itemId;
+      if(!isCurrent){
+        const validation=validateFavorite(currentData,categoryId,itemId,catalog);
+        if(!validation.ok) return {...validation,data:currentData};
       }
+      const nextItemId=isCurrent ? null : itemId;
 
       saving=true;
       view.setBusy?.(true);
       render();
       try{
-        const saved=await playerData.updateFavoriteCharacter(categoryId,itemId);
+        const saved=await playerData.updateFavoriteCharacter(categoryId,nextItemId);
         currentData=sanitizeCatalogEquipment(saved,catalog).data;
         root?.dispatchEvent?.(new root.CustomEvent("nyan-player-appearance-changed"));
         render();
@@ -258,18 +259,19 @@
 
     async function setProfile(categoryId,itemId){
       if(saving) return {ok:false,reason:"busy",data:currentData};
-      const validation=validateProfile(currentData,categoryId,itemId,catalog);
-      if(!validation.ok) return {...validation,data:currentData};
-      if(currentData.profileCharacter?.category===categoryId &&
-        currentData.profileCharacter?.itemId===itemId){
-        return {ok:true,reason:"already_profile",data:currentData};
+      const isCurrent=currentData.profileCharacter?.category===categoryId &&
+        currentData.profileCharacter?.itemId===itemId;
+      if(!isCurrent){
+        const validation=validateProfile(currentData,categoryId,itemId,catalog);
+        if(!validation.ok) return {...validation,data:currentData};
       }
+      const nextItemId=isCurrent ? null : itemId;
 
       saving=true;
       view.setBusy?.(true);
       render();
       try{
-        const saved=await playerData.updateProfileCharacter(categoryId,itemId);
+        const saved=await playerData.updateProfileCharacter(categoryId,nextItemId);
         currentData=sanitizeCatalogEquipment(saved,catalog).data;
         root?.dispatchEvent?.(new root.CustomEvent("nyan-player-appearance-changed"));
         render();
@@ -425,22 +427,25 @@
         const canFavorite=characterSkin &&
           state!=="unowned" && item.id!=="default" && Boolean(item.homeImage);
         favoriteButton.hidden=!characterSkin;
+        favoriteButton.classList.toggle("is-reset",canFavorite && isFavorite);
         favoriteButton.textContent=state==="unowned"
           ? "🔒 未所持"
           : item.id==="default"
             ? "ホーム表示対象外"
-            : isFavorite ? "ホーム表示中" : "ホームに表示";
-        favoriteButton.disabled=saving || !canFavorite || isFavorite;
+            : isFavorite ? "ホームをデフォルトに戻す" : "ホームに表示";
+        favoriteButton.disabled=saving || !canFavorite;
         favoriteButton.onclick=()=>actions.onFavorite(item.category,item.id);
       }
       if(profileButton){
         const characterSkin=isCharacterSkin(item.category);
-        const canProfile=characterSkin && state!=="unowned" && Boolean(item.profileImage);
+        const canProfile=characterSkin && state!=="unowned" && item.id!=="default" && Boolean(item.profileImage);
         profileButton.hidden=!characterSkin;
+        profileButton.classList.toggle("is-reset",canProfile && isProfile);
         profileButton.textContent=state==="unowned"
           ? "🔒 未所持"
-          : isProfile ? "プロフィール設定中" : "プロフィールに設定";
-        profileButton.disabled=saving || !canProfile || isProfile;
+          : item.id==="default" ? "デフォルト使用中"
+            : isProfile ? "プロフィールをデフォルトに戻す" : "プロフィールに設定";
+        profileButton.disabled=saving || !canProfile;
         profileButton.onclick=()=>actions.onProfile(item.category,item.id);
       }
       if(usageGuide){
@@ -448,22 +453,37 @@
       }
       if(usageBoard){
         usageBoard.classList.toggle("is-active",state==="equipped");
+        usageBoard.classList.remove("is-reset","is-unavailable");
+        usageBoard.disabled=saving || state!=="owned";
+        usageBoard.onclick=state==="owned" ? ()=>actions.onEquip(item.category,item.id) : null;
         setText(usageBoard.querySelector("small"),state==="equipped"
           ? "現在この駒を使用中"
           : state==="unowned" ? "所持すると利用できます" : "装備すると自動で適用");
       }
       if(usageHome){
         usageHome.classList.toggle("is-active",isFavorite);
+        const canUseHome=state!=="unowned" && item.id!=="default" && Boolean(item.homeImage);
+        usageHome.classList.toggle("is-reset",canUseHome && isFavorite);
+        usageHome.classList.toggle("is-unavailable",!canUseHome);
+        usageHome.disabled=saving || !canUseHome;
+        usageHome.onclick=canUseHome ? ()=>actions.onFavorite(item.category,item.id) : null;
+        setText(usageHome.querySelector("strong"),item.id==="default" ? "ホーム表示対象外" : "ホームに表示");
         setText(usageHome.querySelector("small"),isFavorite
-          ? "現在ホームに表示中"
+          ? "タップでデフォルトに戻す"
           : state==="unowned" ? "所持すると利用できます" : item.id==="default"
-            ? "追加スキンで利用できます" : "下のボタンから表示できます");
+            ? "追加スキンで利用できます" : "タップしてホームに表示");
       }
       if(usageProfile){
         usageProfile.classList.toggle("is-active",isProfile);
+        const canUseProfile=state!=="unowned" && item.id!=="default" && Boolean(item.profileImage);
+        usageProfile.classList.toggle("is-reset",canUseProfile && isProfile);
+        usageProfile.classList.toggle("is-unavailable",!canUseProfile);
+        usageProfile.disabled=saving || !canUseProfile;
+        usageProfile.onclick=canUseProfile ? ()=>actions.onProfile(item.category,item.id) : null;
         setText(usageProfile.querySelector("small"),isProfile
-          ? "現在プロフィールに設定中"
-          : state==="unowned" ? "所持すると利用できます" : "下のボタンから設定できます");
+          ? "タップでデフォルトに戻す"
+          : state==="unowned" ? "所持すると利用できます" : item.id==="default"
+            ? "デフォルト画像を使用中" : "タップしてプロフィールに設定");
       }
       detail.classList.add("show");
       detail.setAttribute("aria-hidden","false");

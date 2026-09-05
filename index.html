@@ -11,7 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=2.0.collection-ui3">
+<link rel="stylesheet" href="./style.css?v=2.0.collection-ui4">
 </head>
 <body>
 <div class="app">
@@ -235,18 +235,18 @@
         <div class="collection-detail-usage" data-detail-usage aria-label="このスキンでできること">
           <h3>このスキンでできること</h3>
           <div class="collection-usage-list">
-            <div class="collection-usage-item" data-detail-usage-board>
+            <button class="collection-usage-item" data-detail-usage-board type="button">
               <span aria-hidden="true">🎮</span>
               <div><strong>盤面の駒</strong><small>装備すると自動で適用</small></div>
-            </div>
-            <div class="collection-usage-item" data-detail-usage-home>
+            </button>
+            <button class="collection-usage-item" data-detail-usage-home type="button">
               <span aria-hidden="true">🏠</span>
               <div><strong>ホームに表示</strong><small>下のボタンから表示できます</small></div>
-            </div>
-            <div class="collection-usage-item" data-detail-usage-profile>
+            </button>
+            <button class="collection-usage-item" data-detail-usage-profile type="button">
               <span aria-hidden="true">🐾</span>
               <div><strong>プロフィール画像</strong><small>表示イメージを確認できます</small></div>
-            </div>
+            </button>
           </div>
         </div>
         <div class="collection-profile-preview">
@@ -1726,7 +1726,7 @@
       <button class="setting-row" id="sfxToggleBtn" type="button">
         <span>🔊 効果音</span><strong id="sfxState">ON</strong>
       </button>
-      <button class="setting-row" id="vibrationToggleBtn" type="button">
+      <button class="setting-row" id="vibrationToggleBtn" type="button" hidden aria-hidden="true">
         <span>📳 バイブ</span><strong id="vibrationState">ON</strong>
       </button>
       <button class="setting-row" id="bgmToggleBtn" type="button">
@@ -1760,9 +1760,9 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./player-data.js?v=1.0.collection-ui2"></script>
-<script src="./collection-catalog.js?v=1.0.collection-ui3"></script>
-<script src="./collection.js?v=1.0.collection-ui3"></script>
+<script src="./player-data.js?v=1.0.collection-ui4"></script>
+<script src="./collection-catalog.js?v=1.0.collection-ui4"></script>
+<script src="./collection.js?v=1.0.collection-ui4"></script>
 <script src="./skin-presentation.js?v=1.0.collection-ui3"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
