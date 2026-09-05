@@ -8335,3 +8335,94 @@ body.sneak-mode .board-shell{
   }
 }
 
+/* =========================================================
+   ホーム対戦カード レスポンシブ比率固定
+   ========================================================= */
+
+/* 3枚のカードを残り高さで引き伸ばさない */
+.visual-update3 .vu3-modes{
+  display:grid !important;
+  grid-template-rows:repeat(3, auto) !important;
+  gap:clamp(5px, 0.8dvh, 8px) !important;
+
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+
+  margin-bottom:clamp(5px, 0.8dvh, 10px) !important;
+}
+
+/* 各カードは必ず素材と同じ3:1 */
+.visual-update3 .vu3-mode{
+  position:relative !important;
+
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+
+  aspect-ratio:3 / 1 !important;
+
+  padding:0 !important;
+  margin:0 !important;
+
+  overflow:hidden !important;
+  box-sizing:border-box !important;
+  border-radius:clamp(14px, 4vw, 20px) !important;
+}
+
+/* 画像はカード全面に完全一致 */
+.visual-update3 .vu3-mode-full{
+  position:absolute !important;
+  inset:0 !important;
+
+  display:block !important;
+
+  width:100% !important;
+  height:100% !important;
+
+  object-fit:contain !important;
+  object-position:center center !important;
+
+  transform:none !important;
+  border-radius:inherit !important;
+
+  background:transparent !important;
+  pointer-events:none !important;
+}
+/* =========================================================
+   横長端末
+   ========================================================= */
+
+@media (orientation:landscape) and (max-height:700px){
+
+  .visual-update3 .vu3-home{
+    width:min(
+      calc(100vw - 24px),
+      500px,
+      calc(100dvh * .64)
+    ) !important;
+
+    margin-inline:auto !important;
+  }
+
+  .visual-update3 .vu3-logo{
+    max-height:clamp(42px, 9dvh, 60px) !important;
+  }
+
+  .visual-update3 .vu3-sub{
+    font-size:clamp(11px, 2.4dvh, 16px) !important;
+  }
+
+  .visual-update3 .vu3-modes{
+    gap:4px !important;
+    margin-bottom:4px !important;
+  }
+
+  .visual-update3 .collection-entry-btn{
+    height:clamp(28px, 6dvh, 34px) !important;
+  }
+
+  .visual-update3 .vu3-mini{
+    min-height:clamp(30px, 7dvh, 40px) !important;
+  }
+}
