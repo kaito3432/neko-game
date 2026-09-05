@@ -11,7 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=2.0.phase2b-visualfix1">
+<link rel="stylesheet" href="./style.css?v=2.0.collection-ui2">
 </head>
 <body>
 <div class="app">
@@ -227,16 +227,37 @@
       </header>
       <div class="collection-detail-scroll">
         <div class="collection-detail-main-image">
-          <span class="collection-lock" aria-hidden="true">🔒</span>
+          <span class="collection-lock" aria-hidden="true">
+            <strong>?</strong>
+            <small>🔒 未所持</small>
+          </span>
           <img data-detail-collection-image src="" alt="">
+        </div>
+        <div class="collection-detail-usage" data-detail-usage aria-label="このスキンでできること">
+          <h3>このスキンでできること</h3>
+          <div class="collection-usage-list">
+            <div class="collection-usage-item" data-detail-usage-board>
+              <span aria-hidden="true">🎮</span>
+              <div><strong>盤面の駒に適用</strong><small>下のボタンから変更できます</small></div>
+            </div>
+            <div class="collection-usage-item" data-detail-usage-home>
+              <span aria-hidden="true">🏠</span>
+              <div><strong>ホームに表示</strong><small>下のボタンから表示できます</small></div>
+            </div>
+            <div class="collection-usage-item" data-detail-usage-profile>
+              <span aria-hidden="true">🐾</span>
+              <div><strong>プロフィール画像</strong><small>表示イメージを確認できます</small></div>
+            </div>
+          </div>
         </div>
         <div class="collection-profile-preview">
           <img data-detail-profile-image src="" alt="">
-          <div><small>PROFILE PREVIEW</small><strong data-detail-name>スキン詳細</strong></div>
+          <div><small>プロフィール画像プレビュー</small><strong data-detail-name>スキン詳細</strong></div>
         </div>
         <div class="collection-detail-actions">
           <button class="collection-equip-btn" data-detail-equip type="button">装備する</button>
           <button class="collection-favorite-btn" data-detail-favorite type="button">ホームに表示</button>
+          <button class="collection-profile-btn" data-detail-profile type="button">プロフィールに適用</button>
         </div>
       </div>
     </section>
@@ -1741,8 +1762,8 @@
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
 <script src="./player-data.js?v=1.0.phase2b"></script>
-<script src="./collection-catalog.js?v=1.0.phase2b-visualfix1"></script>
-<script src="./collection.js?v=1.0.phase2b"></script>
+<script src="./collection-catalog.js?v=1.0.collection-ui1"></script>
+<script src="./collection.js?v=1.0.collection-ui1"></script>
 <script src="./skin-presentation.js?v=1.0.phase2b-visualfix1"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./audio.js?v=2.0.phase5"></script>

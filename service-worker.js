@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v2-phase2b-visualfix1-20260904";
+const CACHE_NAME = "nyan-chase-v2-collection-ui2-20260905";
 const PRECACHE = [
   "./",
   "./README.md",

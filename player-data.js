@@ -14,7 +14,7 @@
 })(typeof globalThis!=="undefined" ? globalThis : this, root=>{
   "use strict";
 
-  const CURRENT_VERSION=2;
+  const CURRENT_VERSION=3;
   const STORAGE_KEYS=Object.freeze({
     playerId:"nyanChasePlayerId",
     playerData:"nyanChasePlayerData"
@@ -64,7 +64,7 @@
     return ownedItems.includes(itemId) ? itemId : DEFAULT_ITEM_ID;
   }
 
-  function safeFavoriteCharacter(value,ownedCatSkins,ownedDogSkins){
+  function safeCharacterSelection(value,ownedCatSkins,ownedDogSkins){
     if(!isPlainObject(value)) return null;
     const category=value.category;
     const itemId=value.itemId;
@@ -108,6 +108,7 @@
         boardThemeId:DEFAULT_ITEM_ID
       },
       favoriteCharacter:null,
+      profileCharacter:null,
       dailyMissionProgress:{
         date:null,
         missions:[],
@@ -168,8 +169,13 @@
         pawId:safeEquippedItem(equipped.pawId,ownedPaws),
         boardThemeId:safeEquippedItem(equipped.boardThemeId,ownedBoardThemes)
       },
-      favoriteCharacter:safeFavoriteCharacter(
+      favoriteCharacter:safeCharacterSelection(
         source.favoriteCharacter,
+        ownedCatSkins,
+        ownedDogSkins
+      ),
+      profileCharacter:safeCharacterSelection(
+        source.profileCharacter,
         ownedCatSkins,
         ownedDogSkins
       ),
@@ -368,6 +374,23 @@
       return save({...base,favoriteCharacter:{category,itemId}});
     }
 
+    async function updateProfileCharacter(category,itemId){
+      if(category!=="catSkin" && category!=="dogSkin"){
+        throw new Error("invalid_profile_category");
+      }
+      if(typeof itemId!=="string" || itemId.length===0){
+        throw new Error("invalid_profile_item");
+      }
+
+      const definition=EQUIPMENT_CATEGORIES[category];
+      const base=currentData || await load();
+      if(!base[definition.ownedField].includes(itemId)){
+        throw new Error("profile_item_not_owned");
+      }
+
+      return save({...base,profileCharacter:{category,itemId}});
+    }
+
     function setRemoteProvider(provider){
       remote=provider || null;
     }
@@ -380,7 +403,7 @@
       return {...lastStatus};
     }
 
-    return {load,save,updateEquipment,updateFavoriteCharacter,setRemoteProvider,getSnapshot,getStatus};
+    return {load,save,updateEquipment,updateFavoriteCharacter,updateProfileCharacter,setRemoteProvider,getSnapshot,getStatus};
   }
 
   let browserStorage=null;
@@ -409,6 +432,7 @@
     save:defaultStore.save,
     updateEquipment:defaultStore.updateEquipment,
     updateFavoriteCharacter:defaultStore.updateFavoriteCharacter,
+    updateProfileCharacter:defaultStore.updateProfileCharacter,
     setRemoteProvider:defaultStore.setRemoteProvider,
     getSnapshot:defaultStore.getSnapshot,
     getStatus:defaultStore.getStatus

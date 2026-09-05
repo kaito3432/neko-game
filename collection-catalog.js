@@ -53,7 +53,7 @@
   });
 
   const DEFAULT_CAT_IMAGES=Object.freeze({
-    collectionImage:"./assets/images/cat_play_normal.png",
+    collectionImage:"./assets/images/cpu_select_cat.png",
     profileImage:"./assets/images/cat.png",
     pieceImage:"./assets/images/cat_play_normal.png",
     homeImage:"./assets/images/home_hero.png",
@@ -84,7 +84,7 @@
   const ITEMS=Object.freeze([
     Object.freeze({
       id:"default",category:"catSkin",name:"デフォルト",
-      preview:DEFAULT_CAT_IMAGES.collectionImage,
+      preview:"./assets/images/cpu_select_cat.png",
       ...DEFAULT_CAT_IMAGES
     }),
     Object.freeze({
