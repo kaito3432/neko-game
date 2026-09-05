@@ -8496,3 +8496,118 @@ body.sneak-mode .board-shell{
   }
 }
 
+
+/* 2026-09-05 Landscape full-height fit fix */
+/* =========================================================
+   Nest Hub / Nest Hub Max など横長・低高さ端末で、
+   コレクション＋下部3ボタンまで必ず1画面内に収める。
+   ========================================================= */
+
+@media (orientation:landscape) and (max-height:800px){
+
+  /*
+    ホーム全体の高さ概算：
+      ロゴ＋ヒーロー＋案内文＋3カード＋コレクション＋下部ボタン
+    3カードは合計で「ホーム幅」とほぼ同じ高さになるため、
+    横幅だけでなく残り高さからもホーム幅を逆算する。
+  */
+  .visual-update3 .vu3-home{
+    width:min(
+      calc(100vw - 24px),
+      500px,
+      calc((100dvh - 136px) * .75)
+    ) !important;
+
+    min-height:0 !important;
+    height:100dvh !important;
+    max-height:100dvh !important;
+
+    padding-top:4px !important;
+    padding-bottom:4px !important;
+
+    row-gap:3px !important;
+    align-content:start !important;
+    overflow:hidden !important;
+  }
+
+  .visual-update3 .vu3-logo{
+    max-height:48px !important;
+    margin-bottom:0 !important;
+  }
+
+  .visual-update3 .vu3-hero-stage.skin-favorite-active{
+    margin-top:-4px !important;
+  }
+
+  .visual-update3 .vu3-sub{
+    padding:0 0 2px !important;
+    font-size:clamp(11px,2.3dvh,15px) !important;
+  }
+
+  .visual-update3 .vu3-modes{
+    gap:3px !important;
+    margin-bottom:3px !important;
+  }
+
+  .visual-update3 .collection-entry-btn{
+    height:28px !important;
+    min-height:28px !important;
+    margin:0 !important;
+    font-size:10px !important;
+  }
+
+  .visual-update3 .vu3-bottom{
+    gap:5px !important;
+    margin-top:2px !important;
+  }
+
+  .visual-update3 .vu3-mini{
+    min-height:32px !important;
+    height:32px !important;
+    padding:3px !important;
+    font-size:9px !important;
+  }
+
+  .visual-update3 .vu3-svg{
+    width:20px !important;
+    height:20px !important;
+  }
+
+  .visual-update3 .vu3-svg.gear-svg{
+    width:22px !important;
+    height:22px !important;
+  }
+}
+
+/* 600px前後の高さはさらに少し詰める */
+@media (orientation:landscape) and (max-height:640px){
+  .visual-update3 .vu3-home{
+    width:min(
+      calc(100vw - 20px),
+      500px,
+      calc((100dvh - 124px) * .75)
+    ) !important;
+
+    row-gap:2px !important;
+  }
+
+  .visual-update3 .vu3-logo{
+    max-height:42px !important;
+  }
+
+  .visual-update3 .vu3-sub{
+    font-size:12px !important;
+    padding-bottom:1px !important;
+  }
+
+  .visual-update3 .collection-entry-btn{
+    height:26px !important;
+    min-height:26px !important;
+  }
+
+  .visual-update3 .vu3-mini{
+    min-height:30px !important;
+    height:30px !important;
+  }
+}
+
