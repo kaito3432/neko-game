@@ -8611,3 +8611,84 @@ body.sneak-mode .board-shell{
   }
 }
 
+
+/* 2026-09-05 Wide-portrait compact-height fit fix */
+/* =========================================================
+   Surface Duo 540x720 のような「縦向きだが横幅が広く、高さが短い」
+   端末だけ、横幅500pxをそのまま使うとホーム全体が縦に溢れる。
+   通常のスマホ縦画面には影響させず、この比率帯だけ高さ基準で縮める。
+   ========================================================= */
+
+@media
+  (orientation:portrait)
+  and (max-height:780px)
+  and (min-aspect-ratio:2 / 3){
+
+  .visual-update3 .vu3-home{
+    width:min(
+      calc(100vw - 14px),
+      500px,
+      calc((100dvh - 126px) * .72)
+    ) !important;
+
+    height:100dvh !important;
+    min-height:0 !important;
+    max-height:100dvh !important;
+
+    padding-top:4px !important;
+    padding-bottom:4px !important;
+
+    row-gap:3px !important;
+    align-content:start !important;
+    overflow:hidden !important;
+  }
+
+  .visual-update3 .vu3-logo{
+    max-height:48px !important;
+    margin-bottom:0 !important;
+  }
+
+  .visual-update3 .vu3-hero-stage.skin-favorite-active{
+    margin-top:-3px !important;
+  }
+
+  .visual-update3 .vu3-sub{
+    padding:0 0 2px !important;
+    font-size:clamp(12px,2.2dvh,15px) !important;
+  }
+
+  .visual-update3 .vu3-modes{
+    gap:4px !important;
+    margin-bottom:4px !important;
+  }
+
+  .visual-update3 .collection-entry-btn{
+    height:28px !important;
+    min-height:28px !important;
+    margin:0 !important;
+    font-size:10px !important;
+  }
+
+  .visual-update3 .vu3-bottom{
+    gap:5px !important;
+    margin-top:2px !important;
+  }
+
+  .visual-update3 .vu3-mini{
+    min-height:32px !important;
+    height:32px !important;
+    padding:3px !important;
+    font-size:9px !important;
+  }
+
+  .visual-update3 .vu3-svg{
+    width:20px !important;
+    height:20px !important;
+  }
+
+  .visual-update3 .vu3-svg.gear-svg{
+    width:22px !important;
+    height:22px !important;
+  }
+}
+
