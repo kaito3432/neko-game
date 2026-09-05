@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v2-collection-ui2-20260905";
+const CACHE_NAME = "nyan-chase-v2-collection-ui3-20260905";
 const PRECACHE = [
   "./",
   "./README.md",
@@ -53,6 +53,7 @@ const PRECACHE = [
   "./assets/home-skins/detective-shiba/detective-shiba-home-clues.png",
   "./assets/home-skins/detective-shiba/detective-shiba-home-character.png",
   "./assets/images/skins/mystery01/cat_kaitou_collection.png",
+  "./assets/images/skins/mystery01/cat_kaitou_collection_cutout.png",
   "./assets/images/skins/mystery01/cat_kaitou_effect_cards.png",
   "./assets/images/skins/mystery01/cat_kaitou_effect_gem.png",
   "./assets/images/skins/mystery01/cat_kaitou_home.png",

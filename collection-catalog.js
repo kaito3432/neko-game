@@ -91,6 +91,7 @@
       id:"cat_kaitou",category:"catSkin",name:"怪盗にゃん",
       preview:`${MYSTERY_ROOT}/cat_kaitou_collection.png`,
       collectionImage:`${MYSTERY_ROOT}/cat_kaitou_collection.png`,
+      silhouetteImage:`${MYSTERY_ROOT}/cat_kaitou_collection_cutout.png`,
       profileImage:`${MYSTERY_ROOT}/cat_kaitou_profile.png`,
       pieceImage:`${MYSTERY_ROOT}/cat_kaitou_piece.png`,
       homeImage:`${MYSTERY_ROOT}/cat_kaitou_home.png`,
@@ -108,6 +109,7 @@
       id:"dog_detective",category:"dogSkin",name:"探偵しば",
       preview:`${MYSTERY_ROOT}/dog_detective_collection.png`,
       collectionImage:`${MYSTERY_ROOT}/dog_detective_collection.png`,
+      silhouetteImage:`${MYSTERY_ROOT}/dog_detective_collection.png`,
       profileImage:`${MYSTERY_ROOT}/dog_detective_profile.png`,
       pieceImage:Object.freeze({
         red:`${MYSTERY_ROOT}/dog_detective_red_piece.png`,

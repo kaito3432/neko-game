@@ -30,7 +30,7 @@
   function getEquipLabel(categoryId,state){
     if(state==="unowned") return "🔒 未所持";
     if(isCharacterSkin(categoryId)){
-      return state==="equipped" ? "盤面に適用中" : "盤面の駒に適用";
+      return state==="equipped" ? "スキン装備中" : "スキンを装備する";
     }
     return state==="equipped" ? "装備中" : "装備する";
   }
@@ -90,7 +90,7 @@
       const ownedItems=profileCategory && Array.isArray(data[profileCategory.ownedField])
         ? data[profileCategory.ownedField]
         : [];
-      const valid=(profileCharacter.category==="catSkin" || profileCharacter.category==="dogSkin") &&
+      const valid=isCharacterSkin(profileCharacter.category) &&
         ownedItems.includes(profileCharacter.itemId) &&
         Boolean(catalog.getItem(profileCharacter.category,profileCharacter.itemId)?.profileImage);
       if(!valid){
@@ -137,7 +137,7 @@
   }
 
   function validateProfile(data,categoryId,itemId,catalog=defaultCatalog){
-    if(categoryId!=="catSkin" && categoryId!=="dogSkin"){
+    if(!isCharacterSkin(categoryId)){
       return {ok:false,reason:"invalid_category"};
     }
     const validation=validateEquip(data,categoryId,itemId,catalog);
@@ -276,7 +276,7 @@
         return {ok:true,data:currentData};
       }catch(error){
         currentData=playerData.getSnapshot?.() || currentData;
-        view.showError?.("プロフィール画像を保存できませんでした");
+        view.showError?.("プロフィール設定を保存できませんでした");
         render();
         return {ok:false,reason:"save_failed",data:currentData,error};
       }finally{
@@ -315,11 +315,12 @@
       preview.className="collection-item-preview";
       preview.setAttribute("aria-label",`${item.name}の詳細を見る`);
       const image=document.createElement("img");
-      image.src=state==="unowned" && isCharacterSkin(item.category)
-        ? (item.profileImage || item.preview)
-        : item.preview;
+      const silhouetteSource=state==="unowned" && Boolean(item.silhouetteImage);
+      image.src=silhouetteSource ? item.silhouetteImage : item.preview;
       image.alt=`${category.label} ${item.name}`;
       image.decoding="async";
+      image.dataset.itemId=item.id;
+      image.classList.toggle("uses-silhouette-source",silhouetteSource);
       const detailBadge=document.createElement("span");
       detailBadge.className="collection-preview-badge";
       detailBadge.setAttribute("aria-hidden","true");
@@ -332,9 +333,7 @@
         unownedCover.setAttribute("aria-hidden","true");
         const question=document.createElement("strong");
         question.textContent="?";
-        const unownedLabel=document.createElement("small");
-        unownedLabel.textContent="🔒 未所持";
-        unownedCover.append(question,unownedLabel);
+        unownedCover.appendChild(question);
         preview.appendChild(unownedCover);
       }
 
@@ -394,14 +393,17 @@
       detail.dataset.category=item.category;
       detail.dataset.itemId=item.id;
       if(collectionImage){
+        const silhouetteSource=state==="unowned" && Boolean(item.silhouetteImage);
         collectionImage.onerror=()=>{
           collectionImage.onerror=null;
           collectionImage.src=item.preview;
         };
-        collectionImage.src=state==="unowned" && isCharacterSkin(item.category)
-          ? (item.profileImage || item.preview)
-          : (item.collectionImage || item.preview);
+        collectionImage.src=silhouetteSource
+          ? item.silhouetteImage
+          : item.collectionImage || item.preview;
         collectionImage.alt=item.name;
+        collectionImage.dataset.itemId=item.id;
+        collectionImage.classList.toggle("uses-silhouette-source",silhouetteSource);
       }
       if(profileImage){
         profileImage.onerror=()=>{
@@ -437,7 +439,7 @@
         profileButton.hidden=!characterSkin;
         profileButton.textContent=state==="unowned"
           ? "🔒 未所持"
-          : isProfile ? "プロフィール適用中" : "プロフィールに適用";
+          : isProfile ? "プロフィール設定中" : "プロフィールに設定";
         profileButton.disabled=saving || !canProfile || isProfile;
         profileButton.onclick=()=>actions.onProfile(item.category,item.id);
       }
@@ -447,21 +449,21 @@
       if(usageBoard){
         usageBoard.classList.toggle("is-active",state==="equipped");
         setText(usageBoard.querySelector("small"),state==="equipped"
-          ? "現在この見た目を使用中"
-          : state==="unowned" ? "所持すると適用できます" : "下のボタンから変更できます");
+          ? "現在この駒を使用中"
+          : state==="unowned" ? "所持すると利用できます" : "装備すると自動で適用");
       }
       if(usageHome){
         usageHome.classList.toggle("is-active",isFavorite);
         setText(usageHome.querySelector("small"),isFavorite
           ? "現在ホームに表示中"
-          : state==="unowned" ? "所持すると表示できます" : item.id==="default"
+          : state==="unowned" ? "所持すると利用できます" : item.id==="default"
             ? "追加スキンで利用できます" : "下のボタンから表示できます");
       }
       if(usageProfile){
         usageProfile.classList.toggle("is-active",isProfile);
         setText(usageProfile.querySelector("small"),isProfile
-          ? "現在プロフィールに使用中"
-          : state==="unowned" ? "所持すると設定できます" : "下のボタンから設定できます");
+          ? "現在プロフィールに設定中"
+          : state==="unowned" ? "所持すると利用できます" : "下のボタンから設定できます");
       }
       detail.classList.add("show");
       detail.setAttribute("aria-hidden","false");
