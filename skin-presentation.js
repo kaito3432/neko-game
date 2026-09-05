@@ -49,7 +49,7 @@
     "catSkin:cat_kaitou":Object.freeze({
       treasure:"./assets/home-skins/kaito-nyan/kaito-nyan-home-treasure.png",
       character:"./assets/home-skins/kaito-nyan/kaito-nyan-home-character.png",
-      supportLayout:Object.freeze({translate:"2% 38%",scale:".93"}),
+      supportLayout:Object.freeze({translate:"2% 4%",scale:".93"}),
       characterLayout:Object.freeze({translate:"-4.5% 5px",scale:"1.05"}),
       durationMs:HOME_REACTION_DURATION_MS,
       reaction:freezeTimeline([
