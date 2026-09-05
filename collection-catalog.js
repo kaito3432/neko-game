@@ -89,8 +89,8 @@
     }),
     Object.freeze({
       id:"cat_kaitou",category:"catSkin",name:"怪盗にゃん",
-      preview:`${MYSTERY_ROOT}/cat_kaitou_collection.png`,
-      collectionImage:`${MYSTERY_ROOT}/cat_kaitou_collection.png`,
+      preview:`${MYSTERY_ROOT}/cat_kaitou_collection_cutout.png`,
+      collectionImage:`${MYSTERY_ROOT}/cat_kaitou_collection_cutout.png`,
       silhouetteImage:`${MYSTERY_ROOT}/cat_kaitou_collection_cutout.png`,
       profileImage:`${MYSTERY_ROOT}/cat_kaitou_profile.png`,
       pieceImage:`${MYSTERY_ROOT}/cat_kaitou_piece.png`,
