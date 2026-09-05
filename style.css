@@ -8335,27 +8335,49 @@ body.sneak-mode .board-shell{
   }
 }
 
+
+/* 2026-09-05 Home cards full-bleed responsive fix */
 /* =========================================================
-   ホーム対戦カード レスポンシブ比率固定
+   ホーム3カードを「枠いっぱい」に表示しつつ、
+   端末差でカード高・カード間隔が勝手に伸びないようにする。
    ========================================================= */
 
-/* 3枚のカードを残り高さで引き伸ばさない */
+.visual-update3 .vu3-home{
+  grid-template-rows:
+    auto
+    auto
+    auto
+    auto
+    auto !important;
+
+  align-content:start !important;
+  row-gap:clamp(5px, .8dvh, 8px) !important;
+
+  width:min(calc(100vw - 14px), 500px) !important;
+  height:auto !important;
+  min-height:100dvh !important;
+  max-height:none !important;
+
+  margin-inline:auto !important;
+  overflow:hidden !important;
+}
+
 .visual-update3 .vu3-modes{
   display:grid !important;
   grid-template-rows:repeat(3, auto) !important;
-  gap:clamp(5px, 0.8dvh, 8px) !important;
 
   width:100% !important;
   height:auto !important;
   min-height:0 !important;
 
-  margin-bottom:clamp(5px, 0.8dvh, 10px) !important;
+  gap:clamp(6px, 1.2vw, 8px) !important;
+  margin:0 0 clamp(6px, 1dvh, 10px) !important;
 }
 
-/* 各カードは必ず素材と同じ3:1 */
 .visual-update3 .vu3-mode{
   position:relative !important;
 
+  display:block !important;
   width:100% !important;
   height:auto !important;
   min-height:0 !important;
@@ -8367,50 +8389,97 @@ body.sneak-mode .board-shell{
 
   overflow:hidden !important;
   box-sizing:border-box !important;
+
   border-radius:clamp(14px, 4vw, 20px) !important;
 }
 
-/* 画像はカード全面に完全一致 */
 .visual-update3 .vu3-mode-full{
   position:absolute !important;
   inset:0 !important;
 
   display:block !important;
-
   width:100% !important;
   height:100% !important;
 
-  object-fit:contain !important;
+  object-fit:cover !important;
   object-position:center center !important;
 
   transform:none !important;
-  border-radius:inherit !important;
-
   background:transparent !important;
+
+  border-radius:inherit !important;
   pointer-events:none !important;
 }
-/* =========================================================
-   横長端末
-   ========================================================= */
 
-@media (orientation:landscape) and (max-height:700px){
+@media (max-width:390px){
+  .visual-update3 .vu3-mode-full{
+    object-fit:cover !important;
+    background:transparent !important;
+  }
+}
 
+.visual-update3 .collection-entry-btn{
+  margin-top:0 !important;
+}
+
+.visual-update3 .vu3-bottom{
+  margin-top:clamp(2px, .5dvh, 5px) !important;
+}
+
+@media (min-height:900px){
+  .visual-update3 .vu3-home{
+    grid-template-rows:
+      auto
+      auto
+      auto
+      auto
+      auto !important;
+
+    align-content:start !important;
+  }
+
+  .visual-update3 .vu3-modes{
+    gap:8px !important;
+  }
+}
+
+@media (max-height:700px) and (orientation:portrait){
+  .visual-update3 .vu3-home{
+    row-gap:4px !important;
+  }
+
+  .visual-update3 .vu3-modes{
+    gap:4px !important;
+    margin-bottom:4px !important;
+  }
+
+  .visual-update3 .vu3-mode{
+    border-radius:14px !important;
+  }
+
+  .visual-update3 .collection-entry-btn{
+    height:30px !important;
+  }
+
+  .visual-update3 .vu3-mini{
+    min-height:38px !important;
+  }
+}
+
+@media (orientation:landscape) and (max-height:800px){
   .visual-update3 .vu3-home{
     width:min(
       calc(100vw - 24px),
       500px,
-      calc(100dvh * .64)
+      calc(100dvh * .68)
     ) !important;
 
-    margin-inline:auto !important;
+    min-height:100dvh !important;
+    row-gap:4px !important;
   }
 
   .visual-update3 .vu3-logo{
-    max-height:clamp(42px, 9dvh, 60px) !important;
-  }
-
-  .visual-update3 .vu3-sub{
-    font-size:clamp(11px, 2.4dvh, 16px) !important;
+    max-height:56px !important;
   }
 
   .visual-update3 .vu3-modes{
@@ -8419,10 +8488,11 @@ body.sneak-mode .board-shell{
   }
 
   .visual-update3 .collection-entry-btn{
-    height:clamp(28px, 6dvh, 34px) !important;
+    height:30px !important;
   }
 
   .visual-update3 .vu3-mini{
-    min-height:clamp(30px, 7dvh, 40px) !important;
+    min-height:36px !important;
   }
 }
+
