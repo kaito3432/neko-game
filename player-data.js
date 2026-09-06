@@ -2,7 +2,9 @@
    ゲーム進行には依存せず、端末キャッシュと将来のサーバー保存を分離する。
 */
 (function(root, factory){
-  const api=factory(root);
+  const model=typeof module==="object" && module.exports ? require("./progression-model.js") : root.NyanProgressionModel;
+  const unlockSync=typeof module==="object" && module.exports ? require("./cpu-unlock-sync.js") : root.NyanCpuUnlockSync;
+  const api=factory(root,model,unlockSync);
 
   if(typeof module==="object" && module.exports){
     module.exports=api;
@@ -11,13 +13,14 @@
   if(root){
     root.NyanPlayerData=api;
   }
-})(typeof globalThis!=="undefined" ? globalThis : this, root=>{
+})(typeof globalThis!=="undefined" ? globalThis : this, (root,Progress,UnlockSync)=>{
   "use strict";
 
-  const CURRENT_VERSION=3;
+  const CURRENT_VERSION=5;
   const STORAGE_KEYS=Object.freeze({
     playerId:"nyanChasePlayerId",
-    playerData:"nyanChasePlayerData"
+    playerData:"nyanChasePlayerData",
+    pendingBattles:"nyanChasePendingBattles"
   });
 
   const DEFAULT_ITEM_ID="default";
@@ -109,11 +112,10 @@
       },
       favoriteCharacter:null,
       profileCharacter:null,
-      dailyMissionProgress:{
-        date:null,
-        missions:[],
-        allClearRewardClaimed:false
-      },
+      dailyMissionProgress:Progress.normalizeDaily(null),
+      skinUnlockProgress:Progress.normalizeUnlocks(null),
+      cpuUnlockSync:{},
+      battleReceipts:[],
       challengeProgress:{},
       rankPoints:0,
       currentRank:"bronze",
@@ -127,18 +129,7 @@
   }
 
   function normalizeDailyMissionProgress(value){
-    const source=isPlainObject(value) ? value : {};
-    const missions=Array.isArray(source.missions)
-      ? source.missions
-          .filter(isPlainObject)
-          .map(safeProgressObject)
-      : [];
-
-    return {
-      date:typeof source.date==="string" ? source.date : null,
-      missions,
-      allClearRewardClaimed:source.allClearRewardClaimed===true
-    };
+    return Progress.normalizeDaily(value);
   }
 
   function normalizeData(value,playerId){
@@ -179,7 +170,10 @@
         ownedCatSkins,
         ownedDogSkins
       ),
-      dailyMissionProgress:normalizeDailyMissionProgress(source.dailyMissionProgress),
+      dailyMissionProgress:normalizeDailyMissionProgress(source.dailyMissionProgress || source.dailyMissions),
+      skinUnlockProgress:Progress.normalizeUnlocks(source.skinUnlockProgress),
+      cpuUnlockSync:UnlockSync.normalize(source),
+      battleReceipts:Array.isArray(source.battleReceipts) ? [...new Set(source.battleReceipts.filter(id=>typeof id==="string" && /^[a-zA-Z0-9_-]{8,160}$/.test(id)))] : [],
       challengeProgress:safeProgressObject(source.challengeProgress),
       rankPoints:safeNonNegativeInteger(source.rankPoints),
       currentRank:safeString(source.currentRank,defaults.currentRank),
@@ -193,7 +187,7 @@
   }
 
   function migrateData(value,playerId){
-    // Phase 1の初期版。今後はversionごとの変換をこの境界に追加する。
+    // v5: completed local CPU unlocks gain retryable sync status, assets stay intact.
     return normalizeData(value,playerId);
   }
 
@@ -234,7 +228,8 @@
       },
       write(key,value){
         try{
-          storage?.setItem(key,value);
+          if(!storage) throw new Error("storage_unavailable");
+          storage.setItem(key,value);
           return {ok:true,error:null};
         }catch(error){
           return {ok:false,error};
@@ -243,13 +238,26 @@
     };
   }
 
-  function createStore({storage,remoteProvider=null}={}){
+  function createStore({storage,remoteProvider=null,now=()=>Date.now()}={}){
     const local=storage?.read && storage?.write
       ? storage
       : createStorageAdapter(storage);
     let remote=remoteProvider;
     let currentData=null;
     let lastStatus={source:"uninitialized",error:null};
+    let queue=Promise.resolve();
+    function serial(operation){
+      const run=async()=>{
+        // Refresh across tabs before deriving a mutation from the existing data.
+        if(currentData && !remote && lastStatus.source!=="memory") currentData=readLocal(currentData.playerId);
+        return operation();
+      };
+      const locked=()=>root?.navigator?.locks?.request
+        ? root.navigator.locks.request("nyan-player-data",run) : run();
+      const result=queue.then(locked,locked);
+      queue=result.catch(()=>{});
+      return result;
+    }
 
     function ensurePlayerId(){
       const saved=local.read(STORAGE_KEYS.playerId);
@@ -409,7 +417,108 @@
       return {...lastStatus};
     }
 
-    return {load,save,updateEquipment,updateFavoriteCharacter,updateProfileCharacter,setRemoteProvider,getSnapshot,getStatus};
+    function pendingBattles(){
+      try{
+        const read=local.read(STORAGE_KEYS.pendingBattles);
+        if(!read.ok) throw read.error;
+        const values=JSON.parse(read.value || "[]");
+        return Array.isArray(values) ? values.filter(v=>{
+          try{Progress.validateBattle(v);return true;}catch(_){return false;}
+        }) : [];
+      }catch(_){return [];}
+    }
+    function writePending(values){
+      const result=local.write(STORAGE_KEYS.pendingBattles,JSON.stringify(values));
+      if(!result.ok) throw result.error || new Error("pending_save_failed");
+    }
+    function persistProgress(candidate){
+      const data=normalizeData(candidate,candidate.playerId);
+      const result=local.write(STORAGE_KEYS.playerData,JSON.stringify(data));
+      if(!result.ok){
+        lastStatus={source:"memory",error:result.error};
+        throw result.error || new Error("progress_save_failed");
+      }
+      currentData=data;
+      lastStatus={source:"local",error:null};
+      return getSnapshot();
+    }
+    async function progressCommand(method,payload,apply){
+      const base=currentData || await load();
+      if(remote){
+        // Send intent and an idempotency key, never a client-calculated balance/ownership.
+        if(typeof remote[method]!=="function") throw new Error("progress_provider_unavailable");
+        const server=await remote[method](base.playerId,payload);
+        if(!isPlainObject(server)) throw new Error("invalid_server_player_data");
+        return cache(normalizeData(server,base.playerId),"server");
+      }
+      return persistProgress(apply(base));
+    }
+    async function recordPendingBattle(event){
+      if(event.source==='randomMatch' && !remote) {
+        if(typeof root?.NyanOnline?.verifyResult!=='function') throw new Error('online_result_verifier_unavailable');
+        // Always re-fetch the authenticated server receipt, including outbox replay.
+        const verified=Progress.validateBattle(await root.NyanOnline.verifyResult(event));
+        if(verified.source!=='randomMatch' || verified.battleId!==event.battleId) throw new Error('invalid_online_receipt');
+        event=verified;
+      }
+      const data=await progressCommand("recordDailyMissionBattle",event,base=>Progress.recordBattle(base,event,now()));
+      if(!data.battleReceipts.includes(event.battleId)) throw new Error("battle_not_acknowledged");
+      writePending(pendingBattles().filter(b=>b.battleId!==event.battleId));
+      if(event.source==='cpu' && Object.values(data.cpuUnlockSync).includes('pending')){
+        // Local unlock+pending flag were already committed atomically. Networking
+        // must never block the game or roll back a local unlock on failure.
+        root.queueMicrotask(()=>Promise.resolve().then(()=>root.NyanOnline?.syncCpuUnlocks?.()).catch(()=>{}));
+      }
+      return data;
+    }
+    function acknowledgeCpuUnlock(achievement,response){
+      return serial(async()=>{
+        if(!UnlockSync.confirms(achievement,response))throw new Error('unlock_not_acknowledged');
+        const base=currentData || await load();
+        if(base.cpuUnlockSync[achievement]!=='pending')return getSnapshot();
+        if(remote)throw new Error('cpu_unlock_sync_remote_managed');
+        return persistProgress({...base,cpuUnlockSync:{...base.cpuUnlockSync,[achievement]:'synced'}});
+      });
+    }
+    function recordDailyMissionBattle(value){
+      let event;
+      try{
+        event=Progress.validateBattle(value);
+        if(!["cpu","randomMatch"].includes(event.source)) return Promise.resolve(getSnapshot());
+        // Journal immediately at confirmed match completion, before any cut-in/ad/UI awaits.
+        const pending=pendingBattles();
+        if(!pending.some(b=>b.battleId===event.battleId)) writePending([...pending,event]);
+      }catch(error){return Promise.reject(error);}
+      return serial(()=>recordPendingBattle(event));
+    }
+    function retryPendingBattles(){
+      return serial(async()=>{
+        for(const event of pendingBattles()) await recordPendingBattle(event);
+        return getSnapshot();
+      });
+    }
+    function refreshDailyMissions(){
+      return serial(async()=>{
+        const base=await load();
+        if(remote) return base;
+        const next=Progress.rollover(base,now());
+        return JSON.stringify(next.dailyMissionProgress)===JSON.stringify(base.dailyMissionProgress)
+          ? base : persistProgress(next);
+      });
+    }
+    function claimDailyReward(date,missionId){
+      return serial(()=>progressCommand("claimDailyReward",{
+        date,missionId,requestId:`daily:${date}:${missionId}`
+      },base=>Progress.claim(base,{date,missionId},now())));
+    }
+    return {
+      load:()=>serial(load),save:value=>serial(()=>save(value)),
+      updateEquipment:(...args)=>serial(()=>updateEquipment(...args)),
+      updateFavoriteCharacter:(...args)=>serial(()=>updateFavoriteCharacter(...args)),
+      updateProfileCharacter:(...args)=>serial(()=>updateProfileCharacter(...args)),
+      recordDailyMissionBattle,retryPendingBattles,refreshDailyMissions,claimDailyReward,acknowledgeCpuUnlock,
+      setRemoteProvider,getSnapshot,getStatus
+    };
   }
 
   let browserStorage=null;
@@ -441,6 +550,11 @@
     updateProfileCharacter:defaultStore.updateProfileCharacter,
     setRemoteProvider:defaultStore.setRemoteProvider,
     getSnapshot:defaultStore.getSnapshot,
-    getStatus:defaultStore.getStatus
+    getStatus:defaultStore.getStatus,
+    recordDailyMissionBattle:defaultStore.recordDailyMissionBattle,
+    retryPendingBattles:defaultStore.retryPendingBattles,
+    refreshDailyMissions:defaultStore.refreshDailyMissions,
+    claimDailyReward:defaultStore.claimDailyReward
+    ,acknowledgeCpuUnlock:defaultStore.acknowledgeCpuUnlock
   });
 });

@@ -1,0 +1,122 @@
+/* Isolated Chrome + local Wrangler. No user data or live service is used. */
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs/promises');
+const http=require('node:http');
+const path=require('node:path');
+const Player=require('../player-data.js');
+const root=path.resolve(__dirname,'..'),output=path.join(root,'artifacts/online-20260906');
+const server=http.createServer(async(req,res)=>{
+  try{
+    let name=decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1)||'index.html';
+    if(name.includes('..'))throw Error('invalid');
+    let content=await fs.readFile(path.join(root,name));
+    if(name==='online.js')content=Buffer.from(content.toString().replace('https://nyan-chase-online.honda19990602.workers.dev','http://127.0.0.1:8798'));
+    if(name==='game.js')content=Buffer.from(content.toString().replace(/initGame\(true\);\s*\}\)\(\);\s*$/,`initGame(true);window.__onlineQA={state:()=>game,mode:()=>playMode,node:handleNodePress,box:handleBoxPress,render};})();`));
+    const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.wav':'audio/wav'};
+    res.writeHead(200,{'Content-Type':types[path.extname(name)]||'application/octet-stream','Cache-Control':'no-store'});res.end(content);
+  }catch(_){res.writeHead(404);res.end();}
+});
+(async()=>{
+  await fs.mkdir(output,{recursive:true});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  const url=`http://127.0.0.1:${server.address().port}`;
+  const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+  const errors=[];
+  try{
+    const contexts=await Promise.all([0,1].map(async()=>{
+      const ctx=await browser.newContext({viewport:{width:320,height:568},serviceWorkers:'block'});
+      const data=Player.createDefaultData();data.ownedCatSkins.push('cat_kaitou');data.ownedDogSkins.push('dog_detective');data.equippedAppearance.catSkinId='cat_kaitou';data.equippedAppearance.dogSkinId='dog_detective';
+      await ctx.addInitScript(({data,keys})=>{if(!localStorage.getItem(keys.playerData)){localStorage.setItem(keys.playerData,JSON.stringify(data));localStorage.setItem(keys.playerId,data.playerId);}}, {data,keys:Player.STORAGE_KEYS});
+      return ctx;
+    }));
+    const pages=await Promise.all(contexts.map(c=>c.newPage()));
+    for(const page of pages){page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>window.__onlineQA);}
+    const a=pages[0],b=pages[1];
+    for(const [width,height] of [[320,568],[375,667],[390,844],[430,932],[768,1024],[844,390]]){
+      await a.setViewportSize({width,height});await a.waitForTimeout(400);await a.locator('#onlineModeBtn').click();
+      await a.locator('.matchmaking-panel').waitFor({state:'visible'});
+      const box=await a.locator('.matchmaking-panel').boundingBox();assert.ok(box.x>=0&&box.y>=0&&box.x+box.width<=width&&box.y+box.height<=height);
+      assert.deepEqual(await a.evaluate(()=>[document.documentElement.scrollWidth,document.documentElement.scrollHeight]),[width,height]);
+      await a.screenshot({path:path.join(output,`chooser-${width}x${height}.png`)});await a.locator('#matchmakingCancel').click();
+    }
+    await a.setViewportSize({width:320,height:568});
+    for(const page of pages){await page.waitForTimeout(400);await page.locator('#onlineModeBtn').click();await page.locator('#randomMatchStart').click();}
+    await Promise.all(pages.map(p=>p.waitForFunction(()=>NyanOnline.getSession().role)));
+    const randomHost=await a.evaluate(()=>NyanOnline.getSession().player==='host')?a:b;
+    await randomHost.locator('#onlineNormalRuleBtn').click();
+    await Promise.all(pages.map(page=>page.waitForFunction(()=>NyanOnline.getSession().role&&__onlineQA.mode().startsWith('online')&&['dogSetup','onlineWaitingDogSetup'].includes(__onlineQA.state().phase))));
+    const roles=await Promise.all(pages.map(page=>page.evaluate(()=>NyanOnline.getSession().role)));
+    assert.notEqual(roles[0],roles[1]);const cat=roles[0]==='cat'?a:b,police=roles[0]==='police'?a:b;
+    async function dismiss(page){await page.waitForTimeout(450);if(await page.locator('#privacyOverlay.show').count())await page.locator('#privacyBtn').click();}
+    for(const page of pages)await dismiss(page);
+    await police.evaluate(()=>{__onlineQA.node(14);__onlineQA.node(15);__onlineQA.node(21);});
+    await cat.waitForFunction(()=>__onlineQA.state().phase==='catSetup');
+    await dismiss(cat);
+    await cat.evaluate(()=>__onlineQA.box(12));
+    await police.waitForFunction(()=>__onlineQA.state().phase==='dogs');
+    await dismiss(police);
+    await police.evaluate(()=>__onlineQA.node(14));
+    await cat.waitForFunction(()=>document.querySelector('#guideDisplay').textContent.includes('あか柴'));
+    await police.evaluate(()=>__onlineQA.node(14));
+    await cat.waitForFunction(()=>document.querySelector('#guideDisplay').textContent==='柴犬警察が捜査しています…');
+    const snapshots=await Promise.all(pages.map(page=>page.evaluate(()=>NyanOnline.getAppearanceSnapshot())));
+    assert.deepEqual(snapshots[0],snapshots[1]);
+    assert.equal(snapshots[0].catPlayer.catSkinId,'cat_kaitou');assert.equal(snapshots[0].policePlayer.dogSkinId,'dog_detective');
+    for(const page of pages)assert.equal(await page.locator('#board img[data-skin-id="dog_detective"]').count(),3);
+    for(const page of pages)await page.evaluate(()=>{
+      window.__seenEffects=[];
+      new MutationObserver(records=>records.forEach(r=>r.addedNodes.forEach(n=>{
+        if(n.classList?.contains('skin-decorative-effect'))__seenEffects.push(n.src);
+      }))).observe(document.body,{childList:true,subtree:true});
+    });
+    await cat.evaluate(async()=>{await NyanPlayerData.updateEquipment('catSkin','default');});
+    assert.deepEqual(await cat.evaluate(()=>NyanOnline.getAppearanceSnapshot()),snapshots[0]);
+    // Exercise a full police move turn, then a cat move, then a server-checked capture.
+    await police.evaluate(()=>{__onlineQA.node(14);__onlineQA.node(20);__onlineQA.node(15);__onlineQA.node(9);__onlineQA.node(21);__onlineQA.node(22);});
+    await police.locator('#finishDogTurnBtn').click();
+    await cat.waitForFunction(()=>__onlineQA.state().phase==='cat'&&__onlineQA.state().turn===2);
+    await dismiss(cat);
+    await cat.evaluate(()=>{__onlineQA.state().catVisible=true;__onlineQA.render();});
+    assert.equal(await cat.locator('#board img[data-skin-id="cat_kaitou"]').count(),1);
+    await cat.waitForTimeout(1300);
+    await cat.screenshot({path:path.join(output,'random-cat-turn.png')});
+    await cat.evaluate(()=>__onlineQA.box(13));
+    await police.waitForFunction(()=>__onlineQA.state().phase==='dogs'&&__onlineQA.state().turn===2);
+    await police.evaluate(()=>{__onlineQA.node(20);__onlineQA.box(12);});
+    await police.waitForFunction(()=>!__onlineQA.state().actionLocked);
+    for(const page of pages)await page.waitForFunction(()=>__seenEffects.some(src=>src.endsWith(NyanSkinPresentation.effectSource(null,'dogSkin','found',{playMode:'onlineCat'}).replace(/^\.\//,''))));
+    for(const page of pages)assert.ok(await page.evaluate(()=>__seenEffects.some(src=>src.endsWith(NyanSkinPresentation.effectSource(null,'catSkin','move',{playMode:'onlineCat'}).replace(/^\.\//,'')))));
+    await police.evaluate(()=>{__onlineQA.node(22);__onlineQA.box(13);});
+    await Promise.all(pages.map(page=>page.waitForFunction(()=>__onlineQA.state().gameOver&&NyanPlayerData.getSnapshot().battleReceipts.some(id=>id.startsWith('rm_')))));
+    for(const [i,page] of pages.entries()){
+      assert.equal(await page.evaluate(()=>NyanPlayerData.getSnapshot().nyanCoins),0);
+      await page.waitForTimeout(2200);await page.screenshot({path:path.join(output,`random-result-${i}.png`)});
+    }
+    const receipts=await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length)));
+    for(const page of pages){await page.reload();await page.evaluate(()=>NyanPlayerData.updateEquipment('catSkin','cat_kaitou'));await page.locator('#onlineModeBtn').click();await page.locator('#roomMatchStart').click();}
+    await a.locator('#createOnlineRoomBtn').click();
+    await a.waitForFunction(()=>NyanOnline.getSession().roomCode);
+    const code=await a.evaluate(()=>NyanOnline.getSession().roomCode);
+    await b.locator('#onlineRoomCodeInput').fill(code);await b.locator('#joinOnlineRoomBtn').click();
+    await Promise.all(pages.map(p=>p.waitForFunction(()=>NyanOnline.getSession().role)));
+    await a.locator('#onlineStartGameBtn').click();await a.locator('#onlineNormalRuleBtn').click();
+    await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.mode().startsWith('online'))));
+    const roomRoles=await Promise.all(pages.map(p=>p.evaluate(()=>NyanOnline.getSession().role)));
+    const roomCat=roomRoles[0]==='cat'?a:b,roomPolice=roomRoles[0]==='police'?a:b;
+    for(const p of pages)await dismiss(p);
+    await roomPolice.evaluate(()=>{__onlineQA.node(14);__onlineQA.node(15);__onlineQA.node(21);});
+    await roomCat.waitForFunction(()=>__onlineQA.state().phase==='catSetup');await dismiss(roomCat);
+    await roomCat.evaluate(()=>__onlineQA.box(12));await roomPolice.waitForFunction(()=>__onlineQA.state().phase==='dogs');
+    for(const page of pages)assert.equal(await page.locator('#board img[data-skin-id="dog_detective"]').count(),3);
+    await roomPolice.evaluate(()=>{__onlineQA.node(14);__onlineQA.box(12);});
+    await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver)));
+    assert.deepEqual(await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length))),receipts);
+    // Pre-rollout Worker compatibility: no auth endpoint/CORS support.
+    await a.route('http://127.0.0.1:8798/api/online/profile',route=>route.fulfill({status:404,headers:{'access-control-allow-origin':'*'},body:'not found'}));
+    await a.reload();await a.locator('#onlineModeBtn').click();await a.locator('#randomMatchStart').click();
+    await a.getByText('ランダムマッチはサーバー更新後に利用できます。部屋対戦は引き続き利用できます。').waitFor();
+    await a.locator('#roomMatchStart').click();await a.locator('#createOnlineRoomBtn').click();
+    await a.waitForFunction(()=>/^\d{6}$/.test(NyanOnline.getSession().roomCode));
+    assert.deepEqual(errors,[]);console.log('PASS: 6 responsive sizes, 2 Chrome clients, random and room matches to capture, same skins, both-side move/found effects, frozen snapshot, random-only daily receipt, zero coin grant; no JS exceptions');
+  }finally{await browser.close();await new Promise(r=>server.close(r));}
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -7940,12 +7940,7 @@ body.sneak-mode .board-shell{
   line-height:.85;
   text-shadow:0 3px 8px rgba(0,0,0,.45);
 }
-.collection-detail.is-unowned .collection-detail-main-image img,
-.collection-detail.is-unowned .collection-profile-preview img{
-  filter:brightness(0);
-  opacity:1;
-}
-.collection-detail.is-unowned .collection-lock{display:block}
+.collection-detail.is-unowned .collection-lock{display:none}
 .collection-detail-usage{
   padding:8px;
   border:2px solid #ead0b6;
@@ -8052,25 +8047,57 @@ body.sneak-mode .board-shell{
 }
 .setting-row[hidden]{display:none!important}
 
-/* ゲーム情報を覆わない、0.4秒未満の装飾専用レイヤー。 */
+/* Daily entry uses the existing collection row; hero/cards retain their geometry. */
+.home-collection-daily{display:grid!important;grid-template-columns:1.15fr 1fr;gap:0!important;padding:0!important;overflow:hidden}
+.home-collection-daily>button{height:100%;min-width:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:900;cursor:pointer;padding:0 3px}
+.home-collection-daily>button+button{border-left:1px solid #c99c72;background:#fff0d4}
+.daily-overlay[hidden],.daily-result-notice[hidden],.collection-unlock[hidden]{display:none!important}
+.daily-overlay{position:fixed;inset:0;z-index:12000;display:flex;background:#fff8e9;color:var(--brown);padding:max(8px,env(safe-area-inset-top)) 10px max(8px,env(safe-area-inset-bottom));box-sizing:border-box;overflow:auto}
+.daily-shell{width:100%;max-width:500px;margin:0 auto}
+.daily-shell header{display:flex;align-items:center;gap:8px}
+.daily-shell header h2{flex:1;font-size:clamp(16px,4.8vw,22px);margin:0}
+.daily-shell header button{width:38px;height:38px;border:2px solid #b28b67;border-radius:50%;background:white;font-size:22px;color:inherit}
+.daily-shell header>span{font-size:12px;white-space:nowrap}
+#dailyDate,.daily-help{font-size:11px;line-height:1.5;margin:8px 0;color:#786354}
+#dailyMissionList{display:grid;gap:9px}
+.daily-mission{border:2px solid #dfbea0;background:#fffdf6;border-radius:16px;padding:10px 12px}
+.daily-mission h3{font-size:15px;margin:0 0 4px}
+.daily-mission p{font-size:12px;margin:0 0 5px}
+.daily-mission progress{display:block;width:100%;height:7px;accent-color:#de8894;margin-bottom:8px}
+.daily-mission button{width:100%;min-height:34px;border:2px solid #d59b46;border-radius:10px;color:#674320;background:#fff0b9;font-size:12px;font-weight:900;cursor:pointer}
+.daily-mission button:disabled{background:#eee7df;border-color:#d8cbbf;color:#807165;cursor:default;opacity:1}
+#dailyStatus{font-size:12px;line-height:1.5;min-height:18px}
+.daily-result-notice{width:100%;border:2px solid #d0a044;border-radius:12px;background:#fff0b9;color:#674320;min-height:36px;margin:6px 0;font-weight:900;cursor:pointer}
+.collection-unlock{background:#fff4da;border:1px solid #dfbd8b;border-radius:12px;padding:8px 10px;color:#6b5040;font-size:12px}
+.collection-unlock p{margin:4px 0;font-size:12px;line-height:1.4}
+.collection-unlock>span{font-weight:900}
+.collection-detail-scroll{grid-template-rows:minmax(150px,1fr);grid-auto-rows:auto}
+
+/* 100ms fade-in / 400ms hold / 200ms fade-out, decorative only. */
 .skin-decorative-effect{
   position:fixed;
   z-index:4600;
-  width:34px;
-  height:34px;
+  width:54px;
+  height:54px;
   object-fit:contain;
   pointer-events:none;
   opacity:0;
-  transform:translate(-50%,-50%) scale(.55) rotate(-8deg);
-  transition:opacity .08s ease,transform .24s ease;
+  --effect-x:-50%;
+  transform:translate(var(--effect-x),-70%);
   filter:drop-shadow(0 2px 3px rgba(70,45,35,.18));
 }
-.skin-decorative-effect.show{opacity:.78;transform:translate(-50%,-70%) scale(1) rotate(5deg)}
-.skin-effect-found-cat,.skin-effect-found-dog{z-index:4590;width:27px;height:27px;opacity:0}
-.skin-effect-found-cat{transform:translate(-90%,-55%) scale(.5)}
-.skin-effect-found-dog{transform:translate(-10%,-55%) scale(.5)}
-.skin-effect-found-cat.show{opacity:.56;transform:translate(-105%,-95%) scale(.84)}
-.skin-effect-found-dog.show{opacity:.56;transform:translate(5%,-95%) scale(.84)}
+.skin-decorative-effect.show{animation:skin-effect-visible 700ms ease-out both}
+.skin-effect-found-cat,.skin-effect-found-dog{z-index:4590;width:44px;height:44px}
+.skin-effect-found-cat{--effect-x:-85%}
+.skin-effect-found-dog{--effect-x:-15%}
+@keyframes skin-effect-visible{
+  0%{opacity:0;transform:translate(var(--effect-x),-50%) scale(.8)}
+  14%,71%{opacity:.95;transform:translate(var(--effect-x),-70%) scale(1)}
+  100%{opacity:0;transform:translate(var(--effect-x),-85%) scale(1.04)}
+}
+@media(prefers-reduced-motion:reduce){
+  .skin-decorative-effect.show{animation:none;opacity:.9;transform:translate(var(--effect-x),-70%)}
+}
 
 /* 固定3:1ステージ上で、2枚のキーポーズをGPU合成して滑らかに補間する。 */
 .vu3-hero-stage{
@@ -8331,7 +8358,7 @@ body.sneak-mode .board-shell{
   text-shadow:0 3px 7px rgba(0,0,0,.45);
 }
 .collection-item.is-unowned .collection-item-preview img{
-  filter:brightness(0);
+  filter:none;
   opacity:1;
 }
 .collection-item.is-unowned .collection-item-preview img.uses-silhouette-source[data-item-id="cat_kaitou"]{
@@ -9068,3 +9095,11 @@ body.sneak-mode .board-shell{
   margin:-2px auto 0!important;
   overflow:visible!important;
 }
+/* Online chooser is isolated from the existing home geometry. */
+.matchmaking-overlay[hidden] { display: none; }
+.matchmaking-overlay { position: fixed; inset: 0; z-index: 13000; display: grid; place-items: center; padding: 16px; background: #fff7e9f5; overflow-y: auto; }
+.matchmaking-panel { box-sizing: border-box; width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto; color: #654b40; text-align: center; }
+.matchmaking-panel button { display: block; width: 100%; min-height: 48px; margin-block: 12px; padding: 12px; border: 2px solid #c79568; border-radius: 18px; background: #fff0d3; color: #654b40; font: inherit; cursor: pointer; }
+.matchmaking-panel button[hidden] { display: none; }
+.matchmaking-panel button:disabled { opacity: .6; }
+.matchmaking-panel small { font-size: 12px; }

@@ -49,6 +49,11 @@
     return isEquipped ? "equipped" : isOwned ? "owned" : "unowned";
   }
 
+  function displayImage(item,state,kind="collection"){
+    if(state==="unowned") return (kind==="profile" ? item.lockedProfileImage : item.silhouetteImage) || "";
+    return (kind==="profile" ? item.profileImage : item.collectionImage) || item.preview;
+  }
+
   function sanitizeCatalogEquipment(data,catalog=defaultCatalog){
     if(!data || !catalog) return {data,changed:false};
 
@@ -317,8 +322,10 @@
       preview.className="collection-item-preview";
       preview.setAttribute("aria-label",`${item.name}の詳細を見る`);
       const image=document.createElement("img");
-      const silhouetteSource=state==="unowned" && Boolean(item.silhouetteImage);
-      image.src=silhouetteSource ? item.silhouetteImage : item.preview;
+      const silhouetteSource=state==="unowned";
+      const source=displayImage(item,state);
+      if(source) image.src=source;
+      image.onerror=()=>image.removeAttribute("src");
       image.alt=`${category.label} ${item.name}`;
       image.decoding="async";
       image.dataset.itemId=item.id;
@@ -329,7 +336,7 @@
       detailBadge.textContent="🔍 詳細を見る";
       preview.append(image,detailBadge);
 
-      if(state==="unowned"){
+      if(state==="unowned" && !source){
         const unownedCover=document.createElement("span");
         unownedCover.className="collection-unowned-cover";
         unownedCover.setAttribute("aria-hidden","true");
@@ -370,6 +377,7 @@
       if(!selectedItem){
         detail.classList.remove("show");
         detail.setAttribute("aria-hidden","true");
+        detail.querySelectorAll("img").forEach(image=>{image.onerror=null;image.removeAttribute("src");});
         return;
       }
       const item=catalog.getItem(selectedItem.categoryId,selectedItem.itemId);
@@ -386,6 +394,14 @@
       const usageBoard=detail.querySelector("[data-detail-usage-board]");
       const usageHome=detail.querySelector("[data-detail-usage-home]");
       const usageProfile=detail.querySelector("[data-detail-usage-profile]");
+      const unlock=detail.querySelector("[data-detail-unlock]");
+      if(unlock){
+        unlock.hidden=!item.unlockCondition;
+        if(item.unlockCondition){
+          setText(unlock.querySelector("[data-unlock-description]"),item.unlockCondition.text);
+          setText(unlock.querySelector("[data-unlock-progress]"),`${data.skinUnlockProgress?.[item.unlockCondition.progressKey] || 0} / ${item.unlockCondition.target}`);
+        }
+      }
       const isFavorite=data.favoriteCharacter?.category===item.category &&
         data.favoriteCharacter?.itemId===item.id;
       const isProfile=data.profileCharacter?.category===item.category &&
@@ -395,14 +411,15 @@
       detail.dataset.category=item.category;
       detail.dataset.itemId=item.id;
       if(collectionImage){
-        const silhouetteSource=state==="unowned" && Boolean(item.silhouetteImage);
+        const silhouetteSource=state==="unowned";
         collectionImage.onerror=()=>{
           collectionImage.onerror=null;
-          collectionImage.src=item.preview;
+          if(silhouetteSource) collectionImage.removeAttribute("src");
+          else collectionImage.src=item.preview;
         };
-        collectionImage.src=silhouetteSource
-          ? item.silhouetteImage
-          : item.collectionImage || item.preview;
+        const source=displayImage(item,state);
+        if(source) collectionImage.src=source;
+        else collectionImage.removeAttribute("src");
         collectionImage.alt=item.name;
         collectionImage.dataset.itemId=item.id;
         collectionImage.classList.toggle("uses-silhouette-source",silhouetteSource);
@@ -410,9 +427,12 @@
       if(profileImage){
         profileImage.onerror=()=>{
           profileImage.onerror=null;
-          profileImage.src=item.preview;
+          if(state==="unowned") profileImage.removeAttribute("src");
+          else profileImage.src=item.preview;
         };
-        profileImage.src=item.profileImage || item.preview;
+        const source=displayImage(item,state,"profile");
+        if(source) profileImage.src=source;
+        else profileImage.removeAttribute("src");
         profileImage.alt=`${item.name} プロフィール画像`;
       }
       names.forEach(name=>setText(name,item.name));
@@ -549,6 +569,9 @@
       onProfile(categoryId,itemId){controller?.setProfile(categoryId,itemId);}
     });
     controller=createController({playerData,catalog,view});
+    root.addEventListener("nyan-player-progress-changed",()=>{
+      if(overlay.classList.contains("show") && !controller.getState().saving) controller.load();
+    });
 
     openButton.addEventListener("click",async()=>{
       overlay.classList.add("show");
@@ -582,6 +605,7 @@
     isCharacterSkin,
     getEquipLabel,
     getItemState,
+    displayImage,
     sanitizeCatalogEquipment,
     validateEquip,
     validateFavorite,

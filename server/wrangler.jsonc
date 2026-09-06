@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  "name": "nyan-chase-online",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-08-16",
+
+  "durable_objects": {
+    "bindings": [
+      {"name": "ONLINE_PLAYERS", "class_name": "OnlinePlayers"},
+      {
+        "name": "GAME_ROOMS",
+        "class_name": "GameRoom"
+      }
+    ]
+  },
+
+  "exports": {
+    "OnlinePlayers": {"type": "durable-object", "storage": "sqlite"},
+    "GameRoom": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  }
+}

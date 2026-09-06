@@ -56,7 +56,7 @@ test("default装備と不正装備は従来画像へフォールバックする"
   assert.equal(Skins.resolveDogPiece(invalid,1).src,Skins.DEFAULTS.dogPieces[1]);
 });
 
-test("オンラインは通信仕様を使わず標準画像を維持する",()=>{
+test("snapshotがない旧オンラインは標準画像を維持する",()=>{
   assert.equal(Skins.resolveCatPiece(data(),{playMode:"onlineCat"}).src,Skins.DEFAULTS.catPiece);
   assert.equal(Skins.resolveDogPiece(data(),2,{playMode:"onlinePolice"}).src,Skins.DEFAULTS.dogPieces[2]);
   assert.equal(Skins.resolveDogCard(data(),2,{playMode:"onlinePolice"}).src,Skins.DEFAULTS.dogCards[2]);
@@ -233,13 +233,12 @@ test("怪盗にゃん2レイヤー素材は指定順で実在する",()=>{
   assert.equal(layered.reaction.length,5);
 });
 
-test("怪盗にゃんの未所持立ち絵は透過専用素材を使う",()=>{
+test("怪盗にゃんの未所持立ち絵とプロフィールは専用locked素材を使う",()=>{
   const item=Catalog.getItem("catSkin","cat_kaitou");
-  assert.match(item.silhouetteImage,/cat_kaitou_collection_cutout\.png$/);
-  const buffer=fs.readFileSync(path.resolve(__dirname,"..",item.silhouetteImage));
-  assert.equal(buffer.readUInt32BE(16),1254);
-  assert.equal(buffer.readUInt32BE(20),1254);
-  assert.equal(buffer[25],6,"cutout must be RGBA");
+  assert.match(item.silhouetteImage,/cat_kaitou_collection_locked\.png$/);
+  assert.match(item.lockedProfileImage,/cat_kaitou_profile_locked\.png$/);
+  assert.ok(fs.existsSync(path.resolve(__dirname,"..",item.silhouetteImage)));
+  assert.ok(fs.existsSync(path.resolve(__dirname,"..",item.lockedProfileImage)));
 });
 
 test("探偵しば2レイヤー素材とスキン別配置が実在する",()=>{

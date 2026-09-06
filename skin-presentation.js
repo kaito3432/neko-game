@@ -120,6 +120,12 @@
   function equippedItem(data,categoryId,catalog=defaultCatalog,allowCustom=true){
     const category=catalog?.getCategory(categoryId);
     if(!category) return null;
+    if(!allowCustom) {
+      // Only the user's OWN ownership was checked on the server. The viewer may
+      // legitimately not own an opponent's skin. Do not consult viewer owned[].
+      const id=root?.NyanOnline?.resolveAppearance?.(categoryId)?.id;
+      return catalog.getItem(categoryId,id || 'default') || catalog.getItem(categoryId,'default');
+    }
     const requested=allowCustom
       ? data?.equippedAppearance?.[category.equippedField]
       : "default";
@@ -168,8 +174,10 @@
 
   function resolveResultImage(data,winner,playMode,{catalog=defaultCatalog}={}){
     if(isOnlineMode(playMode)){
-      const fallback=winner==="cat" ? DEFAULTS.catResult : DEFAULTS.dogResult;
-      return {src:fallback,fallback};
+      const side=root?.NyanOnline?.getSession?.().role;
+      const category=side==='cat' ? 'catSkin' : side==='police' ? 'dogSkin' : winner==='cat' ? 'catSkin' : 'dogSkin';
+      const won=category==='catSkin' ? winner==='cat' : winner==='dogs';
+      return resolveOutcomeImage(data,category,won?'win':'lose',{catalog,playMode});
     }
     if(playMode==="cpuPolice"){
       return resolveOutcomeImage(data,"catSkin",winner==="cat" ? "win" : "lose",{catalog,playMode});
@@ -239,8 +247,7 @@
   }
 
   function effectSource(data,categoryId,kind,{catalog=defaultCatalog,playMode="local"}={}){
-    if(isOnlineMode(playMode)) return null;
-    const item=equippedItem(data,categoryId,catalog,true);
+    const item=equippedItem(data,categoryId,catalog,!isOnlineMode(playMode));
     const field=kind==="found" ? "foundFootprintEffect" : "moveEffect";
     return item?.id==="default" ? null : item?.[field] || null;
   }
@@ -249,17 +256,23 @@
     const document=root?.document;
     if(!document || !element || !src) return false;
     const rect=element.getBoundingClientRect();
+    const active=document.querySelectorAll(".skin-decorative-effect");
+    if(active.length>=6) active[0].remove();
     const image=document.createElement("img");
     image.className=`skin-decorative-effect skin-effect-${variant}`;
     image.alt="";
     image.setAttribute("aria-hidden","true");
     image.style.left=`${rect.left+rect.width/2}px`;
     image.style.top=`${rect.top+rect.height/2}px`;
-    image.onerror=()=>image.remove();
+    const cleanup=root.setTimeout?.(()=>image.remove(),3000);
+    image.onerror=()=>{root.clearTimeout?.(cleanup);image.remove();};
+    image.onload=()=>{
+      root.clearTimeout?.(cleanup);
+      image.classList.add("show");
+      root.setTimeout?.(()=>image.remove(),720);
+    };
     image.src=src;
     document.body.appendChild(image);
-    root.requestAnimationFrame?.(()=>image.classList.add("show"));
-    root.setTimeout?.(()=>image.remove(),400);
     return true;
   }
 

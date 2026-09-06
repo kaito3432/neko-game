@@ -11,7 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
-<link rel="stylesheet" href="./style.css?v=2.0.collection-ui4">
+<link rel="stylesheet" href="./style.css?v=2.0.daily1">
 </head>
 <body>
 <div class="app">
@@ -168,10 +168,13 @@
 
     </div>
 
-    <button class="collection-entry-btn" id="collectionOpenBtn" type="button">
+    <div class="collection-entry-btn home-collection-daily">
+    <button id="collectionOpenBtn" type="button">
       <span aria-hidden="true">📚</span>
       <span>コレクション</span>
     </button>
+    <button id="dailyOpenBtn" type="button">📅 デイリー 0/3</button>
+    </div>
 
     <div class="vu3-bottom">
       <button class="vu3-mini" id="howToBtn" type="button">
@@ -200,6 +203,16 @@
 
   </div>
 </div>
+
+<section class="daily-overlay" id="dailyOverlay" role="dialog" aria-modal="true" aria-labelledby="dailyHeading" aria-hidden="true" hidden>
+  <div class="daily-shell">
+    <header><button id="dailyCloseBtn" type="button" aria-label="デイリーを閉じる">←</button><h2 id="dailyHeading">デイリーミッション</h2><span>🪙 <strong id="dailyCoins">0</strong></span></header>
+    <p id="dailyDate"></p>
+    <p class="daily-help">CPU対戦を最後まで遊ぼう！<br>ローカル対人戦・オンライン部屋対戦は対象外です。</p>
+    <div id="dailyMissionList"></div>
+    <p id="dailyStatus" role="status" aria-live="polite"></p>
+  </div>
+</section>
 
 <div class="collection-overlay" id="collectionOverlay" aria-hidden="true">
   <div class="collection-shell">
@@ -249,6 +262,11 @@
             </button>
           </div>
         </div>
+        <section class="collection-unlock" data-detail-unlock hidden>
+          <strong>🔓 開放条件</strong>
+          <p data-unlock-description></p>
+          <span data-unlock-progress></span>
+        </section>
         <div class="collection-profile-preview">
           <img data-detail-profile-image src="" alt="">
           <div><small>プロフィール画像プレビュー</small><strong data-detail-name>スキン詳細</strong></div>
@@ -1706,6 +1724,7 @@
       <div class="result-route-note" id="resultRouteNote"></div>
     </div>
 
+    <button class="daily-result-notice" id="dailyResultNotice" type="button" hidden></button>
     <button class="btn pink" id="againBtn">🔄 もう一度遊ぶ</button>
     <button
   class="btn secondary"
@@ -1760,15 +1779,21 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./player-data.js?v=1.0.collection-ui4"></script>
-<script src="./collection-catalog.js?v=1.0.collection-ui4"></script>
-<script src="./collection.js?v=1.0.collection-ui4"></script>
-<script src="./skin-presentation.js?v=1.0.collection-ui3"></script>
+<script src="./progression-model.js?v=1.0.daily1"></script>
+<script src="./cpu-unlock-sync.js?v=1.0"></script>
+<script src="./player-data.js?v=1.0.daily1"></script>
+<script src="./daily-missions.js?v=1.0.daily1"></script>
+<script src="./collection-catalog.js?v=1.0.daily1"></script>
+<script src="./collection.js?v=1.0.daily1"></script>
+<script src="./skin-presentation.js?v=1.0.daily1"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
-<script src="./online.js?v=2.0.online-beta1"></script>
-<script src="./game.js?v=2.0.phase2b-visualfix1"></script>
+<script src="./online-identity.js?v=1.0"></script>
+<script src="./online-appearance.js?v=1"></script>
+<script src="./online.js?v=3.0.random1"></script>
+<script src="./random-match.js?v=1.0"></script>
+<script src="./game.js?v=2.0.daily1"></script>
 
 <script>
 if ("serviceWorker" in navigator) {

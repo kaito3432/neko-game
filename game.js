@@ -19,7 +19,6 @@
   }
 
   function showMoveSkinEffect(type,index,dogIndex=0){
-    if(Skins.isOnlineMode(playMode)) return;
     const category=type==="box" ? "catSkin" : "dogSkin";
     const src=Skins.effectSource(playerAppearance(),category,"move",{playMode});
     const target=type==="box"
@@ -29,7 +28,6 @@
   }
 
   function showFoundFootprintSkinEffects(boxIndex){
-    if(Skins.isOnlineMode(playMode)) return;
     const target=board.querySelector(`.box[data-box-index="${boxIndex}"]`);
     const data=playerAppearance();
     ["catSkin","dogSkin"].forEach(category=>{
@@ -37,6 +35,18 @@
       Skins.showEffectAtElement(target,src,category==="catSkin" ? "found-cat" : "found-dog");
     });
   }
+  window.addEventListener('nyan-online-visual-event',event=>{
+    if(!Skins.isOnlineMode(playMode)) return;
+    const payload=event.detail || {};
+    if(payload.type==='catMoveDone') {
+      // The police must not learn the hidden cat position from a visual effect.
+      Skins.showEffectAtElement(board,Skins.effectSource(playerAppearance(),'catSkin','move',{playMode}),'cat-move');
+    }
+    if(payload.type==='dogMove' && Number.isInteger(payload.node)) showMoveSkinEffect('node',payload.node,payload.dogIndex);
+    if((payload.type==='trackCount' || payload.type==='searchResult' && payload.result==='track') && Number.isInteger(payload.box)) {
+      showFoundFootprintSkinEffects(payload.box);
+    }
+  });
    // 盤面で頻繁に使う画像を先に読み込んでおく
 [
   "./assets/images/paw.png",
@@ -51,9 +61,24 @@
   img.decode?.().catch(()=>{});
 });
   let game;
+  let dailyBattle=null;
   let toastTimer=null;
   let victoryCutinTimer=null;
   let playMode="local"; // local | cpuPolice | cpuCat
+  let peerSelectedDog=null;
+  window.addEventListener('nyan-online-appearance-changed',()=>{
+    peerSelectedDog=null;
+    document.querySelectorAll('.skin-decorative-effect').forEach(el=>el.remove());
+    if(game && Skins.isOnlineMode(playMode))render();
+  });
+  window.addEventListener('nyan-online-visual-event',event=>{
+    const p=event.detail||{};
+    if(!Skins.isOnlineMode(playMode))return;
+    if(p.type==='policeSelection' && playMode==='onlineCat'){
+      peerSelectedDog=Number.isInteger(p.dogIndex)&&p.dogIndex>=0&&p.dogIndex<3?p.dogIndex:null;
+      render();
+    }
+  });
   let cpuTimer=null;
   let cpuDifficulty="normal"; // easy | normal | hard
   let pendingCpuSide="cat"; // cat => player cat, police => player police
@@ -521,6 +546,8 @@ onlineRuleOverlay?.classList.remove("show");
 
   function initGame(showMode=false){
     game=E.createState();
+    dailyBattle=showMode ? null : window.NyanDailyMissions?.beginBattle(playMode,cpuDifficulty);
+    window.NyanDailyMissions?.hideResult();
 
      // 「もう一度あそぶ」を通常状態へ戻す
 if(againBtn){
@@ -2171,12 +2198,14 @@ if(
 
     if(game.selectedDog===di){
       game.selectedDog=null;
+      if(playMode==='onlinePolice')window.NyanOnline.sendGame({type:'policeSelection',dogIndex:null});
       setMessage("柴犬の選択を解除しました。");
       render();
       return;
     }
 
     game.selectedDog=di;
+    if(playMode==='onlinePolice')window.NyanOnline.sendGame({type:'policeSelection',dogIndex:di});
         setMessage(`${E.DOGS[di].label} ${E.DOGS[di].name} を選択。緑の交差点＝移動、青い箱＝探索です。`);
     render();
   }
@@ -2213,6 +2242,7 @@ if(playMode==="onlinePolice"){
 
     render();
 
+    Skins.showBoardEffect(board,bi,"box",Skins.effectSource(playerAppearance(),"dogSkin","found",{playMode}),"dog-search");
     A.animateSniff(board,game.dogs[di],di,bi,motionStatus,()=>{
       if(bi===game.catPos){
         Audio.play("capture");
@@ -3332,6 +3362,7 @@ return;
       dogs:"🐕 柴犬捜査",
       waitingEnd:"🐕 捜査完了",
       gameover:"🎉 ゲーム終了"
+      ,onlineWaitingDogSetup:'⏳ 相手が操作中',onlineWaitingCatSetup:'⏳ 相手が操作中',onlineWaitingPolice:'🐕 相手が捜査中',onlineWaitingCatMove:'🐱 相手が移動中'
     };
     phaseDisplay.textContent=phases[game.phase]||"";
 
@@ -3348,7 +3379,15 @@ return;
       lastRenderedPhase=game.phase;
     }
 
-    if(game.actionLocked){
+    if(Skins.isOnlineMode(playMode) && game.phase==='onlineWaitingDogSetup'){
+      guideDisplay.textContent='柴犬警察が初期位置を決めています…';
+    }else if(Skins.isOnlineMode(playMode) && game.phase==='onlineWaitingCatSetup'){
+      guideDisplay.textContent='ネコが潜伏場所を決めています…';
+    }else if(playMode==='onlineCat' && game.phase==='onlineWaitingPolice'){
+      guideDisplay.textContent=peerSelectedDog===null?'柴犬警察が捜査しています…':`${E.DOGS[peerSelectedDog].name}を操作中…`;
+    }else if(playMode==='onlinePolice' && game.phase==='onlineWaitingCatMove'){
+      guideDisplay.textContent='ネコが移動しています…';
+    }else if(game.actionLocked){
       guideDisplay.textContent=game.phase==="dogs"?"🐕 クンクン調査中…":"🐱 逃走中…";
     }else if(game.phase==="dogSetup"){
       guideDisplay.textContent=`0ターン目：中央16交差点に柴犬を配置 ${game.dogSetupCount}/3`;
@@ -3412,6 +3451,7 @@ if(pos!==null){
         <span class="dog-status">${status}</span>`;
       applySkinFallbacks(c);
       if(game.selectedDog===i)c.classList.add("selected");
+      if(playMode==='onlineCat' && game.phase==='onlineWaitingPolice' && peerSelectedDog===i)c.classList.add('selected');
 
 c.disabled=!(
   (
@@ -5590,6 +5630,8 @@ if(resultRouteNote){
     if(!resultOverlay)return;
 
     resultOverlay.classList.add("show");
+    // A future interstitial resumes here. Mission saving already started at endGame.
+    window.NyanDailyMissions?.presentResult(window.NyanOnline?.getSession().matchId || dailyBattle?.battleId);
     resultOverlay.classList.add("resultOverlayCelebration");
     A.confetti(confettiLayer);
     setTimeout(()=>resultOverlay.classList.remove("resultOverlayCelebration"),700);
@@ -5635,6 +5677,8 @@ if(resultRouteNote){
 
   function endGame(winner,reason){
     game.gameOver=true;
+    // Confirmed outcome only; neither cut-in completion nor future ad success is required.
+    window.NyanDailyMissions?.finishBattle(dailyBattle,winner);
   // =====================================
   // ネコ側：特殊スキルの使用場所を
   // 結果画面用データへ保存
@@ -5710,7 +5754,10 @@ if(againBtn){
 
 bindPress(onlineModeBtn,()=>{
   resetOnlineState();
-  onlineOverlay.classList.add("show");
+  window.NyanRandomMatch.show(
+    ()=>onlineOverlay.classList.add("show"),
+    ()=>{ onlineOverlay.classList.add("show"); createOnlineRoomBtn.click(); }
+  );
 });
 
 bindPress(onlineBackBtn,()=>{
@@ -6078,7 +6125,7 @@ bindPress(
   try{
     const room=await window.NyanOnline.createRoom();
 
-     onlineIsHost=true;
+     onlineIsHost=room.player!=="guest";
 
     onlineStatus.innerHTML=
       `合言葉コード<br><strong style="font-size:32px">${room.roomCode}</strong><br>`+
@@ -6096,6 +6143,12 @@ bindPress(
        onRole:(data)=>{
   onlineAssignedRole=data.role;
 onlineStartGameBtn.hidden=false;
+  if(window.NyanOnline.getSession().matchType==='randomMatch') {
+    if(onlineRule || onlineGameStarted)return;
+    if(onlineIsHost)openOnlineRulePicker();
+    else {onlineStatus.textContent='ホストがルールを設定しています…';onlineStartGameBtn.disabled=true;}
+    return;
+  }
   if(data.role==="cat"){
     onlineStatus.innerHTML=
       `🐱 あなたはネコ！<br>`+
