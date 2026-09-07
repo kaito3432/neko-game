@@ -3,6 +3,9 @@
   'use strict';
   let busy = false, timer = null, entered = false, transitioning = false, launch = null, roomEntry = null;
   const started = new Set();
+  root.addEventListener('nyan-online-ended',event=>{
+    started.delete(event.detail?.matchId);entered=false;transitioning=false;busy=false;clearTimeout(timer);
+  });
   const overlay = document.createElement('div');
   overlay.id = 'matchmakingOverlay'; overlay.className = 'matchmaking-overlay';
   overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true');

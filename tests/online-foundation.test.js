@@ -35,7 +35,7 @@ test('snapshotはコピーで固定しカテゴリ違いと不正IDはdefault',a
   assert.equal(snap.catPlayer.catSkinId,'cat_kaitou');assert.equal(snap.policePlayer.dogSkinId,'dog_detective');
   assert.deepEqual(validateAppearance(a,{catSkinId:'dog_detective',dogSkinId:'unknown'}),{catSkinId:'default',dogSkinId:'default'});
 });
-test('先着2人を1試合に、自己重複・成立後キャンセル・再参加を防止',async()=>{
+test('先着2人を1試合に、自己重複防止と成立後キャンセルから再参加',async()=>{
   const [{initialProfile},{matchmaking}]=await modules;const storage=new Store();
   const a=initialProfile({},'a'),b=initialProfile({},'b');
   assert.equal((await matchmaking(storage,null,a,'join')).status,'waiting');
@@ -43,8 +43,9 @@ test('先着2人を1試合に、自己重複・成立後キャンセル・再参
   const second=await matchmaking(storage,null,b,'join');const first=await matchmaking(storage,null,a,'status');
   assert.equal(first.matchId,second.matchId);assert.notEqual(first.role,second.role);
   assert.match(first.matchId,/^rm_/);
-  assert.equal((await matchmaking(storage,null,a,'cancel')).matchId,first.matchId);
-  assert.equal((await matchmaking(storage,null,a,'join')).matchId,first.matchId);
+  const rooms={idFromName:id=>id,get:()=>({fetch:async()=>Response.json({ok:true})})};
+  assert.equal((await matchmaking(storage,rooms,a,'cancel')).status,'cancelled');
+  assert.equal((await matchmaking(storage,rooms,a,'join')).status,'waiting');
 });
 test('キャンセル済み・期限切れ待機はペアから除外',async()=>{
   const [{initialProfile},{matchmaking}]=await modules;const storage=new Store();

@@ -3,19 +3,40 @@ import { profileRequest, appearanceSnapshot } from './online-profile.mjs';
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
 import { acceptRandomAction } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
+import {disconnected,reconnected,deadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
 
 export class OnlinePlayers extends DurableObject {
   async fetch(request) {
     return this.ctx.blockConcurrencyWhile(async () => {
       try {
         const path = new URL(request.url).pathname;
+        if(path==='/internal/active'){
+          const {playerId,roomCode}=await request.json();
+          await this.ctx.storage.put(`active:${playerId}`,{roomCode});return Response.json({ok:true});
+        }
+        if(path==='/active'){
+          const auth=await profileRequest(this.ctx.storage,new Request('https://players/profile',{headers:request.headers}));
+          if(!auth.ok)return auth;
+          const {profile}=await auth.json();
+          return Response.json(await this.ctx.storage.get(`active:${profile.playerId}`)||{});
+        }
         if (path === '/internal/match-state') {
           const input = await request.json();
           const match = await this.ctx.storage.get(`match:${input.matchId}`);
-          if (match && !['finished','cancelled'].includes(match.status)) {
+          if (match && !['finished','cancelled','invalid'].includes(match.status)) {
             match.status = input.status;
             if (input.status === 'finished') match.result = input.result;
             await this.ctx.storage.put(`match:${input.matchId}`, match);
+          }
+          if(input.result?.finishReason==='disconnectForfeit' && input.loserId){
+            const marker=`forfeit:${input.matchId}`;
+            if(!await this.ctx.storage.get(marker)){
+              const key=`disconnectStats:${input.loserId}`;
+              const stats=await this.ctx.storage.get(key)||{totalDisconnectForfeits:0,recentDisconnects:[]};
+              stats.totalDisconnectForfeits++;stats.recentDisconnects.push({matchId:input.matchId,at:input.result.completedAt});
+              stats.recentDisconnects=stats.recentDisconnects.slice(-100);
+              await this.ctx.storage.put({[key]:stats,[marker]:true});
+            }
           }
           return Response.json({ok: true});
         }
@@ -70,17 +91,44 @@ export class GameRoom extends DurableObject {
     super(ctx, env);
     this.ctx = ctx;
     this.env = env;
+    this.pending=Promise.resolve();
   }
 
-  async fetch(request) {
+  serialize(fn){const task=this.pending.then(fn);this.pending=task.catch(()=>{});return task;}
+  fetch(request){return this.serialize(()=>this.handleRequest(request));}
+  async handleRequest(request) {
     const url = new URL(request.url);
+    if(url.pathname==='/internal/server-failure'){
+      const room=await this.ctx.storage.get('room');
+      if(room)await this.completeLifecycle(room,serverInvalid(room,Date.now()));
+      return json({error:'server_unavailable'},503);
+    }
+    if(url.pathname==='/internal/cancel'){
+      const room=await this.ctx.storage.get('room');
+      if(!room)return json({ok:true});
+      if(room.started)return json({error:'already_playing'},409);
+      room.status='cancelled';await this.ctx.storage.put('room',room);
+      for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'matchCancelled',matchId:room.matchId}));}catch(_){}
+      return json({ok:true});
+    }
+    if(url.pathname==='/internal/resume'){
+      const room=await this.ctx.storage.get('room');
+      const {playerId}=await request.json();
+      const seat=['host','guest'].find(p=>room?.profiles?.[p]?.playerId===playerId);
+      if(!seat)return json({error:'unauthorized'},401);
+      await this.checkDeadline(room);
+      room.resumeTickets||={};const ticket=crypto.randomUUID();
+      room.resumeTickets[seat]={ticket,expires:Date.now()+20000};
+      await this.ctx.storage.put('room',room);
+      return json({roomCode:room.roomCode,token:room[`${seat}Token`],ticket,...publicRecovery(room,seat)});
+    }
 
     if (url.pathname === '/internal/random-init' && request.method === 'POST') {
       const match = await request.json();
       if (await this.ctx.storage.get('room')) return json({ok: true});
       const profiles = {host: match.host, guest: match.guest};
       await this.ctx.storage.put('room', {
-        createdAt: match.createdAt, hostToken: match.hostToken, guestToken: match.guestToken,
+        roomCode:match.matchId,createdAt: match.createdAt, hostToken: match.hostToken, guestToken: match.guestToken,
         roles: match.roles, profiles, matchId: match.matchId, matchType: 'randomMatch', status: 'matched', requiresRuleSelection:true,
         appearanceSnapshot: appearanceSnapshot(profiles[match.roles.host === 'cat' ? 'host' : 'guest'], profiles[match.roles.host === 'police' ? 'host' : 'guest']),
         secretCat: {pos: null, history: [], turn: 0, noTrackBoxes: [], fakeTracks: []}, publicFoundTracks: []
@@ -106,6 +154,7 @@ await this.ctx.storage.put("room", {
   roles: null,
   profiles: {host: registration.profile || null, guest: null},
   matchType: 'roomMatch',
+  roomCode:registration.roomCode,matchId:`room_${crypto.randomUUID()}`,status:'waiting',
 
 secretCat: {
   pos: null,
@@ -183,6 +232,17 @@ secretCat: {
       if (!player) {
         return new Response("Unauthorized", { status: 401 });
       }
+      await this.checkDeadline(room);
+      if(terminal(room))return json({error:'match_closed'},409);
+      room.generations||={};
+      if(room.generations[player]){
+        const t=room.resumeTickets?.[player];
+        if(!t||t.ticket!==url.searchParams.get('ticket')||t.expires<Date.now())return json({error:'resume_auth_required'},401);
+      }
+      if(!reconnected(room,player,Date.now()))return json({error:'resume_expired'},409);
+      const generation=crypto.randomUUID();room.generations[player]=generation;
+      room.lastSeen||={};room.lastSeen[player]=Date.now();
+      await this.ctx.storage.put('room',room);
 
       const pair = new WebSocketPair();
       const client = pair[0];
@@ -199,12 +259,15 @@ secretCat: {
         }
       }
 
-      server.serializeAttachment({ player });
+      server.serializeAttachment({ player,generation });
 
       // Hibernation対応WebSocket
       this.ctx.acceptWebSocket(server, [player]);
 
       await this.broadcastPresence();
+      if(url.searchParams.has('ticket'))server.send(JSON.stringify({type:'recovery',...publicRecovery(await this.ctx.storage.get('room'),player)}));
+      await this.notifyConnection();
+      await this.ctx.storage.setAlarm(Date.now()+3000);
 
       return new Response(null, {
         status: 101,
@@ -236,7 +299,7 @@ secretCat: {
     for (const socket of this.ctx.getWebSockets()) {
       const info = socket.deserializeAttachment();
 
-      if (info?.player) {
+      if (info?.player && socket.readyState===1) {
         players.add(info.player);
       }
     }
@@ -245,7 +308,7 @@ secretCat: {
   }
 
   async markMatch(room, status, winner) {
-    if (room.matchType !== 'randomMatch' || ['finished','cancelled'].includes(room.status)) return;
+    if (terminal(room)) return;
     room.status = status;
     const result = winner ? {winner, completedAt: Date.now()} : null;
     if (result) room.result = result;
@@ -263,15 +326,45 @@ secretCat: {
 
   async publishMatchState(room) {
     const response=await this.env.ONLINE_PLAYERS.get(this.env.ONLINE_PLAYERS.idFromName('profiles-v1')).fetch(
-      new Request('https://players/internal/match-state', {method:'POST',body:JSON.stringify({matchId:room.matchId,status:room.status,result:room.result || null})})
+      new Request('https://players/internal/match-state', {method:'POST',body:JSON.stringify({matchId:room.matchId,status:room.status,result:room.result || null,loserId:room.profiles?.[room.result?.loser]?.playerId})})
     );
     if(!response.ok) throw new Error('match_state_pending');
-    await this.ctx.storage.deleteAlarm();
+    if(terminal(room))await this.ctx.storage.deleteAlarm();
   }
 
-  async alarm() {
+  alarm(){return this.serialize(()=>this.handleAlarm());}
+  async handleAlarm() {
     const room=await this.ctx.storage.get('room');
-    if(room?.matchType==='randomMatch') await this.publishMatchState(room);
+    if(!room)return;
+    if(terminal(room)){await this.publishMatchState(room);return;}
+    // Conservative outage handling: a long missing server alarm must not become
+    // a player's forfeit. This is not perfect attribution of network failures.
+    if(room.lastAlarmAt && Date.now()-room.lastAlarmAt>10000 && room.roles){
+      await this.completeLifecycle(room,serverInvalid(room,Date.now()));return;
+    }
+    room.lastAlarmAt=Date.now();
+    for(const seat of ['host','guest'])if(room.generations?.[seat]&&Date.now()-(room.lastSeen?.[seat]||0)>9000)disconnected(room,seat,Date.now());
+    await this.checkDeadline(room);
+    await this.ctx.storage.put('room',room);
+    await this.notifyConnection();
+    if(!terminal(room))await this.ctx.storage.setAlarm(Date.now()+1000);
+  }
+
+  async checkDeadline(room){
+    const result=deadlineResult(room,Date.now());if(!result)return;
+    await this.completeLifecycle(room,result);
+  }
+  async completeLifecycle(room,result){
+    if(!result)return;
+    room.status=result.status;room.result=result;
+    await this.ctx.storage.put('room',room);
+    await this.ctx.storage.setAlarm(Date.now()+5000);
+    try{await this.publishMatchState(room);}catch(_){}
+    for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'matchFinished',matchId:room.matchId,...result}));}catch(_){}
+  }
+  async notifyConnection(){
+    const room=await this.ctx.storage.get('room');
+    for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'connectionState',matchId:room.matchId,disconnects:room.disconnects||{},serverTime:Date.now(),status:room.status}));}catch(_){}
   }
 
 async broadcastPresence() {
@@ -379,7 +472,14 @@ async broadcastPresence() {
   return null;
 }
 
- async webSocketMessage(ws, message) {
+ webSocketMessage(ws,message){return this.serialize(async()=>{
+   try{return await this.handleMessage(ws,message);}catch(error){
+     // Unexpected server processing failure: fail neutral, never award a forfeit.
+     const room=await this.ctx.storage.get('room');
+     if(room)await this.completeLifecycle(room,serverInvalid(room,Date.now()));
+   }
+ });}
+ async handleMessage(ws, message) {
   let data;
 
   try {
@@ -391,9 +491,14 @@ async broadcastPresence() {
   const sender = ws.deserializeAttachment()?.player;
 
   if (!sender) return;
+  const current=await this.ctx.storage.get('room');
+  if(current?.generations?.[sender]!==ws.deserializeAttachment()?.generation)return;
 
   // 接続確認
   if (data.type === "ping") {
+    if(current.disconnects?.[sender]){try{ws.close(4001,'Resume required');}catch(_){}return;}
+    current.lastSeen||={};current.lastSeen[sender]=Date.now();
+    await this.ctx.storage.put('room',current);
     ws.send(
       JSON.stringify({
         type: "pong",
@@ -417,15 +522,23 @@ async broadcastPresence() {
   }
 
   const senderRole = room.roles[sender];
-  if (room.matchType === 'randomMatch' && ['finished','cancelled'].includes(room.status)) return;
+  if (terminal(room)||Object.keys(room.disconnects||{}).length) return;
+  if(payload.type==='setupProgress'){
+    const dogs=payload.dogs;
+    if(senderRole!=='police'||room.started||!Array.isArray(dogs)||dogs.length!==3)return;
+    const chosen=dogs.filter(n=>n!==null);
+    if(new Set(chosen).size!==chosen.length||!chosen.every(n=>Number.isInteger(n)&&n>=7&&n<=28&&n%6>=1&&n%6<=4))return;
+    room.partialDogs=dogs;await this.ctx.storage.put('room',room);return;
+  }
   const control=sessionEvent(room,sender,payload);
   if(control!==null){
     if(control===false)return;
+    if(control.type==='policeSelection')room.selectedDog=control.dogIndex;
     await this.ctx.storage.put('room',room);
     for(const other of this.ctx.getWebSockets())if(other!==ws){try{other.send(JSON.stringify({type:'game',from:sender,payload:control}));}catch(_){}}
     return;
   }
-  if (room.matchType === 'randomMatch') {
+  if (room.matchType === 'randomMatch' || room.profiles?.host && room.profiles?.guest) {
     if(room.requiresRuleSelection && (!room.ready?.host||!room.ready?.guest))return;
     if (!acceptRandomAction(room, senderRole, payload)) return;
     await this.ctx.storage.put('room', room);
@@ -434,6 +547,7 @@ async broadcastPresence() {
   if(['catSetup','catMove'].includes(payload.type)&&senderRole==='cat')room.publicPhase='dogs';
   if(payload.type==='dogTurnEnd'&&senderRole==='police')room.publicPhase='cat';
   if(['dogMove','search','doubleSearch','howl','dogTurnEnd'].includes(payload.type)&&senderRole==='police'){
+    room.selectedDog=null;
     const peer=this.playerForRole(room,'cat');
     if(peer)this.sendToRole(peer,{type:'game',from:'server',payload:{type:'policeSelection',dogIndex:null}});
   }
@@ -812,6 +926,7 @@ if (payload.type === "doubleSearch") {
 
       if (!room.publicFoundTracks.includes(box)) {
         room.publicFoundTracks.push(box);
+        room.revealedTracks||=[];room.revealedTracks.push([box,trackTurn]);
       }
     }
   }
@@ -991,6 +1106,7 @@ if (result === "track") {
 
   if (!room.publicFoundTracks.includes(box)) {
     room.publicFoundTracks.push(box);
+    room.revealedTracks||=[];room.revealedTracks.push([box,trackTurn]);
     await this.ctx.storage.put("room", room);
   }
 
@@ -1222,30 +1338,18 @@ payload: {
   }
 }
 
-async webSocketClose(ws) {
+webSocketClose(ws){return this.serialize(()=>this.handleClose(ws));}
+async handleClose(ws) {
   const disconnectedPlayer =
     ws.deserializeAttachment()?.player;
   const replacement=this.ctx.getWebSockets().some(socket=>socket!==ws && socket.deserializeAttachment()?.player===disconnectedPlayer && socket.readyState===1);
   if(!replacement){
     const room=await this.ctx.storage.get('room');
-    // Existing room disconnection is terminal UI-wise. Release a random-match
-    // reservation without awarding a win, daily progress, or a penalty.
-    if(room?.matchType==='randomMatch') await this.markMatch(room,'cancelled');
-  }
-
-  // 残っている相手へ切断を通知
-  if(disconnectedPlayer){
-    const outgoing = JSON.stringify({
-      type: "peerDisconnected",
-      player: disconnectedPlayer,
-    });
-
-    for(const socket of this.ctx.getWebSockets()){
-      if(socket === ws) continue;
-
-      try{
-        socket.send(outgoing);
-      }catch(_){}
+    if(room && room.generations?.[disconnectedPlayer]===ws.deserializeAttachment()?.generation){
+      disconnected(room,disconnectedPlayer,Date.now());
+      await this.ctx.storage.put('room',room);
+      if(!terminal(room))await this.ctx.storage.setAlarm(Date.now()+1000);
+      await this.notifyConnection();
     }
   }
 
@@ -1260,7 +1364,7 @@ async webSocketClose(ws) {
       ws.close(1011, "WebSocket error");
     } catch (_) {}
 
-    await this.broadcastPresence();
+    await this.webSocketClose(ws);
   }
 }
 
@@ -1276,7 +1380,7 @@ export default {
     }
 
     const players = () => env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
-    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock)$/);
+    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active)$/);
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));
@@ -1292,9 +1396,11 @@ export default {
       // Legacy room clients may join with default cosmetics. A presented invalid
       // credential fails closed instead of silently importing client ownership.
       if (!request.headers.has('Authorization')) return null;
-      const response = await players().fetch(new Request('https://players/profile', {
+      let response;
+      try{response = await players().fetch(new Request('https://players/profile', {
         headers: {Authorization: request.headers.get('Authorization')}
-      }));
+      }));}catch(_){throw new Error('service_unavailable');}
+      if(response.status>=500)throw new Error('service_unavailable');
       if (!response.ok) throw new Error('unauthorized');
       return (await response.json()).profile;
     }
@@ -1322,12 +1428,13 @@ export default {
         const response = await stub.fetch(
           new Request("https://room/internal/init", {
             method: "POST",
-            body: JSON.stringify({profile}),
+            body: JSON.stringify({profile,roomCode}),
           })
         );
 
         if (response.ok) {
           const result = await response.json();
+          if(profile)await players().fetch(new Request('https://players/internal/active',{method:'POST',body:JSON.stringify({playerId:profile.playerId,roomCode})}));
 
           return json({
             ok: true,
@@ -1348,7 +1455,7 @@ export default {
     }
 
     const match = url.pathname.match(
-      /^\/api\/rooms\/([0-9]{6}|rm_[a-f0-9-]{36})\/(join|status|ws)$/
+      /^\/api\/rooms\/([0-9]{6}|rm_[a-f0-9-]{36})\/(join|status|ws|resume)$/
     );
 
     if (match) {
@@ -1357,6 +1464,18 @@ export default {
 
       const id = env.GAME_ROOMS.idFromName(roomCode);
       const stub = env.GAME_ROOMS.get(id);
+      if(action==='resume' && request.method==='POST'){
+        let profile;try{profile=await authenticatedProfile();}catch(error){
+          if(error.message==='service_unavailable'){
+            await stub.fetch(new Request('https://room/internal/server-failure',{method:'POST'}));
+            return json({error:'server_unavailable'},503);
+          }
+          return json({error:'unauthorized'},401);
+        }
+        if(!profile)return json({error:'unauthorized'},401);
+        const response=await stub.fetch(new Request('https://room/internal/resume',{method:'POST',body:JSON.stringify({playerId:profile.playerId})}));
+        return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
+      }
 
       if (action === "join" && request.method === "POST") {
         if (roomCode.startsWith('rm_')) return json({error: 'private_match'}, 403);
@@ -1369,6 +1488,8 @@ export default {
             body: JSON.stringify({profile}),
           })
         );
+
+        if(response.ok&&profile)await players().fetch(new Request('https://players/internal/active',{method:'POST',body:JSON.stringify({playerId:profile.playerId,roomCode})}));
 
         return new Response(response.body, {
           status: response.status,
@@ -1392,7 +1513,7 @@ export default {
 
         return stub.fetch(
           new Request(
-            `https://room/internal/ws?token=${encodeURIComponent(token)}`,
+            `https://room/internal/ws?token=${encodeURIComponent(token)}${url.searchParams.has('ticket')?'&ticket='+encodeURIComponent(url.searchParams.get('ticket')):''}`,
             request
           )
         );

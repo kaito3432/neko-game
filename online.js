@@ -21,6 +21,52 @@ window.NyanOnline = (() => {
   let verifiedProfile = null;
   let sessionProfile = null;
   let visualState = null;
+  let callbacks=null,retryTimer=null,heartbeat=null,reconnectUntil=0,ticket='',paused=false,resuming=false,closed=false;
+  let leavePromise=null;
+  const connectionEvent=detail=>window.dispatchEvent(new CustomEvent('nyan-online-connection',{detail}));
+  async function resumeRequest(code=roomCode){
+    if(!credentialHeaders)await identity();
+    return readJson(await fetch(api(`/api/rooms/${code}/resume`),{method:'POST',headers:credentialHeaders}));
+  }
+  function finishNotification(data){
+    closed=true;paused=true;clearTimeout(retryTimer);clearInterval(heartbeat);
+    connectionEvent({status:'ended'});
+    try{localStorage.setItem('nyanOnlineLastResultV1',data.matchId);}catch(_){}
+    if(data.finishReason==='disconnectForfeit'&&matchType==='randomMatch')window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,won:data.winner===role,completed:true,completedAt:data.completedAt});
+    window.dispatchEvent(new CustomEvent('nyan-online-ended',{detail:data}));
+  }
+  async function retryConnection(){
+    if(closed)return;
+    try{
+      const result=await resumeRequest();
+      if(['finished','invalid','cancelled'].includes(result.status)){finishNotification({...result.result,matchId:result.matchId,status:result.status});return;}
+      if(Date.now()>reconnectUntil){connectionEvent({status:'checking'});return;}
+      ticket=result.ticket;sessionProfile=result.profile;resuming=true;
+      connect(callbacks);
+    }catch(_){if(Date.now()<reconnectUntil)retryTimer=setTimeout(retryConnection,1500);else connectionEvent({status:'checking'});}
+  }
+  function lostConnection(){
+    if(closed)return;
+    paused=true;resuming=true;clearInterval(heartbeat);
+    if(!reconnectUntil)reconnectUntil=Date.now()+15000;
+    connectionEvent({status:'reconnecting'});
+    clearTimeout(retryTimer);retryTimer=setTimeout(retryConnection,700);
+  }
+  async function activeMatch(){
+    await identity();
+    const active=await readJson(await fetch(api('/api/online/active'),{headers:credentialHeaders}));
+    if(!active.roomCode)return null;
+    const value=await resumeRequest(active.roomCode);
+    if(value.status==='cancelled')return null;
+    if(['finished','invalid'].includes(value.status)){
+      if(value.status==='finished'&&value.result?.finishReason!=='disconnectForfeit')return null;
+      try{if(localStorage.getItem('nyanOnlineLastResultV1')===value.matchId)return null;}catch(_){}
+      role=value.role;matchId=value.matchId;matchType=value.matchType;sessionProfile=value.profile;
+      if(value.result?.finishReason==='disconnectForfeit'||value.status==='invalid')finishNotification({...value.result,status:value.status,matchId:value.matchId});
+      return {...value,handled:true};
+    }
+    return value;
+  }
   function clearMatchVisuals(){
     appearanceSnapshot=null;visualState=null;role=null;matchId=null;matchType='roomMatch';
     window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
@@ -54,6 +100,7 @@ window.NyanOnline = (() => {
     return identity;
   }
   async function matchmaking(action, body = {}) {
+    if(action==='join'&&leavePromise){await leavePromise;leavePromise=null;}
     if (!credentialHeaders && (await identity()).legacy) throw new Error('online_server_update_required');
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),15000);
@@ -97,9 +144,10 @@ window.NyanOnline = (() => {
     disconnect();clearMatchVisuals();
     if (reserved) {
       const value = reserved; reserved = null;
-      sessionProfile=JSON.parse(JSON.stringify(verifiedProfile));
+      sessionProfile=JSON.parse(JSON.stringify(value.profile||verifiedProfile));
       roomCode = value.roomCode; token = value.token; player = value.player;
-      matchType = 'randomMatch'; matchId = value.matchId;
+      matchType = value.matchType||'randomMatch'; matchId = value.matchId;
+      ticket=value.ticket||'';resuming=Boolean(ticket);
       return value;
     }
     const identityData = await identity();
@@ -180,6 +228,7 @@ window.NyanOnline = (() => {
       url.protocol === "https:" ? "wss:" : "ws:";
 
     url.searchParams.set("token", authToken);
+    if(ticket)url.searchParams.set('ticket',ticket);
 
     return url.toString();
   }
@@ -193,7 +242,9 @@ function connect({
   onError,
   onPeerDisconnected
 } = {}) {
-    disconnect();
+    if(socket){const old=socket;socket=null;try{old.close();}catch(_){}}
+    clearInterval(heartbeat);closed=false;
+    callbacks={onOpen,onPresence,onRole,onGame,onClose,onError,onPeerDisconnected};
 
     if (!roomCode || !token) {
       throw new Error("room_not_ready");
@@ -207,6 +258,7 @@ function connect({
     socket.addEventListener("open", () => {
       if(socket!==connectedSocket)return;
       if (onOpen) onOpen();
+      heartbeat=setInterval(()=>{if(socket===connectedSocket&&socket.readyState===1)socket.send(JSON.stringify({type:'ping'}));},2500);
 
       try {
         socket.send(
@@ -226,6 +278,19 @@ socket.addEventListener("message", event => {
   } catch (_) {
     return;
   }
+  if(data.type==='connectionState'){
+    paused=Object.keys(data.disconnects||{}).length>0;
+    connectionEvent({...data,status:paused?'waiting':'connected'});
+    if(!paused){reconnectUntil=0;resuming=false;}
+  }
+  if(data.type==='recovery'){
+    sessionProfile=data.profile;role=data.role;matchId=data.matchId;matchType=data.matchType;
+    visualState=window.NyanOnlineAppearance.accept({...data,type:'role'},{myPlayerId:sessionProfile.playerId,profile:sessionProfile,player,roomCode});
+    appearanceSnapshot=visualState?.snapshot||null;
+    window.dispatchEvent(new CustomEvent('nyan-online-recovery',{detail:data}));
+    return;
+  }
+  if(data.type==='matchCancelled'){finishNotification({status:'cancelled',matchId:data.matchId});return;}
   if (data.type === 'role') {
     role = data.role;
     if(!visualState){
@@ -238,9 +303,10 @@ socket.addEventListener("message", event => {
   }
   if (data.type === 'matchFinished' && matchType === 'randomMatch' && data.matchId === matchId) {
     // Server result is durable before UI/ad presentation. Retryable local journal uses this ID.
-    window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,
+    if(data.status!=='invalid')window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,
       won:data.winner===role,completed:true,completedAt:data.completedAt});
   }
+  if(data.type==='matchFinished' && ['disconnectForfeit','serverInvalid'].includes(data.finishReason)){finishNotification(data);return;}
   if (data.type === 'game') window.dispatchEvent(new CustomEvent('nyan-online-visual-event', {detail: data.payload}));
 
   if (
@@ -252,7 +318,7 @@ socket.addEventListener("message", event => {
 
   if (
     data.type === "role" &&
-    onRole
+    onRole && !resuming
   ) {
     onRole(data);
   }
@@ -274,7 +340,7 @@ socket.addEventListener("message", event => {
 
     socket.addEventListener("close", event => {
       if(socket!==connectedSocket)return;
-      if (onClose) onClose(event);
+      lostConnection();
     });
 
     socket.addEventListener("error", event => {
@@ -286,6 +352,7 @@ socket.addEventListener("message", event => {
   }
 
   function sendGame(payload) {
+    if(paused||closed)return false;
     if (
       !socket ||
       socket.readyState !== WebSocket.OPEN
@@ -304,6 +371,7 @@ socket.addEventListener("message", event => {
   }
 
   function disconnect() {
+    clearTimeout(retryTimer);clearInterval(heartbeat);closed=true;reconnectUntil=0;paused=false;resuming=false;ticket='';
     if (!socket) return;
 
     try {
@@ -314,6 +382,7 @@ socket.addEventListener("message", event => {
   }
 
   function reset() {
+    if(matchType==='randomMatch'&&matchId&&!closed)leavePromise=matchmaking('cancel').catch(()=>{});
     disconnect();
 
     roomCode = "";
@@ -352,6 +421,8 @@ socket.addEventListener("message", event => {
     disconnect,
     reset,
     getSession
+    ,activeMatch
+    ,isPaused:()=>paused
     ,prepareIdentity: async()=>{const value=await identity();if(value.legacy)throw new Error('online_server_update_required');return value;}
     ,matchmaking
     ,useReservation

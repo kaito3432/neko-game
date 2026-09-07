@@ -38,10 +38,7 @@
   window.addEventListener('nyan-online-visual-event',event=>{
     if(!Skins.isOnlineMode(playMode)) return;
     const payload=event.detail || {};
-    if(payload.type==='catMoveDone') {
-      // The police must not learn the hidden cat position from a visual effect.
-      Skins.showEffectAtElement(board,Skins.effectSource(playerAppearance(),'catSkin','move',{playMode}),'cat-move');
-    }
+    // Cat movement is private: the police only see skin effects on found tracks.
     if(payload.type==='dogMove' && Number.isInteger(payload.node)) showMoveSkinEffect('node',payload.node,payload.dogIndex);
     if((payload.type==='trackCount' || payload.type==='searchResult' && payload.result==='track') && Number.isInteger(payload.box)) {
       showFoundFootprintSkinEffects(payload.box);
@@ -453,6 +450,70 @@ const backToTitleBtn=$("backToTitleBtn");
   let lastRenderedPhase=null;
   let lastTurnStingerPlayed=false;
   const motionStatus=$("motionStatus"),confettiLayer=$("confettiLayer");
+  const reconnectOverlay=document.createElement('div');
+  reconnectOverlay.className='online-reconnect-overlay';reconnectOverlay.hidden=true;
+  reconnectOverlay.setAttribute('role','dialog');reconnectOverlay.setAttribute('aria-modal','true');
+  reconnectOverlay.innerHTML='<section><h2>通信を確認しています</h2><p role="status"></p></section>';
+  document.body.append(reconnectOverlay);
+  let connectionCountdown=null;
+  document.addEventListener('click',event=>{
+    if(window.NyanOnline?.isPaused()&&!reconnectOverlay.hidden){event.preventDefault();event.stopImmediatePropagation();}
+  },true);
+  window.addEventListener('nyan-online-connection',({detail:d})=>{
+    clearInterval(connectionCountdown);
+    reconnectOverlay.hidden=['connected','ended'].includes(d.status);
+    if(reconnectOverlay.hidden)return;
+    const message=reconnectOverlay.querySelector('p');
+    const deadline=Math.max(...Object.values(d.disconnects||{}).map(v=>v.deadline));
+    const received=Date.now();
+    const update=()=>{message.textContent=d.status==='waiting'
+      ?`相手との通信が切れました。復帰を待っています… 残り${Math.max(0,Math.ceil((deadline-(d.serverTime+Date.now()-received))/1000))}秒`
+      :d.status==='checking'?'サーバー確定結果を確認できません。通信が戻ってからオンライン画面を開き直してください。':'通信が切れました。対戦に再接続しています…';};
+    update();connectionCountdown=setInterval(update,250);
+  });
+  window.addEventListener('nyan-online-recovery',({detail:d})=>{
+    onlineAssignedRole=d.role;onlineIsHost=d.player==='host';onlinePeerDisconnected=false;
+    onlineRule=d.rule;onlineSelfReady=Boolean(d.ready[d.player]);onlinePeerReady=Boolean(d.ready[d.player==='host'?'guest':'host']);
+    if(!onlineSelfReady||!onlinePeerReady){
+      onlineOverlay.classList.add('show');
+      if(!d.rule){if(onlineIsHost)openOnlineRulePicker();else onlineStatus.textContent='ホストがルールを設定しています…';}
+      else if(d.rule==='normal')startOnlineReadyFlow();
+      else {
+        onlineSelfAbility=d.ownAbility;onlinePeerAbility=d.abilities[d.role==='cat'?'police':'cat']||null;
+        onlinePeerAbilityReady=Boolean(d.abilityReady[d.role==='cat'?'police':'cat']);onlineAbilityRevealSent=Boolean(d.abilities[d.role]);
+        if(onlineSelfAbility){if(onlinePeerAbility)tryShowOnlineAbilityReveal();else if(onlinePeerAbilityReady)sendOnlineAbilityReveal();else onlineStatus.textContent='相手のスキル選択を待っています…';}
+        else beginOnlineAbilitySelection();
+      }
+      return;
+    }
+    onlineGameStarted=true;playMode=d.role==='cat'?'onlineCat':'onlinePolice';
+    game=E.createState();
+    const s=d.state;
+    Object.assign(game,{turn:s.turn,dogs:s.dogs,dogAction:s.dogAction,dogSetupCount:s.dogs.filter(n=>n!==null).length,
+      policeAbilities:s.policeAbilities,catAbilities:s.catAbilities,abilitiesEnabled:d.rule==='ability',selectedAbilities:d.abilities});
+    game.revealedTracks=new Map(s.revealedTracks);onlineFoundTrackCount=game.revealedTracks.size;
+    if(d.role==='cat'){
+      game.catPos=s.catPos;game.catHistory=new Map(s.catHistory);game.noTrackBoxes=new Set(s.noTrackBoxes);game.fakeTracks=new Map(s.fakeTracks);
+      peerSelectedDog=s.selectedDog;
+    }else game.selectedDog=s.selectedDog;
+    game.phase=s.phase==='dogSetup'?(d.role==='police'?'dogSetup':'onlineWaitingDogSetup'):
+      s.phase==='catSetup'?(d.role==='cat'?'catSetup':'onlineWaitingCatSetup'):
+      s.phase==='cat'?(d.role==='cat'?'cat':'onlineWaitingCatMove'):
+      d.role==='cat'?'onlineWaitingPolice':'dogs';
+    [modeOverlay,onlineOverlay,privacyOverlay,onlineRuleOverlay,abilityRevealOverlay,catAbilityOverlay,policeAbilityOverlay].forEach(el=>el?.classList.remove('show'));
+    render();setMessage('対戦に復帰しました');
+  });
+  window.addEventListener('nyan-online-ended',({detail:d})=>{
+    reconnectOverlay.hidden=true;clearInterval(connectionCountdown);
+    if(d.finishReason==='disconnectForfeit'){
+      playMode=window.NyanOnline.getSession().role==='cat'?'onlineCat':'onlinePolice';
+      [modeOverlay,onlineOverlay,onlineRuleOverlay,privacyOverlay,catAbilityOverlay,policeAbilityOverlay].forEach(el=>el?.classList.remove('show'));
+      endGame(d.winner==='cat'?'cat':'dogs','通信切断による終了');
+    }else{
+      onlineStatus.textContent=d.status==='cancelled'?'対戦がキャンセルされました。もう一度相手を探せます。':'通信障害により試合は無効です。勝敗は記録されません。';
+      onlineOverlay.classList.add('show');
+    }
+  });
 
    function tryStartOnlineGame(){
   if(onlineGameStarted)return;
@@ -2038,6 +2099,7 @@ if(
       const di=game.dogSetupCount;
       game.dogs[di]=i;
       game.dogSetupCount++;
+      if(playMode==='onlinePolice')window.NyanOnline.sendGame({type:'setupProgress',dogs:[...game.dogs]});
 
       if(game.dogSetupCount>=3){
         if(playMode==="cpuCat"){
@@ -5752,8 +5814,15 @@ if(againBtn){
     victoryCutinTimer=setTimeout(()=>showVictoryCutin(winner),280);
   }
 
-bindPress(onlineModeBtn,()=>{
+bindPress(onlineModeBtn,async()=>{
   resetOnlineState();
+  try{
+    const active=await window.NyanOnline.activeMatch();
+    if(active?.handled)return;
+    if(active && !['finished','invalid'].includes(active.status)){
+      window.NyanOnline.useReservation(active);onlineOverlay.classList.add('show');createOnlineRoomBtn.click();return;
+    }
+  }catch(_){/* Offline failure must not block the online chooser. */}
   window.NyanRandomMatch.show(
     ()=>onlineOverlay.classList.add("show"),
     ()=>{ onlineOverlay.classList.add("show"); createOnlineRoomBtn.click(); }
@@ -5829,7 +5898,7 @@ bindPress(confirmPoliceAbilityBtn,()=>{
     // 相手には「選択完了」だけ通知
     // スキル内容はまだ秘密
     window.NyanOnline.sendGame({
-      type:"abilityReady"
+      type:"abilityReady",ability:onlineSelfAbility
     });
 
      // 相手が先に選択済みだった場合
@@ -5963,7 +6032,7 @@ bindPress(confirmCatAbilityBtn,()=>{
 
     // 相手には選択完了だけ通知
 window.NyanOnline.sendGame({
-  type:"abilityReady"
+  type:"abilityReady",ability:onlineSelfAbility
 });
 
 // 相手が先に選択済みだった場合
@@ -6127,14 +6196,14 @@ bindPress(
 
      onlineIsHost=room.player!=="guest";
 
-    onlineStatus.innerHTML=
+    onlineStatus.innerHTML=window.NyanOnline.getSession().matchType==='randomMatch'?'対戦相手と接続しています…':
       `合言葉コード<br><strong style="font-size:32px">${room.roomCode}</strong><br>`+
       `相手を待っています…`;
 
     window.NyanOnline.connect({
       onPresence:(data)=>{
         if(data.ready){
-          onlineStatus.innerHTML=
+          onlineStatus.innerHTML=window.NyanOnline.getSession().matchType==='randomMatch'?'🐾 対戦相手と接続しました':
             `合言葉コード<br><strong style="font-size:32px">${room.roomCode}</strong><br>`+
             `🐾 2人そろいました！`;
         }

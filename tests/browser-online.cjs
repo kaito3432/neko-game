@@ -11,7 +11,7 @@ const server=http.createServer(async(req,res)=>{
     let name=decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1)||'index.html';
     if(name.includes('..'))throw Error('invalid');
     let content=await fs.readFile(path.join(root,name));
-    if(name==='online.js')content=Buffer.from(content.toString().replace('https://nyan-chase-online.honda19990602.workers.dev','http://127.0.0.1:8798'));
+    if(name==='online.js')content=Buffer.from(content.toString().replace('https://nyan-chase-online.honda19990602.workers.dev',process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798'));
     if(name==='game.js')content=Buffer.from(content.toString().replace(/initGame\(true\);\s*\}\)\(\);\s*$/,`initGame(true);window.__onlineQA={state:()=>game,mode:()=>playMode,node:handleNodePress,box:handleBoxPress,render};})();`));
     const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.wav':'audio/wav'};
     res.writeHead(200,{'Content-Type':types[path.extname(name)]||'application/octet-stream','Cache-Control':'no-store'});res.end(content);
@@ -25,6 +25,7 @@ const server=http.createServer(async(req,res)=>{
   try{
     const contexts=await Promise.all([0,1].map(async()=>{
       const ctx=await browser.newContext({viewport:{width:320,height:568},serviceWorkers:'block'});
+      await ctx.addInitScript(()=>{const Original=window.WebSocket;window.__qaSockets=[];window.WebSocket=class extends Original{constructor(...args){super(...args);window.__qaSockets.push(this);}};});
       const data=Player.createDefaultData();data.ownedCatSkins.push('cat_kaitou');data.ownedDogSkins.push('dog_detective');data.equippedAppearance.catSkinId='cat_kaitou';data.equippedAppearance.dogSkinId='dog_detective';
       await ctx.addInitScript(({data,keys})=>{if(!localStorage.getItem(keys.playerData)){localStorage.setItem(keys.playerData,JSON.stringify(data));localStorage.setItem(keys.playerId,data.playerId);}}, {data,keys:Player.STORAGE_KEYS});
       return ctx;
@@ -60,6 +61,24 @@ const server=http.createServer(async(req,res)=>{
     await police.evaluate(()=>__onlineQA.node(14));
     await cat.waitForFunction(()=>document.querySelector('#guideDisplay').textContent==='柴犬警察が捜査しています…');
     const snapshots=await Promise.all(pages.map(page=>page.evaluate(()=>NyanOnline.getAppearanceSnapshot())));
+    if(process.env.NYAN_RECONNECT_TEST==='yes'){
+      const originalId=await cat.evaluate(()=>NyanOnline.getSession().matchId);
+      for(const delay of [4500,10000]){
+        await cat.context().setOffline(true);await cat.evaluate(()=>__qaSockets.at(-1).close());
+        await police.locator('.online-reconnect-overlay:not([hidden])').waitFor();
+        await cat.waitForTimeout(delay);await cat.context().setOffline(false);
+        await cat.waitForFunction(()=>!NyanOnline.isPaused()&&NyanOnline.getSession().connected);
+        await cat.waitForTimeout(500);assert.equal(await cat.evaluate(()=>NyanOnline.getSession().matchId),originalId);
+        assert.equal(await cat.evaluate(()=>__onlineQA.state().catPos),12);
+        assert.deepEqual(await cat.evaluate(()=>NyanOnline.getAppearanceSnapshot()),snapshots[0]);
+      }
+      await police.reload();await police.locator('#onlineModeBtn').click();
+      await police.waitForFunction(()=>__onlineQA.mode()==='onlinePolice'&&__onlineQA.state().phase==='dogs');
+      assert.equal(await police.evaluate(()=>__onlineQA.state().catPos),null);
+      for(const p of pages){await p.context().setOffline(true);await p.evaluate(()=>__qaSockets.at(-1).close());}
+      await cat.waitForTimeout(3000);for(const p of pages)await p.context().setOffline(false);
+      for(const p of pages)await p.waitForFunction(()=>!NyanOnline.isPaused()&&NyanOnline.getSession().connected);
+    }
     assert.deepEqual(snapshots[0],snapshots[1]);
     assert.equal(snapshots[0].catPlayer.catSkinId,'cat_kaitou');assert.equal(snapshots[0].policePlayer.dogSkinId,'dog_detective');
     for(const page of pages)assert.equal(await page.locator('#board img[data-skin-id="dog_detective"]').count(),3);
@@ -85,7 +104,7 @@ const server=http.createServer(async(req,res)=>{
     await police.evaluate(()=>{__onlineQA.node(20);__onlineQA.box(12);});
     await police.waitForFunction(()=>!__onlineQA.state().actionLocked);
     for(const page of pages)await page.waitForFunction(()=>__seenEffects.some(src=>src.endsWith(NyanSkinPresentation.effectSource(null,'dogSkin','found',{playMode:'onlineCat'}).replace(/^\.\//,''))));
-    for(const page of pages)assert.ok(await page.evaluate(()=>__seenEffects.some(src=>src.endsWith(NyanSkinPresentation.effectSource(null,'catSkin','move',{playMode:'onlineCat'}).replace(/^\.\//,'')))));
+    for(const page of pages)assert.equal(await page.evaluate(()=>__seenEffects.some(src=>src.endsWith(NyanSkinPresentation.effectSource(null,'catSkin','move',{playMode:'onlineCat'}).replace(/^\.\//,'')))),page===cat);
     await police.evaluate(()=>{__onlineQA.node(22);__onlineQA.box(13);});
     await Promise.all(pages.map(page=>page.waitForFunction(()=>__onlineQA.state().gameOver&&NyanPlayerData.getSnapshot().battleReceipts.some(id=>id.startsWith('rm_')))));
     for(const [i,page] of pages.entries()){
@@ -108,11 +127,16 @@ const server=http.createServer(async(req,res)=>{
     await roomCat.waitForFunction(()=>__onlineQA.state().phase==='catSetup');await dismiss(roomCat);
     await roomCat.evaluate(()=>__onlineQA.box(12));await roomPolice.waitForFunction(()=>__onlineQA.state().phase==='dogs');
     for(const page of pages)assert.equal(await page.locator('#board img[data-skin-id="dog_detective"]').count(),3);
-    await roomPolice.evaluate(()=>{__onlineQA.node(14);__onlineQA.box(12);});
+    if(process.env.NYAN_RECONNECT_TEST==='yes'){
+      await roomCat.context().setOffline(true);await roomCat.evaluate(()=>__qaSockets.at(-1).close());
+      await roomPolice.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:25000});
+      await roomCat.context().setOffline(false);await roomCat.reload();await roomCat.locator('#onlineModeBtn').click();
+      await roomCat.waitForFunction(()=>__onlineQA.state().gameOver);
+    }else await roomPolice.evaluate(()=>{__onlineQA.node(14);__onlineQA.box(12);});
     await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver)));
     assert.deepEqual(await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length))),receipts);
     // Pre-rollout Worker compatibility: no auth endpoint/CORS support.
-    await a.route('http://127.0.0.1:8798/api/online/profile',route=>route.fulfill({status:404,headers:{'access-control-allow-origin':'*'},body:'not found'}));
+    await a.route((process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798')+'/api/online/profile',route=>route.fulfill({status:404,headers:{'access-control-allow-origin':'*'},body:'not found'}));
     await a.reload();await a.locator('#onlineModeBtn').click();await a.locator('#randomMatchStart').click();
     await a.getByText('ランダムマッチはサーバー更新後に利用できます。部屋対戦は引き続き利用できます。').waitFor();
     await a.locator('#roomMatchStart').click();await a.locator('#createOnlineRoomBtn').click();

@@ -8,7 +8,12 @@ export function sessionEvent(room,sender,p){
   if(['abilityReady','abilityRevealRequest','abilityReveal'].includes(p.type)){
     if(room.rule!=='ability'||room.started)return false;
     if(p.type==='abilityRevealRequest')return sender==='host'?{type:p.type}:false;
-    if(p.type==='abilityReady')return {type:p.type};
+    if(p.type==='abilityReady'){
+      const choices=role==='cat'?['sneak','fakePaw']:['howl','dash','doubleSearch'];
+      if(p.ability!==undefined&&!choices.includes(p.ability))return false;
+      room.privateAbilities||={};if(p.ability)room.privateAbilities[role]=p.ability;
+      room.abilityReady||={};room.abilityReady[role]=true;return {type:p.type};
+    }
     const allowed=role==='cat'?['sneak','fakePaw']:['howl','dash','doubleSearch'];
     if(!allowed.includes(p.ability))return false;
     room.abilities||={};if(room.abilities[role]&&room.abilities[role]!==p.ability)return false;

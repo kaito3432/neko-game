@@ -5,7 +5,11 @@ export async function matchmaking(storage, rooms, profile, action, now = Date.no
   const matches = id => `match:${id}`;
   if (current?.matchId) {
     const match = await storage.get(matches(current.matchId));
-    if (match && !['finished','cancelled'].includes(match.status)) {
+    if(match && action==='cancel' && !['finished','cancelled','invalid'].includes(match.status)){
+      const response=await rooms.get(rooms.idFromName(match.matchId)).fetch(new Request('https://room/internal/cancel',{method:'POST'}));
+      if(response.ok){match.status='cancelled';await storage.put({[matches(match.matchId)]:match,[key]:{status:'cancelled'}});return {status:'cancelled'};}
+    }
+    if (match && !['finished','cancelled','invalid'].includes(match.status)) {
       const player = match.host.playerId === profile.playerId ? 'host' : 'guest';
       return {status: match.status, matchId: match.matchId, roomCode: match.matchId,
         player, token: match[`${player}Token`], role: match.roles[player]};
@@ -45,6 +49,7 @@ export async function matchmaking(storage, rooms, profile, action, now = Date.no
     roles: {host: hostIsCat ? 'cat' : 'police', guest: hostIsCat ? 'police' : 'cat'}};
   // Persist reservation before creating the room. Retrying status reuses this match.
   await storage.put({queue, [matches(matchId)]: match,
+    [`active:${peer.profile.playerId}`]:{roomCode:matchId},[`active:${profile.playerId}`]:{roomCode:matchId},
     [`queue:${peer.profile.playerId}`]: {status: 'matched', matchId},
     [key]: {status: 'matched', matchId}});
   return {status: 'matched', matchId, roomCode: matchId, player: 'guest', token: match.guestToken, role: match.roles.guest};

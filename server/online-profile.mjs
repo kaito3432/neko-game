@@ -72,7 +72,7 @@ export async function profileRequest(storage, request) {
   const key = `profile:${await digestToken(token)}`;
   const profile = await storage.get(key);
   if (!profile) return reply({error: 'unauthorized'}, 401);
-  if (path === '/profile' && request.method === 'GET') return reply({profile});
+  if (path === '/profile' && request.method === 'GET') return reply({profile:{...profile,disconnectStats:await storage.get(`disconnectStats:${profile.playerId}`)||{totalDisconnectForfeits:0,recentDisconnects:[]}}});
   if(path==='/cpu-unlock' && request.method==='POST'){
     try{
       const input=await request.json();

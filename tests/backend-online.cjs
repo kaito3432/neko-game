@@ -1,6 +1,6 @@
 /* Defaults to isolated Wrangler. Production requires explicit operator opt-in. */
 const assert=require('node:assert/strict');
-const API=process.env.NYAN_PRODUCTION_SMOKE==='yes'?'https://nyan-chase-online.honda19990602.workers.dev':'http://127.0.0.1:8798';
+const API=process.env.NYAN_PRODUCTION_SMOKE==='yes'?'https://nyan-chase-online.honda19990602.workers.dev':(process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798');
 const sockets=[];
 async function checkDaily(actor,receipt){
   const Player=require('../player-data.js');const data=new Map();
@@ -48,7 +48,6 @@ async function connect(session){
     assert.equal(ar.appearanceSnapshot.catPlayer.catSkinId,'cat_kaitou');
     assert.equal(ar.appearanceSnapshot.policePlayer.dogSkinId,'dog_detective');
     await a.call('/api/online/appearance',{equippedAppearance:{catSkinId:'default',dogSkinId:'default'}});
-    assert.equal((await a.call('/api/matchmaking/cancel')).matchId,as.matchId);
     const cat=as.role==='cat'?ac:bc,police=as.role==='police'?ac:bc;
     police.send({type:'dogSetup',dogs:[14,15,21]});await cat.wait(m=>m.payload?.type==='dogSetup');
     cat.send({type:'catSetup',catPos:12});await cat.wait(m=>m.payload?.type==='catSetupAccepted');
