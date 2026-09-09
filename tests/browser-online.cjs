@@ -105,6 +105,10 @@ const server=http.createServer(async(req,res)=>{
     assert.notEqual(roles[0],roles[1]);const cat=roles[0]==='cat'?a:b,police=roles[0]==='police'?a:b;
     async function dismiss(page){await page.waitForTimeout(450);if(await page.locator('#privacyOverlay.show').count())await page.locator('#privacyBtn').click();}
     for(const page of pages)await dismiss(page);
+    if(process.env.NYAN_ACTOR_TEST==='yes'){
+      await require('./browser-actor-disconnect.cjs')({cat,police,dismiss});
+      assert.deepEqual(errors,[]);console.log('PASS Chrome actor disconnect: setup, cat action, repeated waiting disconnect, selection/actions unchanged, handoff pause, own timer pause, recovery privacy, forfeit');return;
+    }
     await police.evaluate(()=>{__onlineQA.node(14);__onlineQA.node(15);__onlineQA.node(21);});
     await cat.waitForFunction(()=>__onlineQA.state().phase==='catSetup');
     await dismiss(cat);
@@ -120,7 +124,7 @@ const server=http.createServer(async(req,res)=>{
       const originalId=await cat.evaluate(()=>NyanOnline.getSession().matchId);
       for(const delay of [4500,10000]){
         await cat.context().setOffline(true);await cat.evaluate(()=>__qaSockets.at(-1).close());
-        await police.locator('.online-reconnect-overlay:not([hidden])').waitFor();
+        await police.locator('.online-peer-reconnect-notice:not([hidden])').waitFor();
         await cat.waitForTimeout(delay);await cat.context().setOffline(false);
         await cat.waitForFunction(()=>!NyanOnline.isPaused()&&NyanOnline.getSession().connected);
         await cat.waitForTimeout(500);assert.equal(await cat.evaluate(()=>NyanOnline.getSession().matchId),originalId);

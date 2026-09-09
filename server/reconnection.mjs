@@ -1,5 +1,6 @@
 // Pure server-clock lifecycle. No client-supplied deadline is accepted.
 import {hasStarted} from './match-lifecycle.mjs';
+import {actorState,syncTurnClock} from './turn-clock.mjs';
 export const GRACE_MS=15000;
 export const terminal=room=>['finished','invalid','cancelled'].includes(room.status);
 export function serverInvalid(room,now){
@@ -9,7 +10,8 @@ export function serverInvalid(room,now){
 export function disconnected(room,seat,now){
   if(terminal(room))return;
   room.disconnects||={};
-  room.disconnects[seat]??={at:now,deadline:now+GRACE_MS};
+  room.disconnects[seat]??={playerId:room.profiles?.[seat]?.playerId||null,at:now,deadline:now+GRACE_MS};
+  syncTurnClock(room,now);
   room.status='reconnecting';
 }
 export function deadlineResult(room,now){
@@ -29,6 +31,7 @@ export function deadlineResult(room,now){
 export function reconnected(room,seat,now){
   if(terminal(room)||room.disconnects?.[seat]&&now>=room.disconnects[seat].deadline)return false;
   if(room.disconnects)delete room.disconnects[seat];
+  syncTurnClock(room,now);
   room.status=Object.keys(room.disconnects||{}).length?'reconnecting':hasStarted(room)?'playing':'matched';
   return true;
 }
@@ -51,6 +54,6 @@ export function publicRecovery(room,seat){
     participants:{host:room.profiles?.host?.playerId,guest:room.profiles?.guest?.playerId},
     profile:room.profiles?.[seat],rule:room.rule||null,abilities:room.abilities||{},ready:room.ready||{},
     ownAbility:room.privateAbilities?.[role]||null,abilityReady:room.abilityReady||{},
-    status:room.status,hasStarted:hasStarted(room),matchStartedAt:room.matchStartedAt||null,
+    status:room.status,hasStarted:hasStarted(room),...actorState(room),matchStartedAt:room.matchStartedAt||null,
     result:room.result||null,disconnects:room.disconnects||{},turnClock:hasStarted(room)?room.turnClock:null,serverTime:Date.now(),state};
 }

@@ -465,15 +465,18 @@ const backToTitleBtn=$("backToTitleBtn");
     const start=performance.now(),session=window.NyanOnline.getSession();turnClockView.hidden=false;
     const update=()=>{turnClockView.textContent=entries.map(([seat,deadline])=>{
       const name=seat===session.player?'あなた':d.turnClock.phase==='rule'?'ホスト':'相手';
-      return `${name}の操作：残り ${Math.max(0,Math.ceil((deadline-d.serverTime-(performance.now()-start))/1000))}秒`;
+      const remaining=d.turnClock.pausedRemainingMs??(deadline-d.serverTime-(performance.now()-start));
+      return `${name}の操作：残り ${Math.max(0,Math.ceil(remaining/1000))}秒${d.turnClock.pausedRemainingMs!==undefined?'（復帰待ち）':''}`;
     }).join(' ／ ');};update();clockTimer=setInterval(update,200);
   });
   document.addEventListener('click',event=>{
     if(window.NyanOnline?.isPaused()&&!reconnectOverlay.hidden){event.preventDefault();event.stopImmediatePropagation();}
   },true);
+  const peerReconnectNotice=document.createElement('div');peerReconnectNotice.className='online-peer-reconnect-notice';peerReconnectNotice.hidden=true;peerReconnectNotice.setAttribute('role','status');peerReconnectNotice.textContent='相手が再接続しています…';document.body.append(peerReconnectNotice);
   window.addEventListener('nyan-online-connection',({detail:d})=>{
     clearInterval(connectionCountdown);
-    reconnectOverlay.hidden=['connected','ended'].includes(d.status);
+    peerReconnectNotice.hidden=d.status!=='peer-reconnecting';
+    reconnectOverlay.hidden=['connected','ended','peer-reconnecting'].includes(d.status);
     if(reconnectOverlay.hidden)return;
     const message=reconnectOverlay.querySelector('p');
     const deadline=Math.max(...Object.values(d.disconnects||{}).map(v=>v.deadline));

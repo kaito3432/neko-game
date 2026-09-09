@@ -1,18 +1,30 @@
 import {hasStarted} from './match-lifecycle.mjs';
 export const TURN_MS=60000;
 const ended=r=>['finished','invalid','cancelled'].includes(r.status);
+export function actorState(room){
+  const currentPhase=room.validationState?.phase||room.publicPhase||'dogSetup';
+  const role=['cat','catSetup'].includes(currentPhase)?'cat':'police';
+  const currentActorSeat=hasStarted(room)?Object.keys(room.roles||{}).find(s=>room.roles[s]===role):null;
+  return {currentPhase,currentActorSeat:currentActorSeat||null,
+    currentActorPlayerId:room.profiles?.[currentActorSeat]?.playerId||null,
+    actorDisconnected:Boolean(currentActorSeat&&room.disconnects?.[currentActorSeat])};
+}
 export function syncTurnClock(room,now=Date.now()){
   if(ended(room)||!room.roles)return;
   if(!hasStarted(room)){delete room.turnClock;return;}
   const s=room.validationState;
   const phase=`${s?.phase||room.publicPhase||'dogSetup'}:${s?.turn||0}`;
-  const role=['cat','catSetup'].includes(s?.phase||room.publicPhase)?'cat':'police';
-  const seat=Object.keys(room.roles).find(p=>room.roles[p]===role);
-  if(room.turnClock?.phase===phase)return;
-  room.turnClock={phase,deadlines:{[seat]:now+TURN_MS}};
+  const {currentActorSeat:seat,actorDisconnected}=actorState(room);
+  if(room.turnClock?.phase!==phase)room.turnClock={phase,deadlines:{[seat]:now+TURN_MS}};
+  const clock=room.turnClock;
+  if(actorDisconnected){
+    if(clock.pausedRemainingMs===undefined)clock.pausedRemainingMs=Math.max(0,clock.deadlines[seat]-now);
+  }else if(clock.pausedRemainingMs!==undefined){
+    clock.deadlines[seat]=now+clock.pausedRemainingMs;delete clock.pausedRemainingMs;
+  }
 }
 export function turnTimeout(room,now=Date.now()){
-  if(ended(room)||!hasStarted(room)||Object.keys(room.disconnects||{}).length)return null;
+  if(ended(room)||!hasStarted(room)||actorState(room).actorDisconnected)return null;
   const due=Object.entries(room.turnClock?.deadlines||{}).filter(([seat,t])=>now>=t&&!(room.turnClock.phase==='ready'&&room.ready?.[seat]));
   if(!due.length)return null;
   // Simultaneous lobby timeouts are ambiguous: do not pick an arbitrary winner.

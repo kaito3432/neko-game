@@ -15,6 +15,14 @@ async function transport(){
 const role=(matchId='m1',dog='dog_detective')=>({type:'role',matchId,matchType:'randomMatch',player:'host',role:'police',playerId:'A',participants:{host:'A',guest:'B'},profile:own(dog),
  appearanceSnapshot:{catPlayer:{playerId:'B',catSkinId:'cat_kaitou'},policePlayer:{playerId:'A',dogSkinId:dog}}});
 async function enter(t,id){t.api.useReservation({matchId:id,roomCode:id,token:'ticket',player:'host'});await t.api.createRoom();t.api.connect();}
+test('サーバー操作担当判定で待機側切断はロックせず、操作担当不在で停止',async()=>{
+ const t=await transport();await enter(t,'m1');t.Socket.last.emit(role());
+ const status={type:'connectionState',matchId:'m1',status:'reconnecting',hasStarted:true,disconnects:{guest:{deadline:15000}},actorDisconnected:false};
+ t.Socket.last.emit(status);assert.equal(t.api.isPaused(),false);assert.equal(t.events.at(-1).detail.status,'peer-reconnecting');
+ t.Socket.last.emit({...status,actorDisconnected:true});assert.equal(t.api.isPaused(),true);
+ t.Socket.last.emit({...status,disconnects:{host:{deadline:15000}},actorDisconnected:false});assert.equal(t.api.isPaused(),true);
+ t.api.reset();
+});
 test('古いdefaultキャッシュでも試合のサーバープロフィールで探偵しばと相手猫を表示',async()=>{
  const t=await transport();await enter(t,'m1');t.Socket.last.emit(role());
  assert.equal(t.api.resolveAppearance('dogSkin').id,'dog_detective');assert.equal(t.api.resolveAppearance('catSkin').id,'cat_kaitou');

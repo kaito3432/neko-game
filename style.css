@@ -9107,6 +9107,8 @@ body.sneak-mode .board-shell{
 .online-match-locked #catAbilityOverlay [data-home-close],
 .online-match-locked #policeAbilityOverlay [data-home-close]{display:none}
 .online-reconnect-overlay{position:fixed;inset:0;z-index:30000;display:grid;place-items:center;background:#fff8e9ed;padding:20px;text-align:center;color:#654b40}
+.online-peer-reconnect-notice{position:fixed;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:16000;background:#fff3d7;color:#654b40;padding:5px 10px;border-radius:9px;font-size:12px;pointer-events:none;white-space:nowrap}
+.online-peer-reconnect-notice[hidden]{display:none}
 .online-reconnect-overlay section{max-width:420px}
 .matchmaking-overlay[hidden] { display: none; }
 .matchmaking-overlay { position: fixed; inset: 0; z-index: 13000; display: grid; place-items: center; padding: 16px; background: #fff7e9f5; overflow-y: auto; }

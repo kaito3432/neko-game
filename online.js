@@ -304,8 +304,9 @@ socket.addEventListener("message", event => {
     if(data.matchId!==matchId||finishedMatches.has(data.matchId)||closed)return;
     if(['finished','invalid','cancelled'].includes(data.status)){finishNotification({...data.result,status:data.status,matchId:data.matchId});return;}
     window.dispatchEvent(new CustomEvent('nyan-online-clock',{detail:data}));
-    paused=Object.keys(data.disconnects||{}).length>0;
-    connectionEvent({...data,status:paused?'waiting':'connected'});
+    const missing=Object.keys(data.disconnects||{}).length>0;
+    paused=Boolean(data.disconnects?.[player]||(data.hasStarted&&'actorDisconnected' in data?data.actorDisconnected:missing));
+    connectionEvent({...data,status:paused?'waiting':missing?'peer-reconnecting':'connected'});
     if(!paused){reconnectUntil=0;resuming=false;}
   }
   if(data.type==='recovery'){

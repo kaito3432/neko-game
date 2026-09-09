@@ -4,7 +4,7 @@ import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
 import { acceptRandomAction } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
 import {disconnected,reconnected,deadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
-import {syncTurnClock,turnTimeout} from './turn-clock.mjs';
+import {syncTurnClock,turnTimeout,actorState} from './turn-clock.mjs';
 import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 
 export class OnlinePlayers extends DurableObject {
@@ -375,7 +375,7 @@ secretCat: {
   }
   async notifyConnection(){
     const room=await this.ctx.storage.get('room');
-    for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'connectionState',matchId:room.matchId,disconnects:room.disconnects||{},serverTime:Date.now(),status:room.status,hasStarted:hasStarted(room),turnClock:hasStarted(room)?room.turnClock:null,result:room.result||null}));}catch(_){}
+    for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'connectionState',matchId:room.matchId,disconnects:room.disconnects||{},serverTime:Date.now(),status:room.status,hasStarted:hasStarted(room),...actorState(room),turnClock:hasStarted(room)?room.turnClock:null,result:room.result||null}));}catch(_){}
   }
 
 async broadcastPresence() {
@@ -536,7 +536,8 @@ async broadcastPresence() {
 
   const senderRole = room.roles[sender];
   await this.checkDeadline(room);
-  if (terminal(room)||Object.keys(room.disconnects||{}).length) return;
+  if (terminal(room)||room.disconnects?.[sender]||
+      (hasStarted(room)?actorState(room).actorDisconnected:Object.keys(room.disconnects||{}).length)) return;
   if(payload.type==='setupProgress'){
     const dogs=payload.dogs;
     if(senderRole!=='police'||!hasStarted(room)||room.publicPhase!=='dogSetup'||!Array.isArray(dogs)||dogs.length!==3)return;
