@@ -63,5 +63,5 @@ export async function ensureMatchRoom(storage, rooms, result) {
     method: 'POST', body: JSON.stringify(match)
   }));
   if (!response.ok) throw new Error('room_initialization_failed');
-  return result;
+  return {...result,profile:match[result.player]};
 }

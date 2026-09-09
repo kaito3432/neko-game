@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v8-online-turn-clock-20260909";
+const CACHE_NAME = "nyan-chase-v9-online-pregame-20260909";
 const PRECACHE = [
   "./cpu-unlock-sync.js",
   "./online-identity.js",

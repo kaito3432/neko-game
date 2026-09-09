@@ -68,6 +68,7 @@
     document.querySelectorAll('.skin-decorative-effect').forEach(el=>el.remove());
     if(game && Skins.isOnlineMode(playMode))render();
   });
+  window.addEventListener('nyan-online-matched',()=>document.body.classList.add('online-match-locked'));
   window.addEventListener('nyan-online-visual-event',event=>{
     const p=event.detail||{};
     if(!Skins.isOnlineMode(playMode))return;
@@ -460,7 +461,7 @@ const backToTitleBtn=$("backToTitleBtn");
   const turnClockView=document.createElement('div');turnClockView.className='online-turn-clock';turnClockView.hidden=true;document.body.append(turnClockView);
   window.addEventListener('nyan-online-clock',({detail:d})=>{
     clearInterval(clockTimer);const entries=Object.entries(d.turnClock?.deadlines||{});
-    if(!entries.length){turnClockView.hidden=true;return;}
+    if(!entries.length||d.hasStarted===false){turnClockView.hidden=true;return;}
     const start=performance.now(),session=window.NyanOnline.getSession();turnClockView.hidden=false;
     const update=()=>{turnClockView.textContent=entries.map(([seat,deadline])=>{
       const name=seat===session.player?'あなた':d.turnClock.phase==='rule'?'ホスト':'相手';
@@ -519,12 +520,16 @@ const backToTitleBtn=$("backToTitleBtn");
     document.documentElement.classList.remove('online-boot');
     clearInterval(clockTimer);turnClockView.hidden=true;
     reconnectOverlay.hidden=true;clearInterval(connectionCountdown);
+    document.body.classList.remove('online-match-locked');
     if(['disconnectForfeit','turnTimeout'].includes(d.finishReason)){
       playMode=window.NyanOnline.getSession().role==='cat'?'onlineCat':'onlinePolice';
       [modeOverlay,onlineOverlay,onlineRuleOverlay,privacyOverlay,catAbilityOverlay,policeAbilityOverlay].forEach(el=>el?.classList.remove('show'));
       endGame(d.winner==='cat'?'cat':'dogs',d.finishReason==='turnTimeout'?'操作時間切れによる終了':'通信切断による終了');
     }else if(['invalid','cancelled'].includes(d.status)||d.finishReason==='serverInvalid'){
-      onlineStatus.textContent=d.status==='cancelled'?'対戦がキャンセルされました。もう一度相手を探せます。':'通信障害により試合は無効です。勝敗は記録されません。';
+      [onlineRuleOverlay,privacyOverlay,catAbilityOverlay,policeAbilityOverlay,abilityRevealOverlay].forEach(el=>el?.classList.remove('show'));
+      onlineStartGameBtn.hidden=true;
+      onlineBackBtn.textContent='オンライン対戦選択へ';
+      onlineStatus.textContent=d.status==='cancelled'?'対戦相手との接続が終了しました。勝敗は記録されません。':'通信障害により試合は無効です。勝敗は記録されません。';
       onlineOverlay.classList.add('show');
     }
   });
@@ -5830,6 +5835,7 @@ if(againBtn){
 
 bindPress(onlineModeBtn,()=>{
   resetOnlineState();
+  onlineBackBtn.textContent='← 戻る';
   document.body.classList.remove('random-online-session');
   window.NyanRandomMatch.show(
     ()=>onlineOverlay.classList.add("show"),
@@ -5838,10 +5844,9 @@ bindPress(onlineModeBtn,()=>{
 });
 
 bindPress(onlineBackBtn,async()=>{
+  if(document.body.classList.contains('online-match-locked'))return;
   onlineOverlay.classList.remove("show");
-  if(window.NyanOnline.getSession().matchType==='randomMatch'){
-    await window.NyanOnline.matchmaking('cancel');resetOnlineState();onlineModeBtn.click();
-  }
+  window.NyanOnline.reset();resetOnlineState();onlineModeBtn.click();
 }); 
 function choosePendingPoliceAbility(ability){
 

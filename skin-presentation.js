@@ -123,7 +123,9 @@
     if(!allowCustom) {
       // Only the user's OWN ownership was checked on the server. The viewer may
       // legitimately not own an opponent's skin. Do not consult viewer owned[].
-      const id=root?.NyanOnline?.resolveAppearance?.(categoryId)?.id;
+      const appearance=root?.NyanOnline?.resolveAppearance?.(categoryId);
+      if(appearance?.status==='pending')return null;
+      const id=appearance?.id;
       return catalog.getItem(categoryId,id || 'default') || catalog.getItem(categoryId,'default');
     }
     const requested=allowCustom

@@ -23,16 +23,23 @@ const server=http.createServer(async(req,res)=>{
   const browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
   const errors=[];
   try{
-    const contexts=await Promise.all([0,1].map(async()=>{
+    const contexts=await Promise.all([0,1].map(async(index)=>{
       const ctx=await browser.newContext({viewport:{width:320,height:568},serviceWorkers:'block'});
       await ctx.addInitScript(()=>{const Original=window.WebSocket;window.__qaSockets=[];window.WebSocket=class extends Original{constructor(...args){super(...args);window.__qaSockets.push(this);}};});
       const data=Player.createDefaultData();data.ownedCatSkins.push('cat_kaitou');data.ownedDogSkins.push('dog_detective');data.equippedAppearance.catSkinId='cat_kaitou';data.equippedAppearance.dogSkinId='dog_detective';
+      if(process.env.NYAN_OPPONENT_TEST==='yes'){
+        if(index===0){data.ownedDogSkins=['default'];data.equippedAppearance.dogSkinId='default';}
+        else{data.ownedCatSkins=['default'];data.equippedAppearance.catSkinId='default';}
+      }
       await ctx.addInitScript(({data,keys})=>{if(!localStorage.getItem(keys.playerData)){localStorage.setItem(keys.playerData,JSON.stringify(data));localStorage.setItem(keys.playerId,data.playerId);}}, {data,keys:Player.STORAGE_KEYS});
       return ctx;
     }));
     const pages=await Promise.all(contexts.map(c=>c.newPage()));
     for(const page of pages){page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>window.__onlineQA);}
     const a=pages[0],b=pages[1];
+    if(process.env.NYAN_OPPONENT_TEST==='yes'){
+      await require('./browser-skin-cases.cjs')(pages,output);assert.deepEqual(errors,[]);return;
+    }
     // Menu rendering must not await any online HTTP request.
     await a.route('**/api/**',route=>route.abort());
     await a.evaluate(()=>document.getElementById('onlineModeBtn').click());
@@ -57,6 +64,25 @@ const server=http.createServer(async(req,res)=>{
     for(const page of pages){await page.waitForTimeout(400);await page.locator('#onlineModeBtn').click();await page.locator('#randomMatchStart').click();}
     await Promise.all(pages.map(p=>p.waitForFunction(()=>NyanOnline.getSession().role)));
     const randomHost=await a.evaluate(()=>NyanOnline.getSession().player==='host')?a:b;
+    for(const page of pages){
+      assert.ok(await page.locator('#onlineBackBtn').isHidden());
+      assert.ok(await page.locator('#onlineRuleBackBtn').isHidden());
+      assert.ok(await page.locator('.online-turn-clock').evaluate(e=>e.hidden));
+    }
+    if(process.env.NYAN_PREGAME_TEST==='yes'){
+      // Real server clock: rule selection must survive the old 60s deadline.
+      await a.waitForTimeout(65000);
+      for(const p of pages){assert.equal(await p.evaluate(()=>__onlineQA.state().gameOver),false);assert.ok(await p.locator('.online-turn-clock').evaluate(e=>e.hidden));}
+      await randomHost.evaluate(()=>__qaSockets.at(-1).close());
+      for(const p of pages){
+        await p.getByText('対戦相手との接続が終了しました。勝敗は記録されません。',{exact:true}).waitFor();
+        assert.equal(await p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length),0);
+        assert.ok(await p.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
+        await p.locator('#onlineBackBtn').click();await p.locator('#randomMatchStart').waitFor({state:'visible'});
+      }
+      assert.deepEqual(errors,[]);console.log('PASS Chrome preGame: no back/home/countdown, >60s no result, host disconnect cancels without daily, both return to chooser');return;
+    }
+    await randomHost.locator('#onlineNormalRuleBtn').click();
     if(process.env.NYAN_TIMEOUT_TEST==='yes'){
       for(const page of pages)await page.locator('.online-turn-clock:not([hidden])').waitFor();
       const texts=await Promise.all(pages.map(p=>p.locator('.online-turn-clock').textContent()));
@@ -74,7 +100,6 @@ const server=http.createServer(async(req,res)=>{
       }
       assert.deepEqual(errors,[]);console.log('PASS Chrome: both-side 60s countdown, timeout result, daily once, late notification cannot reopen overlay');return;
     }
-    await randomHost.locator('#onlineNormalRuleBtn').click();
     await Promise.all(pages.map(page=>page.waitForFunction(()=>NyanOnline.getSession().role&&__onlineQA.mode().startsWith('online')&&['dogSetup','onlineWaitingDogSetup'].includes(__onlineQA.state().phase))));
     const roles=await Promise.all(pages.map(page=>page.evaluate(()=>NyanOnline.getSession().role)));
     assert.notEqual(roles[0],roles[1]);const cat=roles[0]==='cat'?a:b,police=roles[0]==='police'?a:b;

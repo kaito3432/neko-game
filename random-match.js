@@ -33,7 +33,7 @@
     if (result.matchId) {
       if (started.has(result.matchId)) return;
       started.add(result.matchId); entered = false; transitioning = true;
-      cancel.disabled = true;
+      cancel.disabled = true;cancel.hidden=true;
       status.textContent = `対戦相手が見つかりました！ あなたは${result.role === 'cat' ? '🐱 ネコ' : '🐕 警察'}です。`;
       setTimeout(() => {
         root.NyanOnline.useReservation(result);
@@ -93,6 +93,7 @@
     }
   });
   function show(onRoom, onMatch) {
+    cancel.hidden=false;
     roomEntry = onRoom; launch = onMatch;
     if (entered) { overlay.hidden = false; return; }
     start.hidden = rooms.hidden = false;

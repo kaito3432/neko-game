@@ -64,17 +64,17 @@ window.NyanOnline = (() => {
     const active=await readJson(await fetch(api('/api/online/active'),{headers:credentialHeaders,signal}));
     if(!active.roomCode)return null;
     const value=await resumeRequest(active.roomCode,signal);
-    if(value.status==='cancelled')return null;
-    if(['finished','invalid'].includes(value.status)){
+    if(['finished','invalid','cancelled'].includes(value.status)){
       if(value.status==='finished'&&!['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason))return null;
       try{if(localStorage.getItem('nyanOnlineLastResultV1')===value.matchId)return null;}catch(_){}
       role=value.role;matchId=value.matchId;matchType=value.matchType;sessionProfile=value.profile;
-      if(['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason)||value.status==='invalid')finishNotification({...value.result,status:value.status,matchId:value.matchId});
+      if(['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason)||['invalid','cancelled'].includes(value.status))finishNotification({...value.result,status:value.status,matchId:value.matchId});
       return {...value,handled:true};
     }
     return value;
   }
   function clearMatchVisuals(){
+    roomCode='';token='';player='';
     appearanceSnapshot=null;visualState=null;role=null;matchId=null;matchType='roomMatch';
     window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
   }
@@ -118,6 +118,18 @@ window.NyanOnline = (() => {
   function useReservation(value) {
     if (!value?.matchId || !value?.token) throw new Error('invalid_match');
     reserved = value;
+    window.dispatchEvent(new CustomEvent('nyan-online-matched'));
+  }
+
+  function acceptRoleAppearance(data){
+    // Use the server profile frozen with this match, not a mutable queue-time cache.
+    if(data.player===player&&data.profile?.playerId===data.playerId&&
+        (!sessionProfile||sessionProfile.playerId===data.playerId))sessionProfile=data.profile;
+    if(visualState)return;
+    const next=window.NyanOnlineAppearance.accept(data,{myPlayerId:sessionProfile?.playerId,profile:sessionProfile,player,roomCode});
+    if(!next)return; // Pending is not an invalid ID and must not be pinned to default.
+    visualState=next;appearanceSnapshot=next.snapshot;
+    window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
   }
 
 
@@ -171,6 +183,7 @@ window.NyanOnline = (() => {
     roomCode = data.roomCode;
     token = data.token;
     player = data.player || "host";
+    matchId=data.matchId||null;
 
     return {
       roomCode,
@@ -206,6 +219,8 @@ window.NyanOnline = (() => {
     roomCode = normalizedCode;
     token = data.token;
     player = data.player || "guest";
+    matchId=data.matchId||null;
+    window.dispatchEvent(new CustomEvent('nyan-online-matched'));
 
     return {
       roomCode,
@@ -298,23 +313,22 @@ socket.addEventListener("message", event => {
     sessionProfile=data.profile;role=data.role;matchId=data.matchId;matchType=data.matchType;
     visualState=window.NyanOnlineAppearance.accept({...data,type:'role'},{myPlayerId:sessionProfile.playerId,profile:sessionProfile,player,roomCode});
     appearanceSnapshot=visualState?.snapshot||null;
+    window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
     window.dispatchEvent(new CustomEvent('nyan-online-recovery',{detail:data}));
     return;
   }
   if(data.type==='matchCancelled'){finishNotification({status:'cancelled',matchId:data.matchId});return;}
   if (data.type === 'role') {
+    if(closed||finishedMatches.has(data.matchId)||matchId&&data.matchId!==matchId)return;
     role = data.role;
-    if(!visualState){
-      visualState=window.NyanOnlineAppearance.accept(data,{myPlayerId:sessionProfile?.playerId,profile:sessionProfile,player,roomCode});
-      appearanceSnapshot=visualState?.snapshot||null;
-      window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
-    }
+    acceptRoleAppearance(data);
+    window.dispatchEvent(new CustomEvent('nyan-online-matched'));
     matchType = data.matchType || 'roomMatch';
     matchId = data.matchId || null;
   }
   if (data.type === 'matchFinished' && matchType === 'randomMatch' && data.matchId === matchId) {
     // Server result is durable before UI/ad presentation. Retryable local journal uses this ID.
-    if(data.status!=='invalid')window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,
+    if(!['invalid','cancelled'].includes(data.status)&&['cat','police'].includes(data.winner))window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,
       won:data.winner===role,completed:true,completedAt:data.completedAt});
   }
   if(data.type==='matchFinished'){finishNotification(data);return;}

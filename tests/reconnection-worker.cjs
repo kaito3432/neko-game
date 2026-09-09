@@ -28,7 +28,7 @@ async function pair(random=false){
  for(const delay of [4500,10000]){
   const p=await pair();p.ac.ws.close();await p.bc.wait(m=>m.type==='connectionState'&&m.status==='reconnecting');
   await pause(delay);const restored=await p.a.call(`/api/rooms/${p.as.roomCode}/resume`,{});assert.equal(restored.matchId,p.ar.matchId);
-  const fresh=await socket(restored);const recovery=await fresh.wait(m=>m.type==='recovery');assert.equal(recovery.matchId,p.ar.matchId);assert.equal(recovery.status,'matched');
+  const fresh=await socket(restored);const recovery=await fresh.wait(m=>m.type==='recovery');assert.equal(recovery.matchId,p.ar.matchId);assert.equal(recovery.status,'playing');assert.equal(recovery.hasStarted,true);
   assert.deepEqual(recovery.appearanceSnapshot,p.ar.appearanceSnapshot);
   fresh.ws.close();p.bc.ws.close();
  }

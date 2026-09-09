@@ -5,6 +5,7 @@ import { acceptRandomAction } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
 import {disconnected,reconnected,deadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
 import {syncTurnClock,turnTimeout} from './turn-clock.mjs';
+import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 
 export class OnlinePlayers extends DurableObject {
   async fetch(request) {
@@ -26,10 +27,11 @@ export class OnlinePlayers extends DurableObject {
           const match = await this.ctx.storage.get(`match:${input.matchId}`);
           if (match && !['finished','cancelled','invalid'].includes(match.status)) {
             match.status = input.status;
+            match.hasStarted=input.hasStarted===true;
             if (input.status === 'finished') match.result = input.result;
             await this.ctx.storage.put(`match:${input.matchId}`, match);
           }
-          if(input.result?.finishReason==='disconnectForfeit' && input.loserId){
+          if(input.hasStarted===true && input.result?.finishReason==='disconnectForfeit' && input.loserId){
             const marker=`forfeit:${input.matchId}`;
             if(!await this.ctx.storage.get(marker)){
               const key=`disconnectStats:${input.loserId}`;
@@ -57,7 +59,7 @@ export class OnlinePlayers extends DurableObject {
           const match = await this.ctx.storage.get(`match:${matchId}`);
           const seat = match?.host.playerId === profile.playerId ? 'host' : match?.guest.playerId === profile.playerId ? 'guest' : null;
           if (!seat) return Response.json({error: 'not_found'}, {status: 404});
-          if (match.status !== 'finished') return Response.json({error: 'not_finished'}, {status: 409});
+          if (match.status !== 'finished'||match.hasStarted===false) return Response.json({error: 'not_finished'}, {status: 409});
           return Response.json({battleId: matchId, source: 'randomMatch', side: match.roles[seat],
             won: match.result.winner === match.roles[seat], completed: true, completedAt: match.result.completedAt});
         }
@@ -107,7 +109,7 @@ export class GameRoom extends DurableObject {
     if(url.pathname==='/internal/cancel'){
       const room=await this.ctx.storage.get('room');
       if(!room)return json({ok:true});
-      if(room.started)return json({error:'already_playing'},409);
+      if(hasStarted(room))return json({error:'already_playing'},409);
       room.status='cancelled';await this.ctx.storage.put('room',room);
       for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'matchCancelled',matchId:room.matchId}));}catch(_){}
       return json({ok:true});
@@ -130,10 +132,11 @@ export class GameRoom extends DurableObject {
       const profiles = {host: match.host, guest: match.guest};
       await this.ctx.storage.put('room', {
         roomCode:match.matchId,createdAt: match.createdAt, hostToken: match.hostToken, guestToken: match.guestToken,
-        roles: match.roles, profiles, matchId: match.matchId, matchType: 'randomMatch', status: 'matched', requiresRuleSelection:true,
+        roles: match.roles, profiles, matchId: match.matchId, matchType: 'randomMatch', status: 'matched', hasStarted:false, requiresRuleSelection:true,
         appearanceSnapshot: appearanceSnapshot(profiles[match.roles.host === 'cat' ? 'host' : 'guest'], profiles[match.roles.host === 'police' ? 'host' : 'guest']),
         secretCat: {pos: null, history: [], turn: 0, noTrackBoxes: [], fakeTracks: []}, publicFoundTracks: []
       });
+      await this.ctx.storage.setAlarm(Date.now()+3000);
       return json({ok: true});
     }
 
@@ -146,6 +149,7 @@ export class GameRoom extends DurableObject {
       }
 
       const hostToken = crypto.randomUUID();
+      const matchId=`room_${crypto.randomUUID()}`;
       const registration = await request.json().catch(() => ({}));
 
 await this.ctx.storage.put("room", {
@@ -155,7 +159,7 @@ await this.ctx.storage.put("room", {
   roles: null,
   profiles: {host: registration.profile || null, guest: null},
   matchType: 'roomMatch',
-  roomCode:registration.roomCode,matchId:`room_${crypto.randomUUID()}`,status:'waiting',
+  roomCode:registration.roomCode,matchId,status:'waiting',hasStarted:false,
 
 secretCat: {
   pos: null,
@@ -175,6 +179,7 @@ secretCat: {
       return json({
         ok: true,
         player: "host",
+        matchId,
         token: hostToken,
       });
     }
@@ -194,6 +199,7 @@ secretCat: {
       const guestToken = crypto.randomUUID();
 
       room.guestToken = guestToken;
+      room.joinedAt=Date.now();
       const registration = await request.json().catch(() => ({}));
       room.profiles ||= {host: null, guest: null};
       room.profiles.guest = registration.profile || null;
@@ -202,6 +208,7 @@ secretCat: {
       return json({
         ok: true,
         player: "guest",
+        matchId:room.matchId,
         token: guestToken,
       });
     }
@@ -327,7 +334,7 @@ secretCat: {
 
   async publishMatchState(room) {
     const response=await this.env.ONLINE_PLAYERS.get(this.env.ONLINE_PLAYERS.idFromName('profiles-v1')).fetch(
-      new Request('https://players/internal/match-state', {method:'POST',body:JSON.stringify({matchId:room.matchId,status:room.status,result:room.result || null,loserId:room.profiles?.[room.result?.loser]?.playerId})})
+      new Request('https://players/internal/match-state', {method:'POST',body:JSON.stringify({matchId:room.matchId,status:room.status,hasStarted:hasStarted(room),result:room.result || null,loserId:room.profiles?.[room.result?.loser]?.playerId})})
     );
     if(!response.ok) throw new Error('match_state_pending');
     if(terminal(room))await this.ctx.storage.deleteAlarm();
@@ -345,6 +352,9 @@ secretCat: {
     }
     room.lastAlarmAt=Date.now();
     for(const seat of ['host','guest'])if(room.generations?.[seat]&&Date.now()-(room.lastSeen?.[seat]||0)>9000)disconnected(room,seat,Date.now());
+    // A reserved participant who never opens a socket must not strand the peer.
+    if(!hasStarted(room)&&room.guestToken&&Date.now()-(room.joinedAt||room.createdAt)>15000)
+      for(const seat of ['host','guest'])if(!room.generations?.[seat])disconnected(room,seat,Date.now());
     await this.checkDeadline(room);
     await this.ctx.storage.put('room',room);
     await this.notifyConnection();
@@ -365,7 +375,7 @@ secretCat: {
   }
   async notifyConnection(){
     const room=await this.ctx.storage.get('room');
-    for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'connectionState',matchId:room.matchId,disconnects:room.disconnects||{},serverTime:Date.now(),status:room.status,turnClock:room.turnClock,result:room.result||null}));}catch(_){}
+    for(const ws of this.ctx.getWebSockets())try{ws.send(JSON.stringify({type:'connectionState',matchId:room.matchId,disconnects:room.disconnects||{},serverTime:Date.now(),status:room.status,hasStarted:hasStarted(room),turnClock:hasStarted(room)?room.turnClock:null,result:room.result||null}));}catch(_){}
   }
 
 async broadcastPresence() {
@@ -397,7 +407,7 @@ async broadcastPresence() {
   async assignRoles() {
   const room = await this.ctx.storage.get("room");
 
-  if (!room) return;
+  if (!room||terminal(room)) return;
 
   // まだ役割が決まっていなければ1度だけ抽選
   if (!room.roles) {
@@ -434,6 +444,7 @@ async broadcastPresence() {
           player,
           role,
           playerId: room.profiles?.[player]?.playerId || null,
+          profile:room.profiles?.[player]||null,
           participants: {host:room.profiles?.host?.playerId||null,guest:room.profiles?.guest?.playerId||null},
           appearanceSnapshot: room.appearanceSnapshot,
           matchType: room.matchType || 'roomMatch',
@@ -528,7 +539,7 @@ async broadcastPresence() {
   if (terminal(room)||Object.keys(room.disconnects||{}).length) return;
   if(payload.type==='setupProgress'){
     const dogs=payload.dogs;
-    if(senderRole!=='police'||room.started||!Array.isArray(dogs)||dogs.length!==3)return;
+    if(senderRole!=='police'||!hasStarted(room)||room.publicPhase!=='dogSetup'||!Array.isArray(dogs)||dogs.length!==3)return;
     const chosen=dogs.filter(n=>n!==null);
     if(new Set(chosen).size!==chosen.length||!chosen.every(n=>Number.isInteger(n)&&n>=7&&n<=28&&n%6>=1&&n%6<=4))return;
     room.partialDogs=dogs;await this.ctx.storage.put('room',room);return;
@@ -537,14 +548,16 @@ async broadcastPresence() {
   if(control!==null){
     if(control===false)return;
     if(control.type==='policeSelection')room.selectedDog=control.dogIndex;
+    const justStarted=startIfReady(room,this.connectedPlayers());
     syncTurnClock(room);
     await this.ctx.storage.put('room',room);
+    if(justStarted)try{await this.publishMatchState(room);}catch(_){}
     for(const other of this.ctx.getWebSockets())if(other!==ws){try{other.send(JSON.stringify({type:'game',from:sender,payload:control}));}catch(_){}}
     await this.notifyConnection();
     return;
   }
   if (room.matchType === 'randomMatch' || room.profiles?.host && room.profiles?.guest) {
-    if(room.requiresRuleSelection && (!room.ready?.host||!room.ready?.guest))return;
+    if(!hasStarted(room))return;
     if (!acceptRandomAction(room, senderRole, payload)) return;
     await this.ctx.storage.put('room', room);
   }
@@ -1353,6 +1366,7 @@ async handleClose(ws) {
     const room=await this.ctx.storage.get('room');
     if(room && room.generations?.[disconnectedPlayer]===ws.deserializeAttachment()?.generation){
       disconnected(room,disconnectedPlayer,Date.now());
+      await this.checkDeadline(room);
       await this.ctx.storage.put('room',room);
       if(!terminal(room))await this.ctx.storage.setAlarm(Date.now()+1000);
       await this.notifyConnection();
@@ -1446,6 +1460,7 @@ export default {
             ok: true,
             roomCode,
             player: result.player,
+            matchId:result.matchId,
             token: result.token,
           });
         }

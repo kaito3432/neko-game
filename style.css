@@ -9101,6 +9101,11 @@ body.sneak-mode .board-shell{
 .online-turn-clock{position:fixed;top:max(4px,env(safe-area-inset-top));right:6px;z-index:16000;border-radius:9px;background:#fff3d7;color:#654b40;padding:4px 8px;font-size:12px;pointer-events:none}
 .random-online-session #onlineRuleOverlay [data-home-close]{display:none}
 .random-online-session #onlineOverlay .online-actions{display:none}
+.online-match-locked #onlineBackBtn,
+.online-match-locked #onlineRuleBackBtn,
+.online-match-locked #onlineRuleOverlay [data-home-close],
+.online-match-locked #catAbilityOverlay [data-home-close],
+.online-match-locked #policeAbilityOverlay [data-home-close]{display:none}
 .online-reconnect-overlay{position:fixed;inset:0;z-index:30000;display:grid;place-items:center;background:#fff8e9ed;padding:20px;text-align:center;color:#654b40}
 .online-reconnect-overlay section{max-width:420px}
 .matchmaking-overlay[hidden] { display: none; }

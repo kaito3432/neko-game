@@ -1,4 +1,5 @@
 // Pure server-clock lifecycle. No client-supplied deadline is accepted.
+import {hasStarted} from './match-lifecycle.mjs';
 export const GRACE_MS=15000;
 export const terminal=room=>['finished','invalid','cancelled'].includes(room.status);
 export function serverInvalid(room,now){
@@ -6,7 +7,7 @@ export function serverInvalid(room,now){
   return {status:'invalid',finishReason:'serverInvalid',completedAt:now};
 }
 export function disconnected(room,seat,now){
-  if(terminal(room)||!room.roles)return;
+  if(terminal(room))return;
   room.disconnects||={};
   room.disconnects[seat]??={at:now,deadline:now+GRACE_MS};
   room.status='reconnecting';
@@ -15,6 +16,7 @@ export function deadlineResult(room,now){
   if(terminal(room))return null;
   const missing=Object.entries(room.disconnects||{});
   if(!missing.length)return null;
+  if(!hasStarted(room))return {status:'cancelled',finishReason:'abortedBeforeStart',completedAt:now};
   if(missing.length===2){
     if(missing.every(([,d])=>now>=d.deadline))return {status:'invalid',finishReason:'serverInvalid',completedAt:now};
     return null;
@@ -27,7 +29,7 @@ export function deadlineResult(room,now){
 export function reconnected(room,seat,now){
   if(terminal(room)||room.disconnects?.[seat]&&now>=room.disconnects[seat].deadline)return false;
   if(room.disconnects)delete room.disconnects[seat];
-  room.status=Object.keys(room.disconnects||{}).length?'reconnecting':room.started?'playing':'matched';
+  room.status=Object.keys(room.disconnects||{}).length?'reconnecting':hasStarted(room)?'playing':'matched';
   return true;
 }
 export function publicRecovery(room,seat){
@@ -49,5 +51,6 @@ export function publicRecovery(room,seat){
     participants:{host:room.profiles?.host?.playerId,guest:room.profiles?.guest?.playerId},
     profile:room.profiles?.[seat],rule:room.rule||null,abilities:room.abilities||{},ready:room.ready||{},
     ownAbility:room.privateAbilities?.[role]||null,abilityReady:room.abilityReady||{},
-    status:room.status,result:room.result||null,disconnects:room.disconnects||{},turnClock:room.turnClock,serverTime:Date.now(),state};
+    status:room.status,hasStarted:hasStarted(room),matchStartedAt:room.matchStartedAt||null,
+    result:room.result||null,disconnects:room.disconnects||{},turnClock:hasStarted(room)?room.turnClock:null,serverTime:Date.now(),state};
 }

@@ -28,6 +28,19 @@ test('前試合怪盗→次試合default、未取得はpending',()=>{
 test('snapshotは深いコピー、元の書換で進行中の見た目は変わらない',()=>{
   const p=fixture('B','cat_kaitou'),state=Visual.accept(p,ctx);p.appearanceSnapshot.catPlayer.catSkinId='default';assert.equal(Visual.resolve(state,'catSkin').id,'cat_kaitou');
 });
+test('自分が探偵未所持でも相手policeの探偵しばを表示',()=>{
+  const p=fixture();p.appearanceSnapshot.policePlayer.dogSkinId='dog_detective';
+  assert.equal(Visual.resolve(Visual.accept(p,ctx),'dogSkin').id,'dog_detective');
+});
+test('自分だけ探偵所持でも相手のdefaultへ流用しない',()=>{
+  const mine={...ctx,profile:{...ctx.profile,ownedDogSkins:['default','dog_detective'],equippedAppearance:{catSkinId:'default',dogSkinId:'dog_detective'}}};
+  assert.equal(Visual.resolve(Visual.accept(fixture(),mine),'dogSkin').id,'default');
+});
+test('host警察の探偵しばもplayerIdを照合して表示',()=>{
+  const p=fixture('B');p.appearanceSnapshot.policePlayer.dogSkinId='dog_detective';
+  const mine={...ctx,profile:{...ctx.profile,ownedDogSkins:['default','dog_detective'],equippedAppearance:{catSkinId:'default',dogSkinId:'dog_detective'}}};
+  assert.equal(Visual.resolve(Visual.accept(p,mine),'dogSkin').id,'dog_detective');
+});
 test('ルール変更はhostのみ、ready後は固定、選択通知に秘密フィールドを混ぜない',async()=>{
   const {sessionEvent}=await import('../server/session-events.mjs');
   const room={roles:{host:'police',guest:'cat'},requiresRuleSelection:true};
