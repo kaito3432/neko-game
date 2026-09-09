@@ -33,6 +33,11 @@ const server=http.createServer(async(req,res)=>{
     const pages=await Promise.all(contexts.map(c=>c.newPage()));
     for(const page of pages){page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>window.__onlineQA);}
     const a=pages[0],b=pages[1];
+    // Menu rendering must not await any online HTTP request.
+    await a.route('**/api/**',route=>route.abort());
+    await a.evaluate(()=>document.getElementById('onlineModeBtn').click());
+    assert.ok(await a.locator('.matchmaking-panel').isVisible());
+    await a.locator('#matchmakingCancel').click();await a.unroute('**/api/**');
     for(const [width,height] of [[320,568],[375,667],[390,844],[430,932],[768,1024],[844,390]]){
       await a.setViewportSize({width,height});await a.waitForTimeout(400);await a.locator('#onlineModeBtn').click();
       await a.locator('.matchmaking-panel').waitFor({state:'visible'});
@@ -41,9 +46,34 @@ const server=http.createServer(async(req,res)=>{
       await a.screenshot({path:path.join(output,`chooser-${width}x${height}.png`)});await a.locator('#matchmakingCancel').click();
     }
     await a.setViewportSize({width:320,height:568});
+    await a.waitForTimeout(400);
+    await a.locator('#onlineModeBtn').click();await a.locator('#randomMatchStart').click();
+    await a.waitForFunction(()=>document.getElementById('matchmakingCancel').textContent==='キャンセル'&&!document.getElementById('matchmakingCancel').disabled);
+    assert.equal(await a.locator('.matchmaking-panel').getByText('ホームへ戻る').count(),0);
+    await a.locator('#matchmakingCancel').click();
+    await a.locator('#randomMatchStart').waitFor({state:'visible'});
+    assert.ok(await a.locator('.matchmaking-panel').isVisible());
+    await a.locator('#matchmakingCancel').click();
     for(const page of pages){await page.waitForTimeout(400);await page.locator('#onlineModeBtn').click();await page.locator('#randomMatchStart').click();}
     await Promise.all(pages.map(p=>p.waitForFunction(()=>NyanOnline.getSession().role)));
     const randomHost=await a.evaluate(()=>NyanOnline.getSession().player==='host')?a:b;
+    if(process.env.NYAN_TIMEOUT_TEST==='yes'){
+      for(const page of pages)await page.locator('.online-turn-clock:not([hidden])').waitFor();
+      const texts=await Promise.all(pages.map(p=>p.locator('.online-turn-clock').textContent()));
+      assert.ok(texts.every(t=>/残り (60|59|58)秒/.test(t)));
+      await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:70000})));
+      for(const page of pages){
+        await page.locator('#resultOverlay.show').waitFor({timeout:15000});
+        assert.ok(await page.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
+        await page.evaluate(()=>__qaSockets.at(-1).dispatchEvent(new MessageEvent('message',{data:JSON.stringify({type:'connectionState',matchId:NyanOnline.getSession().matchId,status:'reconnecting',disconnects:{host:{deadline:Date.now()+15000}},serverTime:Date.now()})})));
+        assert.ok(await page.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
+        await page.waitForFunction(()=>NyanPlayerData.getSnapshot().battleReceipts.length===1);
+        await page.screenshot({path:path.join(output,`timeout-result-${pages.indexOf(page)}.png`)});
+        await page.locator('#resultHomeBtn').click();
+        await page.locator('#resultOverlay').waitFor({state:'hidden'});
+      }
+      assert.deepEqual(errors,[]);console.log('PASS Chrome: both-side 60s countdown, timeout result, daily once, late notification cannot reopen overlay');return;
+    }
     await randomHost.locator('#onlineNormalRuleBtn').click();
     await Promise.all(pages.map(page=>page.waitForFunction(()=>NyanOnline.getSession().role&&__onlineQA.mode().startsWith('online')&&['dogSetup','onlineWaitingDogSetup'].includes(__onlineQA.state().phase))));
     const roles=await Promise.all(pages.map(page=>page.evaluate(()=>NyanOnline.getSession().role)));
@@ -72,7 +102,7 @@ const server=http.createServer(async(req,res)=>{
         assert.equal(await cat.evaluate(()=>__onlineQA.state().catPos),12);
         assert.deepEqual(await cat.evaluate(()=>NyanOnline.getAppearanceSnapshot()),snapshots[0]);
       }
-      await police.reload();await police.locator('#onlineModeBtn').click();
+      await police.reload();
       await police.waitForFunction(()=>__onlineQA.mode()==='onlinePolice'&&__onlineQA.state().phase==='dogs');
       assert.equal(await police.evaluate(()=>__onlineQA.state().catPos),null);
       for(const p of pages){await p.context().setOffline(true);await p.evaluate(()=>__qaSockets.at(-1).close());}
@@ -130,10 +160,16 @@ const server=http.createServer(async(req,res)=>{
     if(process.env.NYAN_RECONNECT_TEST==='yes'){
       await roomCat.context().setOffline(true);await roomCat.evaluate(()=>__qaSockets.at(-1).close());
       await roomPolice.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:25000});
-      await roomCat.context().setOffline(false);await roomCat.reload();await roomCat.locator('#onlineModeBtn').click();
+      await roomCat.context().setOffline(false);await roomCat.reload();
       await roomCat.waitForFunction(()=>__onlineQA.state().gameOver);
     }else await roomPolice.evaluate(()=>{__onlineQA.node(14);__onlineQA.box(12);});
     await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver)));
+    if(process.env.NYAN_RECONNECT_TEST==='yes')for(const p of pages){
+      await p.locator('#resultOverlay.show').waitFor({timeout:15000});
+      assert.ok(await p.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
+      await p.screenshot({path:path.join(output,`disconnect-result-${pages.indexOf(p)}.png`)});
+      await p.locator('#resultHomeBtn').click();await p.locator('#resultOverlay').waitFor({state:'hidden'});
+    }
     assert.deepEqual(await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length))),receipts);
     // Pre-rollout Worker compatibility: no auth endpoint/CORS support.
     await a.route((process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798')+'/api/online/profile',route=>route.fulfill({status:404,headers:{'access-control-allow-origin':'*'},body:'not found'}));

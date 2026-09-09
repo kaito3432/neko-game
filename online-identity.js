@@ -40,5 +40,8 @@
     })();
     try { return await active; } finally { active = null; }
   }
-  root.NyanOnlineIdentity = {prepare,hasCredential:()=>!!root.localStorage.getItem(KEY)};
+  function savedHeaders(){
+    try{const secret=root.localStorage.getItem(KEY);return /^[a-f0-9]{64}$/.test(secret||'')?{'Content-Type':'application/json',Authorization:`Bearer ${secret}`}:null;}catch(_){return null;}
+  }
+  root.NyanOnlineIdentity = {prepare,savedHeaders,hasCredential:()=>Boolean(savedHeaders())};
 })(globalThis);

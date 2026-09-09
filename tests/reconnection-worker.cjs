@@ -1,6 +1,7 @@
 // Local only. Uses real WebSockets and server wall-clock deadlines.
 const assert=require('node:assert/strict');
-const API='http://127.0.0.1:8808',pause=ms=>new Promise(r=>setTimeout(r,ms));
+const API=process.env.NYAN_LOCAL_API||'http://127.0.0.1:8808',pause=ms=>new Promise(r=>setTimeout(r,ms));
+if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(API))throw Error('Local Worker only');
 const sockets=[];
 async function actor(){
  const headers={'Content-Type':'application/json',Authorization:'Bearer '+crypto.randomUUID().replaceAll('-','')+crypto.randomUUID().replaceAll('-','')};

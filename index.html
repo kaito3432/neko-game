@@ -11,6 +11,8 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
+<script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
+<style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
 <link rel="stylesheet" href="./style.css?v=2.0.daily1">
 </head>
 <body>

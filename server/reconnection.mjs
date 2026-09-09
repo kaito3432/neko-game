@@ -49,5 +49,5 @@ export function publicRecovery(room,seat){
     participants:{host:room.profiles?.host?.playerId,guest:room.profiles?.guest?.playerId},
     profile:room.profiles?.[seat],rule:room.rule||null,abilities:room.abilities||{},ready:room.ready||{},
     ownAbility:room.privateAbilities?.[role]||null,abilityReady:room.abilityReady||{},
-    status:room.status,result:room.result||null,disconnects:room.disconnects||{},serverTime:Date.now(),state};
+    status:room.status,result:room.result||null,disconnects:room.disconnects||{},turnClock:room.turnClock,serverTime:Date.now(),state};
 }

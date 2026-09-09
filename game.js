@@ -456,6 +456,17 @@ const backToTitleBtn=$("backToTitleBtn");
   reconnectOverlay.innerHTML='<section><h2>通信を確認しています</h2><p role="status"></p></section>';
   document.body.append(reconnectOverlay);
   let connectionCountdown=null;
+  let clockTimer=null;
+  const turnClockView=document.createElement('div');turnClockView.className='online-turn-clock';turnClockView.hidden=true;document.body.append(turnClockView);
+  window.addEventListener('nyan-online-clock',({detail:d})=>{
+    clearInterval(clockTimer);const entries=Object.entries(d.turnClock?.deadlines||{});
+    if(!entries.length){turnClockView.hidden=true;return;}
+    const start=performance.now(),session=window.NyanOnline.getSession();turnClockView.hidden=false;
+    const update=()=>{turnClockView.textContent=entries.map(([seat,deadline])=>{
+      const name=seat===session.player?'あなた':d.turnClock.phase==='rule'?'ホスト':'相手';
+      return `${name}の操作：残り ${Math.max(0,Math.ceil((deadline-d.serverTime-(performance.now()-start))/1000))}秒`;
+    }).join(' ／ ');};update();clockTimer=setInterval(update,200);
+  });
   document.addEventListener('click',event=>{
     if(window.NyanOnline?.isPaused()&&!reconnectOverlay.hidden){event.preventDefault();event.stopImmediatePropagation();}
   },true);
@@ -472,6 +483,7 @@ const backToTitleBtn=$("backToTitleBtn");
     update();connectionCountdown=setInterval(update,250);
   });
   window.addEventListener('nyan-online-recovery',({detail:d})=>{
+    document.documentElement.classList.remove('online-boot');
     onlineAssignedRole=d.role;onlineIsHost=d.player==='host';onlinePeerDisconnected=false;
     onlineRule=d.rule;onlineSelfReady=Boolean(d.ready[d.player]);onlinePeerReady=Boolean(d.ready[d.player==='host'?'guest':'host']);
     if(!onlineSelfReady||!onlinePeerReady){
@@ -504,12 +516,14 @@ const backToTitleBtn=$("backToTitleBtn");
     render();setMessage('対戦に復帰しました');
   });
   window.addEventListener('nyan-online-ended',({detail:d})=>{
+    document.documentElement.classList.remove('online-boot');
+    clearInterval(clockTimer);turnClockView.hidden=true;
     reconnectOverlay.hidden=true;clearInterval(connectionCountdown);
-    if(d.finishReason==='disconnectForfeit'){
+    if(['disconnectForfeit','turnTimeout'].includes(d.finishReason)){
       playMode=window.NyanOnline.getSession().role==='cat'?'onlineCat':'onlinePolice';
       [modeOverlay,onlineOverlay,onlineRuleOverlay,privacyOverlay,catAbilityOverlay,policeAbilityOverlay].forEach(el=>el?.classList.remove('show'));
-      endGame(d.winner==='cat'?'cat':'dogs','通信切断による終了');
-    }else{
+      endGame(d.winner==='cat'?'cat':'dogs',d.finishReason==='turnTimeout'?'操作時間切れによる終了':'通信切断による終了');
+    }else if(['invalid','cancelled'].includes(d.status)||d.finishReason==='serverInvalid'){
       onlineStatus.textContent=d.status==='cancelled'?'対戦がキャンセルされました。もう一度相手を探せます。':'通信障害により試合は無効です。勝敗は記録されません。';
       onlineOverlay.classList.add('show');
     }
@@ -5814,23 +5828,20 @@ if(againBtn){
     victoryCutinTimer=setTimeout(()=>showVictoryCutin(winner),280);
   }
 
-bindPress(onlineModeBtn,async()=>{
+bindPress(onlineModeBtn,()=>{
   resetOnlineState();
-  try{
-    const active=await window.NyanOnline.activeMatch();
-    if(active?.handled)return;
-    if(active && !['finished','invalid'].includes(active.status)){
-      window.NyanOnline.useReservation(active);onlineOverlay.classList.add('show');createOnlineRoomBtn.click();return;
-    }
-  }catch(_){/* Offline failure must not block the online chooser. */}
+  document.body.classList.remove('random-online-session');
   window.NyanRandomMatch.show(
     ()=>onlineOverlay.classList.add("show"),
     ()=>{ onlineOverlay.classList.add("show"); createOnlineRoomBtn.click(); }
   );
 });
 
-bindPress(onlineBackBtn,()=>{
+bindPress(onlineBackBtn,async()=>{
   onlineOverlay.classList.remove("show");
+  if(window.NyanOnline.getSession().matchType==='randomMatch'){
+    await window.NyanOnline.matchmaking('cancel');resetOnlineState();onlineModeBtn.click();
+  }
 }); 
 function choosePendingPoliceAbility(ability){
 
@@ -6195,6 +6206,7 @@ bindPress(
     const room=await window.NyanOnline.createRoom();
 
      onlineIsHost=room.player!=="guest";
+    document.body.classList.toggle('random-online-session',window.NyanOnline.getSession().matchType==='randomMatch');
 
     onlineStatus.innerHTML=window.NyanOnline.getSession().matchType==='randomMatch'?'対戦相手と接続しています…':
       `合言葉コード<br><strong style="font-size:32px">${room.roomCode}</strong><br>`+
@@ -9045,5 +9057,33 @@ render();
 
    }); 
 
+let bootRecoveryRunning=false;
+async function resumeOnLaunch(){
+  if(bootRecoveryRunning||!window.NyanOnlineIdentity.hasCredential()){
+    if(!bootRecoveryRunning)document.documentElement.classList.remove('online-boot');return;
+  }
+  if(window.NyanOnline.getSession().connected){document.documentElement.classList.remove('online-boot');return;}
+  bootRecoveryRunning=true;document.documentElement.classList.add('online-boot');
+  const fallback=setTimeout(()=>document.documentElement.classList.remove('online-boot'),6500);
+  try{
+    for(let attempt=0;attempt<2;attempt++){
+      const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),2200);
+      try{
+        const active=await window.NyanOnline.activeMatch({signal:controller.signal});
+        if(active?.handled)return;
+        if(active){
+          resetOnlineState();window.NyanOnline.useReservation(active);
+          onlineOverlay.classList.add('show');createOnlineRoomBtn.disabled=false;createOnlineRoomBtn.click();
+          return;
+        }
+        break;
+      }catch(_){if(attempt===0)await new Promise(r=>setTimeout(r,250));}
+      finally{clearTimeout(timeout);}
+    }
+    document.documentElement.classList.remove('online-boot');
+  }finally{bootRecoveryRunning=false;if(!document.documentElement.classList.contains('online-boot'))clearTimeout(fallback);}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')resumeOnLaunch();});
+queueMicrotask(resumeOnLaunch);
 initGame(true);
 })();

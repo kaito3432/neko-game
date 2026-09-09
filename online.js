@@ -23,27 +23,33 @@ window.NyanOnline = (() => {
   let visualState = null;
   let callbacks=null,retryTimer=null,heartbeat=null,reconnectUntil=0,ticket='',paused=false,resuming=false,closed=false;
   let leavePromise=null;
-  const connectionEvent=detail=>window.dispatchEvent(new CustomEvent('nyan-online-connection',{detail}));
-  async function resumeRequest(code=roomCode){
+  let sessionGeneration=0;
+  const finishedMatches=new Set();
+  const connectionEvent=detail=>{if(closed&&detail.status!=='ended')return;window.dispatchEvent(new CustomEvent('nyan-online-connection',{detail}));};
+  async function resumeRequest(code=roomCode,signal){
     if(!credentialHeaders)await identity();
-    return readJson(await fetch(api(`/api/rooms/${code}/resume`),{method:'POST',headers:credentialHeaders}));
+    return readJson(await fetch(api(`/api/rooms/${code}/resume`),{method:'POST',headers:credentialHeaders,signal}));
   }
   function finishNotification(data){
+    if(data.matchId!==matchId || finishedMatches.has(data.matchId))return;
+    finishedMatches.add(data.matchId);sessionGeneration++;
     closed=true;paused=true;clearTimeout(retryTimer);clearInterval(heartbeat);
     connectionEvent({status:'ended'});
     try{localStorage.setItem('nyanOnlineLastResultV1',data.matchId);}catch(_){}
-    if(data.finishReason==='disconnectForfeit'&&matchType==='randomMatch')window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,won:data.winner===role,completed:true,completedAt:data.completedAt});
+    if(['disconnectForfeit','turnTimeout'].includes(data.finishReason)&&matchType==='randomMatch')window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,won:data.winner===role,completed:true,completedAt:data.completedAt});
     window.dispatchEvent(new CustomEvent('nyan-online-ended',{detail:data}));
   }
   async function retryConnection(){
     if(closed)return;
+    const generation=sessionGeneration;
     try{
       const result=await resumeRequest();
+      if(closed||generation!==sessionGeneration)return;
       if(['finished','invalid','cancelled'].includes(result.status)){finishNotification({...result.result,matchId:result.matchId,status:result.status});return;}
       if(Date.now()>reconnectUntil){connectionEvent({status:'checking'});return;}
       ticket=result.ticket;sessionProfile=result.profile;resuming=true;
       connect(callbacks);
-    }catch(_){if(Date.now()<reconnectUntil)retryTimer=setTimeout(retryConnection,1500);else connectionEvent({status:'checking'});}
+    }catch(_){if(closed||generation!==sessionGeneration)return;if(Date.now()<reconnectUntil)retryTimer=setTimeout(retryConnection,1500);else connectionEvent({status:'checking'});}
   }
   function lostConnection(){
     if(closed)return;
@@ -52,17 +58,18 @@ window.NyanOnline = (() => {
     connectionEvent({status:'reconnecting'});
     clearTimeout(retryTimer);retryTimer=setTimeout(retryConnection,700);
   }
-  async function activeMatch(){
-    await identity();
-    const active=await readJson(await fetch(api('/api/online/active'),{headers:credentialHeaders}));
+  async function activeMatch({signal}={}){
+    credentialHeaders=credentialHeaders||window.NyanOnlineIdentity.savedHeaders();
+    if(!credentialHeaders)return null;
+    const active=await readJson(await fetch(api('/api/online/active'),{headers:credentialHeaders,signal}));
     if(!active.roomCode)return null;
-    const value=await resumeRequest(active.roomCode);
+    const value=await resumeRequest(active.roomCode,signal);
     if(value.status==='cancelled')return null;
     if(['finished','invalid'].includes(value.status)){
-      if(value.status==='finished'&&value.result?.finishReason!=='disconnectForfeit')return null;
+      if(value.status==='finished'&&!['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason))return null;
       try{if(localStorage.getItem('nyanOnlineLastResultV1')===value.matchId)return null;}catch(_){}
       role=value.role;matchId=value.matchId;matchType=value.matchType;sessionProfile=value.profile;
-      if(value.result?.finishReason==='disconnectForfeit'||value.status==='invalid')finishNotification({...value.result,status:value.status,matchId:value.matchId});
+      if(['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason)||value.status==='invalid')finishNotification({...value.result,status:value.status,matchId:value.matchId});
       return {...value,handled:true};
     }
     return value;
@@ -279,11 +286,15 @@ socket.addEventListener("message", event => {
     return;
   }
   if(data.type==='connectionState'){
+    if(data.matchId!==matchId||finishedMatches.has(data.matchId)||closed)return;
+    if(['finished','invalid','cancelled'].includes(data.status)){finishNotification({...data.result,status:data.status,matchId:data.matchId});return;}
+    window.dispatchEvent(new CustomEvent('nyan-online-clock',{detail:data}));
     paused=Object.keys(data.disconnects||{}).length>0;
     connectionEvent({...data,status:paused?'waiting':'connected'});
     if(!paused){reconnectUntil=0;resuming=false;}
   }
   if(data.type==='recovery'){
+    if(closed||finishedMatches.has(data.matchId))return;
     sessionProfile=data.profile;role=data.role;matchId=data.matchId;matchType=data.matchType;
     visualState=window.NyanOnlineAppearance.accept({...data,type:'role'},{myPlayerId:sessionProfile.playerId,profile:sessionProfile,player,roomCode});
     appearanceSnapshot=visualState?.snapshot||null;
@@ -306,7 +317,7 @@ socket.addEventListener("message", event => {
     if(data.status!=='invalid')window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,
       won:data.winner===role,completed:true,completedAt:data.completedAt});
   }
-  if(data.type==='matchFinished' && ['disconnectForfeit','serverInvalid'].includes(data.finishReason)){finishNotification(data);return;}
+  if(data.type==='matchFinished'){finishNotification(data);return;}
   if (data.type === 'game') window.dispatchEvent(new CustomEvent('nyan-online-visual-event', {detail: data.payload}));
 
   if (
@@ -371,6 +382,7 @@ socket.addEventListener("message", event => {
   }
 
   function disconnect() {
+    sessionGeneration++;
     clearTimeout(retryTimer);clearInterval(heartbeat);closed=true;reconnectUntil=0;paused=false;resuming=false;ticket='';
     if (!socket) return;
 
