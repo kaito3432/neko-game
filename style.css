@@ -9117,3 +9117,21 @@ body.sneak-mode .board-shell{
 .matchmaking-panel button[hidden] { display: none; }
 .matchmaking-panel button:disabled { opacity: .6; }
 .matchmaking-panel small { font-size: 12px; }
+.ranked-frame-preview{
+  position:relative;display:grid;flex:0 0 48px;width:48px;height:48px;place-items:center;
+  border:4px double #b87942;border-radius:50%;background:#fff8e7;
+  box-shadow:0 2px 0 #7d5439,0 0 0 2px #f3d5a4;
+}
+.ranked-frame-preview::before,.ranked-frame-preview::after{position:absolute;top:-8px;color:#b87942;font-size:12px;content:'🐾'}
+.ranked-frame-preview::before{left:-5px;transform:rotate(-24deg)}
+.ranked-frame-preview::after{right:-5px;transform:rotate(24deg)}
+.ranked-frame-preview[data-frame-id="default"]{border-color:#cbb9a9;box-shadow:none}
+.ranked-frame-preview[data-frame-id="rank_silver"]{border-color:#aebac6;box-shadow:0 2px 0 #74808c,0 0 0 2px #e8edf2}
+.ranked-frame-preview[data-frame-id="rank_gold"]{border-color:#e1a91e;box-shadow:0 2px 0 #966612,0 0 0 2px #fff0a4}
+.ranked-frame-preview[data-frame-id="rank_platinum"]{border-color:#91b9cf;box-shadow:0 2px 0 #53788c,0 0 0 2px #dff6ff}
+.ranked-frame-preview[data-frame-id="rank_diamond"]{border-color:#56bde1;box-shadow:0 2px 0 #26728d,0 0 0 2px #bdf4ff}
+.ranked-frame-preview[data-frame-id="rank_master"]{border-color:#8b5acb;box-shadow:0 2px 0 #57307d,0 0 0 2px #ffd76a}
+.ranked-frame-preview[data-frame-id="default"]::before,.ranked-frame-preview[data-frame-id="default"]::after{content:''}
+.ranked-result-notice[hidden],.ranked-profile-card[hidden]{display:none}
+.season-reward-overlay{z-index:31000}
+.ranked-profile-card{margin:8px 0;padding:10px;border:2px solid #d3a25e;border-radius:16px;background:#fffaf0;text-align:left}.ranked-profile-main{display:flex;gap:9px;align-items:center}.ranked-profile-main>span{font-size:30px}.ranked-profile-main div{display:grid}.ranked-profile-main strong{font-size:18px}.ranked-profile-card small{display:block}.ranked-record,.ranked-coins{margin-top:5px;font-size:12px}.ranked-profile-card label{display:grid;gap:3px;margin-top:7px;font-size:11px}.ranked-profile-card select{min-height:34px;border:1px solid #c79568;border-radius:10px;background:#fff;padding:4px;color:#654b40}.ranked-result-notice{display:grid;gap:3px;margin:8px 0;padding:9px;border-radius:12px;background:#fff4ca;color:#654b40}.ranked-result-notice span,.ranked-result-notice em{font-size:12px}.ranked-result-notice em{font-style:normal;font-weight:700;color:#c85a49}.season-reward-overlay [data-season-copy]{margin:10px 0;line-height:1.7}

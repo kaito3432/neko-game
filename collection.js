@@ -511,7 +511,7 @@
 
     function render({data,activeSection,selectedItem,saving}){
       if(!data || !content) return;
-      setText(balance,String(data.nyanCoins));
+      setText(balance,String(window.NyanRankedUI?.totalCoins(data.nyanCoins)??data.nyanCoins));
 
       tabs.forEach(tab=>{
         const selected=tab.dataset.collectionSection===activeSection;

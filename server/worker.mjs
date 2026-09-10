@@ -6,8 +6,36 @@ import { sessionEvent } from './session-events.mjs';
 import {disconnected,reconnected,deadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
 import {syncTurnClock,turnTimeout,actorState} from './turn-clock.mjs';
 import {hasStarted,startIfReady} from './match-lifecycle.mjs';
+import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile} from './ranked-progression.mjs';
+
+const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
 
 export class OnlinePlayers extends DurableObject {
+  profileOptions(){return {masterRewardPeriods:this.env.MASTER_REWARD_PERIODS};}
+  async applyRankedMatch(match,input){
+    if(!eligibleRankedResult(match,input))return match;
+    match.rankedResults||={};const periods=masterPeriods(this.env.MASTER_REWARD_PERIODS);
+    for(const seat of ['host','guest']){
+      if(match.rankedResults[seat])continue;
+      const playerId=match[seat]?.playerId,key=await this.ctx.storage.get(`profile-key:${playerId}`);
+      if(!key)continue;
+      const marker=`ranked:${match.matchId}:${playerId}`;
+      const apply=async storage=>{
+        const existing=await storage.get(marker);if(existing)return existing;
+        const profile=await storage.get(key);if(!profile)return null;
+        // completedAt is produced by GameRoom at formal result finalization. Client
+        // clocks never choose the season that receives this result.
+        const completedAt=Number(input.result.completedAt)||Date.now();
+        const applied=applyRankedResult(profile,{matchId:match.matchId,won:match.roles[seat]===input.result.winner,completedAt},periods,RANK_REWARD_SKINS);
+        await storage.put(key,applied.profile);await storage.put(marker,applied.receipt);
+        return applied.receipt;
+      };
+      const receipt=typeof this.ctx.storage.transaction==='function'
+        ?await this.ctx.storage.transaction(apply):await apply(this.ctx.storage);
+      if(receipt)match.rankedResults[seat]=receipt;
+    }
+    return match;
+  }
   async fetch(request) {
     return this.ctx.blockConcurrencyWhile(async () => {
       try {
@@ -17,7 +45,7 @@ export class OnlinePlayers extends DurableObject {
           await this.ctx.storage.put(`active:${playerId}`,{roomCode});return Response.json({ok:true});
         }
         if(path==='/active'){
-          const auth=await profileRequest(this.ctx.storage,new Request('https://players/profile',{headers:request.headers}));
+          const auth=await profileRequest(this.ctx.storage,new Request('https://players/profile',{headers:request.headers}),this.profileOptions());
           if(!auth.ok)return auth;
           const {profile}=await auth.json();
           return Response.json(await this.ctx.storage.get(`active:${profile.playerId}`)||{});
@@ -29,6 +57,7 @@ export class OnlinePlayers extends DurableObject {
             match.status = input.status;
             match.hasStarted=input.hasStarted===true;
             if (input.status === 'finished') match.result = input.result;
+            await this.applyRankedMatch(match,input);
             await this.ctx.storage.put(`match:${input.matchId}`, match);
           }
           if(input.hasStarted===true && input.result?.finishReason==='disconnectForfeit' && input.loserId){
@@ -45,25 +74,29 @@ export class OnlinePlayers extends DurableObject {
         }
         if (['/join', '/status', '/cancel'].includes(path)) {
           await request.text();
-          const auth = await profileRequest(this.ctx.storage, new Request('https://players/profile', {headers: request.headers}));
+          const auth = await profileRequest(this.ctx.storage, new Request('https://players/profile', {headers: request.headers}),this.profileOptions());
           if (!auth.ok) return auth;
           const {profile} = await auth.json();
           const result = await matchmaking(this.ctx.storage, this.env.GAME_ROOMS, profile, path.slice(1));
           return Response.json(await ensureMatchRoom(this.ctx.storage, this.env.GAME_ROOMS, result));
         }
         if (path === '/result') {
-          const auth = await profileRequest(this.ctx.storage, new Request('https://players/profile', {headers: request.headers}));
+          const auth = await profileRequest(this.ctx.storage, new Request('https://players/profile', {headers: request.headers}),this.profileOptions());
           if (!auth.ok) return auth;
           const {profile} = await auth.json();
           const {matchId} = await request.json();
-          const match = await this.ctx.storage.get(`match:${matchId}`);
+          let match = await this.ctx.storage.get(`match:${matchId}`);
           const seat = match?.host.playerId === profile.playerId ? 'host' : match?.guest.playerId === profile.playerId ? 'guest' : null;
           if (!seat) return Response.json({error: 'not_found'}, {status: 404});
-          if (match.status !== 'finished'||match.hasStarted===false) return Response.json({error: 'not_finished'}, {status: 409});
+          if (match.status !== 'finished'||match.hasStarted!==true) return Response.json({error: 'not_finished'}, {status: 409});
+          match=await this.applyRankedMatch(match,{status:match.status,hasStarted:match.hasStarted,result:match.result});
+          await this.ctx.storage.put(`match:${matchId}`,match);
+          const profileKey=await this.ctx.storage.get(`profile-key:${profile.playerId}`),rankedProfile=profileKey&&await this.ctx.storage.get(profileKey);
           return Response.json({battleId: matchId, source: 'randomMatch', side: match.roles[seat],
-            won: match.result.winner === match.roles[seat], completed: true, completedAt: match.result.completedAt});
+            won: match.result.winner === match.roles[seat], completed: true, completedAt: match.result.completedAt,
+            ranked:match.rankedResults?.[seat]||null,rankedProfile:rankedProfile?publicRankedProfile(rankedProfile):null});
         }
-        return await profileRequest(this.ctx.storage, request);
+        return await profileRequest(this.ctx.storage, request,this.profileOptions());
       }
       catch (_) { return Response.json({error: 'invalid_request'}, {status: 400}); }
     });
@@ -1401,7 +1434,7 @@ export default {
     }
 
     const players = () => env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
-    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active)$/);
+    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active|profile-frame|season-reward)$/);
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));

@@ -331,6 +331,7 @@ socket.addEventListener("message", event => {
     // Server result is durable before UI/ad presentation. Retryable local journal uses this ID.
     if(!['invalid','cancelled'].includes(data.status)&&['cat','police'].includes(data.winner))window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,
       won:data.winner===role,completed:true,completedAt:data.completedAt});
+    matchmaking('result',{matchId}).then(receipt=>window.dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:receipt}))).catch(()=>{});
   }
   if(data.type==='matchFinished'){finishNotification(data);return;}
   if (data.type === 'game') window.dispatchEvent(new CustomEvent('nyan-online-visual-event', {detail: data.payload}));

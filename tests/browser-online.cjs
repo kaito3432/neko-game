@@ -54,7 +54,24 @@ const server=http.createServer(async(req,res)=>{
     }
     await a.setViewportSize({width:320,height:568});
     await a.waitForTimeout(400);
-    await a.locator('#onlineModeBtn').click();await a.locator('#randomMatchStart').click();
+    await a.locator('#onlineModeBtn').click();
+    await a.locator('.ranked-profile-card:not([hidden])').waitFor();
+    assert.match(await a.locator('.ranked-profile-card').textContent(),/ブロンズ.*RP 0 \/ 100.*今シーズン 0勝 0敗/s);
+    await a.locator('[data-rank-frame]').selectOption('rank_bronze');
+    await a.waitForFunction(()=>document.querySelector('[data-rank-frame-preview]').dataset.frameId==='rank_bronze');
+    const initialRankProfile=await a.evaluate(()=>NyanRankedUI.getProfile());
+    await a.evaluate(profile=>NyanRankedUI.updateProfile({...profile,seasonHistory:[{seasonId:'2026-08',finalRank:'master',finalRP:1088,rewardStatus:'pendingConfiguration'}]}),initialRankProfile);
+    await a.locator('.season-reward-overlay.show').waitFor();
+    assert.match(await a.locator('[data-season-copy]').textContent(),/最終ランク マスター.*1088 RP.*準備中.*資格は保存済み/);
+    assert.equal(await a.locator('[data-season-claim]').isDisabled(),true);
+    await a.locator('[data-season-close]').click();
+    await a.evaluate(profile=>NyanRankedUI.updateProfile(profile),initialRankProfile);
+    await a.evaluate(()=>dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:{ranked:{beforeRP:245,afterRP:255,rpDelta:10,beforeRank:'silver',afterRank:'gold',coinDelta:5,unlockedProfileFrames:['rank_gold']}}})));
+    assert.match(await a.locator('.ranked-result-notice').textContent(),/シルバー → ゴールド.*ランクアップ！.*プロフィールフレームを獲得/s);
+    await a.evaluate(()=>dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:{ranked:{beforeRP:451,afterRP:445,rpDelta:-6,beforeRank:'platinum',afterRank:'gold',coinDelta:0,unlockedProfileFrames:[]}}})));
+    assert.match(await a.locator('.ranked-result-notice').textContent(),/プラチナ → ゴールド.*ランクダウン/s);
+    await a.screenshot({path:path.join(output,'ranked-chooser-320x568.png')});
+    await a.locator('#randomMatchStart').click();
     await a.waitForFunction(()=>document.getElementById('matchmakingCancel').textContent==='キャンセル'&&!document.getElementById('matchmakingCancel').disabled);
     assert.equal(await a.locator('.matchmaking-panel').getByText('ホームへ戻る').count(),0);
     await a.locator('#matchmakingCancel').click();
@@ -90,6 +107,11 @@ const server=http.createServer(async(req,res)=>{
       await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:70000})));
       for(const page of pages){
         await page.locator('#resultOverlay.show').waitFor({timeout:15000});
+        await page.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
+        const role=await page.evaluate(()=>NyanOnline.getSession().role),ranked=await page.evaluate(()=>NyanRankedUI.getProfile());
+        assert.equal(ranked.ranked.seasonWins,role==='cat'?1:0);
+        assert.equal(ranked.ranked.seasonLosses,role==='police'?1:0);
+        assert.equal(ranked.serverNyanCoins,role==='cat'?5:0);
         assert.ok(await page.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
         await page.evaluate(()=>__qaSockets.at(-1).dispatchEvent(new MessageEvent('message',{data:JSON.stringify({type:'connectionState',matchId:NyanOnline.getSession().matchId,status:'reconnecting',disconnects:{host:{deadline:Date.now()+15000}},serverTime:Date.now()})})));
         assert.ok(await page.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
@@ -107,6 +129,11 @@ const server=http.createServer(async(req,res)=>{
     for(const page of pages)await dismiss(page);
     if(process.env.NYAN_ACTOR_TEST==='yes'){
       await require('./browser-actor-disconnect.cjs')({cat,police,dismiss});
+      await police.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
+      const winnerRanked=await police.evaluate(()=>NyanRankedUI.getProfile());
+      assert.equal(winnerRanked.ranked.seasonWins,1);assert.equal(winnerRanked.serverNyanCoins,5);
+      const loserReceipt=await cat.evaluate(()=>NyanOnline.verifyResult({battleId:NyanOnline.getSession().matchId}));
+      assert.equal(loserReceipt.won,false);assert.equal(loserReceipt.ranked.coinDelta,0);
       assert.deepEqual(errors,[]);console.log('PASS Chrome actor disconnect: setup, cat action, repeated waiting disconnect, selection/actions unchanged, handoff pause, own timer pause, recovery privacy, forfeit');return;
     }
     await police.evaluate(()=>{__onlineQA.node(14);__onlineQA.node(15);__onlineQA.node(21);});
@@ -168,6 +195,12 @@ const server=http.createServer(async(req,res)=>{
     await Promise.all(pages.map(page=>page.waitForFunction(()=>__onlineQA.state().gameOver&&NyanPlayerData.getSnapshot().battleReceipts.some(id=>id.startsWith('rm_')))));
     for(const [i,page] of pages.entries()){
       assert.equal(await page.evaluate(()=>NyanPlayerData.getSnapshot().nyanCoins),0);
+      await page.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
+      const ranked=await page.evaluate(()=>NyanRankedUI.getProfile());
+      assert.equal(ranked.ranked.seasonWins,page===police?1:0);
+      assert.equal(ranked.ranked.seasonLosses,page===cat?1:0);
+      assert.equal(ranked.serverNyanCoins,page===police?5:0);
+      assert.match(await page.locator('.ranked-result-notice').textContent(),/RP/);
       await page.waitForTimeout(2200);await page.screenshot({path:path.join(output,`random-result-${i}.png`)});
     }
     const receipts=await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length)));
@@ -206,6 +239,6 @@ const server=http.createServer(async(req,res)=>{
     await a.getByText('ランダムマッチはサーバー更新後に利用できます。部屋対戦は引き続き利用できます。').waitFor();
     await a.locator('#roomMatchStart').click();await a.locator('#createOnlineRoomBtn').click();
     await a.waitForFunction(()=>/^\d{6}$/.test(NyanOnline.getSession().roomCode));
-    assert.deepEqual(errors,[]);console.log('PASS: 6 responsive sizes, 2 Chrome clients, random and room matches to capture, same skins, both-side move/found effects, frozen snapshot, random-only daily receipt, zero coin grant; no JS exceptions');
+    assert.deepEqual(errors,[]);console.log('PASS: 6 responsive sizes, 2 Chrome clients, random and room matches to capture, rank UI/result/server reward, same skins, both-side effects, frozen snapshot, random-only daily receipt, room rank exclusion; no JS exceptions');
   }finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

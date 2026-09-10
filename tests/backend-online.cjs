@@ -22,8 +22,12 @@ async function actor(cat,dog){
     const response=await fetch(API+path,{method:'POST',headers,body:JSON.stringify(body)});
     assert.equal(response.status,200,`${path}: ${await response.clone().text()}`);return response.json();
   };
+  const profile=async()=>{
+    const response=await fetch(API+'/api/online/profile',{headers});
+    assert.equal(response.status,200,`profile: ${await response.clone().text()}`);return (await response.json()).profile;
+  };
   await call('/api/online/register',{ownedCatSkins:cat?['cat_kaitou']:[],ownedDogSkins:dog?['dog_detective']:[],equippedAppearance:{catSkinId:cat?'cat_kaitou':'default',dogSkinId:dog?'dog_detective':'default'}});
-  return {call,headers};
+  return {call,profile,headers};
 }
 async function connect(session){
   const ws=new WebSocket(`${API.replace('http','ws')}/api/rooms/${session.roomCode}/ws?token=${session.token}`);
@@ -57,6 +61,16 @@ async function connect(session){
     const ra=await a.call('/api/matchmaking/result',{matchId:as.matchId});
     const rb=await b.call('/api/matchmaking/result',{matchId:as.matchId});
     assert.notEqual(ra.won,rb.won);assert.equal(ra.side,as.role);
+    for(const receipt of [ra,rb]){
+      assert.equal(receipt.ranked.coinDelta,receipt.won?5:0);
+      assert.equal(receipt.ranked.afterRP,receipt.won?10:0);
+      assert.equal(receipt.rankedProfile.ranked.lifetimeWins,receipt.won?1:0);
+      assert.equal(receipt.rankedProfile.ranked.lifetimeLosses,receipt.won?0:1);
+    }
+    const replay=await a.call('/api/matchmaking/result',{matchId:as.matchId});
+    assert.deepEqual(replay.ranked,ra.ranked,'same matchId is idempotent');
+    assert.equal((await a.profile()).ranked.lifetimeWins,ra.won?1:0);
+    assert.equal((await a.profile()).ranked.lifetimeLosses,ra.won?0:1);
     await checkDaily(a,ra);await checkDaily(b,rb);
     assert.equal((await a.call('/api/matchmaking/join')).status,'waiting');
     await a.call('/api/matchmaking/cancel');
@@ -83,12 +97,25 @@ async function connect(session){
     await checkDaily(a,await a.call('/api/matchmaking/result',{matchId:nextA.matchId}));
     await checkDaily(b,await b.call('/api/matchmaking/result',{matchId:nextA.matchId}));
     const c=await actor(true,false),d=await actor(false,true);
+    const cBefore=await c.profile(),dBefore=await d.profile();
     const room=await c.call('/api/rooms');const joined=await d.call(`/api/rooms/${room.roomCode}/join`);
     const cc=await connect(room),dc=await connect({...joined,roomCode:room.roomCode});
     const cr=await cc.wait(m=>m.type==='role'),dr=await dc.wait(m=>m.type==='role');
     assert.equal(cr.matchType,'roomMatch');assert.deepEqual(cr.appearanceSnapshot,dr.appearanceSnapshot);
     assert.equal(cr.appearanceSnapshot.catPlayer.catSkinId,cr.role==='cat'?'cat_kaitou':'default');
     assert.equal(cr.appearanceSnapshot.policePlayer.dogSkinId,dr.role==='police'?'dog_detective':'default');
-    console.log('PASS: authenticated profiles, matching, roles, snapshots, live WebSocket capture and 11-turn escape, forged early win rejected, finished receipts, repeat queue, existing rooms');
+    const rh=room.player==='host'?cc:dc,rg=rh===cc?dc:cc;
+    rh.send({type:'ruleSelect',rule:'normal'});await rg.wait(m=>m.payload?.type==='ruleSelect');
+    cc.send({type:'ready'});dc.send({type:'ready'});await cc.wait(m=>m.payload?.type==='ready');await dc.wait(m=>m.payload?.type==='ready');
+    const roomCat=cr.role==='cat'?cc:dc,roomPolice=cr.role==='police'?cc:dc;
+    roomPolice.send({type:'dogSetup',dogs:[14,15,21]});await roomCat.wait(m=>m.payload?.type==='dogSetup');
+    roomCat.send({type:'catSetup',catPos:12});await roomCat.wait(m=>m.payload?.type==='catSetupAccepted');
+    roomPolice.send({type:'search',box:12,dogIndex:0});await roomCat.wait(m=>m.type==='matchFinished');
+    const cAfter=await c.profile(),dAfter=await d.profile();
+    assert.deepEqual(cAfter.ranked,cBefore.ranked,'room match does not change rank');
+    assert.deepEqual(dAfter.ranked,dBefore.ranked,'room match does not change rank');
+    assert.equal(cAfter.serverNyanCoins,cBefore.serverNyanCoins);
+    assert.equal(dAfter.serverNyanCoins,dBefore.serverNyanCoins);
+    console.log('PASS: authenticated profiles, ranked idempotency, matching, roles, snapshots, live WebSocket capture and 11-turn escape, forged early win rejected, finished receipts, repeat queue, room rank exclusion');
   }finally{for(const ws of sockets)ws.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

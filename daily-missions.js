@@ -84,7 +84,7 @@
       const daily=snapshot.dailyMissionProgress;
       entry.textContent=`📅 デイリー ${daily.missions.filter(m=>m.completed).length}/3`;
       document.getElementById("dailyDate").textContent=`${daily.date || Model.jstDate()} · 日本時間0時更新`;
-      document.getElementById("dailyCoins").textContent=String(snapshot.nyanCoins);
+      document.getElementById("dailyCoins").textContent=String(root.NyanRankedUI?.totalCoins(snapshot.nyanCoins)??snapshot.nyanCoins);
       list.replaceChildren();
       Model.MISSIONS.forEach(rule=>{
         const mission=daily.missions.find(m=>m.id===rule.id);
@@ -145,6 +145,7 @@
     });
     root.addEventListener("focus",refresh);
     root.addEventListener("online",refresh);
+    root.addEventListener("nyan-ranked-profile-changed",render);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden) refresh();});
     Promise.resolve(data.ready).then(refresh).catch(()=>{});
     return {...tracker,presentResult(id){resultId=id;renderResult();},hideResult(){resultId=null;if(notice) notice.hidden=true;}};

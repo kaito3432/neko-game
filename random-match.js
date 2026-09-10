@@ -100,6 +100,7 @@
     start.disabled = cancel.disabled = false;
     cancel.textContent = '戻る'; status.textContent = '遊び方を選んでね';
     overlay.hidden = false; start.focus();
+    root.NyanRankedUI?.refresh();
   }
   root.NyanRandomMatch = {show};
 })(globalThis);
