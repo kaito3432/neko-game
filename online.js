@@ -74,6 +74,7 @@ window.NyanOnline = (() => {
     return value;
   }
   function clearMatchVisuals(){
+    window.dispatchEvent(new CustomEvent('nyan-online-player-profiles',{detail:null}));
     roomCode='';token='';player='';
     appearanceSnapshot=null;visualState=null;role=null;matchId=null;matchType='roomMatch';
     window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
@@ -129,6 +130,7 @@ window.NyanOnline = (() => {
     const next=window.NyanOnlineAppearance.accept(data,{myPlayerId:sessionProfile?.playerId,profile:sessionProfile,player,roomCode});
     if(!next)return; // Pending is not an invalid ID and must not be pinned to default.
     visualState=next;appearanceSnapshot=next.snapshot;
+    window.dispatchEvent(new CustomEvent('nyan-online-player-profiles',{detail:data}));
     window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
   }
 
@@ -314,6 +316,7 @@ socket.addEventListener("message", event => {
     sessionProfile=data.profile;role=data.role;matchId=data.matchId;matchType=data.matchType;
     visualState=window.NyanOnlineAppearance.accept({...data,type:'role'},{myPlayerId:sessionProfile.playerId,profile:sessionProfile,player,roomCode});
     appearanceSnapshot=visualState?.snapshot||null;
+    window.dispatchEvent(new CustomEvent('nyan-online-player-profiles',{detail:visualState?data:null}));
     window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
     window.dispatchEvent(new CustomEvent('nyan-online-recovery',{detail:data}));
     return;
@@ -410,6 +413,7 @@ socket.addEventListener("message", event => {
   }
 
   function reset() {
+    window.dispatchEvent(new CustomEvent('nyan-online-player-profiles',{detail:null}));
     if(matchType==='randomMatch'&&matchId&&!closed)leavePromise=matchmaking('cancel').catch(()=>{});
     disconnect();
 

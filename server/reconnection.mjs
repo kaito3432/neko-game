@@ -1,5 +1,6 @@
 // Pure server-clock lifecycle. No client-supplied deadline is accepted.
 import {hasStarted} from './match-lifecycle.mjs';
+import {publicPlayerProfiles} from './online-profile.mjs';
 import {actorState,syncTurnClock} from './turn-clock.mjs';
 export const GRACE_MS=15000;
 export const terminal=room=>['finished','invalid','cancelled'].includes(room.status);
@@ -52,6 +53,7 @@ export function publicRecovery(room,seat){
   return {matchId:room.matchId,matchType:room.matchType,player:seat,role,
     playerId:room.profiles?.[seat]?.playerId,appearanceSnapshot:room.appearanceSnapshot,
     participants:{host:room.profiles?.host?.playerId,guest:room.profiles?.guest?.playerId},
+    playerProfiles:publicPlayerProfiles(room.profiles),
     profile:room.profiles?.[seat],rule:room.rule||null,abilities:room.abilities||{},ready:room.ready||{},
     ownAbility:room.privateAbilities?.[role]||null,abilityReady:room.abilityReady||{},
     status:room.status,hasStarted:hasStarted(room),...actorState(room),matchStartedAt:room.matchStartedAt||null,

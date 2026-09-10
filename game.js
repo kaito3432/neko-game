@@ -590,6 +590,7 @@ function bindPress(el, fn){
 // 各画面から一発でホームへ戻る
 // =====================================
 function returnHomeFromOverlay(){
+  if(document.body.classList.contains('online-match-locked'))return;
 
   // 遊び方
   howToOverlay?.classList.remove("show");

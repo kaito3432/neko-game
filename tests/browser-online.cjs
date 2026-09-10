@@ -27,7 +27,7 @@ const server=http.createServer(async(req,res)=>{
       const ctx=await browser.newContext({viewport:{width:320,height:568},serviceWorkers:'block'});
       await ctx.addInitScript(()=>{const Original=window.WebSocket;window.__qaSockets=[];window.WebSocket=class extends Original{constructor(...args){super(...args);window.__qaSockets.push(this);}};});
       const data=Player.createDefaultData();data.ownedCatSkins.push('cat_kaitou');data.ownedDogSkins.push('dog_detective');data.equippedAppearance.catSkinId='cat_kaitou';data.equippedAppearance.dogSkinId='dog_detective';
-      if(process.env.NYAN_OPPONENT_TEST==='yes'){
+      if(process.env.NYAN_OPPONENT_TEST==='yes'||process.env.NYAN_PROFILE_TEST==='yes'){
         if(index===0){data.ownedDogSkins=['default'];data.equippedAppearance.dogSkinId='default';}
         else{data.ownedCatSkins=['default'];data.equippedAppearance.catSkinId='default';}
       }
@@ -37,6 +37,9 @@ const server=http.createServer(async(req,res)=>{
     const pages=await Promise.all(contexts.map(c=>c.newPage()));
     for(const page of pages){page.on('pageerror',e=>errors.push(e.message));await page.goto(url);await page.waitForFunction(()=>window.__onlineQA);}
     const a=pages[0],b=pages[1];
+    if(process.env.NYAN_PROFILE_TEST==='yes'){
+      await require('./browser-profile-cases.cjs')(pages,output);assert.deepEqual(errors,[]);return;
+    }
     if(process.env.NYAN_OPPONENT_TEST==='yes'){
       await require('./browser-skin-cases.cjs')(pages,output);assert.deepEqual(errors,[]);return;
     }

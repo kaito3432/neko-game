@@ -18,6 +18,7 @@ export function initialProfile(input, playerId, now = Date.now()) {
       .filter(id => allowed.includes(id))])];
   }
   profile.equippedAppearance = validateAppearance(profile, input.equippedAppearance);
+  profile.profileCharacter = validateProfileCharacter(profile, input.profileCharacter);
   return normalizeRanked(profile,now,{},KNOWN_REWARD_SKINS);
 }
 
@@ -28,6 +29,20 @@ export function validateAppearance(profile, requested = {}) {
     result[field] = SKINS[owned].includes(id) && profile[owned]?.includes(id) ? id : 'default';
   }
   return result;
+}
+
+export function validateProfileCharacter(profile, selection) {
+  const owned = selection?.category === 'catSkin' ? 'ownedCatSkins' :
+    selection?.category === 'dogSkin' ? 'ownedDogSkins' : null;
+  return owned && SKINS[owned].includes(selection.itemId) && profile[owned]?.includes(selection.itemId)
+    ? {category: selection.category, itemId: selection.itemId}
+    : {category: 'catSkin', itemId: 'default'};
+}
+
+// Public presentation only. Never expose another player's credentials, inventory or stats.
+export function publicPlayerProfiles(profiles = {}) {
+  return Object.fromEntries(Object.entries(profiles).filter(([, p]) => p?.playerId).map(([seat, p]) =>
+    [seat, {playerId: p.playerId, profileCharacter: validateProfileCharacter(p, p.profileCharacter)}]));
 }
 
 export function appearanceSnapshot(cat, police) {
@@ -97,6 +112,9 @@ export async function profileRequest(storage, request, options={}) {
   if (path === '/appearance' && request.method === 'POST') {
     const input = await request.json();
     profile.equippedAppearance = validateAppearance(profile, input.equippedAppearance);
+    // Old clients that omit the field must not erase an existing profile selection.
+    if (Object.hasOwn(input, 'profileCharacter'))
+      profile.profileCharacter = validateProfileCharacter(profile, input.profileCharacter);
     await storage.put(key, profile);
     return reply({profile});
   }

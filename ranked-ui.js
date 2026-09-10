@@ -19,7 +19,7 @@
   panel.className='ranked-profile-card';
   panel.hidden=true;
   panel.innerHTML=`<div class="ranked-profile-main">
-    <span class="ranked-frame-preview" data-rank-frame-preview data-frame-id="default"><span data-rank-icon>🥉</span></span>
+    <span class="ranked-frame-preview" data-rank-frame-preview data-frame-id="default"><img data-rank-icon alt="プロフィールアイコン"></span>
     <div><strong data-rank-name>ブロンズ</strong><small data-rank-rp>RP 0 / 100</small><small data-rank-next>次のシルバーまで あと100RP</small></div>
   </div>
   <div class="ranked-record" data-rank-record>今シーズン 0勝 0敗</div>
@@ -38,12 +38,12 @@
   document.querySelector('#matchmakingStatus')?.after(panel);
 
   function update(next){
-    profile=next||profile;
+    profile=next?{...profile,...next}:profile;
     if(!profile?.ranked)return;
     if(!panel.isConnected)document.querySelector('#matchmakingStatus')?.after(panel);
     panel.hidden=false;
     const current=rank(profile.ranked.rank),index=ranks.indexOf(current),nextRank=ranks[index+1];
-    panel.querySelector('[data-rank-icon]').textContent=current[3];
+    root.NyanOnlineProfileUI.setImage(panel.querySelector('[data-rank-icon]'),profile.profileCharacter);
     panel.querySelector('[data-rank-name]').textContent=current[1];
     panel.querySelector('[data-rank-rp]').textContent=nextRank?`RP ${profile.ranked.rp} / ${nextRank[2]}`:`RP ${profile.ranked.rp}`;
     const nextCopy=panel.querySelector('[data-rank-next]');

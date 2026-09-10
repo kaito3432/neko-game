@@ -9100,12 +9100,20 @@ body.sneak-mode .board-shell{
 .online-turn-clock[hidden]{display:none}
 .online-turn-clock{position:fixed;top:max(4px,env(safe-area-inset-top));right:6px;z-index:16000;border-radius:9px;background:#fff3d7;color:#654b40;padding:4px 8px;font-size:12px;pointer-events:none}
 .random-online-session #onlineRuleOverlay [data-home-close]{display:none}
+.random-online-session #catAbilityOverlay [data-home-close],
+.random-online-session #policeAbilityOverlay [data-home-close],
+.random-online-session #abilityRevealOverlay [data-home-close]{display:none!important}
 .random-online-session #onlineOverlay .online-actions{display:none}
 .online-match-locked #onlineBackBtn,
 .online-match-locked #onlineRuleBackBtn,
 .online-match-locked #onlineRuleOverlay [data-home-close],
 .online-match-locked #catAbilityOverlay [data-home-close],
-.online-match-locked #policeAbilityOverlay [data-home-close]{display:none}
+.online-match-locked #abilityRevealOverlay [data-home-close],
+.online-match-locked #policeAbilityOverlay [data-home-close]{display:none!important}
+.ranked-frame-preview img{width:100%;height:100%;object-fit:contain;border-radius:50%;min-width:0;min-height:0}
+.online-opponent-profile{display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0;font-size:12px;color:#654b40}
+.online-opponent-profile[hidden]{display:none}
+.online-opponent-profile img{width:36px;height:36px;object-fit:contain;border-radius:50%;background:#fff8e7;border:1px solid #d9b99b}
 .online-reconnect-overlay{position:fixed;inset:0;z-index:30000;display:grid;place-items:center;background:#fff8e9ed;padding:20px;text-align:center;color:#654b40}
 .online-peer-reconnect-notice{position:fixed;bottom:max(8px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:16000;background:#fff3d7;color:#654b40;padding:5px 10px;border-radius:9px;font-size:12px;pointer-events:none;white-space:nowrap}
 .online-peer-reconnect-notice[hidden]{display:none}

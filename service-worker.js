@@ -1,10 +1,11 @@
-const CACHE_NAME = "nyan-chase-v11-ranked-season-20260910";
+const CACHE_NAME = "nyan-chase-v12-profile-icons-20260910";
 const PRECACHE = [
   "./cpu-unlock-sync.js",
   "./online-identity.js",
   "./online-appearance.js",
   "./random-match.js",
   "./ranked-ui.js",
+  "./online-profile-ui.js",
   "./",
   "./README.md",
   "./animation.js",

@@ -43,7 +43,8 @@
       await post('register', {playerId: local.playerId, ownedCatSkins: local.ownedCatSkins,
         ownedDogSkins: local.ownedDogSkins, equippedAppearance: local.equippedAppearance});
       await root.NyanCpuUnlockSync.flush(root.NyanPlayerData,body=>post('cpu-unlock',body));
-      const {profile} = await post('appearance', {equippedAppearance: local.equippedAppearance});
+      const {profile} = await post('appearance', {equippedAppearance: local.equippedAppearance,
+        profileCharacter: local.profileCharacter || null});
       if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function')
         root.dispatchEvent(new root.CustomEvent('nyan-online-profile',{detail:{profile}}));
       return {headers, profile};
