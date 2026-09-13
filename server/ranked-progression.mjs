@@ -10,6 +10,9 @@ const SEASON_COINS={silver:200,gold:400,platinum:800,diamond:1200};
 const RESET_RP={bronze:0,silver:50,gold:150,platinum:300,diamond:500,master:750};
 export const seasonId=now=>new Date(now+9*60*60*1000).toISOString().slice(0,7);
 export const rankForRp=rp=>[...RANKS].reverse().find(r=>rp>=r.min)||RANKS[0];
+export function validateProfileFrame(profile,id=profile?.equippedProfileFrameId){
+  return id==='default'||RANKS.some(rank=>rank.frameId===id)&&profile?.ownedProfileFrames?.includes(id)?id:'default';
+}
 export const periodId=id=>`${id.slice(0,4)}-Q${Math.floor((Number(id.slice(5,7))-1)/3)+1}`;
 export function masterPeriods(value){try{return typeof value==='string'?(JSON.parse(value)||{}):(value||{});}catch(_){return {};}}
 export function eligibleRankedResult(match,input){
@@ -39,7 +42,7 @@ export function normalizeRanked(profile,now=Date.now(),periods={},knownSkins={})
   const p=structuredClone(profile);p.version=Math.max(2,Number(p.version)||1);
   p.serverNyanCoins=Math.max(0,Number(p.serverNyanCoins)||0);
   p.ownedProfileFrames=[...new Set(['rank_bronze',...(Array.isArray(p.ownedProfileFrames)?p.ownedProfileFrames:[])])];
-  if(!p.ownedProfileFrames.includes(p.equippedProfileFrameId))p.equippedProfileFrameId='default';
+  p.equippedProfileFrameId=validateProfileFrame(p);
   p.seasonHistory=Array.isArray(p.seasonHistory)?p.seasonHistory:[];
   p.seasonRewardsClaimed=[...new Set(Array.isArray(p.seasonRewardsClaimed)?p.seasonRewardsClaimed:[])];
   const current=seasonId(now),old=p.ranked||{};

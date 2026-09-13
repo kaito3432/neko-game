@@ -61,6 +61,7 @@
   let dailyBattle=null;
   let toastTimer=null;
   let victoryCutinTimer=null;
+  let celebrateResult=false;
   let playMode="local"; // local | cpuPolice | cpuCat
   let peerSelectedDog=null;
   window.addEventListener('nyan-online-appearance-changed',()=>{
@@ -524,10 +525,19 @@ const backToTitleBtn=$("backToTitleBtn");
     clearInterval(clockTimer);turnClockView.hidden=true;
     reconnectOverlay.hidden=true;clearInterval(connectionCountdown);
     document.body.classList.remove('online-match-locked');
+    const resultWinner=d.winner==='cat'?'cat':d.winner==='police'?'dogs':null;
+    celebrateResult=window.NyanResultPresentation.shouldCelebrate({playMode,winner:resultWinner,
+      winnerPlayerId:d.winnerPlayerId,session:window.NyanOnline.getSession(),resultStatus:d.status,finishReason:d.finishReason,official:true});
+    if(!celebrateResult)A.clearConfetti(confettiLayer);
+    if(resultOverlay.classList.contains('show')){
+      resultOverlay.classList.toggle('resultOverlayCelebration',celebrateResult);
+      resultOverlay.querySelector('.modal')?.classList.toggle('celebrate',celebrateResult);
+      if(celebrateResult)A.confetti(confettiLayer);
+    }
     if(['disconnectForfeit','turnTimeout'].includes(d.finishReason)){
       playMode=window.NyanOnline.getSession().role==='cat'?'onlineCat':'onlinePolice';
       [modeOverlay,onlineOverlay,onlineRuleOverlay,privacyOverlay,catAbilityOverlay,policeAbilityOverlay].forEach(el=>el?.classList.remove('show'));
-      endGame(d.winner==='cat'?'cat':'dogs',d.finishReason==='turnTimeout'?'操作時間切れによる終了':'通信切断による終了');
+      endGame(d.winner==='cat'?'cat':'dogs',d.finishReason==='turnTimeout'?'操作時間切れによる終了':'通信切断による終了',d);
     }else if(['invalid','cancelled'].includes(d.status)||d.finishReason==='serverInvalid'){
       [onlineRuleOverlay,privacyOverlay,catAbilityOverlay,policeAbilityOverlay,abilityRevealOverlay].forEach(el=>el?.classList.remove('show'));
       onlineStartGameBtn.hidden=true;
@@ -643,6 +653,8 @@ if(againBtn){
   playMode==="onlinePolice";
     clearTimeout(cpuTimer);
     clearTimeout(victoryCutinTimer);
+    celebrateResult=false;
+    A.clearConfetti(confettiLayer);
     if(victoryCutin){
       victoryCutin.classList.remove("show","closing");
       victoryCutin.setAttribute("aria-hidden","true");
@@ -5717,8 +5729,10 @@ if(resultRouteNote){
     resultOverlay.classList.add("show");
     // A future interstitial resumes here. Mission saving already started at endGame.
     window.NyanDailyMissions?.presentResult(window.NyanOnline?.getSession().matchId || dailyBattle?.battleId);
-    resultOverlay.classList.add("resultOverlayCelebration");
-    A.confetti(confettiLayer);
+    resultOverlay.classList.toggle("resultOverlayCelebration",celebrateResult);
+    resultOverlay.querySelector('.modal')?.classList.toggle('celebrate',celebrateResult);
+    A.clearConfetti(confettiLayer);
+    if(celebrateResult)A.confetti(confettiLayer);
     setTimeout(()=>resultOverlay.classList.remove("resultOverlayCelebration"),700);
 
     // Connect Phase5 cut-in directly to the existing escape-route result.
@@ -5760,7 +5774,13 @@ if(resultRouteNote){
     victoryCutinTimer=setTimeout(finish,1850);
   }
 
-  function endGame(winner,reason){
+  function endGame(winner,reason,officialResult=null){
+    const session=window.NyanOnline?.getSession?.();
+    if(officialResult)celebrateResult=window.NyanResultPresentation.shouldCelebrate({playMode,winner,session,
+      winnerPlayerId:officialResult.winnerPlayerId,resultStatus:officialResult.status,finishReason:officialResult.finishReason,official:true});
+    else if(!['onlineCat','onlinePolice'].includes(playMode))
+      celebrateResult=window.NyanResultPresentation.shouldCelebrate({playMode,winner,session});
+    A.clearConfetti(confettiLayer);
     game.gameOver=true;
     // Confirmed outcome only; neither cut-in completion nor future ad success is required.
     window.NyanDailyMissions?.finishBattle(dailyBattle,winner);
@@ -5800,7 +5820,7 @@ if(resultRouteNote){
     const resultModalEl=resultOverlay.querySelector(".modal");
     if(resultModalEl){
       resultModalEl.classList.remove("win-cat","win-dogs","celebrate");
-      resultModalEl.classList.add(winner==="cat"?"win-cat":"win-dogs","celebrate");
+      resultModalEl.classList.add(winner==="cat"?"win-cat":"win-dogs");
     }
     game.phase="gameover";
     game.catVisible=true;
@@ -8930,6 +8950,8 @@ bindPress(resultHomeBtn,()=>{
 
   // 結果画面を閉じる
   resultOverlay.classList.remove("show");
+  celebrateResult=false;
+  A.clearConfetti(confettiLayer);
 
   // オンライン対戦なら通信も終了
   if(

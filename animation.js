@@ -1,5 +1,6 @@
 /* にゃんチェイス - アニメーション */
 window.NyanAnimation = (() => {
+  const confettiTimers=new WeakMap();
   function centerOfBox(board,i){
     const el=board.querySelector(`[data-box-index="${i}"]`);
     if(!el) return null;
@@ -109,6 +110,7 @@ window.NyanAnimation = (() => {
 
   function confetti(layer){
     if(!layer) return;
+    clearConfetti(layer);
     layer.innerHTML="";
     const pieces=["🎉","✨","🌟","🎊","💖","🐾"];
     for(let i=0;i<34;i++){
@@ -121,11 +123,14 @@ window.NyanAnimation = (() => {
       e.style.animationDelay=(Math.random()*.45)+"s";
       layer.appendChild(e);
     }
-    setTimeout(()=>layer.innerHTML="",3600);
+    confettiTimers.set(layer,setTimeout(()=>{layer.innerHTML="";confettiTimers.delete(layer);},3600));
+  }
+  function clearConfetti(layer){
+    if(!layer)return;clearTimeout(confettiTimers.get(layer));confettiTimers.delete(layer);layer.innerHTML="";
   }
 
   return {
     centerOfBox,centerOfNode,tapPopBox,animateBoxOpen,burstAtBox,
-    animateCatMove,animateSniff,shakeBoxSoon,confetti
+    animateCatMove,animateSniff,shakeBoxSoon,confetti,clearConfetti
   };
 })();

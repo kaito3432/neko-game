@@ -60,5 +60,6 @@ module.exports=async({cat,police,dismiss})=>{
  await disconnect(cat);await free(police);
  await police.waitForFunction(()=>__onlineQA.state().gameOver,null,{timeout:22000});
  await police.locator('#resultOverlay.show').waitFor();
+ assert.ok(await police.locator('#confettiLayer .confetti-piece').count());
  await cat.context().setOffline(false);
 };

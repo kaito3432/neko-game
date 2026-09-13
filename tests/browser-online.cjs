@@ -97,6 +97,7 @@ const server=http.createServer(async(req,res)=>{
       for(const p of pages){
         await p.getByText('対戦相手との接続が終了しました。勝敗は記録されません。',{exact:true}).waitFor();
         assert.equal(await p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length),0);
+        assert.equal(await p.locator('#confettiLayer .confetti-piece').count(),0);
         assert.ok(await p.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
         await p.locator('#onlineBackBtn').click();await p.locator('#randomMatchStart').waitFor({state:'visible'});
       }
@@ -110,6 +111,10 @@ const server=http.createServer(async(req,res)=>{
       await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:70000})));
       for(const page of pages){
         await page.locator('#resultOverlay.show').waitFor({timeout:15000});
+        assert.equal(await page.locator('#confettiLayer .confetti-piece').count()>0,
+          await page.evaluate(()=>NyanOnline.getSession().role)==='cat');
+        assert.equal(await page.locator('#resultOverlay .modal').evaluate(el=>el.classList.contains('celebrate')),
+          await page.evaluate(()=>NyanOnline.getSession().role)==='cat');
         await page.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
         const role=await page.evaluate(()=>NyanOnline.getSession().role),ranked=await page.evaluate(()=>NyanRankedUI.getProfile());
         assert.equal(ranked.ranked.seasonWins,role==='cat'?1:0);
@@ -198,6 +203,9 @@ const server=http.createServer(async(req,res)=>{
     await Promise.all(pages.map(page=>page.waitForFunction(()=>__onlineQA.state().gameOver&&NyanPlayerData.getSnapshot().battleReceipts.some(id=>id.startsWith('rm_')))));
     for(const [i,page] of pages.entries()){
       assert.equal(await page.evaluate(()=>NyanPlayerData.getSnapshot().nyanCoins),0);
+      await page.locator('#resultOverlay.show').waitFor({timeout:15000});
+      assert.equal(await page.locator('#confettiLayer .confetti-piece').count()>0,page===police);
+      assert.equal(await page.locator('#resultOverlay .modal').evaluate(el=>el.classList.contains('celebrate')),page===police);
       await page.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
       const ranked=await page.evaluate(()=>NyanRankedUI.getProfile());
       assert.equal(ranked.ranked.seasonWins,page===police?1:0);
@@ -229,11 +237,20 @@ const server=http.createServer(async(req,res)=>{
       await roomCat.waitForFunction(()=>__onlineQA.state().gameOver);
     }else await roomPolice.evaluate(()=>{__onlineQA.node(14);__onlineQA.box(12);});
     await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver)));
+    for(const p of pages){
+      await p.locator('#resultOverlay.show').waitFor({timeout:15000});
+      assert.equal(await p.locator('#confettiLayer .confetti-piece').count()>0,p===roomPolice);
+      assert.equal(await p.locator('#resultOverlay .modal').evaluate(el=>el.classList.contains('celebrate')),p===roomPolice);
+    }
     if(process.env.NYAN_RECONNECT_TEST==='yes')for(const p of pages){
       await p.locator('#resultOverlay.show').waitFor({timeout:15000});
       assert.ok(await p.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
       await p.screenshot({path:path.join(output,`disconnect-result-${pages.indexOf(p)}.png`)});
       await p.locator('#resultHomeBtn').click();await p.locator('#resultOverlay').waitFor({state:'hidden'});
+    }
+    if(process.env.NYAN_RECONNECT_TEST!=='yes')for(const p of pages){
+      await p.locator('#resultHomeBtn').click();await p.locator('#resultOverlay').waitFor({state:'hidden'});
+      assert.equal(await p.locator('#confettiLayer .confetti-piece').count(),0);
     }
     assert.deepEqual(await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length))),receipts);
     // Pre-rollout Worker compatibility: no auth endpoint/CORS support.
@@ -242,6 +259,9 @@ const server=http.createServer(async(req,res)=>{
     await a.getByText('ランダムマッチはサーバー更新後に利用できます。部屋対戦は引き続き利用できます。').waitFor();
     await a.locator('#roomMatchStart').click();await a.locator('#createOnlineRoomBtn').click();
     await a.waitForFunction(()=>/^\d{6}$/.test(NyanOnline.getSession().roomCode));
+    await a.evaluate(()=>{const s=NyanOnline.getSession();dispatchEvent(new CustomEvent('nyan-online-ended',
+      {detail:{matchId:s.matchId,status:'invalid',finishReason:'serverInvalid',winner:'cat',winnerPlayerId:s.playerId}}));});
+    assert.equal(await a.locator('#confettiLayer .confetti-piece').count(),0);
     assert.deepEqual(errors,[]);console.log('PASS: 6 responsive sizes, 2 Chrome clients, random and room matches to capture, rank UI/result/server reward, same skins, both-side effects, frozen snapshot, random-only daily receipt, room rank exclusion; no JS exceptions');
   }finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

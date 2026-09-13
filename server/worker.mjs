@@ -9,6 +9,12 @@ import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile} from './ranked-progression.mjs';
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
+const withWinnerPlayerId=(room,result)=>{
+  if(!result?.winner)return result;
+  const seat=Object.keys(room.roles||{}).find(key=>room.roles[key]===result.winner);
+  const winnerPlayerId=room.profiles?.[seat]?.playerId;
+  return winnerPlayerId?{...result,winnerPlayerId}:result;
+};
 
 export class OnlinePlayers extends DurableObject {
   profileOptions(){return {masterRewardPeriods:this.env.MASTER_REWARD_PERIODS};}
@@ -351,7 +357,7 @@ secretCat: {
   async markMatch(room, status, winner) {
     if (terminal(room)) return;
     room.status = status;
-    const result = winner ? {winner, completedAt: Date.now()} : null;
+    const result = winner ? withWinnerPlayerId(room,{winner, completedAt: Date.now()}) : null;
     if (result) room.result = result;
     await this.ctx.storage.put('room', room);
     // Persist a retry alarm before cross-object I/O. A directory outage must not
@@ -400,6 +406,7 @@ secretCat: {
   }
   async completeLifecycle(room,result){
     if(!result)return;
+    result=withWinnerPlayerId(room,result);
     room.status=result.status;room.result=result;
     await this.ctx.storage.put('room',room);
     await this.ctx.storage.setAlarm(Date.now()+5000);

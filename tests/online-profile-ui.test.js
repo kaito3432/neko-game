@@ -11,8 +11,14 @@ test('プロフィール画像は設定だけから解決し、未設定・未�
   const image={};UI.setImage(image,{category:'dogSkin',itemId:'dog_detective'});image.onerror();
   assert.equal(image.src,fallback);assert.equal(image.onerror,null);
 });
+test('プロフィールフレームは共通定義だけを許可し、不正・未設定はdefault',()=>{
+  for(const id of Object.keys(UI.frames))assert.equal(UI.frameId(id),id);
+  for(const id of [null,undefined,'rank_unknown','gold'])assert.equal(UI.frameId(id),'default');
+  const element={dataset:{}};UI.setFrame(element,'rank_gold');assert.equal(element.dataset.frameId,'rank_gold');
+  UI.setFrame(element,'bad');assert.equal(element.dataset.frameId,'default');
+});
 test('相手表示はplayerId照合、viewer所持状態に非依存、旧試合は明示クリア',()=>{
-  const peer={playerId:'b',profileCharacter:{category:'dogSkin',itemId:'dog_detective'}};
+  const peer={playerId:'b',profileCharacter:{category:'dogSkin',itemId:'dog_detective'},equippedProfileFrameId:'rank_gold'};
   const data={matchType:'randomMatch',matchId:'rm_test',player:'host',playerId:'a',participants:{host:'a',guest:'b'},playerProfiles:{guest:peer}};
   assert.deepEqual(UI.opponentProfile(data),peer);
   assert.equal(UI.opponentProfile({...data,playerId:'b'}),null);
@@ -51,7 +57,11 @@ test('サーバーは所有者だけを検証し、認証更新・旧クライ�
     assert.equal(profile.profileCharacter.itemId,'default');
   }
   const publicData=publicPlayerProfiles({host:profile}).host;
-  assert.deepEqual(Object.keys(publicData).sort(),['playerId','profileCharacter']);
+  assert.deepEqual(Object.keys(publicData).sort(),['equippedProfileFrameId','playerId','profileCharacter']);
+  profile.ownedProfileFrames.push('rank_gold');profile.equippedProfileFrameId='rank_gold';
+  assert.equal(publicPlayerProfiles({host:profile}).host.equippedProfileFrameId,'rank_gold');
+  profile.ownedProfileFrames.push('rank_unknown');profile.equippedProfileFrameId='rank_unknown';
+  assert.equal(publicPlayerProfiles({host:profile}).host.equippedProfileFrameId,'default');
   const token='ef'.repeat(32);await call('register',{},token);
   const unowned=await (await call('appearance',{profileCharacter:{category:'dogSkin',itemId:'dog_detective'}},token)).json();
   assert.equal(unowned.profile.profileCharacter.itemId,'default');

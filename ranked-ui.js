@@ -5,11 +5,7 @@
     ['gold','ゴールド',250,'✨'],['platinum','プラチナ',450,'🌙'],
     ['diamond','ダイヤ',700,'💎'],['master','マスター',1000,'👑']
   ];
-  const frameNames={
-    rank_bronze:'肉球ブロンズフレーム',rank_silver:'足あとシルバーフレーム',
-    rank_gold:'きらめきゴールドフレーム',rank_platinum:'月夜のプラチナフレーム',
-    rank_diamond:'宝石肉球ダイヤフレーム',rank_master:'にゃんチェイス・マスターフレーム'
-  };
+  const frameNames=root.NyanOnlineProfileUI.frames;
   let profile=null;
   const dismissedSeasons=new Set();
   const rank=id=>ranks.find(value=>value[0]===id)||ranks[0];
@@ -62,7 +58,7 @@
       select.append(option);
     }
     select.value=profile.equippedProfileFrameId||'default';
-    panel.querySelector('[data-rank-frame-preview]').dataset.frameId=select.value;
+    root.NyanOnlineProfileUI.setFrame(panel.querySelector('[data-rank-frame-preview]'),select.value);
     select.onchange=async()=>{
       select.disabled=true;
       try{const response=await api('profile-frame',{frameId:select.value});update(response.profile);}

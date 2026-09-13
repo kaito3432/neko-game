@@ -6,7 +6,7 @@ export const SKINS = Object.freeze({
   ownedDogSkins: Object.freeze(['default', 'dog_detective'])
 });
 import {applyCpuUnlockClaim} from './cpu-unlock-claims.mjs';
-import {normalizeRanked,claimSeasonReward,masterPeriods} from './ranked-progression.mjs';
+import {normalizeRanked,claimSeasonReward,masterPeriods,validateProfileFrame} from './ranked-progression.mjs';
 const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
 
 export function initialProfile(input, playerId, now = Date.now()) {
@@ -42,7 +42,8 @@ export function validateProfileCharacter(profile, selection) {
 // Public presentation only. Never expose another player's credentials, inventory or stats.
 export function publicPlayerProfiles(profiles = {}) {
   return Object.fromEntries(Object.entries(profiles).filter(([, p]) => p?.playerId).map(([seat, p]) =>
-    [seat, {playerId: p.playerId, profileCharacter: validateProfileCharacter(p, p.profileCharacter)}]));
+    [seat, {playerId: p.playerId, profileCharacter: validateProfileCharacter(p, p.profileCharacter),
+      equippedProfileFrameId:validateProfileFrame(p)}]));
 }
 
 export function appearanceSnapshot(cat, police) {
