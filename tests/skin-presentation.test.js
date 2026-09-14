@@ -79,6 +79,35 @@ test("勝敗とプレイヤー側に応じて勝利・敗北画像を解決す�
   assert.equal(Skins.resolveResultImage(onlyDog,"cat","local").src,dog.resultLoseImage);
 });
 
+test("デフォルト敗北専用画像はCPU・オンラインだけで使用し、勝利と対人戦は従来画像を維持する",()=>{
+  const defaults={
+    ownedCatSkins:["default"],ownedDogSkins:["default"],
+    equippedAppearance:{catSkinId:"default",dogSkinId:"default"}
+  };
+  assert.equal(Skins.resolveResultImage(defaults,"dogs","cpuPolice").src,Skins.DEFAULTS.catLoseResult);
+  assert.equal(Skins.resolveResultImage(defaults,"cat","cpuPolice").src,Skins.DEFAULTS.catResult);
+  assert.equal(Skins.resolveResultImage(defaults,"cat","cpuCat").src,Skins.DEFAULTS.dogLoseResult);
+  assert.equal(Skins.resolveResultImage(defaults,"dogs","cpuCat").src,Skins.DEFAULTS.dogResult);
+  assert.equal(Skins.resolveResultImage(defaults,"cat","local").src,Skins.DEFAULTS.catResult);
+  assert.equal(Skins.resolveResultImage(defaults,"dogs","local").src,Skins.DEFAULTS.dogResult);
+
+  const previousOnline=globalThis.NyanOnline;
+  try{
+    let role="cat";
+    globalThis.NyanOnline={
+      getSession:()=>({role}),
+      resolveAppearance:()=>({status:"ready",id:"default"})
+    };
+    assert.equal(Skins.resolveResultImage(defaults,"dogs","onlineCat").src,Skins.DEFAULTS.catLoseResult);
+    assert.equal(Skins.resolveResultImage(defaults,"cat","onlineCat").src,Skins.DEFAULTS.catResult);
+    role="police";
+    assert.equal(Skins.resolveResultImage(defaults,"cat","onlinePolice").src,Skins.DEFAULTS.dogLoseResult);
+    assert.equal(Skins.resolveResultImage(defaults,"dogs","onlinePolice").src,Skins.DEFAULTS.dogResult);
+  }finally{
+    globalThis.NyanOnline=previousOnline;
+  }
+});
+
 test("ホーム推し設定は装備とは独立して候補画像を解決する",()=>{
   const state=data();
   state.equippedAppearance.catSkinId="default";

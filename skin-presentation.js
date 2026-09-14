@@ -32,6 +32,8 @@
     ]),
     catResult:"./assets/images/cutin_cat_win.jpg",
     dogResult:"./assets/images/cutin_police_win.jpg",
+    catLoseResult:"./assets/images/default_cat_result_lose.png",
+    dogLoseResult:"./assets/images/default_dog_result_lose.png",
     home:"./assets/images/home_hero.png"
   });
 
@@ -171,6 +173,11 @@
       : (isCat ? DEFAULTS.dogResult : DEFAULTS.catResult);
     const item=equippedItem(data,categoryId,catalog,!isOnlineMode(playMode));
     const field=outcome==="win" ? "resultWinImage" : "resultLoseImage";
+    const useDefaultLoss=outcome==="lose" && item?.id==="default" &&
+      (isOnlineMode(playMode) || playMode==="cpuPolice" || playMode==="cpuCat");
+    if(useDefaultLoss){
+      return {src:isCat ? DEFAULTS.catLoseResult : DEFAULTS.dogLoseResult,fallback};
+    }
     return {src:item?.[field] || fallback,fallback};
   }
 

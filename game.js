@@ -5858,6 +5858,7 @@ if(againBtn){
   }
 
 bindPress(onlineModeBtn,()=>{
+  window.NyanOnline.reset();
   resetOnlineState();
   onlineBackBtn.textContent='← 戻る';
   document.body.classList.remove('random-online-session');

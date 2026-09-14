@@ -111,6 +111,10 @@ const server=http.createServer(async(req,res)=>{
       await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:70000})));
       for(const page of pages){
         await page.locator('#resultOverlay.show').waitFor({timeout:15000});
+        await page.setViewportSize({width:375,height:667});
+        assert.equal(await page.locator('#resultIcon').isVisible(),false);
+        await page.locator('#resultHomeBtn').scrollIntoViewIfNeeded();
+        assert.ok(await page.locator('#resultHomeBtn').evaluate(el=>{const box=el.getBoundingClientRect();return box.top>=0&&box.bottom<=innerHeight;}));
         assert.equal(await page.locator('#confettiLayer .confetti-piece').count()>0,
           await page.evaluate(()=>NyanOnline.getSession().role)==='cat');
         assert.equal(await page.locator('#resultOverlay .modal').evaluate(el=>el.classList.contains('celebrate')),
@@ -213,9 +217,37 @@ const server=http.createServer(async(req,res)=>{
       assert.equal(ranked.serverNyanCoins,page===police?5:0);
       assert.match(await page.locator('.ranked-result-notice').textContent(),/RP/);
       await page.waitForTimeout(2200);await page.screenshot({path:path.join(output,`random-result-${i}.png`)});
+      await page.setViewportSize({width:375,height:667});
+      await page.locator('#resultHomeBtn').scrollIntoViewIfNeeded();
+      assert.ok(await page.locator('#resultHomeBtn').evaluate(el=>{const box=el.getBoundingClientRect();return box.top>=0&&box.bottom<=innerHeight;}));
+      await page.screenshot({path:path.join(output,`normal-result-${page===police?'win':'lose'}-375x667.png`)});
+      const change=page===police
+        ?{beforeRP:99,afterRP:109,rpDelta:10,beforeRank:'bronze',afterRank:'silver',coinDelta:5,unlockedProfileFrames:['rank_silver']}
+        :{beforeRP:104,afterRP:98,rpDelta:-6,beforeRank:'silver',afterRank:'bronze',coinDelta:0,unlockedProfileFrames:[]};
+      await page.evaluate(ranked=>dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:{ranked}})),change);
+      await page.locator('.ranked-result-notice em').first().waitFor();
+      const resultScroll=page.locator('#resultOverlay');
+      assert.equal(await page.locator('#resultIcon').isVisible(),false);
+      assert.ok(await resultScroll.evaluate(el=>el.scrollHeight>el.clientHeight));
+      await resultScroll.evaluate(el=>{el.scrollTop=0;});
+      assert.ok(await page.locator('#resultOverlay .modal').evaluate(el=>el.getBoundingClientRect().top>=0));
+      await page.locator('#resultHomeBtn').scrollIntoViewIfNeeded();
+      assert.ok(await page.locator('#resultHomeBtn').evaluate(el=>{const box=el.getBoundingClientRect();return box.top>=0&&box.bottom<=innerHeight;}));
+      await page.screenshot({path:path.join(output,`rank-change-result-${page===police?'up':'down'}-375x667.png`)});
+      await page.setViewportSize({width:390,height:844});
+      assert.ok(await resultScroll.evaluate(el=>el.scrollHeight<=el.clientHeight));
     }
     const receipts=await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length)));
-    for(const page of pages){await page.reload();await page.evaluate(()=>NyanPlayerData.updateEquipment('catSkin','cat_kaitou'));await page.locator('#onlineModeBtn').click();await page.locator('#roomMatchStart').click();}
+    for(const page of pages){
+      await page.locator('#resultHomeBtn').click();await page.locator('#resultOverlay').waitFor({state:'hidden'});
+      await page.locator('#onlineModeBtn').click();await page.locator('#roomMatchStart').click();
+      assert.equal(await page.locator('.online-opponent-profile:not([hidden])').count(),0);
+      assert.equal(await page.locator('.online-opponent-profile[data-player-id]').count(),0);
+      assert.equal(await page.locator('.online-opponent-profile img[src]').count(),0);
+      assert.equal(await page.locator('.online-opponent-profile .online-profile-frame:not([data-frame-id="default"])').count(),0);
+      await page.reload();await page.evaluate(()=>NyanPlayerData.updateEquipment('catSkin','cat_kaitou'));
+      await page.locator('#onlineModeBtn').click();await page.locator('#roomMatchStart').click();
+    }
     await a.locator('#createOnlineRoomBtn').click();
     await a.waitForFunction(()=>NyanOnline.getSession().roomCode);
     const code=await a.evaluate(()=>NyanOnline.getSession().roomCode);

@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v13-profile-frame-results-20260911";
+const CACHE_NAME = "nyan-chase-v16-default-loss-results-20260914";
 const PRECACHE = [
   "./cpu-unlock-sync.js",
   "./online-identity.js",
@@ -28,6 +28,8 @@ const PRECACHE = [
   "./assets/images/cat.png",
   "./assets/images/cutin_cat_win.jpg",
   "./assets/images/cutin_police_win.jpg",
+  "./assets/images/default_cat_result_lose.png",
+  "./assets/images/default_dog_result_lose.png",
   "./assets/images/cat_play_action.png",
   "./assets/images/cat_play_alert.png",
   "./assets/images/cat_play_normal.png",
