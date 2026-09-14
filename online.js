@@ -35,7 +35,6 @@ window.NyanOnline = (() => {
     finishedMatches.add(data.matchId);sessionGeneration++;
     closed=true;paused=true;clearTimeout(retryTimer);clearInterval(heartbeat);
     connectionEvent({status:'ended'});
-    try{localStorage.setItem('nyanOnlineLastResultV1',data.matchId);}catch(_){}
     if(['disconnectForfeit','turnTimeout'].includes(data.finishReason)&&matchType==='randomMatch')window.NyanDailyMissions.recordOnline({battleId:matchId,source:'randomMatch',side:role,won:data.winner===role,completed:true,completedAt:data.completedAt});
     window.dispatchEvent(new CustomEvent('nyan-online-ended',{detail:data}));
   }
@@ -67,7 +66,13 @@ window.NyanOnline = (() => {
     if(['finished','invalid','cancelled'].includes(value.status)){
       if(value.status==='finished'&&!['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason))return null;
       try{if(localStorage.getItem('nyanOnlineLastResultV1')===value.matchId)return null;}catch(_){}
+      roomCode=value.roomCode;token=value.token;player=value.player;
       role=value.role;matchId=value.matchId;matchType=value.matchType;sessionProfile=value.profile;
+      visualState=window.NyanOnlineAppearance.accept({...value,type:'role'},
+        {myPlayerId:sessionProfile?.playerId,profile:sessionProfile,player,roomCode});
+      appearanceSnapshot=visualState?.snapshot||null;
+      window.dispatchEvent(new CustomEvent('nyan-online-player-profiles',{detail:visualState?value:null}));
+      window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
       if(['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason)||['invalid','cancelled'].includes(value.status))finishNotification({...value.result,status:value.status,matchId:value.matchId});
       return {...value,handled:true};
     }
@@ -412,6 +417,11 @@ socket.addEventListener("message", event => {
     socket = null;
   }
 
+  function acknowledgeResult(){
+    if(!matchId||!finishedMatches.has(matchId))return;
+    try{localStorage.setItem('nyanOnlineLastResultV1',matchId);}catch(_){}
+  }
+
   function reset() {
     window.dispatchEvent(new CustomEvent('nyan-online-player-profiles',{detail:null}));
     if(matchType==='randomMatch'&&matchId&&!closed)leavePromise=matchmaking('cancel').catch(()=>{});
@@ -451,6 +461,7 @@ socket.addEventListener("message", event => {
     connect,
     sendGame,
     disconnect,
+    acknowledgeResult,
     reset,
     getSession
     ,activeMatch

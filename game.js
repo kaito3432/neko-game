@@ -4031,6 +4031,7 @@ function openSettings(){
     playMode==="onlineCat" ||
     playMode==="onlinePolice";
 
+  backToTitleBtn.hidden=isOnline;
 
   settingsOverlay.classList.add("show");
 }
@@ -8906,16 +8907,8 @@ bindPress(dashBtn,toggleDash);
   bindPress(settingsCloseBtn,closeSettings);
 
 bindPress(backToTitleBtn,()=>{
+  if(playMode==="onlineCat"||playMode==="onlinePolice")return;
   settingsOverlay.classList.remove("show");
-
-  if(
-    playMode==="onlineCat" ||
-    playMode==="onlinePolice"
-  ){
-    window.NyanOnline?.disconnect();
-    resetOnlineState();
-  }
-
   initGame(true);
 });
   bindPress(sfxToggleBtn,()=>{Audio.toggleSfx();updateSettingsUI();});
@@ -8959,6 +8952,7 @@ bindPress(resultHomeBtn,()=>{
     playMode==="onlineCat" ||
     playMode==="onlinePolice"
   ){
+    window.NyanOnline?.acknowledgeResult();
     window.NyanOnline?.disconnect();
     resetOnlineState();
   }

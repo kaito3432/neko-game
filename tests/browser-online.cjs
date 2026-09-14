@@ -27,6 +27,9 @@ const server=http.createServer(async(req,res)=>{
       const ctx=await browser.newContext({viewport:{width:320,height:568},serviceWorkers:'block'});
       await ctx.addInitScript(()=>{const Original=window.WebSocket;window.__qaSockets=[];window.WebSocket=class extends Original{constructor(...args){super(...args);window.__qaSockets.push(this);}};});
       const data=Player.createDefaultData();data.ownedCatSkins.push('cat_kaitou');data.ownedDogSkins.push('dog_detective');data.equippedAppearance.catSkinId='cat_kaitou';data.equippedAppearance.dogSkinId='dog_detective';
+      if(process.env.NYAN_DEFAULT_DOG_FORFEIT_TEST==='yes'){
+        data.ownedDogSkins=['default'];data.equippedAppearance.dogSkinId='default';
+      }
       if(process.env.NYAN_OPPONENT_TEST==='yes'||process.env.NYAN_PROFILE_TEST==='yes'){
         if(index===0){data.ownedDogSkins=['default'];data.equippedAppearance.dogSkinId='default';}
         else{data.ownedCatSkins=['default'];data.equippedAppearance.catSkinId='default';}
@@ -139,6 +142,29 @@ const server=http.createServer(async(req,res)=>{
     assert.notEqual(roles[0],roles[1]);const cat=roles[0]==='cat'?a:b,police=roles[0]==='police'?a:b;
     async function dismiss(page){await page.waitForTimeout(450);if(await page.locator('#privacyOverlay.show').count())await page.locator('#privacyBtn').click();}
     for(const page of pages)await dismiss(page);
+    if(process.env.NYAN_DEFAULT_DOG_FORFEIT_TEST==='yes'){
+      await police.locator('#settingsBtn').click();
+      assert.equal(await police.locator('#backToTitleBtn').isVisible(),false);
+      await police.locator('#settingsCloseBtn').click();
+      await police.context().setOffline(true);await police.evaluate(()=>__qaSockets.at(-1).close());
+      await cat.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:30000});
+      await police.context().setOffline(false);await police.reload();
+      await police.waitForFunction(()=>__onlineQA.state().gameOver,{},{timeout:20000});
+      assert.equal(await police.evaluate(()=>__onlineQA.mode()),'onlinePolice');
+      await police.locator('#resultOverlay.show').waitFor({timeout:10000});
+      assert.match(await police.locator('#victoryCutinImage').getAttribute('src'),/default_dog_result_lose\.png$/);
+      assert.equal(await police.locator('#resultOverlay .modal').evaluate(el=>el.classList.contains('celebrate')),false);
+      await police.reload();await police.locator('#resultOverlay.show').waitFor({timeout:20000});
+      await police.locator('#resultHomeBtn').click();await police.locator('#resultOverlay').waitFor({state:'hidden'});
+      await police.reload();await police.waitForTimeout(700);
+      assert.equal(await police.locator('#resultOverlay.show').count(),0);
+      assert.deepEqual(errors,[]);console.log('PASS Chrome default dog forfeit: signed result on reopen, loss cut-in, no celebration, replays until dismissed, settings has no home exit');return;
+    }
+    for(const page of pages){
+      await page.locator('#settingsBtn').click();
+      assert.equal(await page.locator('#backToTitleBtn').isVisible(),false);
+      await page.locator('#settingsCloseBtn').click();
+    }
     if(process.env.NYAN_ACTOR_TEST==='yes'){
       await require('./browser-actor-disconnect.cjs')({cat,police,dismiss});
       await police.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
@@ -258,6 +284,11 @@ const server=http.createServer(async(req,res)=>{
     const roomRoles=await Promise.all(pages.map(p=>p.evaluate(()=>NyanOnline.getSession().role)));
     const roomCat=roomRoles[0]==='cat'?a:b,roomPolice=roomRoles[0]==='police'?a:b;
     for(const p of pages)await dismiss(p);
+    for(const p of pages){
+      await p.locator('#settingsBtn').click();
+      assert.equal(await p.locator('#backToTitleBtn').isVisible(),false);
+      await p.locator('#settingsCloseBtn').click();
+    }
     await roomPolice.evaluate(()=>{__onlineQA.node(14);__onlineQA.node(15);__onlineQA.node(21);});
     await roomCat.waitForFunction(()=>__onlineQA.state().phase==='catSetup');await dismiss(roomCat);
     await roomCat.evaluate(()=>__onlineQA.box(12));await roomPolice.waitForFunction(()=>__onlineQA.state().phase==='dogs');
