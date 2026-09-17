@@ -683,9 +683,11 @@ resultFakeTracks=[];
     setMessage("🐕 0ターン目。まず柴犬警察3匹を配置してください。");
     if(showMode){
       modeOverlay.classList.add("show");
-      Audio.setBgmMode("home");
     }
     render();
+    // renderStatus() selects the in-game track, so confirm the home track
+    // after the shared render pass when returning to the mode-selection home.
+    if(showMode) Audio.setBgmMode("home");
   }
 
 // =====================================
