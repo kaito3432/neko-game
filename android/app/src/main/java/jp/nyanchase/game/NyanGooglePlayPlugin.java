@@ -34,8 +34,13 @@ public class NyanGooglePlayPlugin extends Plugin implements PurchasesUpdatedList
     @PluginMethod public void loadProducts(PluginCall call) {
         JSArray ids = call.getArray("productIds", new JSArray());
         List<QueryProductDetailsParams.Product> requested = new ArrayList<>();
-        for (Object value : ids.toList()) requested.add(QueryProductDetailsParams.Product.newBuilder()
-            .setProductId(String.valueOf(value)).setProductType(BillingClient.ProductType.INAPP).build());
+        try {
+            for (Object value : ids.toList()) requested.add(QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(String.valueOf(value)).setProductType(BillingClient.ProductType.INAPP).build());
+        } catch (org.json.JSONException error) {
+            call.reject("invalid_product_ids", error);
+            return;
+        }
         ready(call, () -> billingClient.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(requested).build(), (result, detailsResult) -> {
             if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) { call.reject("product_query_failed", String.valueOf(result.getResponseCode())); return; }
             JSArray list = new JSArray(); products.clear();
