@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 
 test('home BGM is confirmed after the shared render selects the game track',()=>{
-  const source=fs.readFileSync(require.resolve('../game.js'),'utf8');
+  const source=fs.readFileSync(require.resolve('../game.js'),'utf8').replace(/\r\n/g,'\n');
   const start=source.indexOf('function initGame(showMode=false)');
   const end=source.indexOf('// =====================================\n// \u30aa\u30f3\u30e9\u30a4\u30f3',start);
   const initGame=source.slice(start,end);
