@@ -1,5 +1,18 @@
-const CACHE_NAME = "nyan-chase-v18-home-bgm-20260917";
+const CACHE_NAME = "nyan-chase-v26-android-monetization-phase8-20260918";
 const PRECACHE = [
+  "./skill-catalog.js",
+  "./api-environment.js",
+  "./monetization-products.js",
+  "./monetization.js",
+  "./monetization-ui.js",
+  "./ad-config.js",
+  "./rewarded-ad-provider.js",
+  "./rewarded-ad-ui.js",
+  "./storekit-provider.js",
+  "./google-play-provider.js",
+  "./purchase-provider.js",
+  "./store-ui-model.js",
+  "./storekit-ui.js",
   "./cpu-unlock-sync.js",
   "./online-identity.js",
   "./online-appearance.js",

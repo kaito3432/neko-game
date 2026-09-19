@@ -1,6 +1,23 @@
 import './engine-environment.mjs';
 import '../engine.js';
+import {runtimeSkillId,skillDefinition,validateSkillUseForMatch} from './skill-entitlements.mjs';
 const E=globalThis.NyanEngine;
+
+function approvedAbilities(room){
+  if(!room.approvedSkills)return room.abilities||{}; // persisted pre-Phase-3 match compatibility
+  return {cat:runtimeSkillId(room.approvedSkills.cat),police:runtimeSkillId(room.approvedSkills.police)};
+}
+
+export function validateAbilityUse(room,role,payload){
+  let skillId=null;
+  if(payload.type==='policeSkillUsed')skillId=payload.skill;
+  else if(payload.type==='howl'||payload.type==='doubleSearch')skillId=payload.type;
+  else if(payload.type==='catMove'&&payload.sneakUsed===true)skillId='sneak';
+  else if(payload.type==='catMove'&&payload.fakePawUsed===true)skillId='fakePaw';
+  if(!skillId)return {ok:true};
+  const approved=room.approvedSkills||Object.fromEntries(Object.entries(room.abilities||{}).map(([key,value])=>[key,skillDefinition(value)?.id||null]));
+  return validateSkillUseForMatch({role,skillId,approvedSkills:approved});
+}
 
 // Random rules reuse the same engine and existing room skill protocol.
 // This shadow state validates events using the shared engine before the existing
@@ -8,7 +25,7 @@ const E=globalThis.NyanEngine;
 export function acceptRandomAction(room, role, payload) {
   const state=room.validationState || (room.validationState=E.createState());
   const type=payload.type;
-  const abilities=room.rule==='ability'?room.abilities||{}:{};
+  const abilities=room.rule==='ability'?approvedAbilities(room):{};
   state.selectedAbilities={cat:abilities.cat||null,police:abilities.police||null};
   if(type==='policeSkillUsed'){
     if(role!=='police'||state.phase!=='dogs'||payload.skill!==abilities.police||!['howl','dash','doubleSearch'].includes(payload.skill))return false;

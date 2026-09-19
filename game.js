@@ -198,7 +198,40 @@ const howToCloseBtn = $("howToCloseBtn");
 let onlinePeerReady=false;
 let onlineGameStarted=false;
    let onlinePeerDisconnected = false;
-   let onlineFoundTrackCount=0;
+let onlineFoundTrackCount=0;
+
+function skillIdForRuntime(role,runtimeId){
+  return window.NyanSkillCatalog?.fromRuntimeId(role,runtimeId)||null;
+}
+function canChooseRuntimeSkill(role,runtimeId){
+  const skillId=skillIdForRuntime(role,runtimeId);
+  return Boolean(skillId && window.NyanMonetization?.canEquipSkill(role,skillId));
+}
+function refreshSkillEntitlementUI(){
+  const unlocked=window.NyanMonetization?.isSkillModeUnlocked()===true;
+  [localAbilityRuleBtn,onlineAbilityRuleBtn].forEach(button=>{
+    if(!button)return;
+    button.disabled=!unlocked;
+    button.setAttribute("aria-disabled",String(!unlocked));
+    button.title=unlocked?"":"リワード広告を3回視聴すると永久解放されます";
+  });
+  [[selectSneakBtn,"cat","sneak"],[selectFakePawBtn,"cat","fakePaw"],
+   [selectHowlBtn,"police","howl"],[selectDashBtn,"police","dash"],
+   [selectDoubleSearchBtn,"police","doubleSearch"]].forEach(([button,role,runtimeId])=>{
+    if(!button)return;
+    const available=canChooseRuntimeSkill(role,runtimeId);
+    button.disabled=!available;
+    button.setAttribute("aria-disabled",String(!available));
+    button.classList.toggle("ability-not-owned",!available);
+    const skillId=skillIdForRuntime(role,runtimeId),skill=window.NyanSkillCatalog?.SKILLS?.[skillId];
+    let badge=button.querySelector(".ability-entitlement-badge");
+    if(!badge){badge=document.createElement("span");badge.className="ability-entitlement-badge";button.querySelector(".ability-card-summary")?.append(badge);}
+    badge.textContent=!unlocked?"🔒 モード未解放":available?(skill?.free?"無料":"所持済み"):"🔒 未所持・ストアで購入";
+  });
+}
+window.addEventListener("nyan-storekit-entitlements",refreshSkillEntitlementUI);
+window.addEventListener("nyan-purchase-entitlements",refreshSkillEntitlementUI);
+window.addEventListener("nyan-online-profile",refreshSkillEntitlementUI);
 
 
    
@@ -703,6 +736,7 @@ function openOnlineRulePicker(){
   }
 
   onlineOverlay.classList.remove("show");
+  refreshSkillEntitlementUI();
   onlineRuleOverlay.classList.add("show");
 }
 
@@ -919,6 +953,12 @@ function beginOnlineAbilitySelection(){
 
   if(onlineRule!=="ability") return;
   if(!onlineAssignedRole) return;
+  if(!window.NyanMonetization?.isSkillModeUnlocked()){
+    onlineRuleOverlay?.classList.remove("show");
+    onlineOverlay.classList.add("show");
+    onlineStatus.textContent="特殊スキルモードは未解放です。";
+    return;
+  }
 
   onlineOverlay.classList.remove("show");
   onlineRuleOverlay?.classList.remove("show");
@@ -931,6 +971,7 @@ onlineAbilityRevealSent=false;
 
   pendingPoliceAbility=null;
   pendingCatAbility=null;
+  refreshSkillEntitlementUI();
 
 
   // =============================
@@ -975,6 +1016,7 @@ onlineAbilityRevealSent=false;
 function startOnlineAbilityRule(){
 
   if(!onlineIsHost) return;
+  if(!window.NyanMonetization?.isSkillModeUnlocked()) return;
 
   onlineRule="ability";
 
@@ -1096,6 +1138,7 @@ function startOnlineGame(){
 function openLocalRulePicker(){
 
   modeOverlay.classList.remove("show");
+  refreshSkillEntitlementUI();
   localRuleOverlay.classList.add("show");
 }
 
@@ -1142,6 +1185,8 @@ function startLocalNormalMode(){
 // 特殊スキルあり
 function startLocalAbilityMode(){
 
+  if(!window.NyanMonetization?.isSkillModeUnlocked()) return;
+
   localRuleOverlay.classList.remove("show");
 
   // 今まで完成させた対人戦をそのまま開始
@@ -1175,8 +1220,9 @@ function startLocalMode(){
 
   render();
 }
-   function selectPoliceAbility(ability){
+function selectPoliceAbility(ability){
   if(playMode!=="local") return;
+  if(!canChooseRuntimeSkill("police",ability)) return;
 
   game.selectedAbilities.police=ability;
 
@@ -1194,6 +1240,7 @@ function startLocalMode(){
 
    function selectCatAbility(ability){
   if(playMode!=="local") return;
+  if(!canChooseRuntimeSkill("cat",ability)) return;
 
   game.selectedAbilities.cat=ability;
 
@@ -5878,6 +5925,8 @@ bindPress(onlineBackBtn,async()=>{
 }); 
 function choosePendingPoliceAbility(ability){
 
+  if(!canChooseRuntimeSkill("police",ability)) return;
+
   pendingPoliceAbility=ability;
 
   [
@@ -5910,6 +5959,7 @@ bindPress(
 bindPress(confirmPoliceAbilityBtn,()=>{
 
   if(!pendingPoliceAbility) return;
+  if(!canChooseRuntimeSkill("police",pendingPoliceAbility)) return;
 
 
   // =====================================
@@ -6018,6 +6068,8 @@ if(onlinePeerAbilityReady){
 
 function choosePendingCatAbility(ability){
 
+  if(!canChooseRuntimeSkill("cat",ability)) return;
+
   pendingCatAbility=ability;
 
   [
@@ -6046,6 +6098,7 @@ bindPress(
 bindPress(confirmCatAbilityBtn,()=>{
 
   if(!pendingCatAbility) return;
+  if(!canChooseRuntimeSkill("cat",pendingCatAbility)) return;
 
 
   // =====================================

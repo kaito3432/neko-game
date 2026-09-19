@@ -4,7 +4,7 @@
 */
 
 window.NyanOnline = (() => {
-  const API_BASE =
+  const API_BASE = window.NYAN_API_BASE ||
     "https://nyan-chase-online.honda19990602.workers.dev";
 
   let socket = null;
@@ -105,6 +105,10 @@ window.NyanOnline = (() => {
     }
     credentialHeaders = identity.headers;
     verifiedProfile = identity.profile;
+    if(verifiedProfile?.skillEntitlements&&window.NyanMonetization?.syncServerSkillModeEntitlement){
+      window.NyanMonetization.syncServerSkillModeEntitlement(verifiedProfile.skillEntitlements);
+      window.NyanMonetization.syncServerPurchaseEntitlements?.(verifiedProfile.skillEntitlements);
+    }
     // Recover a result missed while closing the app before the WS notification.
     try {
       const latest=await matchmaking('status');

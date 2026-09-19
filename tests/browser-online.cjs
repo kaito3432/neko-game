@@ -5,12 +5,15 @@ const fs=require('node:fs/promises');
 const http=require('node:http');
 const path=require('node:path');
 const Player=require('../player-data.js');
+const Monetization=require('../monetization.js');
+const Skills=require('../skill-catalog.js');
 const root=path.resolve(__dirname,'..'),output=path.join(root,'artifacts/online-20260906');
 const server=http.createServer(async(req,res)=>{
   try{
     let name=decodeURIComponent(new URL(req.url,'http://localhost').pathname).slice(1)||'index.html';
     if(name.includes('..'))throw Error('invalid');
     let content=await fs.readFile(path.join(root,name));
+    if(name==='api-environment.js')content=Buffer.from(`globalThis.NYAN_API_BASE=${JSON.stringify(process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798')};`);
     if(name==='online.js')content=Buffer.from(content.toString().replace('https://nyan-chase-online.honda19990602.workers.dev',process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798'));
     if(name==='game.js')content=Buffer.from(content.toString().replace(/initGame\(true\);\s*\}\)\(\);\s*$/,`initGame(true);window.__onlineQA={state:()=>game,mode:()=>playMode,node:handleNodePress,box:handleBoxPress,render};})();`));
     const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.wav':'audio/wav'};
@@ -27,6 +30,7 @@ const server=http.createServer(async(req,res)=>{
       const ctx=await browser.newContext({viewport:{width:320,height:568},serviceWorkers:'block'});
       await ctx.addInitScript(()=>{const Original=window.WebSocket;window.__qaSockets=[];window.WebSocket=class extends Original{constructor(...args){super(...args);window.__qaSockets.push(this);}};});
       const data=Player.createDefaultData();data.ownedCatSkins.push('cat_kaitou');data.ownedDogSkins.push('dog_detective');data.equippedAppearance.catSkinId='cat_kaitou';data.equippedAppearance.dogSkinId='dog_detective';
+      const monetization=Monetization.normalizeState({skillModeUnlocked:true,skillModeUnlockAdViews:3,ownedSkillIds:Object.values(Skills.SKILL_IDS)});
       if(process.env.NYAN_DEFAULT_DOG_FORFEIT_TEST==='yes'){
         data.ownedDogSkins=['default'];data.equippedAppearance.dogSkinId='default';
       }
@@ -34,7 +38,7 @@ const server=http.createServer(async(req,res)=>{
         if(index===0){data.ownedDogSkins=['default'];data.equippedAppearance.dogSkinId='default';}
         else{data.ownedCatSkins=['default'];data.equippedAppearance.catSkinId='default';}
       }
-      await ctx.addInitScript(({data,keys})=>{if(!localStorage.getItem(keys.playerData)){localStorage.setItem(keys.playerData,JSON.stringify(data));localStorage.setItem(keys.playerId,data.playerId);}}, {data,keys:Player.STORAGE_KEYS});
+      await ctx.addInitScript(({data,keys,monetization,monetizationKey})=>{if(!localStorage.getItem(keys.playerData)){localStorage.setItem(keys.playerData,JSON.stringify(data));localStorage.setItem(keys.playerId,data.playerId);}localStorage.setItem(monetizationKey,JSON.stringify(monetization));}, {data,keys:Player.STORAGE_KEYS,monetization,monetizationKey:Monetization.STORAGE_KEY});
       return ctx;
     }));
     const pages=await Promise.all(contexts.map(c=>c.newPage()));

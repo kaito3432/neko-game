@@ -7,6 +7,10 @@ export const SKINS = Object.freeze({
 });
 import {applyCpuUnlockClaim} from './cpu-unlock-claims.mjs';
 import {normalizeRanked,claimSeasonReward,masterPeriods,validateProfileFrame} from './ranked-progression.mjs';
+import {applyVerifiedRewardedAdCompletion,normalizeServerSkillEntitlements} from './skill-entitlements.mjs';
+import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
+import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
+import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
 const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
 
 export function initialProfile(input, playerId, now = Date.now()) {
@@ -19,7 +23,13 @@ export function initialProfile(input, playerId, now = Date.now()) {
   }
   profile.equippedAppearance = validateAppearance(profile, input.equippedAppearance);
   profile.profileCharacter = validateProfileCharacter(profile, input.profileCharacter);
+  profile.skillEntitlements=normalizeServerSkillEntitlements();
   return normalizeRanked(profile,now,{},KNOWN_REWARD_SKINS);
+}
+
+function normalizeOnlineProfile(profile,now,periods){
+  const normalized=normalizeRanked(profile,now,periods,KNOWN_REWARD_SKINS);
+  return {...normalized,skillEntitlements:normalizeServerSkillEntitlements(normalized.skillEntitlements)};
 }
 
 export function validateAppearance(profile, requested = {}) {
@@ -85,7 +95,7 @@ export async function profileRequest(storage, request, options={}) {
       await storage.put(key,profile);
       await storage.put(`profile-key:${profile.playerId}`,key);
     }else{
-      const normalized=normalizeRanked(profile,now,periods,KNOWN_REWARD_SKINS),index=await storage.get(`profile-key:${profile.playerId}`);
+      const normalized=normalizeOnlineProfile(profile,now,periods),index=await storage.get(`profile-key:${profile.playerId}`);
       if(JSON.stringify(normalized)!==JSON.stringify(profile))await storage.put(key,normalized);
       if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
       profile=normalized;
@@ -97,7 +107,7 @@ export async function profileRequest(storage, request, options={}) {
   const key = `profile:${await digestToken(token)}`;
   let profile = await storage.get(key);
   if (!profile) return reply({error: 'unauthorized'}, 401);
-  const normalized=normalizeRanked(profile,now,periods,KNOWN_REWARD_SKINS),index=await storage.get(`profile-key:${profile.playerId}`);
+  const normalized=normalizeOnlineProfile(profile,now,periods),index=await storage.get(`profile-key:${profile.playerId}`);
   if(JSON.stringify(normalized)!==JSON.stringify(profile))await storage.put(key,normalized);
   if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
   profile=normalized;
@@ -118,6 +128,33 @@ export async function profileRequest(storage, request, options={}) {
       profile.profileCharacter = validateProfileCharacter(profile, input.profileCharacter);
     await storage.put(key, profile);
     return reply({profile});
+  }
+  if(path==='/rewarded-ad-completion'&&request.method==='POST'){
+    try{
+      const input=await request.json();
+      const result=await applyVerifiedRewardedAdCompletion({storage,profileKey:key,profile,
+        rewardType:input.rewardType,verificationId:input.verificationId,verification:input.verification,
+        verify:options.verifyRewardedAd});
+      return reply({profile:result.profile,applied:result.applied,duplicate:result.duplicate});
+    }catch(error){
+      const code=error?.message||'invalid_reward_completion';
+      const status=code==='reward_verification_unavailable'?503:code==='reward_not_verified'?403:400;
+      return reply({error:code},status);
+    }
+  }
+  if(path==='/rewarded-ad-attempt'&&request.method==='POST'){
+    try{return reply(await createRewardedAdAttempt(storage,profile,(await request.json()).rewardType,now));}
+    catch(error){return reply({error:error?.message||'invalid_reward_attempt'},400);}
+  }
+  if(path==='/storekit-transaction'&&request.method==='POST'){
+    try{const result=await applyVerifiedStoreTransaction({storage,profileKey:key,profile,signedTransaction:(await request.json()).signedTransaction,verify:options.verifyStoreTransaction});
+      return reply({profile:result.profile,transaction:result.receipt,duplicate:result.duplicate});}
+    catch(error){const code=error?.message||'invalid_store_transaction';return reply({error:code},code.includes('unavailable')?503:403);}
+  }
+  if(path==='/google-play-purchase'&&request.method==='POST'){
+    try{const input=await request.json(),result=await applyVerifiedGooglePlayPurchase({storage,profileKey:key,profile,purchaseToken:input.purchaseToken,productId:input.productId,verify:options.verifyGooglePlayPurchase,acknowledge:options.acknowledgeGooglePlayPurchase});
+      return reply({profile:result.profile,purchase:result.receipt,duplicate:result.duplicate});}
+    catch(error){const code=error?.message||'invalid_google_play_purchase';return reply({error:code},code.includes('unavailable')?503:403);}
   }
   if(path==='/profile-frame'&&request.method==='POST'){
     const {frameId}=await request.json();

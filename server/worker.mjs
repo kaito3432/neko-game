@@ -1,12 +1,15 @@
 import { DurableObject } from "cloudflare:workers";
 import { profileRequest, appearanceSnapshot, publicPlayerProfiles } from './online-profile.mjs';
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
-import { acceptRandomAction } from './random-game-validation.mjs';
+import { acceptRandomAction,validateAbilityUse } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
 import {disconnected,reconnected,deadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
 import {syncTurnClock,turnTimeout,actorState} from './turn-clock.mjs';
 import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile} from './ranked-progression.mjs';
+import {acceptVerifiedAdMobSsv,verifyStoredRewardedAd} from './rewarded-ad-verification.mjs';
+import {verifyStoreKitTransaction} from './storekit-verification.mjs';
+import {verifyGooglePlayPurchase,acknowledgeGooglePlayPurchase} from './google-play-verification.mjs';
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -17,7 +20,19 @@ const withWinnerPlayerId=(room,result)=>{
 };
 
 export class OnlinePlayers extends DurableObject {
-  profileOptions(){return {masterRewardPeriods:this.env.MASTER_REWARD_PERIODS};}
+  profileOptions(){
+    const verifier=this.env.REWARDED_AD_VERIFIER;
+    return {masterRewardPeriods:this.env.MASTER_REWARD_PERIODS,
+      verifyRewardedAd:async claim=>{
+        if(await verifyStoredRewardedAd(this.ctx.storage,claim))return true;
+        if(!verifier)return false;
+        const response=await verifier.fetch('https://reward-verifier/verify',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(claim)});
+        if(!response.ok)return false;
+        return (await response.json()).verified===true;
+      },verifyStoreTransaction:signedTransaction=>verifyStoreKitTransaction(signedTransaction,{env:this.env}),
+      verifyGooglePlayPurchase:purchase=>verifyGooglePlayPurchase(purchase,{env:this.env}),
+      acknowledgeGooglePlayPurchase:receipt=>acknowledgeGooglePlayPurchase(receipt)};
+  }
   async applyRankedMatch(match,input){
     if(!eligibleRankedResult(match,input))return match;
     match.rankedResults||={};const periods=masterPeriods(this.env.MASTER_REWARD_PERIODS);
@@ -46,6 +61,12 @@ export class OnlinePlayers extends DurableObject {
     return this.ctx.blockConcurrencyWhile(async () => {
       try {
         const path = new URL(request.url).pathname;
+        if(path==='/internal/admob-ssv'){
+          if(!this.env.ADMOB_REWARDED_AD_UNIT_ID||!this.env.ADMOB_SKILL_MODE_REWARD_ITEM)throw new Error('admob_ssv_not_configured');
+          const {url}=await request.json();
+          const result=await acceptVerifiedAdMobSsv(this.ctx.storage,url,{allowedAdUnitId:this.env.ADMOB_REWARDED_AD_UNIT_ID,expectedRewardItem:this.env.ADMOB_SKILL_MODE_REWARD_ITEM});
+          return Response.json(result);
+        }
         if(path==='/internal/active'){
           const {playerId,roomCode}=await request.json();
           await this.ctx.storage.put(`active:${playerId}`,{roomCode});return Response.json({ok:true});
@@ -589,6 +610,10 @@ async broadcastPresence() {
   const control=sessionEvent(room,sender,payload);
   if(control!==null){
     if(control===false)return;
+    if(control.skillError){
+      try{ws.send(JSON.stringify({type:'gameError',error:control.skillError}));}catch(_){}
+      return;
+    }
     if(control.type==='policeSelection')room.selectedDog=control.dogIndex;
     const justStarted=startIfReady(room,this.connectedPlayers());
     syncTurnClock(room);
@@ -600,6 +625,11 @@ async broadcastPresence() {
   }
   if (room.matchType === 'randomMatch' || room.profiles?.host && room.profiles?.guest) {
     if(!hasStarted(room))return;
+    const abilityUse=validateAbilityUse(room,senderRole,payload);
+    if(!abilityUse.ok){
+      try{ws.send(JSON.stringify({type:'gameError',error:abilityUse.error}));}catch(_){}
+      return;
+    }
     if (!acceptRandomAction(room, senderRole, payload)) return;
     await this.ctx.storage.put('room', room);
   }
@@ -1442,7 +1472,11 @@ export default {
     }
 
     const players = () => env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
-    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active|profile-frame|season-reward)$/);
+    if(url.pathname==='/api/ads/admob/ssv'&&request.method==='GET'){
+      const response=await players().fetch(new Request('https://players/internal/admob-ssv',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:request.url})}));
+      return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
+    }
+    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|storekit-transaction|google-play-purchase)$/);
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));

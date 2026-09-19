@@ -1758,6 +1758,40 @@
         <input id="bgmVolumeSlider" type="range" min="0" max="100" step="1" value="72" aria-label="BGM音量">
         <strong id="bgmVolumeValue">72%</strong>
       </div>
+      <section class="skill-mode-unlock" id="skillModeUnlockPanel">
+        <div class="skill-mode-unlock-title"><span>✨</span><div><strong>スキルモードを永久解放</strong><small>広告を3回見ると、ずっと遊べます</small></div></div>
+        <div class="skill-mode-progress"><span id="skillModeUnlockProgress">0 / 3</span><div id="skillModeUnlockDots" aria-hidden="true"></div></div>
+        <button type="button" id="skillModeAdButton">広告を見る</button>
+        <small id="skillModeAdStatus" aria-live="polite">広告を準備しています</small>
+      </section>
+      <section class="storekit-panel" id="storeKitPanel">
+        <div class="storekit-heading"><span>🛍️</span><div><h3>スキルストア</h3><small>スキルは1試合につき1つ選べます</small></div></div>
+        <small id="storeKitStatus" class="storekit-status" aria-live="polite">商品を確認しています</small>
+        <div id="storeKitProducts" class="storekit-products"></div>
+        <button type="button" id="storeKitRestore" class="storekit-restore">購入を復元</button>
+        <small class="storekit-note">購入済みの商品は、同じApple Accountで復元できます</small>
+      </section>
+      <section class="monetization-dev" id="monetizationDevPanel" hidden aria-label="開発用広告・課金確認">
+        <h3>開発用広告・課金</h3>
+        <dl>
+          <div><dt>広告状態</dt><dd id="monetizationAdsState">広告あり</dd></div>
+          <div><dt>購入済み</dt><dd id="monetizationPurchasedProducts">なし</dd></div>
+          <div><dt>リワード</dt><dd id="monetizationRewardState">未実行</dd></div>
+          <div><dt>スキルモード</dt><dd id="monetizationSkillModeState">未解放 0/3</dd></div>
+          <div><dt>所有スキル</dt><dd id="monetizationOwnedSkills">無料スキル</dd></div>
+          <div><dt>PACK 01</dt><dd id="monetizationSkillPackState">未所有</dd></div>
+        </dl>
+        <div class="monetization-dev-actions">
+          <button type="button" id="monetizationRewardTest">リワードテスト</button>
+          <button type="button" id="monetizationSkillUnlockAdTest">スキル解放広告を1回見る</button>
+          <button type="button" id="monetizationPurchaseFakePaw">フェイク肉球をモック購入</button>
+          <button type="button" id="monetizationPurchaseGroupSearch">一斉捜索をモック購入</button>
+          <button type="button" id="monetizationPurchaseDash">ダッシュをモック購入</button>
+          <button type="button" id="monetizationPurchaseSkillPack01">SKILL PACK 01をモック購入</button>
+          <button type="button" id="monetizationPurchaseRemoveAds">広告削除をモック購入</button>
+          <button type="button" id="monetizationRestoreTest">購入をモック復元</button>
+        </div>
+      </section>
     </div>
     <div class="settings-actions">
       <button class="btn" id="backToTitleBtn" type="button">🏠 タイトルへ戻る</button>
@@ -1788,17 +1822,30 @@
 <script src="./collection-catalog.js?v=1.0.daily1"></script>
 <script src="./collection.js?v=1.0.daily1"></script>
 <script src="./skin-presentation.js?v=1.0.defaultloss1"></script>
+<script src="./skill-catalog.js?v=1.0.phase2"></script>
+<script src="./monetization-products.js?v=2.0.phase2"></script>
+<script src="./monetization.js?v=2.0.phase2"></script>
+<script src="./monetization-ui.js?v=2.0.phase2"></script>
+<script src="./ad-config.js?v=1.0.phase5"></script>
+<script src="./rewarded-ad-provider.js?v=1.0.phase5"></script>
+<script src="./rewarded-ad-ui.js?v=1.0.phase5"></script>
+<script src="./storekit-provider.js?v=1.0.phase6"></script>
+<script src="./google-play-provider.js?v=1.0.phase8"></script>
+<script src="./purchase-provider.js?v=1.0.phase8"></script>
+<script src="./store-ui-model.js?v=1.0.phase7"></script>
+<script src="./storekit-ui.js?v=2.0.phase7"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./result-presentation.js?v=1"></script>
+<script src="./api-environment.js?v=1.0.sandbox-ready"></script>
 <script src="./online-identity.js?v=1.0"></script>
 <script src="./online-appearance.js?v=1"></script>
 <script src="./online.js?v=3.0.result-recovery1"></script>
 <script src="./online-profile-ui.js?v=1"></script>
 <script src="./ranked-ui.js?v=1.0"></script>
 <script src="./random-match.js?v=1.0"></script>
-<script src="./game.js?v=2.0.home-bgm1"></script>
+<script src="./game.js?v=2.1.skill-entitlements"></script>
 
 <script>
 if ("serviceWorker" in navigator) {
