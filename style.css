@@ -9232,6 +9232,103 @@ body.sneak-mode .board-shell{
 /* The same how-to diagrams are rendered inside the shop's scrollable detail. */
 .shop-overlay .shop-preview-overlay .howto-ability-visual{box-sizing:border-box;max-width:100%;min-width:0;margin-top:10px;padding:10px;overflow:hidden}
 .shop-overlay .shop-preview-overlay .howto-ability-visual>.skill-demo{max-width:100%;min-width:0}
-.shop-overlay #shopPreviewUseCondition{margin:10px 0 4px;padding:8px;border-radius:10px;background:#f6ecdf;font-size:11px;line-height:1.45;text-align:left}
-.shop-overlay #shopPreviewOwnership{margin:7px 0 2px}
 @media(max-width:390px),(max-height:700px){.shop-overlay .shop-preview-overlay .howto-ability-visual{min-height:0;margin-top:7px;padding:7px}.shop-overlay .shop-preview-overlay .howto-ability-detail{margin-top:6px}.shop-overlay .shop-preview-art{width:68px;height:68px;margin:2px auto 6px}}
+
+/* Keep shop actions reachable while only the skill description scrolls. */
+.shop-overlay .shop-preview-overlay{
+  box-sizing:border-box;
+  padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+  overflow:hidden;
+}
+.shop-overlay .shop-preview-overlay .howto-ability-preview{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  max-height:100%;
+  overflow:hidden;
+}
+.shop-overlay .shop-preview-body{
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.shop-overlay .shop-preview-actions{
+  display:grid;
+  flex:none;
+  gap:7px;
+  padding-top:8px;
+  background:#fffaf1;
+}
+.shop-overlay #shopPreviewPurchase,
+.shop-overlay #shopPreviewClose{
+  min-height:42px;
+  margin:0;
+}
+.shop-overlay .shop-preview-overlay .howto-ability-visual,
+.shop-overlay .shop-preview-overlay .howto-ability-visual>.skill-demo{
+  max-width:100%;
+  min-width:0;
+}
+.shop-overlay .shop-preview-overlay .fake-demo-normal,
+.shop-overlay .shop-preview-overlay .fake-demo-special{
+  flex-wrap:wrap;
+  gap:6px;
+}
+.shop-overlay .shop-preview-overlay .fake-route{
+  min-width:0;
+}
+@media(max-width:380px),(max-height:850px){
+  .shop-overlay .shop-preview-overlay .howto-ability-preview{padding:12px;}
+  .shop-overlay .shop-preview-art{width:72px;height:72px;margin:2px auto 6px;}
+  .shop-overlay .shop-preview-overlay .howto-ability-kicker{margin-bottom:6px;}
+  .shop-overlay .shop-preview-overlay .howto-ability-name{margin-bottom:2px;font-size:19px;}
+  .shop-overlay .shop-preview-overlay .howto-ability-desc{font-size:12px;line-height:1.35;}
+  .shop-overlay .shop-preview-overlay .howto-ability-visual{min-height:0;margin-top:7px;padding:7px;}
+  .shop-overlay .shop-preview-overlay .howto-ability-detail{margin-top:6px;padding:6px 8px;line-height:1.4;}
+  .shop-overlay #shopPreviewPrice{margin:4px 0;font-size:15px;}
+  .shop-overlay #shopPreviewPurchase,.shop-overlay #shopPreviewClose{min-height:40px;}
+}
+
+/* Separate ownership, individual purchase and the existing pack option. */
+.shop-overlay .shop-preview-ownership{
+  display:table;
+  margin:0 auto 5px;
+  padding:2px 9px;
+  border-radius:999px;
+  background:#eee6df;
+  color:#735f54;
+  font-size:11px;
+  font-weight:800;
+}
+.shop-overlay .shop-preview-ownership.is-owned{background:#e6f3df;color:#507a47;}
+.shop-overlay .shop-preview-ownership[hidden],
+.shop-overlay #shopPreviewPrice[hidden],
+.shop-overlay .shop-preview-pack[hidden]{display:none;}
+.shop-overlay .shop-preview-actions #shopPreviewPrice{margin:0;font-size:15px;line-height:1.3;}
+.shop-overlay .shop-preview-pack{
+  box-sizing:border-box;
+  display:grid;
+  gap:2px;
+  min-width:0;
+  padding:8px 10px;
+  border:1px solid #e7d5ba;
+  border-radius:11px;
+  background:#fff7e9;
+  text-align:left;
+}
+.shop-overlay .shop-preview-pack strong{font-size:12px;line-height:1.3;}
+.shop-overlay .shop-preview-pack small{color:#79695e;font-size:10px;line-height:1.3;}
+.shop-overlay .shop-preview-pack button{
+  justify-self:start;
+  min-height:28px;
+  padding:2px 0;
+  border:0;
+  background:none;
+  color:#865b42;
+  font:inherit;
+  font-size:11px;
+  font-weight:800;
+  text-decoration:underline;
+}

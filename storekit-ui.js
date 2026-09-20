@@ -61,17 +61,26 @@
     const image=document.getElementById('shopPreviewImage');image.src=info?.image||'';image.alt=skill.name;
     document.getElementById('shopPreviewVisual').innerHTML=info?.visual||'';
     document.getElementById('shopPreviewDetail').innerHTML=info?.detail||'';
-    document.getElementById('shopPreviewUseCondition').textContent='使用条件：スキルモード解放後、1試合につき1つ選択できます。';
     const owned=root.NyanMonetization.isSkillOwned(skillId),view=root.NyanStoreUIModel.build(root.NyanMonetization,products,activeProductId).find(item=>item.skillId===skillId);
     const packIncludes=Object.values(root.NyanSkillCatalog.SKILL_PACKS).some(pack=>pack.skillIds.includes(skillId));
-    document.getElementById('shopPreviewOwnership').textContent=`${skill.free?'無料':owned?'所持済み':'未所持・有料'}${packIncludes?' · スキル3点パックに含まれます':''}`;
-    document.getElementById('shopPreviewPrice').textContent=skill.free?'':view?.displayPrice||'';
+    const ownership=document.getElementById('shopPreviewOwnership');ownership.hidden=skill.free;
+    ownership.textContent=skill.free?'':owned?'所有済み':'未所持';
+    ownership.classList.toggle('is-owned',owned);
+    const price=document.getElementById('shopPreviewPrice');price.hidden=skill.free||!view?.displayPrice;
+    price.textContent=skill.free?'':view?.displayPrice||'';
+    document.getElementById('shopPreviewPack').hidden=skill.free||!packIncludes;
     previewBuy.hidden=skill.free;previewBuy.disabled=owned||!view?.available||Boolean(activeProductId);
     previewBuy.textContent=owned?'所持済み':view?.available?'購入する':'現在購入できません';
+    preview.querySelector('.shop-preview-body').scrollTop=0;
     preview.classList.add('show');preview.setAttribute('aria-hidden','false');
   }
   previewBuy?.addEventListener('click',()=>{if(selectedSkillId)buy(skills[selectedSkillId].purchaseProductId);});
   document.getElementById('shopPreviewClose')?.addEventListener('click',()=>{preview.classList.remove('show');preview.setAttribute('aria-hidden','true');selectedSkillId=null;});
+  document.getElementById('shopPreviewPackLink')?.addEventListener('click',()=>{
+    preview.classList.remove('show');preview.setAttribute('aria-hidden','true');selectedSkillId=null;
+    const heading=document.querySelector('.shop-pack-section h3');
+    heading?.scrollIntoView({block:'start'});heading?.focus({preventScroll:true});
+  });
   document.querySelectorAll('[data-shop-category]').forEach(button=>button.addEventListener('click',()=>{category=button.dataset.shopCategory;selectedSkillId=null;preview?.classList.remove('show');preview?.setAttribute('aria-hidden','true');render();}));
   document.querySelectorAll('[data-shop-role]').forEach(button=>button.addEventListener('click',()=>{role=button.dataset.shopRole;render();}));
   async function load(){

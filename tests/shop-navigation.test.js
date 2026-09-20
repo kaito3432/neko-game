@@ -44,7 +44,7 @@ test('ショップは単一カテゴリを描画し、解放導線と復元を�
 });
 
 test('全5スキルの図解を遊び方とショップで共用する',()=>{
-  const game=read('game.js'),shop=read('storekit-ui.js'),html=read('index.html');
+  const game=read('game.js').replace(/\r\n/g,'\n'),shop=read('storekit-ui.js'),html=read('index.html');
   const start=game.indexOf('const howToSkillDescriptions=');
   const end=game.indexOf('\n};\nwindow.NyanHowToSkillDescriptions',start)+3;
   assert.ok(start>=0&&end>start);
