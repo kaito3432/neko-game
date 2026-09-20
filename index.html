@@ -176,6 +176,7 @@
       <span>コレクション</span>
     </button>
     <button id="dailyOpenBtn" type="button">📅 デイリー 0/3</button>
+    <button id="shopOpenBtn" type="button">🛍️ ショップ</button>
     </div>
 
     <div class="vu3-bottom">
@@ -269,7 +270,7 @@
           <p data-unlock-description></p>
           <span data-unlock-progress></span>
         </section>
-        <div class="collection-profile-preview">
+        <div class="collection-profile-preview" data-detail-profile-preview>
           <img data-detail-profile-image src="" alt="">
           <div><small>プロフィール画像プレビュー</small><strong data-detail-name>スキン詳細</strong></div>
         </div>
@@ -838,6 +839,8 @@
 
     </div>
 
+    <button class="skill-unlock-entry" id="localSkillUnlockOpen" type="button">✨ スキルモードを解放する</button>
+
     <button
       class="btn"
       id="localRuleBackBtn"
@@ -966,6 +969,8 @@
       </button>
 
     </div>
+
+    <p id="onlineSkillModeNotice" hidden>この対戦では通常戦のみ</p>
 
 
     <button
@@ -1758,18 +1763,34 @@
         <input id="bgmVolumeSlider" type="range" min="0" max="100" step="1" value="72" aria-label="BGM音量">
         <strong id="bgmVolumeValue">72%</strong>
       </div>
-      <section class="skill-mode-unlock" id="skillModeUnlockPanel">
-        <div class="skill-mode-unlock-title"><span>✨</span><div><strong>スキルモードを永久解放</strong><small>広告を3回見ると、ずっと遊べます</small></div></div>
-        <div class="skill-mode-progress"><span id="skillModeUnlockProgress">0 / 3</span><div id="skillModeUnlockDots" aria-hidden="true"></div></div>
-        <button type="button" id="skillModeAdButton">広告を見る</button>
-        <small id="skillModeAdStatus" aria-live="polite">広告を準備しています</small>
-      </section>
+    </div>
+    <div class="settings-actions">
+      <button class="btn" id="backToTitleBtn" type="button">🏠 タイトルへ戻る</button>
+    </div>
+    <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
+  </div>
+</div>
+
+<section class="skill-unlock-overlay" id="skillUnlockOverlay" role="dialog" aria-modal="true" aria-label="スキルモード解放" hidden>
+  <div class="skill-unlock-shell">
+    <button id="skillUnlockClose" class="skill-unlock-back" type="button">← ルール選択へ戻る</button>
+    <section class="skill-mode-unlock" id="skillModeUnlockPanel">
+      <div class="skill-mode-unlock-title"><span>✨</span><div><strong>スキルモードを永久解放</strong><small>広告を3回見ると、ずっと遊べます</small></div></div>
+      <div class="skill-mode-progress"><span id="skillModeUnlockProgress">0 / 3</span><div id="skillModeUnlockDots" aria-hidden="true"></div></div>
+      <button type="button" id="skillModeAdButton">広告を見る</button>
+      <small id="skillModeAdStatus" aria-live="polite">広告を準備しています</small>
+    </section>
+  </div>
+</section>
+
+<section class="shop-overlay" id="shopOverlay" role="dialog" aria-modal="true" aria-labelledby="shopHeading" hidden>
+  <div class="shop-shell">
+    <header class="shop-header"><button id="shopCloseBtn" type="button" aria-label="ショップを閉じる">←</button><h2 id="shopHeading">ショップ</h2></header>
+    <nav class="shop-categories" aria-label="商品カテゴリ"><button type="button" class="active" data-shop-category="skills">スキル</button><button type="button" data-shop-category="ads">広告</button></nav>
+    <div class="shop-content">
       <section class="storekit-panel" id="storeKitPanel">
-        <div class="storekit-heading"><span>🛍️</span><div><h3>スキルストア</h3><small>スキルは1試合につき1つ選べます</small></div></div>
-        <small id="storeKitStatus" class="storekit-status" aria-live="polite">商品を確認しています</small>
+        <div id="shopSkillBrowser" class="shop-skill-browser"><nav class="howto-skill-tabs" aria-label="スキルの役割"><button type="button" class="howto-skill-tab active" data-shop-role="cat">🐱 ネコ</button><button type="button" class="howto-skill-tab" data-shop-role="police">🐕 警察</button></nav><div id="shopSkillList" class="shop-skill-list"></div><div class="shop-pack-section"><h3>スキルパック</h3><div id="shopPackProducts" class="storekit-products"></div></div></div>
         <div id="storeKitProducts" class="storekit-products"></div>
-        <button type="button" id="storeKitRestore" class="storekit-restore">購入を復元</button>
-        <small class="storekit-note">購入済みの商品は、同じApple Accountで復元できます</small>
       </section>
       <section class="monetization-dev" id="monetizationDevPanel" hidden aria-label="開発用広告・課金確認">
         <h3>開発用広告・課金</h3>
@@ -1793,12 +1814,10 @@
         </div>
       </section>
     </div>
-    <div class="settings-actions">
-      <button class="btn" id="backToTitleBtn" type="button">🏠 タイトルへ戻る</button>
-    </div>
-    <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
+    <footer class="shop-footer"><small id="storeKitStatus" class="storekit-status" aria-live="polite">商品を確認しています</small><button type="button" id="storeKitRestore" class="storekit-restore">購入を復元</button></footer>
   </div>
-</div>
+  <div class="howto-skill-preview-overlay shop-preview-overlay" id="shopSkillPreview" aria-hidden="true"><div class="howto-ability-preview"><div class="howto-ability-kicker" id="shopPreviewRole"></div><img class="shop-preview-art" id="shopPreviewImage" alt=""><div class="howto-ability-name" id="shopPreviewName"></div><div class="howto-ability-desc" id="shopPreviewDescription"></div><div class="howto-ability-visual" id="shopPreviewVisual"></div><div class="howto-ability-detail" id="shopPreviewDetail"></div><p id="shopPreviewUseCondition"></p><p id="shopPreviewOwnership"></p><p id="shopPreviewPrice"></p><button type="button" id="shopPreviewPurchase" class="btn pink"></button><button type="button" id="shopPreviewClose" class="btn howto-ability-close">閉じる</button></div></div>
+</section>
 
 <div class="last-turn-banner" id="lastTurnBanner">🔥 LAST TURN 🔥</div>
 
@@ -1833,7 +1852,7 @@
 <script src="./google-play-provider.js?v=1.0.phase8"></script>
 <script src="./purchase-provider.js?v=1.0.phase8"></script>
 <script src="./store-ui-model.js?v=1.0.phase7"></script>
-<script src="./storekit-ui.js?v=2.0.phase7"></script>
+<script src="./storekit-ui.js?v=2.3.shared-preview"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
@@ -1845,7 +1864,7 @@
 <script src="./online-profile-ui.js?v=1"></script>
 <script src="./ranked-ui.js?v=1.0"></script>
 <script src="./random-match.js?v=1.0"></script>
-<script src="./game.js?v=2.1.skill-entitlements"></script>
+<script src="./game.js?v=2.3.skill-unlock-entry"></script>
 
 <script>
 if ("serviceWorker" in navigator) {

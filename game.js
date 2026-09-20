@@ -63,6 +63,12 @@
   let victoryCutinTimer=null;
   let celebrateResult=false;
   let playMode="local"; // local | cpuPolice | cpuCat
+  let battleBgmActive=false;
+  function beginBattleBgm(){
+    battleBgmActive=true;
+    Audio.setBgmMode("normal");
+    Audio.startBgm();
+  }
   let peerSelectedDog=null;
   window.addEventListener('nyan-online-appearance-changed',()=>{
     peerSelectedDog=null;
@@ -197,8 +203,9 @@ const howToCloseBtn = $("howToCloseBtn");
    let onlineSelfReady=false;
 let onlinePeerReady=false;
 let onlineGameStarted=false;
-   let onlinePeerDisconnected = false;
+let onlinePeerDisconnected = false;
 let onlineFoundTrackCount=0;
+let onlineSkillModeAvailable=false;
 
 function skillIdForRuntime(role,runtimeId){
   return window.NyanSkillCatalog?.fromRuntimeId(role,runtimeId)||null;
@@ -209,12 +216,21 @@ function canChooseRuntimeSkill(role,runtimeId){
 }
 function refreshSkillEntitlementUI(){
   const unlocked=window.NyanMonetization?.isSkillModeUnlocked()===true;
-  [localAbilityRuleBtn,onlineAbilityRuleBtn].forEach(button=>{
-    if(!button)return;
-    button.disabled=!unlocked;
-    button.setAttribute("aria-disabled",String(!unlocked));
-    button.title=unlocked?"":"リワード広告を3回視聴すると永久解放されます";
-  });
+  const localUnlockButton=document.getElementById("localSkillUnlockOpen");
+  if(localUnlockButton)localUnlockButton.hidden=unlocked;
+  if(unlocked && document.getElementById("skillUnlockOverlay"))document.getElementById("skillUnlockOverlay").hidden=true;
+  if(localAbilityRuleBtn){
+    localAbilityRuleBtn.disabled=!unlocked;
+    localAbilityRuleBtn.setAttribute("aria-disabled",String(!unlocked));
+    localAbilityRuleBtn.title=unlocked?"":"リワード広告を3回視聴すると永久解放されます";
+  }
+  if(onlineAbilityRuleBtn){
+    onlineAbilityRuleBtn.disabled=!onlineSkillModeAvailable;
+    onlineAbilityRuleBtn.setAttribute("aria-disabled",String(!onlineSkillModeAvailable));
+    onlineAbilityRuleBtn.title=onlineSkillModeAvailable?"":"この対戦では通常戦のみ";
+  }
+  const onlineNotice=document.getElementById("onlineSkillModeNotice");
+  if(onlineNotice)onlineNotice.hidden=onlineSkillModeAvailable;
   [[selectSneakBtn,"cat","sneak"],[selectFakePawBtn,"cat","fakePaw"],
    [selectHowlBtn,"police","howl"],[selectDashBtn,"police","dash"],
    [selectDoubleSearchBtn,"police","doubleSearch"]].forEach(([button,role,runtimeId])=>{
@@ -232,6 +248,7 @@ function refreshSkillEntitlementUI(){
 window.addEventListener("nyan-storekit-entitlements",refreshSkillEntitlementUI);
 window.addEventListener("nyan-purchase-entitlements",refreshSkillEntitlementUI);
 window.addEventListener("nyan-online-profile",refreshSkillEntitlementUI);
+window.addEventListener("nyan-rewarded-ad-progress",refreshSkillEntitlementUI);
 
 
    
@@ -246,6 +263,7 @@ let onlineIsHost=false;
   onlineFoundTrackCount=0;
 onlinePeerDisconnected=false;
       onlineIsHost=false;
+      onlineSkillModeAvailable=false;
 
       onlineRule=null;
 onlineSelfAbility=null;
@@ -523,6 +541,7 @@ const backToTitleBtn=$("backToTitleBtn");
   window.addEventListener('nyan-online-recovery',({detail:d})=>{
     document.documentElement.classList.remove('online-boot');
     onlineAssignedRole=d.role;onlineIsHost=d.player==='host';onlinePeerDisconnected=false;
+    onlineSkillModeAvailable=d.skillModeAvailable===true;
     onlineRule=d.rule;onlineSelfReady=Boolean(d.ready[d.player]);onlinePeerReady=Boolean(d.ready[d.player==='host'?'guest':'host']);
     if(!onlineSelfReady||!onlinePeerReady){
       onlineOverlay.classList.add('show');
@@ -551,6 +570,7 @@ const backToTitleBtn=$("backToTitleBtn");
       s.phase==='cat'?(d.role==='cat'?'cat':'onlineWaitingCatMove'):
       d.role==='cat'?'onlineWaitingPolice':'dogs';
     [modeOverlay,onlineOverlay,privacyOverlay,onlineRuleOverlay,abilityRevealOverlay,catAbilityOverlay,policeAbilityOverlay].forEach(el=>el?.classList.remove('show'));
+    beginBattleBgm();
     render();setMessage('対戦に復帰しました');
   });
   window.addEventListener('nyan-online-ended',({detail:d})=>{
@@ -672,6 +692,8 @@ onlineRuleOverlay?.classList.remove("show");
   });
 
   function initGame(showMode=false){
+    const returningFromBattle=showMode && battleBgmActive;
+    battleBgmActive=false;
     game=E.createState();
     dailyBattle=showMode ? null : window.NyanDailyMissions?.beginBattle(playMode,cpuDifficulty);
     window.NyanDailyMissions?.hideResult();
@@ -718,9 +740,8 @@ resultFakeTracks=[];
       modeOverlay.classList.add("show");
     }
     render();
-    // renderStatus() selects the in-game track, so confirm the home track
-    // after the shared render pass when returning to the mode-selection home.
-    if(showMode) Audio.setBgmMode("home");
+    // A home modal may reset UI state, but must not restart the home track.
+    if(returningFromBattle){Audio.setBgmMode("home");Audio.startBgm();}
   }
 
 // =====================================
@@ -1016,7 +1037,7 @@ onlineAbilityRevealSent=false;
 function startOnlineAbilityRule(){
 
   if(!onlineIsHost) return;
-  if(!window.NyanMonetization?.isSkillModeUnlocked()) return;
+  if(!onlineSkillModeAvailable) return;
 
   onlineRule="ability";
 
@@ -1054,7 +1075,6 @@ function startOnlineGame(){
   abilityStartBtn.disabled=false;
   abilityStartBtn.textContent="ゲーム開始";
 
-  Audio.setBgmMode("normal");
   Audio.play("gamestart");
 
 
@@ -1074,6 +1094,7 @@ function startOnlineGame(){
 
   // ゲーム本体を初期化
   initGame(false);
+  beginBattleBgm();
 
 
   // =============================
@@ -1153,6 +1174,7 @@ function startLocalNormalMode(){
   playMode="local";
 
   initGame(false);
+  beginBattleBgm();
 
   // 特殊スキルを完全OFF
   game.abilitiesEnabled=false;
@@ -1215,8 +1237,6 @@ function startLocalMode(){
 
   // まず警察側の特殊スキル選択へ
   policeAbilityOverlay.classList.add("show");
-
-  Audio.setBgmMode("normal");
 
   render();
 }
@@ -1375,6 +1395,7 @@ requestAnimationFrame(()=>{
 
   abilityRevealOverlay.classList.remove("show");
 
+  beginBattleBgm();
   Audio.play("gamestart");
 
   showPrivacy(
@@ -1406,12 +1427,12 @@ requestAnimationFrame(()=>{
   function beginCpuPoliceGame(difficulty){
     cpuDifficulty=difficulty;
     difficultyOverlay.classList.remove("show");
-    Audio.setBgmMode("normal");
     Audio.play("gamestart");
 
     if(pendingCpuSide==="cat"){
       playMode="cpuPolice";
       initGame(false);
+      beginBattleBgm();
       cpuSetupDogs();
       game.phase="catSetup";
       game.turn=1;
@@ -1427,6 +1448,7 @@ requestAnimationFrame(()=>{
     // Player = police / CPU = cat
     playMode="cpuCat";
     initGame(false);
+    beginBattleBgm();
     game.phase="dogSetup";
     game.turn=0;
 
@@ -3492,12 +3514,12 @@ return;
       Audio.haptic([30,35,30]);
     }
 
-    // BGM changes reliably for the final 3 escape turns.
-    if(game.turn>0 && remaining<=3 && !game.gameOver){
+    // Only an active match changes tracks; home and pregame renders keep home BGM.
+    if(battleBgmActive && game.turn>0 && remaining<=3 && !game.gameOver){
       Audio.setBgmMode("tension");
       document.body.classList.add("final-three");
     }else{
-      Audio.setBgmMode("normal");
+      if(battleBgmActive && !game.gameOver)Audio.setBgmMode("normal");
       document.body.classList.remove("final-three");
     }
 
@@ -6309,6 +6331,7 @@ bindPress(
 
        onRole:(data)=>{
   onlineAssignedRole=data.role;
+  onlineSkillModeAvailable=data.skillModeAvailable===true;
 onlineStartGameBtn.hidden=false;
   if(window.NyanOnline.getSession().matchType==='randomMatch') {
     if(onlineRule || onlineGameStarted)return;
@@ -7406,6 +7429,7 @@ if(isNewTrack){
       },
        onRole:(data)=>{
     onlineAssignedRole=data.role;
+    onlineSkillModeAvailable=data.skillModeAvailable===true;
     onlineStartGameBtn.hidden=false;      
 
     if(data.role==="cat"){
@@ -8843,6 +8867,19 @@ search:{
 }
 
 };
+window.NyanHowToSkillDescriptions=howToSkillDescriptions;
+
+const shopOpenBtn=$("shopOpenBtn"),shopCloseBtn=$("shopCloseBtn"),shopOverlay=$("shopOverlay");
+bindPress(shopOpenBtn,()=>{shopOverlay.hidden=false;shopOverlay.setAttribute("aria-hidden","false");window.NyanShopRefresh?.();});
+bindPress(shopCloseBtn,()=>{shopOverlay.hidden=true;shopOverlay.setAttribute("aria-hidden","true");$("shopPreviewClose")?.click();});
+const skillUnlockOverlay=$("skillUnlockOverlay");
+bindPress($("localSkillUnlockOpen"),()=>{
+  skillUnlockOverlay.hidden=false;
+});
+bindPress($("skillUnlockClose"),()=>{
+  skillUnlockOverlay.hidden=true;
+  refreshSkillEntitlementUI();
+});
 
 
 function openHowToSkillPreview(skill){
@@ -9015,10 +9052,7 @@ bindPress(resultHomeBtn,()=>{
   // ゲーム状態を初期化してホームへ
   initGame(true);
 });
-   bindPress(againBtn,()=>{
-  Audio.setBgmMode("normal");
-  Audio.startBgm();
-
+bindPress(againBtn,()=>{
   // オンライン対戦終了後はホームへ戻す
   if(
     playMode==="onlineCat" ||
@@ -9035,6 +9069,7 @@ bindPress(resultHomeBtn,()=>{
     Audio.play("gamestart");
 
     initGame(false);
+    beginBattleBgm();
 
     game.phase="dogSetup";
     game.turn=0;
@@ -9064,6 +9099,7 @@ bindPress(resultHomeBtn,()=>{
     Audio.play("gamestart");
 
     initGame(false);
+    beginBattleBgm();
 
     cpuSetupDogs();
     game.phase="catSetup";
@@ -9089,11 +9125,17 @@ bindPress(resultHomeBtn,()=>{
     return;
   }
 
- // 通常の対人戦
+ // 対人戦の前回ルールを保持し、通常戦はスキル選択を経由しない。
+if(game.abilitiesEnabled!==true){
+  startLocalNormalMode();
+  return;
+}
 initGame(false);
 
 // 特殊スキル選択を初期化
 game.abilitiesEnabled=true;
+Audio.setBgmMode("home");
+Audio.startBgm();
 
 game.selectedAbilities={
   cat:null,

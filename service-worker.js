@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v26-android-monetization-phase8-20260918";
+const CACHE_NAME = "nyan-chase-v31-home-loop-collection-20260919";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",

@@ -27,6 +27,10 @@
     return categoryId==="catSkin" || categoryId==="dogSkin";
   }
 
+  function supportsProfilePreview(categoryId){
+    return isCharacterSkin(categoryId) || categoryId==="profileFrame";
+  }
+
   function getEquipLabel(categoryId,state){
     if(state==="unowned") return "🔒 未所持";
     if(isCharacterSkin(categoryId)){
@@ -385,6 +389,9 @@
       const state=getItemState(data,item,catalog);
       const collectionImage=detail.querySelector("[data-detail-collection-image]");
       const profileImage=detail.querySelector("[data-detail-profile-image]");
+      const profilePreview=detail.querySelector("[data-detail-profile-preview]");
+      const showProfilePreview=supportsProfilePreview(item.category);
+      if(profilePreview)profilePreview.hidden=!showProfilePreview;
       const names=[...detail.querySelectorAll("[data-detail-name]")];
       const stateLabel=detail.querySelector("[data-detail-state]");
       const equipButton=detail.querySelector("[data-detail-equip]");
@@ -424,7 +431,7 @@
         collectionImage.dataset.itemId=item.id;
         collectionImage.classList.toggle("uses-silhouette-source",silhouetteSource);
       }
-      if(profileImage){
+      if(profileImage && showProfilePreview){
         profileImage.onerror=()=>{
           profileImage.onerror=null;
           if(state==="unowned") profileImage.removeAttribute("src");
@@ -434,6 +441,9 @@
         if(source) profileImage.src=source;
         else profileImage.removeAttribute("src");
         profileImage.alt=`${item.name} プロフィール画像`;
+      }else if(profileImage){
+        profileImage.onerror=null;
+        profileImage.removeAttribute("src");
       }
       names.forEach(name=>setText(name,item.name));
       setText(stateLabel,state==="equipped" ? "装備中" : state==="owned" ? "所持" : "🔒 未所持");
@@ -603,6 +613,7 @@
   const api=Object.freeze({
     SECTION_CATEGORIES,
     isCharacterSkin,
+    supportsProfilePreview,
     getEquipLabel,
     getItemState,
     displayImage,

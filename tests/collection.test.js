@@ -92,6 +92,25 @@ test("未所持立ち絵内は中央の疑問符だけを表示する",()=>{
   assert.doesNotMatch(detailSource,/collection-lock[\s\S]{0,180}🔒 未所持/);
 });
 
+test("非プロフィールカテゴリは詳細だけを維持しプロフィールプレビューを隠す",()=>{
+  const source=fs.readFileSync(path.resolve(__dirname,"..","collection.js"),"utf8");
+  const html=fs.readFileSync(path.resolve(__dirname,"..","index.html"),"utf8");
+  const css=fs.readFileSync(path.resolve(__dirname,"..","style.css"),"utf8");
+  for(const category of ["cardboard","paw","boardTheme"]){
+    assert.ok(Catalog.getItem(category,"default"));
+    assert.equal(Collection.supportsProfilePreview(category),false);
+  }
+  for(const category of ["catSkin","dogSkin","profileFrame"]){
+    assert.equal(Collection.supportsProfilePreview(category),true);
+  }
+  assert.match(source,/showProfilePreview=supportsProfilePreview\(item\.category\)/);
+  assert.match(source,/profilePreview\.hidden=!showProfilePreview/);
+  assert.match(source,/else if\(profileImage\)\{\s*profileImage\.onerror=null;\s*profileImage\.removeAttribute\("src"\)/);
+  assert.match(html,/data-detail-profile-preview/);
+  assert.match(html,/id="collectionDetail"[\s\S]*?data-detail-collection-image/);
+  assert.match(css,/\.collection-profile-preview\[hidden\]\{display:none\}/);
+});
+
 test("defaultアイテムを全カテゴリで装備中と判定する",()=>{
   const data=createData();
   Catalog.ITEMS.filter(item=>item.id==="default").forEach(item=>{

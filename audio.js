@@ -75,6 +75,43 @@ const sfxBufferCache=new Map();
 let audioContext=null;
 let bgmSource=null;
 let bgmGain=null;
+let bgmLoopGain=null;
+let loopFade=1;
+let loopFrame=null;
+let fallbackDuckScale=1;
+const HOME_LOOP_FADE_SECONDS=.35;
+
+function updateHomeLoopFade(){
+  if(!bgmAudio) return;
+  const remaining=Number.isFinite(bgmAudio.duration)
+    ?bgmAudio.duration-bgmAudio.currentTime:Infinity;
+  loopFade=bgmMode==="home" && bgmStarted && settings.bgm
+    ?Math.max(0,Math.min(1,bgmAudio.currentTime/HOME_LOOP_FADE_SECONDS,remaining/HOME_LOOP_FADE_SECONDS))
+    :1;
+  if(bgmLoopGain) bgmLoopGain.gain.value=loopFade;
+  else applyBgmVolume();
+}
+
+function stopHomeLoopMonitor(){
+  if(loopFrame!==null && typeof cancelAnimationFrame==="function")cancelAnimationFrame(loopFrame);
+  loopFrame=null;
+  loopFade=1;
+  if(bgmLoopGain)bgmLoopGain.gain.value=1;
+  else applyBgmVolume();
+}
+
+function monitorHomeLoop(){
+  loopFrame=null;
+  if(!bgmAudio || bgmAudio.paused || bgmMode!=="home" || !settings.bgm)return;
+  updateHomeLoopFade();
+  if(typeof requestAnimationFrame==="function")loopFrame=requestAnimationFrame(monitorHomeLoop);
+}
+
+function startHomeLoopMonitor(){
+  updateHomeLoopFade();
+  if(loopFrame===null && typeof requestAnimationFrame==="function" &&
+      bgmAudio && !bgmAudio.paused && bgmMode==="home")loopFrame=requestAnimationFrame(monitorHomeLoop);
+}
   async function loadSfxBuffer(name){
   if(sfxBufferCache.has(name)){
     return sfxBufferCache.get(name);
@@ -126,10 +163,13 @@ function setupBgmWebAudio(){
     const a=createBgm();
 
     bgmSource=audioContext.createMediaElementSource(a);
+    bgmLoopGain=audioContext.createGain();
     bgmGain=audioContext.createGain();
 
-    bgmSource.connect(bgmGain);
+    bgmSource.connect(bgmLoopGain);
+    bgmLoopGain.connect(bgmGain);
     bgmGain.connect(audioContext.destination);
+    bgmLoopGain.gain.value=loopFade;
 
     // HTMLAudio側は100%にして、
     // 実際の音量はGainNodeで制御
@@ -150,7 +190,7 @@ function applyBgmVolume(){
     bgmGain.gain.value=volume;
   }else if(bgmAudio){
     // Web Audio非対応ブラウザ用
-    bgmAudio.volume=volume;
+    bgmAudio.volume=volume*loopFade*fallbackDuckScale;
   }
 }
 
@@ -158,9 +198,19 @@ function createBgm(){
   if(bgmAudio) return bgmAudio;
 
   bgmAudio=new Audio();
+  // Never inherit an OS/WebView playback-rate change across screen or app resume.
+  bgmAudio.playbackRate=1;
   bgmAudio.loop=true;
   bgmAudio.preload="auto";
   bgmAudio.playsInline=true;
+  // Native looping stays gapless in WKWebView; only its last/first 350 ms are softened.
+  bgmAudio.addEventListener?.("timeupdate",updateHomeLoopFade);
+  bgmAudio.addEventListener?.("loadedmetadata",updateHomeLoopFade);
+  bgmAudio.addEventListener?.("playing",startHomeLoopMonitor);
+  bgmAudio.addEventListener?.("pause",stopHomeLoopMonitor);
+  if(typeof document!=="undefined")document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="visible")startHomeLoopMonitor();
+  });
 
   // Web Audio使用前のフォールバック音量
   bgmAudio.volume=.58*(settings.bgmVolume/100);
@@ -205,10 +255,12 @@ async function unlockAudio(){
     if(!BGM[mode]) mode="normal";
     bgmMode=mode;
     const a=createBgm();
+    a.playbackRate=1;
     const wanted=new URL(BGM[mode],location.href).href;
     const changed=a.src!==wanted;
 
     if(changed){
+      stopHomeLoopMonitor();
       try{
         a.pause();
         a.currentTime=0;
@@ -228,6 +280,7 @@ if(bgmGain){
 
     if(settings.bgm && (bgmStarted||force)){
       bgmStarted=true;
+      startHomeLoopMonitor();
       try{
         const p=a.play();
         if(p && typeof p.catch==="function") p.catch(()=>{});
@@ -239,6 +292,7 @@ async function startBgm(){
   if(!settings.bgm) return;
 
   const a=createBgm();
+  a.playbackRate=1;
 
   // Web Audioを準備
   setupBgmWebAudio();
@@ -269,6 +323,7 @@ async function startBgm(){
   }
 
   bgmStarted=true;
+  startHomeLoopMonitor();
 
   try{
     const p=a.play();
@@ -281,6 +336,7 @@ async function startBgm(){
 
   function stopBgm(){
     bgmStarted=false;
+    stopHomeLoopMonitor();
     if(!bgmAudio) return;
     try{
       bgmAudio.pause();
@@ -290,7 +346,10 @@ async function startBgm(){
 
   function setBgmMode(mode){
     if(!BGM[mode]) mode="normal";
-    if(mode===bgmMode && bgmAudio && bgmAudio.src) return;
+    if(mode===bgmMode && bgmAudio && bgmAudio.src){
+      bgmAudio.playbackRate=1;
+      return;
+    }
     switchBgm(mode,false);
   }
 
@@ -375,11 +434,13 @@ function duckBgm(ms=700){
   // Web Audio非対応ブラウザ
   if(!bgmAudio) return;
 
-  bgmAudio.volume=ducked;
+  fallbackDuckScale=normal ? Math.min(1,ducked/normal):0;
+  applyBgmVolume();
 
   setTimeout(()=>{
     if(bgmAudio && settings.bgm){
-      bgmAudio.volume=normal;
+      fallbackDuckScale=1;
+      applyBgmVolume();
     }
   },ms);
 }

@@ -107,6 +107,11 @@ export function resolveServerOwnedSkillIds(value={}){
 export function skillDefinition(skillId){return SERVER_SKILLS[skillId]||BY_RUNTIME[skillId]||null;}
 export function runtimeSkillId(skillId){return skillDefinition(skillId)?.runtimeId||null;}
 
+// Match profiles are server snapshots; never derive this from a viewer's local storage.
+export function canUseOnlineSkillMode(profiles){
+  return ['host','guest'].every(seat=>normalizeServerSkillEntitlements(profiles?.[seat]?.skillEntitlements).skillModeUnlocked);
+}
+
 export function validateSkillSelectionForMatch({role,skillId,entitlements}={}){
   if(Array.isArray(skillId))return {ok:false,error:SKILL_ERROR_CODES.MULTIPLE_SKILLS_NOT_ALLOWED};
   const skill=skillDefinition(skillId);

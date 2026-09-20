@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { profileRequest, appearanceSnapshot, publicPlayerProfiles } from './online-profile.mjs';
+import {canUseOnlineSkillMode} from './skill-entitlements.mjs';
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
 import { acceptRandomAction,validateAbilityUse } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
@@ -507,6 +508,7 @@ async broadcastPresence() {
           playerId: room.profiles?.[player]?.playerId || null,
           profile:room.profiles?.[player]||null,
           playerProfiles:publicPlayerProfiles(room.profiles),
+          skillModeAvailable:canUseOnlineSkillMode(room.profiles),
           participants: {host:room.profiles?.host?.playerId||null,guest:room.profiles?.guest?.playerId||null},
           appearanceSnapshot: room.appearanceSnapshot,
           matchType: room.matchType || 'roomMatch',

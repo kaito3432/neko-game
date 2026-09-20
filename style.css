@@ -8028,6 +8028,7 @@ body.sneak-mode .board-shell{
   align-items:center;
   gap:10px;
 }
+.collection-profile-preview[hidden]{display:none}
 .collection-profile-preview img{
   width:58px;height:58px;flex:0 0 auto;object-fit:contain;border-radius:50%;background:#fff8e8;
 }
@@ -8063,7 +8064,7 @@ body.sneak-mode .board-shell{
 .setting-row[hidden]{display:none!important}
 
 /* Daily entry uses the existing collection row; hero/cards retain their geometry. */
-.home-collection-daily{display:grid!important;grid-template-columns:1.15fr 1fr;gap:0!important;padding:0!important;overflow:hidden}
+.home-collection-daily{display:grid!important;grid-template-columns:1.15fr 1fr .85fr;gap:0!important;padding:0!important;overflow:hidden}
 .home-collection-daily>button{height:100%;min-width:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:900;cursor:pointer;padding:0 3px}
 .home-collection-daily>button+button{border-left:1px solid #c99c72;background:#fff0d4}
 .daily-overlay[hidden],.daily-result-notice[hidden],.collection-unlock[hidden]{display:none!important}
@@ -9170,3 +9171,67 @@ body.sneak-mode .board-shell{
 .skill-mode-unlock-title,.storekit-heading{display:flex;align-items:center;gap:9px;text-align:left}.skill-mode-unlock-title>span,.storekit-heading>span{font-size:26px}.skill-mode-unlock-title div,.storekit-heading div{display:grid;gap:2px}.skill-mode-unlock-title small,.storekit-heading small{font-size:11px;color:#89695b}.skill-mode-progress{display:flex;align-items:center;justify-content:center;gap:12px}.skill-mode-progress>span{min-width:44px}.skill-mode-progress>div{display:flex;gap:6px}.skill-mode-progress i{display:block;width:13px;height:13px;border:2px solid #dca44d;border-radius:50%;background:#fff}.skill-mode-progress i.done{background:#ef8d75;border-color:#ef8d75;box-shadow:inset 0 0 0 2px #fff}
 .storekit-panel{gap:10px;padding:13px;background:linear-gradient(180deg,#fffaf0,#fff5e4);box-shadow:0 3px 0 #ead6bd}.storekit-heading h3{font-size:18px}.storekit-status{display:block;padding:6px 9px;border-radius:9px;background:#fff1d2;color:#765247;font-weight:700;text-align:center}.storekit-products{display:grid!important;gap:8px!important}.store-product-card{display:grid!important;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:8px!important;padding:9px;border:1.5px solid #e1c19b;border-radius:13px;background:#fff;box-shadow:0 2px 0 #f0dfcc}.store-product-card.is-owned{border-color:#9bc987;background:#f4ffef}.store-product-card.is-unavailable{background:#f4f1ed;color:#8c817b}.store-product-icon{display:grid;width:36px;height:36px;place-items:center;border-radius:11px;background:#fff0d3;font-size:22px}.store-product-copy{display:grid;min-width:0;gap:2px}.store-product-copy strong{font-size:13px;line-height:1.2}.store-product-copy small{font-size:10px;line-height:1.3;color:#826a5e}.store-product-copy .store-product-ownership{color:#c16d52;font-weight:800}.store-product-action{display:grid!important;justify-items:end!important;gap:3px!important}.store-product-state{padding:2px 6px;border-radius:999px;background:#eee3d8;font-size:9px;font-weight:800;white-space:nowrap}.is-owned .store-product-state{background:#dff2d8;color:#477a3c}.store-product-action button{min-width:68px;padding:7px 9px!important;background:#ef8d75!important;border:0!important;color:#fff;font-size:11px;font-weight:800}.store-product-action button:disabled{background:#d7cec7!important;color:#746b66}.storekit-restore{width:100%;min-height:40px;background:#fff!important;font-weight:800}.storekit-note{text-align:center;color:#8f7568;font-size:9px}.ability-card-summary{position:relative}.ability-entitlement-badge{margin-left:auto;padding:3px 6px;border-radius:999px;background:#e7f4df;color:#4f7d43;font-size:9px;font-weight:800;white-space:nowrap}.ability-not-owned .ability-entitlement-badge{background:#e8e2df;color:#746964}.ability-not-owned{filter:none!important;opacity:.72!important}
 @media (max-width:390px),(max-height:700px){.settings-modal{width:min(96vw,430px);padding:12px!important}.settings-list{gap:7px;margin:8px 0}.skill-mode-unlock,.storekit-panel{padding:10px}.store-product-card{grid-template-columns:32px minmax(0,1fr) auto;padding:7px;gap:6px!important}.store-product-icon{width:30px;height:30px;font-size:18px}.store-product-copy strong{font-size:12px}.store-product-copy small{font-size:9px}.store-product-action button{min-width:62px;padding:6px!important;font-size:10px}.storekit-heading h3{font-size:16px}}
+
+/* Home shop: reuse the how-to skill cards and preview without growing settings. */
+.shop-overlay{position:fixed;inset:0;z-index:12000;display:flex;justify-content:center;box-sizing:border-box;padding:max(8px,env(safe-area-inset-top)) 10px max(8px,env(safe-area-inset-bottom));background:#fff8e9;color:var(--brown)}
+.shop-overlay[hidden],.shop-skill-browser[hidden]{display:none!important}
+.shop-shell{width:min(100%,500px);min-height:0;display:flex;flex-direction:column}
+.shop-header{display:flex;align-items:center;gap:10px;flex:none}.shop-header h2{margin:0;font-size:24px}.shop-header button{width:42px;height:42px;border:2px solid #a47b60;border-radius:50%;background:#fff;color:inherit;font-size:22px}
+.shop-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;align-content:start;gap:10px;padding:8px 2px 12px}
+.shop-categories{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.shop-categories button{min-height:38px;font-weight:900;background:#fff}.shop-categories button.active{border-color:#d77c8f;background:#fff1f4}
+.shop-skill-browser{display:grid;gap:7px}.shop-skill-browser .howto-skill-tabs{margin:0}.shop-skill-list{display:grid;gap:6px}.shop-skill-item{width:100%;min-height:56px;text-align:left}.shop-skill-item img{object-fit:contain}
+.shop-preview-overlay{position:fixed;z-index:12001}.shop-preview-overlay .howto-ability-preview{box-sizing:border-box;max-height:calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}.shop-preview-overlay #shopPreviewOwnership{text-align:center;font-weight:900}.shop-preview-overlay #shopPreviewPurchase[hidden]{display:none}
+@media(max-width:390px),(max-height:700px){.shop-header h2{font-size:20px}.shop-skill-item{min-height:49px}.home-collection-daily>button{font-size:9px!important}}
+
+/* Shop v2: one category at a time; the purchase provider and product model remain shared. */
+.skill-unlock-entry[hidden],.skill-unlock-overlay[hidden]{display:none!important}
+.skill-unlock-entry{width:100%;min-height:44px;margin:8px 0;border:1px solid #dba651;border-radius:12px;background:#fff8df;color:var(--brown);font:inherit;font-weight:800}
+.skill-unlock-overlay{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;box-sizing:border-box;padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom));background:rgba(61,45,36,.6)}
+.skill-unlock-shell{width:min(100%,410px);display:grid;gap:12px}.skill-unlock-back{min-height:44px;border:2px solid #b78c63;border-radius:12px;background:#fff8ea;color:var(--brown);font:inherit;font-weight:800}
+.shop-overlay .shop-shell{min-width:0}
+.shop-overlay .shop-header{height:48px;justify-content:center;position:relative}
+.shop-overlay .shop-header button{position:absolute;left:0;top:2px;min-width:44px;height:44px}
+.shop-overlay .shop-categories{flex:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 10px}
+.shop-overlay .shop-categories button{min-width:0;min-height:46px;border:2px solid #d9b79a;border-radius:12px;background:#fff;color:var(--brown);font:inherit;font-size:15px;font-weight:900;white-space:nowrap}
+.shop-overlay .shop-categories button.active{background:#ffedf1;border-color:#dc8394}
+.shop-overlay .shop-content{display:block;min-height:0;flex:1;padding:4px 2px 12px}
+.shop-overlay .storekit-panel{display:block;min-width:0;padding:0;border:0;background:transparent;box-shadow:none}
+.shop-overlay .shop-skill-browser{display:grid;gap:14px}
+.shop-overlay .shop-skill-browser[hidden],.shop-overlay #storeKitProducts[hidden]{display:none!important}
+.shop-overlay .shop-skill-browser .howto-skill-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.shop-overlay .shop-skill-browser .howto-skill-tab{min-width:0;min-height:44px;font-size:14px;white-space:nowrap}
+.shop-overlay .shop-skill-list{display:grid;gap:9px}
+.shop-overlay .shop-skill-item{box-sizing:border-box;display:flex;width:100%;height:72px;min-height:72px;max-height:72px;gap:12px;padding:10px 12px;border:2px solid #e4c9b0;border-radius:16px;background:#fffdf9;box-shadow:0 2px 0 #eadccc;overflow:hidden}
+.shop-overlay .shop-skill-item img{box-sizing:border-box;width:48px;height:48px;flex:0 0 48px;object-fit:contain;background:#fff4e5;border-radius:10px}
+.shop-overlay .shop-skill-item .howto-preview-copy strong{margin:0;font-size:15px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shop-overlay .shop-skill-item .howto-preview-copy span{font-size:12px;line-height:1.3}
+.shop-overlay .shop-skill-item .howto-preview-arrow{flex:none;font-size:24px}
+.shop-overlay .shop-pack-section{display:block;margin-top:6px;padding-top:14px;border-top:1px solid #dec5ad}.shop-overlay .shop-pack-section h3{margin:0 0 9px;font-size:14px}
+.shop-overlay .storekit-products{display:grid!important;gap:10px!important}
+.shop-overlay .store-product-card{box-sizing:border-box;min-width:0;min-height:80px;grid-template-columns:42px minmax(0,1fr) 96px;gap:9px!important;padding:12px!important}
+.shop-overlay .store-product-icon{width:40px;height:40px;font-size:24px}
+.shop-overlay .store-product-copy strong{font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.shop-overlay .store-product-copy .store-product-ownership{font-size:11px}
+.shop-overlay .store-product-action{width:96px;justify-items:stretch!important}.shop-overlay .store-product-action button{box-sizing:border-box;min-width:0;width:100%;min-height:42px;padding:5px!important;font-size:12px;white-space:nowrap}
+.shop-overlay .shop-footer{display:flex;flex:none;align-items:center;justify-content:space-between;gap:8px;padding:10px 2px max(4px,env(safe-area-inset-bottom));border-top:1px solid #ead8c5}
+.shop-overlay .shop-footer .storekit-status{min-width:0;padding:0;background:none;text-align:left;font-size:11px;font-weight:500}
+.shop-overlay .shop-footer .storekit-restore{flex:none;width:auto;min-height:42px;padding:5px 10px;border:0;background:none!important;text-decoration:underline;font-size:12px;white-space:nowrap}
+.shop-overlay .shop-preview-overlay .howto-ability-preview{width:min(100%,380px);max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:18px;border:2px solid #dfba9a;border-radius:18px;background:#fffaf1!important;text-align:center}
+.shop-overlay .shop-preview-art{display:block;width:92px;height:92px;object-fit:contain;margin:6px auto 10px}
+.shop-overlay .shop-preview-overlay .howto-ability-detail{text-align:left}
+.shop-overlay #shopPreviewPrice{margin:6px 0;font-size:17px;font-weight:900}
+.shop-overlay #shopPreviewPurchase,.shop-overlay #shopPreviewClose{box-sizing:border-box;width:100%;min-height:44px;margin-top:8px;white-space:nowrap}
+@media(max-width:390px),(max-height:700px){.shop-overlay .shop-categories{margin:6px 0 8px}.shop-overlay .shop-skill-browser{gap:9px}.shop-overlay .shop-skill-item{height:64px;min-height:64px;max-height:64px}.shop-overlay .shop-skill-item img{width:42px;height:42px;flex-basis:42px}.shop-overlay .shop-preview-art{width:76px;height:76px}.shop-overlay .shop-preview-overlay .howto-ability-preview{padding:12px}}
+
+/* Equal-width home shortcuts, aligned to the three existing bottom controls. */
+.visual-update3 .home-collection-daily{box-sizing:border-box;justify-self:stretch;width:100%;max-width:none;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important;height:40px;padding:0!important;border:0;border-radius:0;background:transparent;box-shadow:none}
+.visual-update3 .home-collection-daily>button,.visual-update3 .home-collection-daily>button+button{box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:3px;width:100%;min-width:0;height:100%;padding:0 3px;border:2px solid #c28b52;border-radius:14px;background:#fff2d3;box-shadow:0 3px 0 rgba(93,64,55,.12);font-size:clamp(10px,2.8vw,12px)!important;line-height:1;font-weight:900;white-space:nowrap;text-align:center}
+.visual-update3 .home-collection-daily>button span{flex:none}
+@media(max-height:700px){.visual-update3 .home-collection-daily{height:32px!important;min-height:32px!important;gap:5px!important}.visual-update3 .home-collection-daily>button{border-radius:10px}}
+
+/* The same how-to diagrams are rendered inside the shop's scrollable detail. */
+.shop-overlay .shop-preview-overlay .howto-ability-visual{box-sizing:border-box;max-width:100%;min-width:0;margin-top:10px;padding:10px;overflow:hidden}
+.shop-overlay .shop-preview-overlay .howto-ability-visual>.skill-demo{max-width:100%;min-width:0}
+.shop-overlay #shopPreviewUseCondition{margin:10px 0 4px;padding:8px;border-radius:10px;background:#f6ecdf;font-size:11px;line-height:1.45;text-align:left}
+.shop-overlay #shopPreviewOwnership{margin:7px 0 2px}
+@media(max-width:390px),(max-height:700px){.shop-overlay .shop-preview-overlay .howto-ability-visual{min-height:0;margin-top:7px;padding:7px}.shop-overlay .shop-preview-overlay .howto-ability-detail{margin-top:6px}.shop-overlay .shop-preview-art{width:68px;height:68px;margin:2px auto 6px}}

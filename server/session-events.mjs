@@ -1,10 +1,11 @@
-import {validateSkillSelectionForMatch,validateSkillUseForMatch} from './skill-entitlements.mjs';
+import {canUseOnlineSkillMode,validateSkillSelectionForMatch,validateSkillUseForMatch} from './skill-entitlements.mjs';
 
 // Only public, whitelisted lobby/selection fields can leave this boundary.
 export function sessionEvent(room,sender,p){
   const role=room.roles[sender];
   if(p.type==='ruleSelect'){
     if(sender!=='host'||room.started||room.ready?.host||room.ready?.guest||!['normal','ability'].includes(p.rule))return false;
+    if(p.rule==='ability'&&!canUseOnlineSkillMode(room.profiles))return {skillError:'SKILL_MODE_LOCKED'};
     room.rule=p.rule;return {type:'ruleSelect',rule:p.rule};
   }
   if(['abilityReady','abilityRevealRequest','abilityReveal'].includes(p.type)){
