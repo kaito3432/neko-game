@@ -46,20 +46,23 @@ function createFutureCatalog(){
   };
 }
 
-test("本番カタログはdefaultと第1弾スキンだけを持つ",()=>{
-  assert.equal(Catalog.ITEMS.length,7);
+test("本番カタログは既存品とコイン・ランク報酬の土台を持つ",()=>{
   assert.deepEqual(
     Catalog.ITEMS.filter(item=>item.id==="default").map(item=>item.category).sort(),
     ["boardTheme","cardboard","catSkin","dogSkin","paw"]
   );
-  Catalog.ITEMS.forEach(item=>{
-    assert.equal(typeof item.preview,"string");
-    ["price","rarity","limited","shop","skill","ability"].forEach(field=>{
-      assert.equal(Object.hasOwn(item,field),false);
-    });
-  });
   assert.equal(Catalog.getItem("catSkin","cat_kaitou").name,"怪盗にゃん");
   assert.equal(Catalog.getItem("dogSkin","dog_detective").name,"探偵しば");
+  assert.equal(Catalog.getItem("catSkin","cat_coin_01").priceCoins,500);
+  assert.equal(Catalog.getItem("dogSkin","dog_coin_01").priceCoins,500);
+  assert.equal(Catalog.getItem("cardboard","cardboard_coin_01").priceCoins,30);
+  assert.equal(Catalog.getItem("paw","paw_coin_01").priceCoins,30);
+  assert.equal(Catalog.getItem("boardTheme","board_coin_01").priceCoins,60);
+  assert.equal(Catalog.getItem("profileFrame","rank_master").acquisitionType,"rankReward");
+  assert.equal(Catalog.getItem("catSkin","cat_master_reward_pending").acquisitionType,"masterRankReward");
+  assert.equal(Catalog.getItem("dogSkin","dog_master_reward_pending").acquisitionType,"masterRankReward");
+  assert.deepEqual(Collection.SECTION_CATEGORIES.rank,["profileFrame"]);
+  assert.equal(Catalog.getItemsByCategory("profileFrame").some(item=>item.acquisitionType==="masterRankReward"),false);
 });
 
 test("デフォルト猫は立ち絵と盤面駒の画像を分離する",()=>{

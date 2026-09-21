@@ -16,7 +16,7 @@
 })(typeof globalThis!=="undefined" ? globalThis : this, (root,Progress,UnlockSync)=>{
   "use strict";
 
-  const CURRENT_VERSION=5;
+  const CURRENT_VERSION=6;
   const STORAGE_KEYS=Object.freeze({
     playerId:"nyanChasePlayerId",
     playerData:"nyanChasePlayerData",
@@ -98,6 +98,7 @@
       version:CURRENT_VERSION,
       playerId,
       nyanCoins:0,
+      coinTransactions:[],
       ownedCatSkins:[DEFAULT_ITEM_ID],
       ownedDogSkins:[DEFAULT_ITEM_ID],
       ownedCardboards:[DEFAULT_ITEM_ID],
@@ -148,6 +149,7 @@
       version:CURRENT_VERSION,
       playerId,
       nyanCoins:safeNonNegativeInteger(source.nyanCoins),
+      coinTransactions:Progress.normalizeCoinTransactions(source.coinTransactions),
       ownedCatSkins,
       ownedDogSkins,
       ownedCardboards,
@@ -405,6 +407,32 @@
       return save({...base,profileCharacter:{category,itemId}});
     }
 
+    function coinCommand(operation){
+      return serial(async()=>{
+        const base=currentData || await load();
+        if(remote)throw new Error("coin_server_provider_required");
+        return persistProgress(operation(base));
+      });
+    }
+    function canSpendCoins(amount){return Progress.canSpendCoins(currentData,amount);}
+    function spendCoins(amount,reason,requestId){return coinCommand(base=>Progress.spendCoins(base,{amount,reason,requestId}));}
+    function addCoins(amount,reason,requestId){return coinCommand(base=>Progress.addCoins(base,{amount,reason,requestId}));}
+    function purchaseCollectionItem(categoryId,itemId){
+      return serial(async()=>{
+        const base=currentData || await load();
+        if(remote)throw new Error("collection_purchase_server_required");
+        const catalog=typeof module==="object"&&module.exports?require("./collection-catalog.js"):root?.NyanCollectionCatalog;
+        const category=catalog?.getCategory(categoryId),item=catalog?.getItem(categoryId,itemId);
+        if(!category||!item)throw new Error("unknown_collection_item");
+        if(item.acquisitionType!=="coins"||item.currency!=="nyanCoins"||!Number.isSafeInteger(item.priceCoins))throw new Error("item_not_coin_purchasable");
+        if(item.materialStatus==="pending")throw new Error("collection_material_unavailable");
+        const owned=Array.isArray(base[category.ownedField])?base[category.ownedField]:[];
+        if(owned.includes(itemId))return getSnapshot();
+        const spent=Progress.spendCoins(base,{amount:item.priceCoins,reason:`collection:${categoryId}`,requestId:`collection:${categoryId}:${itemId}`});
+        return persistProgress({...spent,[category.ownedField]:[...new Set([...owned,itemId])]});
+      });
+    }
+
     function setRemoteProvider(provider){
       remote=provider || null;
     }
@@ -516,6 +544,7 @@
       updateEquipment:(...args)=>serial(()=>updateEquipment(...args)),
       updateFavoriteCharacter:(...args)=>serial(()=>updateFavoriteCharacter(...args)),
       updateProfileCharacter:(...args)=>serial(()=>updateProfileCharacter(...args)),
+      canSpendCoins,spendCoins,addCoins,purchaseCollectionItem,
       recordDailyMissionBattle,retryPendingBattles,refreshDailyMissions,claimDailyReward,acknowledgeCpuUnlock,
       setRemoteProvider,getSnapshot,getStatus
     };
@@ -548,6 +577,10 @@
     updateEquipment:defaultStore.updateEquipment,
     updateFavoriteCharacter:defaultStore.updateFavoriteCharacter,
     updateProfileCharacter:defaultStore.updateProfileCharacter,
+    canSpendCoins:defaultStore.canSpendCoins,
+    spendCoins:defaultStore.spendCoins,
+    addCoins:defaultStore.addCoins,
+    purchaseCollectionItem:defaultStore.purchaseCollectionItem,
     setRemoteProvider:defaultStore.setRemoteProvider,
     getSnapshot:defaultStore.getSnapshot,
     getStatus:defaultStore.getStatus,

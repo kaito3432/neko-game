@@ -84,5 +84,27 @@
     next.dailyMissionProgress={...next.dailyMissionProgress,updatedAt:now,missions:next.dailyMissionProgress.missions.map(m=>m.id===missionId ? {...m,claimed:true} : m)};
     return next;
   }
-  return Object.freeze({MISSIONS,UNLOCKS,jstDate,normalizeDaily,normalizeUnlocks,rollover,validateBattle,recordBattle,claim});
+  function normalizeCoinTransactions(value){
+    return Array.isArray(value)?[...new Set(value.filter(id=>typeof id==="string"&&/^[a-zA-Z0-9:_-]{4,180}$/.test(id)))].slice(-500):[];
+  }
+  function canSpendCoins(data,amount){return Number.isSafeInteger(amount)&&amount>0&&integer(data?.nyanCoins)>=amount;}
+  function spendCoins(data,{amount,reason,requestId}){
+    if(!Number.isSafeInteger(amount)||amount<=0)throw new Error("invalid_coin_amount");
+    if(typeof reason!=="string"||!reason)throw new Error("invalid_coin_reason");
+    if(typeof requestId!=="string"||!/^[a-zA-Z0-9:_-]{4,180}$/.test(requestId))throw new Error("invalid_coin_request");
+    const transactions=normalizeCoinTransactions(data?.coinTransactions);
+    if(transactions.includes(requestId))return {...data,coinTransactions:transactions};
+    if(!canSpendCoins(data,amount))throw new Error("insufficient_coins");
+    return {...data,nyanCoins:integer(data.nyanCoins)-amount,coinTransactions:[...transactions,requestId].slice(-500)};
+  }
+  function addCoins(data,{amount,reason,requestId}){
+    if(!Number.isSafeInteger(amount)||amount<=0)throw new Error("invalid_coin_amount");
+    if(typeof reason!=="string"||!reason)throw new Error("invalid_coin_reason");
+    if(typeof requestId!=="string"||!/^[a-zA-Z0-9:_-]{4,180}$/.test(requestId))throw new Error("invalid_coin_request");
+    const transactions=normalizeCoinTransactions(data?.coinTransactions);
+    if(transactions.includes(requestId))return {...data,coinTransactions:transactions};
+    if(!Number.isSafeInteger(integer(data?.nyanCoins)+amount))throw new Error("coin_overflow");
+    return {...data,nyanCoins:integer(data?.nyanCoins)+amount,coinTransactions:[...transactions,requestId].slice(-500)};
+  }
+  return Object.freeze({MISSIONS,UNLOCKS,jstDate,normalizeDaily,normalizeUnlocks,normalizeCoinTransactions,rollover,validateBattle,recordBattle,claim,canSpendCoins,spendCoins,addCoins});
 });

@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v31-home-loop-collection-20260919";
+const CACHE_NAME = "nyan-chase-v33-collection-coins-20260921";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",
@@ -17,6 +17,7 @@ const PRECACHE = [
   "./online-identity.js",
   "./online-appearance.js",
   "./random-match.js",
+  "./rank-rewards.js",
   "./ranked-ui.js",
   "./result-presentation.js",
   "./online-profile-ui.js",

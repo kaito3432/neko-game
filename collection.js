@@ -20,7 +20,8 @@
   const SECTION_CATEGORIES=Object.freeze({
     cat:Object.freeze(["catSkin"]),
     police:Object.freeze(["dogSkin"]),
-    town:Object.freeze(["cardboard","paw","boardTheme"])
+    town:Object.freeze(["cardboard","paw","boardTheme"]),
+    rank:Object.freeze(["profileFrame"])
   });
 
   function isCharacterSkin(categoryId){
@@ -47,8 +48,10 @@
       ? data[category.ownedField]
       : [];
     const isOwned=ownedItems.includes(item.id);
-    const isEquipped=isOwned &&
-      data.equippedAppearance?.[category.equippedField]===item.id;
+    const equippedId=category.equipmentScope==="onlineProfile"
+      ? data[category.equippedField]
+      : data.equippedAppearance?.[category.equippedField];
+    const isEquipped=isOwned && equippedId===item.id;
 
     return isEquipped ? "equipped" : isOwned ? "owned" : "unowned";
   }
@@ -65,6 +68,9 @@
     const equippedAppearance={...data.equippedAppearance};
 
     Object.values(catalog.CATEGORIES).forEach(category=>{
+      // Only the five appearance categories live under equippedAppearance.
+      // Rank rewards use the server profile and must not be repaired here.
+      if(category.equipmentScope!=="appearance" || !category.equippedField || !Object.hasOwn(equippedAppearance,category.equippedField))return;
       const current=equippedAppearance[category.equippedField];
       const ownedItems=Array.isArray(data[category.ownedField])
         ? data[category.ownedField]
@@ -129,7 +135,19 @@
     if(!ownedItems.includes(itemId)){
       return {ok:false,reason:"not_owned"};
     }
+    if(item.materialStatus==="pending")return {ok:false,reason:"material_unavailable"};
+    if(category.equipmentScope!=="appearance")return {ok:false,reason:"external_equipment"};
 
+    return {ok:true,category,item};
+  }
+
+  function validatePurchase(data,categoryId,itemId,catalog=defaultCatalog){
+    const category=catalog?.getCategory(categoryId),item=catalog?.getItem(categoryId,itemId);
+    if(!category||!item)return {ok:false,reason:"unknown_item"};
+    if(item.acquisitionType!=="coins"||item.currency!=="nyanCoins"||!Number.isSafeInteger(item.priceCoins))return {ok:false,reason:"not_coin_purchasable"};
+    if(item.materialStatus==="pending")return {ok:false,reason:"material_unavailable",category,item};
+    if(data?.[category.ownedField]?.includes(itemId))return {ok:false,reason:"already_owned",category,item};
+    if((Number(data?.nyanCoins)||0)<item.priceCoins)return {ok:false,reason:"insufficient_coins",category,item};
     return {ok:true,category,item};
   }
 
@@ -235,6 +253,26 @@
       }
     }
 
+    async function purchase(categoryId,itemId){
+      if(saving)return {ok:false,reason:"busy",data:currentData};
+      const validation=validatePurchase(currentData,categoryId,itemId,catalog);
+      if(!validation.ok){
+        if(validation.reason==="insufficient_coins")view.showError?.("にゃんコインが足りません");
+        return {...validation,data:currentData};
+      }
+      saving=true;view.setBusy?.(true);render();
+      try{
+        const saved=await playerData.purchaseCollectionItem(categoryId,itemId);
+        currentData=sanitizeCatalogEquipment(saved,catalog).data;
+        root?.dispatchEvent?.(new root.CustomEvent("nyan-player-progress-changed"));
+        render();return {ok:true,data:currentData};
+      }catch(error){
+        currentData=playerData.getSnapshot?.()||currentData;
+        view.showError?.(error?.message==="insufficient_coins"?"にゃんコインが足りません":"購入を完了できませんでした");
+        render();return {ok:false,reason:error?.message||"purchase_failed",data:currentData,error};
+      }finally{saving=false;view.setBusy?.(false);render();}
+    }
+
     async function setFavorite(categoryId,itemId){
       if(saving) return {ok:false,reason:"busy",data:currentData};
       const isCurrent=currentData.favoriteCharacter?.category===categoryId &&
@@ -301,7 +339,7 @@
       return {data:currentData,activeSection,selectedItem,saving};
     }
 
-    return {load,setSection,selectItem,closeDetail,equip,setFavorite,setProfile,getState};
+    return {load,setSection,selectItem,closeDetail,equip,purchase,setFavorite,setProfile,getState};
   }
 
   function createDomView(document,catalog,actions){
@@ -345,7 +383,7 @@
         unownedCover.className="collection-unowned-cover";
         unownedCover.setAttribute("aria-hidden","true");
         const question=document.createElement("strong");
-        question.textContent="?";
+        question.textContent=item.materialStatus==="pending"?"素材未設定":"?";
         unownedCover.appendChild(question);
         preview.appendChild(unownedCover);
       }
@@ -362,11 +400,15 @@
       const button=document.createElement("button");
       button.type="button";
       button.className="collection-equip-btn";
-      button.textContent=getEquipLabel(item.category,state);
-      button.disabled=saving || state!=="owned";
+      const coinItem=item.acquisitionType==="coins";
+      button.textContent=state==="unowned"&&coinItem?`🪙 ${item.priceCoins}で購入`:getEquipLabel(item.category,state);
+      if(state==="unowned"&&!coinItem)button.textContent=catalog.acquisitionLabel(item);
+      if(item.materialStatus==="pending")button.textContent="素材未設定";
+      button.disabled=saving || item.materialStatus==="pending" || (state==="unowned"&&!coinItem) || (state!=="owned"&&state!=="unowned") || (category.equipmentScope!=="appearance"&&state!=="unowned");
       button.addEventListener("click",event=>{
         event.stopPropagation();
-        actions.onEquip(item.category,item.id);
+        if(state==="unowned")actions.onPurchase(item.category,item.id);
+        else actions.onEquip(item.category,item.id);
       });
 
       const open=()=>actions.onSelect(item.category,item.id);
@@ -388,6 +430,7 @@
       if(!item) return;
       const state=getItemState(data,item,catalog);
       const collectionImage=detail.querySelector("[data-detail-collection-image]");
+      const materialPending=detail.querySelector("[data-detail-material]");
       const profileImage=detail.querySelector("[data-detail-profile-image]");
       const profilePreview=detail.querySelector("[data-detail-profile-preview]");
       const showProfilePreview=supportsProfilePreview(item.category);
@@ -402,6 +445,12 @@
       const usageHome=detail.querySelector("[data-detail-usage-home]");
       const usageProfile=detail.querySelector("[data-detail-usage-profile]");
       const unlock=detail.querySelector("[data-detail-unlock]");
+      const categoryLabel=detail.querySelector("[data-detail-category]");
+      const acquisition=detail.querySelector("[data-detail-acquisition]");
+      const price=detail.querySelector("[data-detail-price]");
+      const localNote=detail.querySelector("[data-detail-local-note]");
+      const purchaseButton=detail.querySelector("[data-detail-purchase]");
+      if(materialPending)materialPending.hidden=item.materialStatus!=="pending";
       if(unlock){
         unlock.hidden=!item.unlockCondition;
         if(item.unlockCondition){
@@ -446,10 +495,21 @@
         profileImage.removeAttribute("src");
       }
       names.forEach(name=>setText(name,item.name));
+      setText(categoryLabel,catalog.getCategory(item.category)?.label||item.category);
+      setText(acquisition,catalog.acquisitionLabel(item));
+      setText(price,item.acquisitionType==="coins"?`🪙 ×${item.priceCoins}`:"—");
+      if(localNote)localNote.hidden=!catalog.isLocalOnly(item.category);
       setText(stateLabel,state==="equipped" ? "装備中" : state==="owned" ? "所持" : "🔒 未所持");
+      if(purchaseButton){
+        purchaseButton.hidden=item.acquisitionType!=="coins"||state!=="unowned";
+        purchaseButton.textContent=item.materialStatus==="pending"?"素材未設定":`🪙 ${item.priceCoins}で購入`;
+        purchaseButton.disabled=saving||item.materialStatus==="pending";
+        purchaseButton.onclick=()=>actions.onPurchase(item.category,item.id);
+      }
       if(equipButton){
         equipButton.textContent=getEquipLabel(item.category,state);
-        equipButton.disabled=saving || state!=="owned";
+        equipButton.hidden=catalog.getCategory(item.category)?.equipmentScope!=="appearance";
+        equipButton.disabled=saving || state!=="owned" || item.materialStatus==="pending";
         equipButton.onclick=()=>actions.onEquip(item.category,item.id);
       }
       if(favoriteButton){
@@ -521,6 +581,12 @@
 
     function render({data,activeSection,selectedItem,saving}){
       if(!data || !content) return;
+      const rankedProfile=root?.NyanRankedUI?.getProfile?.();
+      const presentedData=rankedProfile?{
+        ...data,
+        ownedProfileFrames:rankedProfile.ownedProfileFrames||[],
+        equippedProfileFrameId:rankedProfile.equippedProfileFrameId||"default",
+      }:data;
       setText(balance,String(window.NyanRankedUI?.totalCoins(data.nyanCoins)??data.nyanCoins));
 
       tabs.forEach(tab=>{
@@ -539,12 +605,12 @@
         const grid=document.createElement("div");
         grid.className="collection-grid";
         catalog.getItemsByCategory(categoryId).forEach(item=>{
-          grid.appendChild(createItemCard(item,data,saving));
+          grid.appendChild(createItemCard(item,presentedData,saving));
         });
         group.append(heading,grid);
         content.appendChild(group);
       });
-      renderDetail(data,selectedItem,saving);
+      renderDetail(presentedData,selectedItem,saving);
     }
 
     function setBusy(isBusy){
@@ -574,6 +640,7 @@
     let controller=null;
     const view=createDomView(document,catalog,{
       onEquip(categoryId,itemId){controller?.equip(categoryId,itemId);},
+      onPurchase(categoryId,itemId){controller?.purchase(categoryId,itemId);},
       onSelect(categoryId,itemId){controller?.selectItem(categoryId,itemId);},
       onFavorite(categoryId,itemId){controller?.setFavorite(categoryId,itemId);},
       onProfile(categoryId,itemId){controller?.setProfile(categoryId,itemId);}
@@ -619,6 +686,7 @@
     displayImage,
     sanitizeCatalogEquipment,
     validateEquip,
+    validatePurchase,
     validateFavorite,
     validateProfile,
     createController,

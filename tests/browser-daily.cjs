@@ -17,7 +17,7 @@ const server=http.createServer(async(req,res)=>{
     if(baseline) name=name.slice(9);
     if(!name || name.endsWith("/")) name+="index.html";
     if(name.includes("..")) throw new Error("invalid path");
-    let body=baseline && ["index.html","style.css","player-data.js","collection.js","collection-catalog.js","skin-presentation.js","game.js"].includes(name)
+    let body=baseline && ["index.html","style.css","player-data.js","collection.js","collection-catalog.js","skin-presentation.js","game.js","random-match.js","ranked-ui.js"].includes(name)
       ? execFileSync("git",["show",`HEAD:${name}`],{cwd:root}) : await fs.readFile(path.join(root,name));
     // Test-only integration access; never written into shipped game code.
     if(name==="game.js" && !baseline) body=Buffer.from(body.toString().replace(/initGame\(true\);\s*\}\)\(\);\s*$/,`initGame(true);
@@ -71,6 +71,22 @@ const server=http.createServer(async(req,res)=>{
     }
     assert.ok(requested.filter(src=>src.includes("mystery01")).every(src=>src.includes("_locked.png")));
     checks.push("unowned list/detail/profile: only supplied locked URLs; failed-load fallback safe");
+    for(const [width,height] of [[375,667],[393,851],[412,915]]){
+      await page.setViewportSize({width,height});
+      for(const section of ["town","rank"]){
+        await page.locator(`[data-collection-section="${section}"]`).click();
+        const geometry=await page.locator("#collectionOverlay").evaluate(element=>({
+          pageWidth:document.documentElement.scrollWidth,
+          viewportWidth:document.documentElement.clientWidth,
+          shellWidth:element.querySelector(".collection-shell").getBoundingClientRect().width,
+          closeVisible:element.querySelector("#collectionBackBtn").getBoundingClientRect().bottom<=innerHeight
+        }));
+        assert.equal(geometry.pageWidth,geometry.viewportWidth);
+        assert.ok(geometry.shellWidth<=width);
+        assert.equal(geometry.closeVisible,true);
+      }
+      checks.push(`${width}x${height}: collection town/rank no horizontal overflow and close reachable`);
+    }
     await page.locator("#collectionBackBtn").click();
     // Start a real CPU game through its UI, then confirm its outcome via the test harness.
     async function cpu(side){
@@ -124,8 +140,26 @@ const server=http.createServer(async(req,res)=>{
     await page.locator("#localModeBtn").click();
     assert.ok(await page.locator("#localRuleOverlay").isVisible());
     await page.reload();await page.locator("#onlineModeBtn").click();
+    await page.evaluate(()=>{
+      NyanRankedUI.updateProfile({ranked:{rank:'silver',rp:120,seasonWins:1,seasonLosses:0},ownedProfileFrames:[],equippedProfileFrameId:'default'});
+      NyanOnline.prepareIdentity=async()=>({profile:{ranked:{rank:'silver',rp:120,seasonWins:1,seasonLosses:0}}});
+      NyanOnline.matchmaking=async action=>action==='join'?{status:'waiting'}:{status:'cancelled'};
+    });
+    assert.equal(await page.locator('.rank-guide').isVisible(),true);
+    assert.equal(await page.locator('.ranked-profile-card').isVisible(),true);
+    await page.locator('#randomMatchStart').click();
+    await page.waitForFunction(()=>document.querySelector('#matchmakingStatus').textContent.includes('探しています'));
+    assert.equal(await page.locator('.rank-guide').isVisible(),false);
+    assert.equal(await page.locator('.ranked-profile-card').isVisible(),false);
+    await page.locator('#matchmakingCancel').click();
+    await page.waitForFunction(()=>document.querySelector('#matchmakingStatus').textContent==='遊び方を選んでね');
+    assert.equal(await page.locator('.rank-guide').isVisible(),true);
+    assert.equal(await page.locator('.ranked-profile-card').isVisible(),true);
     await page.locator("#roomMatchStart").click();
+    assert.equal(await page.locator('.rank-guide').isVisible(),false);
+    assert.equal(await page.locator('.ranked-profile-card').isVisible(),false);
     assert.ok(await page.locator("#onlineOverlay").isVisible());
+    checks.push("online rank guide/profile: selection only; random waiting and room entry hidden; cancel restores");
     checks.push("local match selection and online room entry open");
     assert.deepEqual(errors,[]);
     await fs.writeFile(path.join(output,"checks.json"),JSON.stringify({checks,errors},null,2));

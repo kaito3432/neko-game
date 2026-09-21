@@ -1,12 +1,9 @@
 (function(root){
   'use strict';
-  const ranks=[
-    ['bronze','ブロンズ',0,'🥉'],['silver','シルバー',100,'🐾'],
-    ['gold','ゴールド',250,'✨'],['platinum','プラチナ',450,'🌙'],
-    ['diamond','ダイヤ',700,'💎'],['master','マスター',1000,'👑']
-  ];
+  const ranks=root.NyanRankRewards.ranks.map(item=>[item.id,item.name,item.min,item.icon]);
   const frameNames=root.NyanOnlineProfileUI.frames;
   let profile=null;
+  let selectionVisible=false;
   const dismissedSeasons=new Set();
   const rank=id=>ranks.find(value=>value[0]===id)||ranks[0];
   const api=(path,body,method)=>root.NyanOnlineIdentity.request(root.NyanOnline.API_BASE,path,body,method);
@@ -37,7 +34,7 @@
     profile=next?{...profile,...next}:profile;
     if(!profile?.ranked)return;
     if(!panel.isConnected)document.querySelector('#matchmakingStatus')?.after(panel);
-    panel.hidden=false;
+    panel.hidden=!selectionVisible;
     const current=rank(profile.ranked.rank),index=ranks.indexOf(current),nextRank=ranks[index+1];
     root.NyanOnlineProfileUI.setImage(panel.querySelector('[data-rank-icon]'),profile.profileCharacter);
     panel.querySelector('[data-rank-name]').textContent=current[1];
@@ -65,11 +62,12 @@
       catch(_){select.value=profile.equippedProfileFrameId||'default';}
       finally{select.disabled=false;}
     };
-    showSeason();
+    if(selectionVisible)showSeason();
     root.dispatchEvent(new CustomEvent('nyan-ranked-profile-changed',{detail:{profile}}));
   }
 
   function showSeason(){
+    if(!selectionVisible)return;
     const reward=profile?.seasonHistory?.find(item=>
       ['claimable','pendingConfiguration'].includes(item.rewardStatus)&&!dismissedSeasons.has(item.seasonId));
     if(!reward)return;
@@ -99,6 +97,12 @@
     try{const prepared=await root.NyanOnline.prepareIdentity();update(prepared.profile);return prepared.profile;}
     catch(_){return null;}
   }
+  function setSelectionVisible(visible){
+    selectionVisible=visible===true;
+    panel.hidden=!selectionVisible||!profile?.ranked;
+    if(!selectionVisible)season.classList.remove('show');
+    else showSeason();
+  }
   root.addEventListener('nyan-online-profile',event=>update(event.detail.profile));
   root.addEventListener('nyan-online-matched',()=>{result.hidden=true;result.replaceChildren();});
   root.addEventListener('nyan-ranked-result',event=>{
@@ -120,6 +124,6 @@
       const unlocked=document.createElement('em');unlocked.textContent='新しいプロフィールフレームを獲得！';result.append(unlocked);
     }
   });
-  root.NyanRankedUI={refresh,updateProfile:update,getProfile:()=>profile,
+  root.NyanRankedUI={refresh,updateProfile:update,getProfile:()=>profile,setSelectionVisible,
     totalCoins:local=>(Number(local)||0)+(Number(profile?.serverNyanCoins)||0)};
 })(globalThis);

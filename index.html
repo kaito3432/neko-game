@@ -232,6 +232,7 @@
       <button class="collection-tab selected" type="button" role="tab" aria-selected="true" data-collection-section="cat">ネコ図鑑</button>
       <button class="collection-tab" type="button" role="tab" aria-selected="false" data-collection-section="police">柴犬警察手帳</button>
       <button class="collection-tab" type="button" role="tab" aria-selected="false" data-collection-section="town">街のきせかえ</button>
+      <button class="collection-tab" type="button" role="tab" aria-selected="false" data-collection-section="rank">ランク報酬</button>
     </nav>
 
     <main class="collection-content" id="collectionContent"></main>
@@ -247,6 +248,7 @@
             <strong>?</strong>
           </span>
           <img data-detail-collection-image src="" alt="">
+          <span class="collection-material-pending" data-detail-material hidden>素材未設定</span>
         </div>
         <div class="collection-detail-usage" data-detail-usage aria-label="このスキンでできること">
           <h3>このスキンでできること</h3>
@@ -270,11 +272,18 @@
           <p data-unlock-description></p>
           <span data-unlock-progress></span>
         </section>
+        <dl class="collection-item-meta">
+          <div><dt>カテゴリ</dt><dd data-detail-category></dd></div>
+          <div><dt>入手方法</dt><dd data-detail-acquisition></dd></div>
+          <div><dt>必要コイン</dt><dd data-detail-price></dd></div>
+        </dl>
+        <p class="collection-local-note" data-detail-local-note hidden>自分の画面に適用されます</p>
         <div class="collection-profile-preview" data-detail-profile-preview>
           <img data-detail-profile-image src="" alt="">
           <div><small>プロフィール画像プレビュー</small><strong data-detail-name>スキン詳細</strong></div>
         </div>
         <div class="collection-detail-actions">
+          <button class="collection-purchase-btn" data-detail-purchase type="button" hidden>購入する</button>
           <button class="collection-equip-btn" data-detail-equip type="button">スキンを装備する</button>
           <button class="collection-favorite-btn" data-detail-favorite type="button">ホームに表示</button>
           <button class="collection-profile-btn" data-detail-profile type="button">プロフィールに設定</button>
@@ -1856,12 +1865,12 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./progression-model.js?v=1.0.daily1"></script>
+<script src="./progression-model.js?v=1.1.collection-coins"></script>
 <script src="./cpu-unlock-sync.js?v=1.0"></script>
-<script src="./player-data.js?v=1.0.daily1"></script>
+<script src="./player-data.js?v=1.1.collection-coins"></script>
 <script src="./daily-missions.js?v=1.0.daily1"></script>
-<script src="./collection-catalog.js?v=1.0.daily1"></script>
-<script src="./collection.js?v=1.0.daily1"></script>
+<script src="./collection-catalog.js?v=1.1.coin-items"></script>
+<script src="./collection.js?v=1.1.coin-items"></script>
 <script src="./skin-presentation.js?v=1.0.defaultloss1"></script>
 <script src="./skill-catalog.js?v=1.0.phase2"></script>
 <script src="./monetization-products.js?v=2.0.phase2"></script>
@@ -1884,6 +1893,7 @@
 <script src="./online-appearance.js?v=1"></script>
 <script src="./online.js?v=3.0.result-recovery1"></script>
 <script src="./online-profile-ui.js?v=1"></script>
+<script src="./rank-rewards.js?v=1.0"></script>
 <script src="./ranked-ui.js?v=1.0"></script>
 <script src="./random-match.js?v=1.0"></script>
 <script src="./game.js?v=2.3.skill-unlock-entry"></script>

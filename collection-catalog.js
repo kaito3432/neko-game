@@ -1,6 +1,5 @@
-/* にゃんチェイス - Phase 2 コレクションカタログ
-   見た目素材の解決だけを担当する。価格・ショップ・特殊能力は扱わない。
-*/
+/* にゃんチェイス - コレクションカタログ
+   表示素材・入手方法・価格・同期範囲を一元管理する。 */
 (function(root,factory){
   const api=factory();
 
@@ -20,36 +19,50 @@
       label:"ネコスキン",
       section:"cat",
       ownedField:"ownedCatSkins",
-      equippedField:"catSkinId"
+      equippedField:"catSkinId",
+      equipmentScope:"appearance",
+      opponentVisible:true
     }),
     dogSkin:Object.freeze({
       id:"dogSkin",
       label:"柴犬スキン",
       section:"police",
       ownedField:"ownedDogSkins",
-      equippedField:"dogSkinId"
+      equippedField:"dogSkinId",
+      equipmentScope:"appearance",
+      opponentVisible:true
     }),
     cardboard:Object.freeze({
       id:"cardboard",
       label:"ダンボール",
       section:"town",
       ownedField:"ownedCardboards",
-      equippedField:"cardboardId"
+      equippedField:"cardboardId",
+      equipmentScope:"appearance",
+      opponentVisible:false
     }),
     paw:Object.freeze({
       id:"paw",
       label:"肉球",
       section:"town",
       ownedField:"ownedPaws",
-      equippedField:"pawId"
+      equippedField:"pawId",
+      equipmentScope:"appearance",
+      opponentVisible:false
     }),
     boardTheme:Object.freeze({
       id:"boardTheme",
       label:"盤面テーマ",
       section:"town",
       ownedField:"ownedBoardThemes",
-      equippedField:"boardThemeId"
-    })
+      equippedField:"boardThemeId",
+      equipmentScope:"appearance",
+      opponentVisible:false
+    }),
+    profileFrame:Object.freeze({
+      id:"profileFrame",label:"プロフィールフレーム",section:"rank",
+      ownedField:"ownedProfileFrames",equippedField:"equippedProfileFrameId",equipmentScope:"onlineProfile",opponentVisible:true
+    }),
   });
 
   const DEFAULT_CAT_IMAGES=Object.freeze({
@@ -84,11 +97,11 @@
   const ITEMS=Object.freeze([
     Object.freeze({
       id:"default",category:"catSkin",name:"デフォルト",
-      preview:"./assets/images/cpu_select_cat.png",
+      preview:"./assets/images/cpu_select_cat.png",acquisitionType:"default",rarity:"Common",
       ...DEFAULT_CAT_IMAGES
     }),
     Object.freeze({
-      id:"cat_kaitou",category:"catSkin",name:"怪盗にゃん",
+      id:"cat_kaitou",category:"catSkin",name:"怪盗にゃん",acquisitionType:"achievement",rarity:"Rare",
       preview:`${MYSTERY_ROOT}/cat_kaitou_collection_cutout.png`,
       collectionImage:`${MYSTERY_ROOT}/cat_kaitou_collection_cutout.png`,
       silhouetteImage:`${MYSTERY_ROOT}/cat_kaitou_collection_locked.png`,
@@ -104,11 +117,11 @@
     }),
     Object.freeze({
       id:"default",category:"dogSkin",name:"デフォルト",
-      preview:DEFAULT_DOG_IMAGES.collectionImage,
+      preview:DEFAULT_DOG_IMAGES.collectionImage,acquisitionType:"default",rarity:"Common",
       ...DEFAULT_DOG_IMAGES
     }),
     Object.freeze({
-      id:"dog_detective",category:"dogSkin",name:"探偵しば",
+      id:"dog_detective",category:"dogSkin",name:"探偵しば",acquisitionType:"achievement",rarity:"Rare",
       preview:`${MYSTERY_ROOT}/dog_detective_collection.png`,
       collectionImage:`${MYSTERY_ROOT}/dog_detective_collection.png`,
       silhouetteImage:`${MYSTERY_ROOT}/dog_detective_collection_locked.png`,
@@ -131,9 +144,21 @@
       moveEffect:`${MYSTERY_ROOT}/dog_detective_effect_clue.png`,
       foundFootprintEffect:`${MYSTERY_ROOT}/dog_detective_effect_search.png`
     }),
-    Object.freeze({id:"default",category:"cardboard",name:"デフォルト",preview:"./assets/images/box.png"}),
-    Object.freeze({id:"default",category:"paw",name:"デフォルト",preview:"./assets/images/paw.png"}),
-    Object.freeze({id:"default",category:"boardTheme",name:"デフォルト",preview:"./assets/images/bg_day.png"})
+    Object.freeze({id:"default",category:"cardboard",name:"デフォルト",preview:"./assets/images/box.png",acquisitionType:"default",rarity:"Common"}),
+    Object.freeze({id:"default",category:"paw",name:"デフォルト",preview:"./assets/images/paw.png",acquisitionType:"default",rarity:"Common"}),
+    Object.freeze({id:"default",category:"boardTheme",name:"デフォルト",preview:"./assets/images/bg_day.png",acquisitionType:"default",rarity:"Common"}),
+    // The first coin products intentionally remain unavailable until approved art is added.
+    Object.freeze({id:"cat_coin_01",category:"catSkin",name:"にゃんコイン限定ネコスキン",acquisitionType:"coins",currency:"nyanCoins",priceCoins:500,rarity:"Rare",materialStatus:"pending"}),
+    Object.freeze({id:"dog_coin_01",category:"dogSkin",name:"にゃんコイン限定柴犬スキン（3匹セット）",acquisitionType:"coins",currency:"nyanCoins",priceCoins:500,rarity:"Rare",materialStatus:"pending"}),
+    Object.freeze({id:"cardboard_coin_01",category:"cardboard",name:"にゃんコイン限定ダンボール",acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common",materialStatus:"pending"}),
+    Object.freeze({id:"paw_coin_01",category:"paw",name:"にゃんコイン限定肉球テーマ",acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common",materialStatus:"pending"}),
+    Object.freeze({id:"board_coin_01",category:"boardTheme",name:"にゃんコイン限定盤面テーマ",acquisitionType:"coins",currency:"nyanCoins",priceCoins:60,rarity:"Common",materialStatus:"pending"}),
+    Object.freeze({id:"cat_master_reward_pending",category:"catSkin",name:"マスター限定ネコスキン",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
+    Object.freeze({id:"dog_master_reward_pending",category:"dogSkin",name:"マスター限定柴犬スキン（3匹セット）",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
+    ...["silver","gold","platinum","diamond","master"].map(rank=>Object.freeze({
+      id:`rank_${rank}`,category:"profileFrame",name:`${({silver:"シルバー",gold:"ゴールド",platinum:"プラチナ",diamond:"ダイヤ",master:"マスター"})[rank]}フレーム`,
+      acquisitionType:"rankReward",rarity:rank==="master"?"Legendary":"Epic",materialStatus:"css"
+    }))
   ]);
 
   function getCategory(categoryId){
@@ -152,12 +177,26 @@
     return getItem(categoryId,itemId)!==null;
   }
 
+  function acquisitionLabel(item){
+    if(item?.acquisitionType==="coins")return "にゃんコイン";
+    if(item?.acquisitionType==="masterRankReward")return "ランク報酬（マスター限定）";
+    if(item?.acquisitionType==="rankReward")return "ランク報酬";
+    if(item?.acquisitionType==="achievement")return "プレイ実績";
+    return "初期所持";
+  }
+
+  function isOpponentVisible(categoryId){return getCategory(categoryId)?.opponentVisible===true;}
+  function isLocalOnly(categoryId){return ["cardboard","paw","boardTheme"].includes(categoryId);}
+
   return Object.freeze({
     CATEGORIES,
     ITEMS,
     getCategory,
     getItemsByCategory,
     getItem,
-    isKnownItem
+    isKnownItem,
+    acquisitionLabel,
+    isOpponentVisible,
+    isLocalOnly
   });
 });

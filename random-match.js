@@ -15,13 +15,26 @@
     <p id="matchmakingStatus" role="status">遊び方を選んでね</p>
     <button id="randomMatchStart" type="button">🎲 ランダムマッチ<br><small>すぐに相手を探して対戦</small></button>
     <button id="roomMatchStart" type="button">🏠 部屋対戦<br><small>友達と部屋コードで対戦</small></button>
+    <section class="rank-guide" aria-labelledby="rankGuideTitle">
+      <h3 id="rankGuideTitle">🏆 ランク戦について</h3>
+      <ul><li>確定ランクに応じてにゃんコイン</li><li>初到達でランク専用フレーム</li><li>マスター初到達で限定スキン</li></ul>
+      <button class="rank-guide-open" data-rank-rewards-open type="button">報酬を見る</button>
+    </section>
     <button id="matchmakingCancel" type="button">戻る</button></section>`;
   document.body.append(overlay);
+  root.NyanRankRewards?.attach(overlay);
   const status = overlay.querySelector('#matchmakingStatus');
   const start = overlay.querySelector('#randomMatchStart');
   const rooms = overlay.querySelector('#roomMatchStart');
   const cancel = overlay.querySelector('#matchmakingCancel');
+  const rankGuide = overlay.querySelector('.rank-guide');
+  function setSelectionVisible(visible) {
+    overlay.classList.toggle('is-selection', visible);
+    rankGuide.hidden = !visible;
+    root.NyanRankedUI?.setSelectionVisible?.(visible);
+  }
   function waiting() {
+    setSelectionVisible(false);
     start.hidden = rooms.hidden = true;
     cancel.textContent = 'キャンセル';
     status.textContent = '🐱 ↔ 🐕 対戦相手を探しています…';
@@ -33,6 +46,7 @@
     if (result.matchId) {
       if (started.has(result.matchId)) return;
       started.add(result.matchId); entered = false; transitioning = true;
+      setSelectionVisible(false);
       cancel.disabled = true;cancel.hidden=true;
       status.textContent = `対戦相手が見つかりました！ あなたは${result.role === 'cat' ? '🐱 ネコ' : '🐕 警察'}です。`;
       setTimeout(() => {
@@ -68,12 +82,13 @@
         : '接続できませんでした。もう一度お試しください';
       start.hidden = rooms.hidden = entered;
       start.disabled = false;
+      if(!entered)setSelectionVisible(true);
     } finally { busy = false; cancel.disabled = transitioning; }
   };
   cancel.onclick = async () => {
     if (busy || transitioning) return;
     clearTimeout(timer);
-    if (!entered) { overlay.hidden = true; document.getElementById('onlineModeBtn')?.focus(); return; }
+    if (!entered) { setSelectionVisible(false);overlay.hidden = true; document.getElementById('onlineModeBtn')?.focus(); return; }
     busy = true; cancel.disabled = true;
     try {
       const result = await root.NyanOnline.matchmaking('cancel');
@@ -82,7 +97,7 @@
     } catch (_) { status.textContent = 'キャンセルを確認できませんでした。もう一度押してください'; }
     finally { busy = false; cancel.disabled = transitioning; }
   };
-  rooms.onclick = () => { if (!busy) { overlay.hidden = true; roomEntry(); } };
+  rooms.onclick = () => { if (!busy) { setSelectionVisible(false);overlay.hidden = true; roomEntry(); } };
   overlay.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();cancel.click();}
     if(event.key==='Tab'){
@@ -95,10 +110,11 @@
   function show(onRoom, onMatch) {
     cancel.hidden=false;
     roomEntry = onRoom; launch = onMatch;
-    if (entered) { overlay.hidden = false; return; }
+    if (entered) { setSelectionVisible(false);overlay.hidden = false; return; }
     start.hidden = rooms.hidden = false;
     start.disabled = cancel.disabled = false;
     cancel.textContent = '戻る'; status.textContent = '遊び方を選んでね';
+    setSelectionVisible(true);
     overlay.hidden = false; start.focus();
     root.NyanRankedUI?.refresh();
   }
