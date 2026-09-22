@@ -4825,7 +4825,22 @@ function hardBestProbabilitySearch(di){
     return {type:"move",target,score};
   }
 
+  function hardPolicePublicState(){
+    return {
+      turn:game.turn,
+      dogs:[...game.dogs],
+      revealedTracks:new Map(game.revealedTracks),
+      searchedBoxes:new Set(game.cpuSearchedBoxes),
+      emptyByTurn:new Map([...cpuMemory.emptyByTurn].map(([turn,boxes])=>[turn,new Set(boxes)])),
+      lastDogNodes:[...cpuMemory.lastDogNodes],
+      reservedSearchTargets:new Set(cpuMemory.recentTargets)
+    };
+  }
+
   function chooseCpuAction(di){
+    if(cpuDifficulty==="hard" && window.NyanPoliceHardAI){
+      return window.NyanPoliceHardAI.chooseAction(hardPolicePublicState(),di);
+    }
      const policeDifficulty=cpuPoliceDifficulty();
     const profile=cpuProfile();
     let search=bestSearchAction(di);
@@ -5012,11 +5027,15 @@ for(let d=0;d<3;d++){
 let di=-1;
 
 if(availableDogs.length){
+  if(cpuDifficulty==="hard" && window.NyanPoliceHardAI){
+    const planned=window.NyanPoliceHardAI.chooseDogAction(hardPolicePublicState(),availableDogs);
+    if(planned)di=planned.dogIndex;
+  }
   /*
    * 痕跡がある場合は、痕跡に近い犬が
    * 少し行動しやすい。ただし固定しない。
    */
-  if(knownTrackBoxes().length){
+  if(di===-1 && knownTrackBoxes().length){
     const ranked=availableDogs
       .map(d=>{
         let dist=99;
@@ -5037,7 +5056,7 @@ if(availableDogs.length){
 
     di=ranked[0].dog;
 
-  }else{
+  }else if(di===-1){
     // 痕跡なしなら完全にランダム
     di=availableDogs[
       Math.floor(Math.random()*availableDogs.length)
@@ -5052,7 +5071,7 @@ if(availableDogs.length){
 
     let action=chooseCpuAction(di);
 
-    if(policeDifficulty!=="easy" && game.cpuSearchesThisTurn<cpuProfile().targetSearches){
+    if(cpuDifficulty!=="hard" && policeDifficulty!=="easy" && game.cpuSearchesThisTurn<cpuProfile().targetSearches){
       const remainingDogs=game.dogAction.filter(a=>a===false).length;
       const searchesNeeded=cpuProfile().targetSearches-game.cpuSearchesThisTurn;
 
@@ -5208,21 +5227,32 @@ if(remainingDogs<=searchesNeeded){
     return pressure;
   }
 
-  function cpuCatSecondStepValue(fromBox,nextBox){
-    let best=-999;
-    E.getBoxNeighbors(nextBox).forEach(n=>{
-      if(game.catHistory.has(n) || n===fromBox) return;
+  // 公開情報（柴犬の現在位置）と自分の移動履歴だけを使い、
+  // 数手先まで逃走経路が残るかを評価する。難易度ごとに探索深度を変える。
+  function cpuCatRouteValue(fromBox,visited,depth){
+    if(depth<=0)return 0;
 
-      const dogDist=cpuCatDistanceFromDogs(n);
-      const freedom=E.getBoxNeighbors(n).filter(x=>!game.catHistory.has(x) && x!==nextBox).length;
-      const pressure=projectedDogPressure(n);
+    let best=-80;
 
-      let s=dogDist*4.2 + freedom*5.4 - pressure*4.8;
-      if(freedom===0) s-=60;
-      else if(freedom===1) s-=16;
+    E.getBoxNeighbors(fromBox).forEach(next=>{
+      if(visited.has(next))return;
 
-      best=Math.max(best,s);
+      const freedom=E.getBoxNeighbors(next).filter(n=>!visited.has(n) && n!==fromBox).length;
+      const dogDist=cpuCatDistanceFromDogs(next);
+      const pressure=projectedDogPressure(next);
+
+      visited.add(next);
+
+      let score=dogDist*3.2 + freedom*2.4 - pressure*2.2;
+      if(freedom===0)score-=30;
+      else if(freedom===1)score-=7;
+
+      score+=cpuCatRouteValue(next,visited,depth-1)*.82;
+      visited.delete(next);
+
+      best=Math.max(best,score);
     });
+
     return best;
   }
 
@@ -5231,88 +5261,26 @@ if(remainingDogs<=searchesNeeded){
     const freedom=cpuCatFutureFreedom(boxIndex);
     const pressure=projectedDogPressure(boxIndex);
 
-    let score=0;
+    const config=cpuDifficulty==="easy"
+      ? {distance:2.1,freedom:1.9,pressure:1.25,routeDepth:2,routeWeight:.16,finish:4,blocked:-9,noise:7}
+      : cpuDifficulty==="normal"
+        ? {distance:2.8,freedom:2.6,pressure:2,routeDepth:5,routeWeight:.36,finish:12,blocked:-30,noise:4}
+        : {distance:3,freedom:2.8,pressure:2.2,routeDepth:6,routeWeight:.42,finish:16,blocked:-45,noise:2};
 
-    // ==========================================
-    // やさしい
-    // ==========================================
-    if(cpuDifficulty==="easy"){
-      score+=dogDist*1.6;
-      score+=freedom*1.4;
-      score-=pressure*.8;
-      score+=Math.random()*8;
+    let score=
+      dogDist*config.distance +
+      freedom*config.freedom -
+      pressure*config.pressure;
 
-      if(freedom===0){
-        score-=8;
-      }
+    score+=canCpuCatFinishRoute(boxIndex)?config.finish:config.blocked;
 
-      return score;
-    }
+    if(freedom===0)score-=20;
+    else if(freedom===1)score-=5;
 
-
-    // ==========================================
-    // ふつう
-    // 旧「つよい」をベースにする
-    // + 11ターンまで逃げ切れるルートを優先
-    // ==========================================
-if(cpuDifficulty==="normal"){
-
-  score+=dogDist*4.4;
-  score+=freedom*5.2;
-  score-=pressure*3.8;
-
-  if(freedom===0){
-    score-=40;
-  }
-
-  if(freedom===1){
-    score-=10;
-  }
-
-  const lookahead=cpuCatSecondStepValue(
-    game.catPos,
-    boxIndex
-  );
-
-  if(lookahead>-999){
-    score+=lookahead*.28;
-  }
-
-  // つよいより判断に迷いを持たせる
-  score+=Math.random()*15;
-
-  return score;
-}
-
-
-    // ==========================================
-    // つよい
-    // 旧「ふつう」のロジック
-    // シミュレーション上はこちらの方が強かった
-    // ==========================================
-
-    score+=dogDist*4.4;
-    score+=freedom*5.2;
-    score-=pressure*3.8;
-
-    if(freedom===0){
-      score-=40;
-    }
-
-    if(freedom===1){
-      score-=10;
-    }
-
-    const lookahead=cpuCatSecondStepValue(
-      game.catPos,
-      boxIndex
-    );
-
-    if(lookahead>-999){
-      score+=lookahead*.28;
-    }
-
-    score+=Math.random()*1.5;
+    const visited=new Set(game.catHistory.keys());
+    visited.add(boxIndex);
+    score+=cpuCatRouteValue(boxIndex,visited,config.routeDepth)*config.routeWeight;
+    score+=Math.random()*config.noise;
 
     return score;
   }
@@ -5324,19 +5292,18 @@ if(cpuDifficulty==="normal"){
       const freedom=E.getBoxNeighbors(b).length;
       const pressure=projectedDogPressure(b);
 
-      let s=dogDist*5 + freedom*2.3 - pressure*2.5;
+      const config=cpuDifficulty==="easy"
+        ? {distance:4,freedom:2,pressure:2,finish:1,noise:14}
+        : cpuDifficulty==="normal"
+          ? {distance:4.5,freedom:2.8,pressure:2.3,finish:5,noise:7}
+          : {distance:5,freedom:3.5,pressure:2.7,finish:10,noise:4};
 
-      if(cpuDifficulty==="easy"){
-        s+=Math.random()*14;
-      }else if(cpuDifficulty==="normal"){
-        s+=freedom*2.2;
-        s+=Math.random()*2.2;
-      }else{
-        // Hard prefers starts with both distance and multiple exits.
-        s+=freedom*4.4;
-        if(freedom<=2)s-=10;
-        s+=Math.random()*.35;
-      }
+      let s=
+        dogDist*config.distance +
+        freedom*config.freedom -
+        pressure*config.pressure +
+        (canCpuCatFinishRoute(b)?config.finish:-40) +
+        Math.random()*config.noise;
 
       if(s>bestScore){bestScore=s;best=b;}
     }

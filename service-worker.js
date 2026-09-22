@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v34-ranked-stamina-20260921";
+const CACHE_NAME = "nyan-chase-v35-hard-police-ai-20260922";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",
@@ -79,6 +79,7 @@ const PRECACHE = [
   "./collection-catalog.js",
   "./collection.js",
   "./engine.js",
+  "./police-hard-ai.js",
   "./game.js",
   "./index.html",
   "./manifest.webmanifest",
