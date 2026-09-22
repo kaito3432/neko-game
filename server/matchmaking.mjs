@@ -1,4 +1,5 @@
 // Called only inside OnlinePlayers.blockConcurrencyWhile: pairing/cancel is serialized.
+import {normalizeRankedStamina} from './ranked-stamina.mjs';
 export async function matchmaking(storage, rooms, profile, action, now = Date.now()) {
   const key = `queue:${profile.playerId}`;
   const current = await storage.get(key);
@@ -20,6 +21,7 @@ export async function matchmaking(storage, rooms, profile, action, now = Date.no
         won:match.result.winner===match.roles[seat],completed:true,completedAt:match.result.completedAt}};
     }
   }
+  if(action==='join'&&normalizeRankedStamina(profile.rankedStamina,now).stamina<=0)return {status:'blocked',error:'STAMINA_EMPTY'};
   let queue = (await storage.get('queue')) || [];
   queue = queue.filter(entry => entry.expiresAt > now);
   if (action === 'cancel') {

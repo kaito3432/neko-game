@@ -48,6 +48,7 @@ async function connect(session){
     guest.send({type:'ruleSelect',rule:'ability'});
     host.send({type:'ruleSelect',rule:'normal'});await guest.wait(m=>m.payload?.type==='ruleSelect'&&m.payload.rule==='normal');
     ac.send({type:'ready'});bc.send({type:'ready'});await ac.wait(m=>m.payload?.type==='ready');await bc.wait(m=>m.payload?.type==='ready');
+    assert.equal((await a.profile()).rankedStamina.stamina,4);assert.equal((await b.profile()).rankedStamina.stamina,4);
     assert.deepEqual(ar.appearanceSnapshot,br.appearanceSnapshot);
     assert.equal(ar.appearanceSnapshot.catPlayer.catSkinId,'cat_kaitou');
     assert.equal(ar.appearanceSnapshot.policePlayer.dogSkinId,'dog_detective');
@@ -81,6 +82,7 @@ async function connect(session){
     const nh=nextA.player==='host'?na:nb,ng=nh===na?nb:na;
     nh.send({type:'ruleSelect',rule:'normal'});await ng.wait(m=>m.payload?.type==='ruleSelect');
     na.send({type:'ready'});nb.send({type:'ready'});await na.wait(m=>m.payload?.type==='ready');await nb.wait(m=>m.payload?.type==='ready');
+    assert.equal((await a.profile()).rankedStamina.stamina,3);assert.equal((await b.profile()).rankedStamina.stamina,3);
     const nc=nextA.role==='cat'?na:nb,np=nextA.role==='police'?na:nb;
     np.send({type:'dogSetup',dogs:[7,8,9]});await nc.wait(m=>m.payload?.type==='dogSetup');
     nc.send({type:'catSetup',catPos:20});await nc.wait(m=>m.payload?.type==='catSetupAccepted');
@@ -114,6 +116,8 @@ async function connect(session){
     const cAfter=await c.profile(),dAfter=await d.profile();
     assert.deepEqual(cAfter.ranked,cBefore.ranked,'room match does not change rank');
     assert.deepEqual(dAfter.ranked,dBefore.ranked,'room match does not change rank');
+    assert.equal(cAfter.rankedStamina.stamina,cBefore.rankedStamina.stamina,'room match does not consume stamina');
+    assert.equal(dAfter.rankedStamina.stamina,dBefore.rankedStamina.stamina,'room match does not consume stamina');
     assert.equal(cAfter.serverNyanCoins,cBefore.serverNyanCoins);
     assert.equal(dAfter.serverNyanCoins,dBefore.serverNyanCoins);
     console.log('PASS: authenticated profiles, ranked idempotency, matching, roles, snapshots, live WebSocket capture and 11-turn escape, forged early win rejected, finished receipts, repeat queue, room rank exclusion');

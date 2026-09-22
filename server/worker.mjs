@@ -11,6 +11,7 @@ import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile
 import {acceptVerifiedAdMobSsv,verifyStoredRewardedAd} from './rewarded-ad-verification.mjs';
 import {verifyStoreKitTransaction} from './storekit-verification.mjs';
 import {verifyGooglePlayPurchase,acknowledgeGooglePlayPurchase} from './google-play-verification.mjs';
+import {consumeRankedStamina,publicRankedStamina,withRankedStamina} from './ranked-stamina.mjs';
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -72,6 +73,28 @@ export class OnlinePlayers extends DurableObject {
           const {playerId,roomCode}=await request.json();
           await this.ctx.storage.put(`active:${playerId}`,{roomCode});return Response.json({ok:true});
         }
+        if(path==='/internal/ranked-start'){
+          const {matchId,playerIds}=await request.json();
+          if(typeof matchId!=='string'||!matchId.startsWith('rm_')||!Array.isArray(playerIds)||playerIds.length!==2)return Response.json({error:'invalid_ranked_start'},{status:400});
+          const unique=[...new Set(playerIds)];if(unique.length!==2)return Response.json({error:'invalid_ranked_start'},{status:400});
+          const apply=async storage=>{
+            const updates={},profiles=[];
+            for(const playerId of unique){
+              const marker=`stamina-consumed:${matchId}:${playerId}`,key=await storage.get(`profile-key:${playerId}`);
+              if(!key)throw new Error('profile_not_found');
+              const current=withRankedStamina(await storage.get(key),Date.now());
+              if(await storage.get(marker)){profiles.push(current);continue;}
+              const next=consumeRankedStamina(current,Date.now());
+              updates[key]=next;updates[marker]={matchId,playerId,consumedAt:Date.now()};profiles.push(next);
+            }
+            if(Object.keys(updates).length)await storage.put(updates);
+            return profiles;
+          };
+          try{
+            const profiles=typeof this.ctx.storage.transaction==='function'?await this.ctx.storage.transaction(apply):await apply(this.ctx.storage);
+            return Response.json({ok:true,profiles:profiles.map(profile=>({playerId:profile.playerId,rankedStamina:publicRankedStamina(profile)}))});
+          }catch(error){return Response.json({error:error?.message||'STAMINA_CONSUME_FAILED'},{status:error?.message==='STAMINA_EMPTY'?409:400});}
+        }
         if(path==='/active'){
           const auth=await profileRequest(this.ctx.storage,new Request('https://players/profile',{headers:request.headers}),this.profileOptions());
           if(!auth.ok)return auth;
@@ -106,6 +129,7 @@ export class OnlinePlayers extends DurableObject {
           if (!auth.ok) return auth;
           const {profile} = await auth.json();
           const result = await matchmaking(this.ctx.storage, this.env.GAME_ROOMS, profile, path.slice(1));
+          if(result.error)return Response.json({error:result.error,rankedStamina:publicRankedStamina(profile)},{status:409});
           return Response.json(await ensureMatchRoom(this.ctx.storage, this.env.GAME_ROOMS, result));
         }
         if (path === '/result') {
@@ -376,6 +400,15 @@ secretCat: {
     return [...players];
   }
 
+  async authorizeRankedStart(room){
+    if(room.matchType!=='randomMatch')return {ok:true};
+    const playerIds=['host','guest'].map(seat=>room.profiles?.[seat]?.playerId);
+    const response=await this.env.ONLINE_PLAYERS.get(this.env.ONLINE_PLAYERS.idFromName('profiles-v1')).fetch(
+      new Request('https://players/internal/ranked-start',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({matchId:room.matchId,playerIds})}));
+    const result=await response.json().catch(()=>({error:'STAMINA_CONSUME_FAILED'}));
+    return response.ok?result:{ok:false,error:result.error||'STAMINA_CONSUME_FAILED'};
+  }
+
   async markMatch(room, status, winner) {
     if (terminal(room)) return;
     room.status = status;
@@ -617,7 +650,14 @@ async broadcastPresence() {
       return;
     }
     if(control.type==='policeSelection')room.selectedDog=control.dogIndex;
-    const justStarted=startIfReady(room,this.connectedPlayers());
+    let justStarted=false;
+    const candidate=structuredClone(room);
+    if(startIfReady(candidate,this.connectedPlayers())){
+      const authorized=await this.authorizeRankedStart(room);
+      if(!authorized.ok){
+        for(const socket of this.ctx.getWebSockets())try{socket.send(JSON.stringify({type:'gameError',error:authorized.error}));}catch(_){}
+      }else{Object.assign(room,candidate);justStarted=true;}
+    }
     syncTurnClock(room);
     await this.ctx.storage.put('room',room);
     if(justStarted)try{await this.publishMatchState(room);}catch(_){}
@@ -1478,7 +1518,7 @@ export default {
       const response=await players().fetch(new Request('https://players/internal/admob-ssv',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:request.url})}));
       return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
     }
-    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|storekit-transaction|google-play-purchase)$/);
+    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|stamina-coin|storekit-transaction|google-play-purchase)$/);
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));

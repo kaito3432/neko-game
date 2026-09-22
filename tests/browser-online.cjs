@@ -60,6 +60,12 @@ const server=http.createServer(async(req,res)=>{
       await a.locator('.matchmaking-panel').waitFor({state:'visible'});
       const box=await a.locator('.matchmaking-panel').boundingBox();assert.ok(box.x>=0&&box.y>=0&&box.x+box.width<=width&&box.y+box.height<=height);
       assert.deepEqual(await a.evaluate(()=>[document.documentElement.scrollWidth,document.documentElement.scrollHeight]),[width,height]);
+      assert.equal(await a.locator('.ranked-stamina-card').isVisible(),true);
+      await a.locator('[data-stamina-open]').click();
+      const staminaBox=await a.locator('.ranked-stamina-shell').boundingBox();
+      assert.ok(staminaBox.x>=0&&staminaBox.y>=0&&staminaBox.x+staminaBox.width<=width&&staminaBox.y+staminaBox.height<=height);
+      assert.equal(await a.locator('[data-stamina-coin]').isVisible(),true);assert.equal(await a.locator('[data-stamina-ad]').isVisible(),true);
+      await a.locator('[data-stamina-close]').click();
       await a.screenshot({path:path.join(output,`chooser-${width}x${height}.png`)});await a.locator('#matchmakingCancel').click();
     }
     await a.setViewportSize({width:320,height:568});

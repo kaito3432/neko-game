@@ -17,7 +17,7 @@ export function derEcdsaToRaw(value,size=32){
 }
 
 export async function createRewardedAdAttempt(storage,profile,rewardType,now=Date.now()){
-  if(rewardType!==REWARDED_AD_REWARD_TYPES.SKILL_MODE_UNLOCK_PROGRESS)throw new Error('invalid_reward_type');
+  if(!Object.values(REWARDED_AD_REWARD_TYPES).includes(rewardType))throw new Error('invalid_reward_type');
   const attemptId=`ra_${crypto.randomUUID()}`;
   await storage.put(`rewarded-ad-attempt:${attemptId}`,{attemptId,playerId:profile.playerId,rewardType,createdAt:now,expiresAt:now+ATTEMPT_TTL_MS});
   return {attemptId,rewardType,expiresAt:now+ATTEMPT_TTL_MS};

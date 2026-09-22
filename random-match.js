@@ -32,6 +32,7 @@
     overlay.classList.toggle('is-selection', visible);
     rankGuide.hidden = !visible;
     root.NyanRankedUI?.setSelectionVisible?.(visible);
+    root.NyanRankedStaminaUI?.setSelectionVisible?.(visible);
   }
   function waiting() {
     setSelectionVisible(false);
@@ -72,13 +73,19 @@
     if (busy || entered || transitioning) return;
     busy = true; start.disabled = true; cancel.disabled = true;
     try {
-      await root.NyanOnline.prepareIdentity();
+      const identity=await root.NyanOnline.prepareIdentity();
+      root.NyanRankedStaminaUI?.update?.(identity.profile);
+      if(root.NyanRankedStaminaUI&&!root.NyanRankedStaminaUI.canStart()){
+        root.NyanRankedStaminaUI.open('スタミナが足りません');start.disabled=false;cancel.disabled=false;return;
+      }
       entered = true; waiting();
       await accept(await root.NyanOnline.matchmaking('join'));
     } catch (error) {
       // A lost join response may have reserved a match: resolve via status/cancel.
+      if(error.message==='STAMINA_EMPTY')root.NyanRankedStaminaUI?.open?.('スタミナが足りません');
       status.textContent = error.message==='online_server_update_required'
         ? 'ランダムマッチはサーバー更新後に利用できます。部屋対戦は引き続き利用できます。'
+        : error.message==='STAMINA_EMPTY'?'スタミナを回復してからランク戦に参加してね'
         : '接続できませんでした。もう一度お試しください';
       start.hidden = rooms.hidden = entered;
       start.disabled = false;

@@ -11,6 +11,7 @@ import {applyVerifiedRewardedAdCompletion,normalizeServerSkillEntitlements} from
 import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
 import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
 import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
+import {STAMINA_REWARD_TYPE,applyVerifiedStaminaAd,withRankedStamina,recoverStaminaWithCoins,publicRankedStamina} from './ranked-stamina.mjs';
 const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
 
 export function initialProfile(input, playerId, now = Date.now()) {
@@ -24,12 +25,12 @@ export function initialProfile(input, playerId, now = Date.now()) {
   profile.equippedAppearance = validateAppearance(profile, input.equippedAppearance);
   profile.profileCharacter = validateProfileCharacter(profile, input.profileCharacter);
   profile.skillEntitlements=normalizeServerSkillEntitlements();
-  return normalizeRanked(profile,now,{},KNOWN_REWARD_SKINS);
+  return withRankedStamina(normalizeRanked(profile,now,{},KNOWN_REWARD_SKINS),now);
 }
 
 function normalizeOnlineProfile(profile,now,periods){
   const normalized=normalizeRanked(profile,now,periods,KNOWN_REWARD_SKINS);
-  return {...normalized,skillEntitlements:normalizeServerSkillEntitlements(normalized.skillEntitlements)};
+  return withRankedStamina({...normalized,skillEntitlements:normalizeServerSkillEntitlements(normalized.skillEntitlements)},now);
 }
 
 export function validateAppearance(profile, requested = {}) {
@@ -111,7 +112,7 @@ export async function profileRequest(storage, request, options={}) {
   if(JSON.stringify(normalized)!==JSON.stringify(profile))await storage.put(key,normalized);
   if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
   profile=normalized;
-  if (path === '/profile' && request.method === 'GET') return reply({profile:{...profile,disconnectStats:await storage.get(`disconnectStats:${profile.playerId}`)||{totalDisconnectForfeits:0,recentDisconnects:[]}}});
+  if (path === '/profile' && request.method === 'GET') return reply({profile:{...profile,rankedStamina:publicRankedStamina(profile,now),disconnectStats:await storage.get(`disconnectStats:${profile.playerId}`)||{totalDisconnectForfeits:0,recentDisconnects:[]}}});
   if(path==='/cpu-unlock' && request.method==='POST'){
     try{
       const input=await request.json();
@@ -132,15 +133,32 @@ export async function profileRequest(storage, request, options={}) {
   if(path==='/rewarded-ad-completion'&&request.method==='POST'){
     try{
       const input=await request.json();
-      const result=await applyVerifiedRewardedAdCompletion({storage,profileKey:key,profile,
-        rewardType:input.rewardType,verificationId:input.verificationId,verification:input.verification,
-        verify:options.verifyRewardedAd});
+      const result=input.rewardType===STAMINA_REWARD_TYPE
+        ?await applyVerifiedStaminaAd({storage,profileKey:key,profile,verificationId:input.verificationId,
+          verification:input.verification,verify:options.verifyRewardedAd,now})
+        :await applyVerifiedRewardedAdCompletion({storage,profileKey:key,profile,
+          rewardType:input.rewardType,verificationId:input.verificationId,verification:input.verification,
+          verify:options.verifyRewardedAd});
       return reply({profile:result.profile,applied:result.applied,duplicate:result.duplicate});
     }catch(error){
       const code=error?.message||'invalid_reward_completion';
       const status=code==='reward_verification_unavailable'?503:code==='reward_not_verified'?403:400;
       return reply({error:code},status);
     }
+  }
+  if(path==='/stamina-coin'&&request.method==='POST'){
+    try{
+      const {requestId}=await request.json();if(typeof requestId!=='string'||!/^[A-Za-z0-9:_-]{8,200}$/.test(requestId))throw new Error('invalid_request_id');
+      const marker=`stamina-coin:${profile.playerId}:${requestId}`;
+      const apply=async tx=>{
+        const existing=await tx.get(marker);if(existing)return {profile:await tx.get(key)||profile,duplicate:true};
+        const next=recoverStaminaWithCoins(await tx.get(key)||profile,now);
+        await tx.put({[key]:next,[marker]:{processedAt:now}});return {profile:next,duplicate:false};
+      };
+      const result=typeof storage.transaction==='function'?await storage.transaction(apply):await apply(storage);
+      return reply({...result,rankedStamina:publicRankedStamina(result.profile,now)});
+    }
+    catch(error){const code=error?.message||'stamina_recovery_failed';return reply({error:code},code==='insufficient_coins'?409:400);}
   }
   if(path==='/rewarded-ad-attempt'&&request.method==='POST'){
     try{return reply(await createRewardedAdAttempt(storage,profile,(await request.json()).rewardType,now));}
