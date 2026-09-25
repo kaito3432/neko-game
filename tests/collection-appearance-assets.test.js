@@ -250,3 +250,16 @@ test("忍者にゃん10素材は制作仕様の寸法・透過条件を満たす
     assert.equal(buffer[25],colorType,`${field} PNG color type`);
   });
 });
+
+test("和風ホームcharacterは忍者を下端へ、侍しばを左へ配置し450ms反応を維持",()=>{
+  const ninja=Skins.HOME_LAYERED_SKINS["catSkin:cat_coin_01"];
+  const samurai=Skins.HOME_LAYERED_SKINS["dogSkin:dog_coin_01"];
+  assert.equal(ninja.characterLayout.translate,"0 5%");
+  assert.equal(samurai.characterLayout.translate,"-14% 0");
+  assert.equal(ninja.durationMs,450);assert.equal(samurai.durationMs,450);
+  for(const config of [ninja,samurai]){
+    assert.match(config.character,/home_character\.png$/);
+    assert.match(config.treasure,/home_decor\.png$/);
+    assert.equal(config.reaction.at(-1).transform,"translate3d(0,0,0) scale(1) rotate(0deg)");
+  }
+});

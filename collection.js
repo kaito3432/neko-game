@@ -151,10 +151,18 @@
     const category=catalog?.getCategory(categoryId),item=catalog?.getItem(categoryId,itemId);
     if(!category||!item)return {ok:false,reason:"unknown_item"};
     if(item.acquisitionType!=="coins"||item.currency!=="nyanCoins"||!Number.isSafeInteger(item.priceCoins))return {ok:false,reason:"not_coin_purchasable"};
-    if(item.materialStatus==="pending")return {ok:false,reason:"material_unavailable",category,item};
+    if(item.materialStatus!=="ready"||item.assetStatus!=="ready")return {ok:false,reason:"material_unavailable",category,item};
     if(data?.[category.ownedField]?.includes(itemId))return {ok:false,reason:"already_owned",category,item};
     if((Number(data?.nyanCoins)||0)<item.priceCoins)return {ok:false,reason:"insufficient_coins",category,item};
     return {ok:true,category,item};
+  }
+
+  function purchaseConfirmation(data,categoryId,itemId,catalog=defaultCatalog){
+    const validation=validatePurchase(data,categoryId,itemId,catalog);
+    if(!validation.ok)return validation;
+    const current=Number(data?.nyanCoins)||0;
+    return {ok:true,category:validation.category,item:validation.item,current,
+      price:validation.item.priceCoins,after:current-validation.item.priceCoins};
   }
 
   function validateFavorite(data,categoryId,itemId,catalog=defaultCatalog){
@@ -354,10 +362,53 @@
     const status=document.getElementById("collectionStatus");
     const tabs=[...document.querySelectorAll("[data-collection-section]")];
     const detail=document.getElementById("collectionDetail");
+    const purchaseConfirm=document.getElementById("collectionPurchaseConfirm");
+    const purchaseConfirmName=purchaseConfirm?.querySelector("[data-purchase-confirm-name]");
+    const purchaseConfirmPrice=purchaseConfirm?.querySelector("[data-purchase-confirm-price]");
+    const purchaseConfirmCurrent=purchaseConfirm?.querySelector("[data-purchase-confirm-current]");
+    const purchaseConfirmAfter=purchaseConfirm?.querySelector("[data-purchase-confirm-after]");
+    const purchaseConfirmCancel=purchaseConfirm?.querySelector("[data-purchase-confirm-cancel]");
+    const purchaseConfirmSubmit=purchaseConfirm?.querySelector("[data-purchase-confirm-submit]");
+    let pendingPurchase=null;
 
     function setText(element,text){
       if(element) element.textContent=text;
     }
+
+    function closePurchaseConfirm(){
+      pendingPurchase=null;
+      purchaseConfirm?.classList.remove("show");
+      purchaseConfirm?.setAttribute("aria-hidden","true");
+      if(purchaseConfirmSubmit)purchaseConfirmSubmit.disabled=false;
+    }
+
+    function requestPurchase(item,data,saving){
+      const validation=purchaseConfirmation(data,item.category,item.id,catalog);
+      if(!validation.ok||saving){
+        if(validation.reason==="insufficient_coins")showError("にゃんコインが足りません");
+        return false;
+      }
+      pendingPurchase={categoryId:item.category,itemId:item.id};
+      setText(purchaseConfirmName,`${item.name}を購入しますか？`);
+      setText(purchaseConfirmPrice,`🪙 ${validation.price}`);
+      setText(purchaseConfirmCurrent,`🪙 ${validation.current}`);
+      setText(purchaseConfirmAfter,`🪙 ${validation.after}`);
+      purchaseConfirm?.classList.add("show");
+      purchaseConfirm?.setAttribute("aria-hidden","false");
+      purchaseConfirmSubmit?.focus();
+      return true;
+    }
+
+    purchaseConfirmCancel?.addEventListener("click",closePurchaseConfirm);
+    purchaseConfirm?.addEventListener("click",event=>{if(event.target===purchaseConfirm)closePurchaseConfirm();});
+    purchaseConfirmSubmit?.addEventListener("click",async()=>{
+      if(!pendingPurchase||purchaseConfirmSubmit.disabled)return;
+      const target={...pendingPurchase};
+      purchaseConfirmSubmit.disabled=true;
+      const result=await actions.onPurchase(target.categoryId,target.itemId);
+      if(result?.ok)closePurchaseConfirm();
+      else purchaseConfirmSubmit.disabled=false;
+    });
 
     function createItemCard(item,data,saving){
       const category=catalog.getCategory(item.category);
@@ -414,13 +465,16 @@
       button.type="button";
       button.className="collection-equip-btn";
       const coinItem=item.acquisitionType==="coins";
+      const purchaseValidation=coinItem&&state==="unowned"?validatePurchase(data,item.category,item.id,catalog):null;
+      const purchasable=purchaseValidation?.ok===true;
+      button.classList.toggle("is-purchasable",purchasable);
       button.textContent=state==="unowned"&&coinItem?`🪙 ${item.priceCoins}で購入`:getEquipLabel(item.category,state);
       if(state==="unowned"&&!coinItem)button.textContent=catalog.acquisitionLabel(item);
-      if(item.materialStatus==="pending")button.textContent="素材未設定";
-      button.disabled=saving || item.materialStatus==="pending" || (state==="unowned"&&!coinItem) || (state!=="owned"&&state!=="unowned") || (category.equipmentScope!=="appearance"&&state!=="unowned");
+      if(coinItem&&(item.materialStatus!=="ready"||item.assetStatus!=="ready"))button.textContent="素材未設定";
+      button.disabled=saving || (state==="unowned" ? !purchasable : state!=="owned") || (category.equipmentScope!=="appearance"&&state!=="unowned");
       button.addEventListener("click",event=>{
         event.stopPropagation();
-        if(state==="unowned")actions.onPurchase(item.category,item.id);
+        if(state==="unowned")requestPurchase(item,data,saving);
         else actions.onEquip(item.category,item.id);
       });
 
@@ -514,10 +568,12 @@
       if(localNote)localNote.hidden=!catalog.isLocalOnly(item.category);
       setText(stateLabel,state==="equipped" ? "装備中" : state==="owned" ? "所持" : "🔒 未所持");
       if(purchaseButton){
+        const purchaseValidation=validatePurchase(data,item.category,item.id,catalog);
         purchaseButton.hidden=item.acquisitionType!=="coins"||state!=="unowned";
-        purchaseButton.textContent=item.materialStatus==="pending"?"素材未設定":`🪙 ${item.priceCoins}で購入`;
-        purchaseButton.disabled=saving||item.materialStatus==="pending";
-        purchaseButton.onclick=()=>actions.onPurchase(item.category,item.id);
+        purchaseButton.textContent=item.materialStatus!=="ready"||item.assetStatus!=="ready"?"素材未設定":`🪙 ${item.priceCoins}で購入`;
+        purchaseButton.disabled=saving||!purchaseValidation.ok;
+        purchaseButton.classList.toggle("is-purchasable",purchaseValidation.ok);
+        purchaseButton.onclick=()=>requestPurchase(item,data,saving);
       }
       if(equipButton){
         equipButton.textContent=getEquipLabel(item.category,state);
@@ -636,7 +692,7 @@
       root?.setTimeout?.(()=>status?.classList.remove("show"),2600);
     }
 
-    return {render,setBusy,showError};
+    return {render,setBusy,showError,closePurchaseConfirm};
   }
 
   function initializeBrowser(){
@@ -653,7 +709,7 @@
     let controller=null;
     const view=createDomView(document,catalog,{
       onEquip(categoryId,itemId){controller?.equip(categoryId,itemId);},
-      onPurchase(categoryId,itemId){controller?.purchase(categoryId,itemId);},
+      onPurchase(categoryId,itemId){return controller?.purchase(categoryId,itemId);},
       onSelect(categoryId,itemId){controller?.selectItem(categoryId,itemId);},
       onFavorite(categoryId,itemId){controller?.setFavorite(categoryId,itemId);},
       onProfile(categoryId,itemId){controller?.setProfile(categoryId,itemId);}
@@ -670,6 +726,10 @@
     });
 
     backButton.addEventListener("click",()=>{
+      if(document.getElementById("collectionPurchaseConfirm")?.classList.contains("show")){
+        view.closePurchaseConfirm();
+        return;
+      }
       if(controller.getState().selectedItem){
         controller.closeDetail();
         return;
@@ -701,6 +761,7 @@
     sanitizeCatalogEquipment,
     validateEquip,
     validatePurchase,
+    purchaseConfirmation,
     validateFavorite,
     validateProfile,
     createController,

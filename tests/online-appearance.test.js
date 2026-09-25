@@ -41,6 +41,15 @@ test('host警察の探偵しばもplayerIdを照合して表示',()=>{
   const mine={...ctx,profile:{...ctx.profile,ownedDogSkins:['default','dog_detective'],equippedAppearance:{catSkinId:'default',dogSkinId:'dog_detective'}}};
   assert.equal(Visual.resolve(Visual.accept(p,mine),'dogSkin').id,'dog_detective');
 });
+test('忍者にゃん・侍しばはitem IDのまま自分／相手の盤面表示へ同期する',()=>{
+  const peer=Visual.accept(fixture('B','cat_coin_01'),ctx);
+  assert.equal(Visual.resolve(peer,'catSkin').id,'cat_coin_01');
+  const opponentDog=fixture();opponentDog.appearanceSnapshot.policePlayer.dogSkinId='dog_coin_01';
+  assert.equal(Visual.resolve(Visual.accept(opponentDog,ctx),'dogSkin').id,'dog_coin_01');
+  const dogMessage=fixture('B');dogMessage.appearanceSnapshot.policePlayer.dogSkinId='dog_coin_01';
+  const mine={...ctx,profile:{...ctx.profile,ownedDogSkins:['default','dog_coin_01'],equippedAppearance:{catSkinId:'default',dogSkinId:'dog_coin_01'}}};
+  assert.equal(Visual.resolve(Visual.accept(dogMessage,mine),'dogSkin').id,'dog_coin_01');
+});
 test('ルール変更はhostのみ、ready後は固定、選択通知に秘密フィールドを混ぜない',async()=>{
   const {sessionEvent}=await import('../server/session-events.mjs');
   const room={roles:{host:'police',guest:'cat'},requiresRuleSelection:true};

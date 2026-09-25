@@ -6,7 +6,7 @@ test('プロフィール画像は設定だけから解決し、未設定・未�
   const fallback=Catalog.getItem('catSkin','default').profileImage;
   for(const value of [null,{}, {category:'dogSkin',itemId:'unknown'}, {category:'paw',itemId:'default'}])
     assert.equal(UI.imageSource(value),fallback);
-  for(const [category,itemId] of [['catSkin','cat_kaitou'],['dogSkin','dog_detective']])
+  for(const [category,itemId] of [['catSkin','cat_kaitou'],['dogSkin','dog_detective'],['catSkin','cat_coin_01'],['dogSkin','dog_coin_01']])
     assert.equal(UI.imageSource({category,itemId}),Catalog.getItem(category,itemId).profileImage);
   const image={};UI.setImage(image,{category:'dogSkin',itemId:'dog_detective'});image.onerror();
   assert.equal(image.src,fallback);assert.equal(image.onerror,null);
@@ -65,4 +65,20 @@ test('サーバーは所有者だけを検証し、認証更新・旧クライ�
   const token='ef'.repeat(32);await call('register',{},token);
   const unowned=await (await call('appearance',{profileCharacter:{category:'dogSkin',itemId:'dog_detective'}},token)).json();
   assert.equal(unowned.profile.profileCharacter.itemId,'default');
+});
+
+test('コイン購入スキンは固定allowlistだけ同期しプロフィール画像を相手へ公開する',async()=>{
+  const {profileRequest,publicPlayerProfiles}=await import('../server/online-profile.mjs');
+  const values=new Map(),storage={get:async k=>structuredClone(values.get(k)),put:async(k,v)=>values.set(k,structuredClone(v))};
+  const headers={Authorization:'Bearer '+('ac'.repeat(32))};
+  const call=(path,body)=>profileRequest(storage,new Request('https://test/'+path,{method:'POST',headers,body:JSON.stringify(body)}));
+  await call('register',{});
+  const response=await call('appearance',{collectionOwnership:{ownedCatSkins:['cat_coin_01','forged'],ownedDogSkins:['dog_coin_01','dog_detective']},
+    equippedAppearance:{catSkinId:'cat_coin_01',dogSkinId:'dog_coin_01'},profileCharacter:{category:'dogSkin',itemId:'dog_coin_01'}});
+  const {profile}=await response.json();
+  assert.deepEqual(profile.ownedCatSkins,['default','cat_coin_01']);
+  assert.deepEqual(profile.ownedDogSkins,['default','dog_coin_01']);
+  assert.deepEqual(profile.equippedAppearance,{catSkinId:'cat_coin_01',dogSkinId:'dog_coin_01'});
+  assert.deepEqual(publicPlayerProfiles({guest:profile}).guest.profileCharacter,{category:'dogSkin',itemId:'dog_coin_01'});
+  assert.equal(UI.imageSource({category:'dogSkin',itemId:'dog_coin_01'}),Catalog.getItem('dogSkin','dog_coin_01').profileImage);
 });

@@ -2,8 +2,12 @@
 // IMPORTANT: first registration imports client claims, NOT verified purchases or wins.
 // Never reuse this migration endpoint as an ongoing ownership synchronization API.
 export const SKINS = Object.freeze({
-  ownedCatSkins: Object.freeze(['default', 'cat_kaitou']),
-  ownedDogSkins: Object.freeze(['default', 'dog_detective'])
+  ownedCatSkins: Object.freeze(['default', 'cat_kaitou', 'cat_coin_01']),
+  ownedDogSkins: Object.freeze(['default', 'dog_detective', 'dog_coin_01'])
+});
+const CLIENT_COIN_SKINS=Object.freeze({
+  ownedCatSkins:Object.freeze(['cat_coin_01']),
+  ownedDogSkins:Object.freeze(['dog_coin_01'])
 });
 import {applyCpuUnlockClaim} from './cpu-unlock-claims.mjs';
 import {normalizeRanked,claimSeasonReward,masterPeriods,validateProfileFrame} from './ranked-progression.mjs';
@@ -48,6 +52,15 @@ export function validateProfileCharacter(profile, selection) {
   return owned && SKINS[owned].includes(selection.itemId) && profile[owned]?.includes(selection.itemId)
     ? {category: selection.category, itemId: selection.itemId}
     : {category: 'catSkin', itemId: 'default'};
+}
+
+export function mergeClientCoinSkinOwnership(profile,claims={}){
+  const next={...profile};
+  for(const [field,allowed] of Object.entries(CLIENT_COIN_SKINS)){
+    const claimed=Array.isArray(claims?.[field])?claims[field]:[];
+    next[field]=[...new Set([...(Array.isArray(profile?.[field])?profile[field]:['default']),...claimed.filter(id=>allowed.includes(id))])];
+  }
+  return next;
 }
 
 // Public presentation only. Never expose another player's credentials, inventory or stats.
@@ -123,6 +136,10 @@ export async function profileRequest(storage, request, options={}) {
   }
   if (path === '/appearance' && request.method === 'POST') {
     const input = await request.json();
+    // Coin cosmetics currently use the local progression ledger. Only the fixed,
+    // catalog-backed coin skin IDs cross this authenticated migration boundary;
+    // arbitrary IDs and achievement/rank rewards are never imported here.
+    profile = mergeClientCoinSkinOwnership(profile,input.collectionOwnership);
     profile.equippedAppearance = validateAppearance(profile, input.equippedAppearance);
     // Old clients that omit the field must not erase an existing profile selection.
     if (Object.hasOwn(input, 'profileCharacter'))

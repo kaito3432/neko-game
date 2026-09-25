@@ -51,6 +51,22 @@ test("ランク報酬はコイン購入できない",async()=>{
   assert.equal(Collection.validatePurchase({...data,nyanCoins:999},"catSkin","cat_master_reward_pending").reason,"not_coin_purchasable");
 });
 
+test("購入確認はreadyかつ十分な残高だけ有効で、確定前は残高を変更しない",async()=>{
+  const store=PlayerData.createStore({storage:new MemoryStorage()});
+  await store.load();
+  await store.addCoins(2000,"test:grant","test:purchase-confirm:grant");
+  const before=store.getSnapshot();
+  const confirmation=Collection.purchaseConfirmation(before,"catSkin","cat_coin_01");
+  assert.deepEqual({ok:confirmation.ok,current:confirmation.current,price:confirmation.price,after:confirmation.after},
+    {ok:true,current:2000,price:500,after:1500});
+  assert.equal(store.getSnapshot().nyanCoins,2000,"確認表示・キャンセル相当では未減算");
+  const short={...before,nyanCoins:499};
+  assert.equal(Collection.purchaseConfirmation(short,"catSkin","cat_coin_01").reason,"insufficient_coins");
+  const pending={...Catalog.getItem("catSkin","cat_coin_01"),id:"pending",materialStatus:"pending",assetStatus:"placeholder"};
+  const fakeCatalog={getCategory:Catalog.getCategory,getItem:()=>pending};
+  assert.equal(Collection.purchaseConfirmation(before,"catSkin","pending",fakeCatalog).reason,"material_unavailable");
+});
+
 const LOCAL_COSMETIC_CASES=[
   {category:"cardboard",id:"cardboard_coin_01",price:30,ownedField:"ownedCardboards",equippedField:"cardboardId",fallback:"default"},
   {category:"paw",id:"paw_coin_01",price:30,ownedField:"ownedPaws",equippedField:"pawId",fallback:"default"},
@@ -214,7 +230,7 @@ test("忍者にゃんは499コイン以下で購入できず残高と所有状�
 });
 
 test("購入可能素材では購入後に所持へ移り再購入で二重控除しない",async()=>{
-  const item={id:"ready_paw",category:"paw",name:"購入可能肉球",preview:"paw.png",acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common"};
+  const item={id:"ready_paw",category:"paw",name:"購入可能肉球",preview:"paw.png",acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common",materialStatus:"ready",assetStatus:"ready"};
   const items=[...Catalog.ITEMS,item];
   const catalog={...Catalog,ITEMS:items,getItem:(category,id)=>items.find(value=>value.category===category&&value.id===id)||null,isKnownItem:(category,id)=>items.some(value=>value.category===category&&value.id===id)};
   let data={...PlayerData.createDefaultData("ncp_collectiontest2"),nyanCoins:60};

@@ -419,6 +419,7 @@ test("忍者にゃんもホームのキャラクターレイヤーだけを450ms
   state.ownedCatSkins.push("cat_coin_01");
   state.favoriteCharacter={category:"catSkin",itemId:"cat_coin_01"};
   Skins.renderHomeFavorite(state,{document:view.document});
+  assert.equal(view.characterImage.style.translate,"0 5%");
   const queue=[];
   const setTimer=(callback,delay)=>{const task={callback,delay};queue.push(task);return task;};
   assert.equal(Skins.playHomeAnimation(view.hero,{setTimer,clearTimer:()=>{},reducedMotion:false}),true);
@@ -430,12 +431,12 @@ test("忍者にゃんもホームのキャラクターレイヤーだけを450ms
   assert.equal(Skins.isHomeAnimationPlaying(view.hero),false);
 });
 
-test("侍しばは同一座標のホームレイヤーと短い反応を使用する",()=>{
+test("侍しばはdecorを維持してcharacterだけ左寄せし短い反応を使用する",()=>{
   const layered=Skins.HOME_LAYERED_SKINS["dogSkin:dog_coin_01"];
   assert.match(layered.treasure,/dog_samurai_home_decor\.png$/);
   assert.match(layered.character,/dog_samurai_home_character\.png$/);
   assert.equal(layered.supportLayout.translate,"0 0");
-  assert.equal(layered.characterLayout.translate,"0 0");
+  assert.equal(layered.characterLayout.translate,"-14% 0");
   assert.equal(layered.durationMs,450);
 });
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v43-japanese-cosmetics-ready-20260924";
+const CACHE_NAME = "nyan-chase-v44-collection-online-skin-fixes-20260925";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",

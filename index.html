@@ -290,6 +290,21 @@
         </div>
       </div>
     </section>
+    <div class="collection-purchase-confirm" id="collectionPurchaseConfirm" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="collectionPurchaseConfirmTitle">
+      <div class="collection-purchase-confirm-card">
+        <span class="collection-purchase-confirm-icon" aria-hidden="true">🪙</span>
+        <h2 id="collectionPurchaseConfirmTitle" data-purchase-confirm-name>購入しますか？</h2>
+        <dl>
+          <div><dt>価格</dt><dd data-purchase-confirm-price></dd></div>
+          <div><dt>現在</dt><dd data-purchase-confirm-current></dd></div>
+          <div><dt>購入後</dt><dd data-purchase-confirm-after></dd></div>
+        </dl>
+        <div class="collection-purchase-confirm-actions">
+          <button type="button" data-purchase-confirm-cancel>キャンセル</button>
+          <button type="button" data-purchase-confirm-submit>購入する</button>
+        </div>
+      </div>
+    </div>
     <div class="collection-status" id="collectionStatus" role="status" aria-live="polite"></div>
   </div>
 </div>
@@ -1870,8 +1885,8 @@
 <script src="./player-data.js?v=1.1.collection-coins"></script>
 <script src="./daily-missions.js?v=1.0.daily1"></script>
 <script src="./collection-catalog.js?v=1.6.japanese-cosmetics-ready"></script>
-<script src="./collection.js?v=1.1.coin-items"></script>
-<script src="./skin-presentation.js?v=1.2.home-board-theme"></script>
+<script src="./collection.js?v=1.2.purchase-confirm"></script>
+<script src="./skin-presentation.js?v=1.3.home-layout"></script>
 <script src="./skill-catalog.js?v=1.0.phase2"></script>
 <script src="./monetization-products.js?v=2.0.phase2"></script>
 <script src="./monetization.js?v=2.0.phase2"></script>
@@ -1890,7 +1905,7 @@
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./result-presentation.js?v=1"></script>
 <script src="./api-environment.js?v=1.0.sandbox-ready"></script>
-<script src="./online-identity.js?v=1.0"></script>
+<script src="./online-identity.js?v=1.1.coin-skins"></script>
 <script src="./online-appearance.js?v=1"></script>
 <script src="./online.js?v=3.0.result-recovery1"></script>
 <script src="./online-profile-ui.js?v=1"></script>

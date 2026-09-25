@@ -69,7 +69,7 @@
       treasure:"./assets/images/skins/ninja01/cat_ninja_home_decor.png",
       character:"./assets/images/skins/ninja01/cat_ninja_home_character.png",
       supportLayout:Object.freeze({translate:"0 0",scale:"1"}),
-      characterLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      characterLayout:Object.freeze({translate:"0 5%",scale:"1"}),
       durationMs:HOME_REACTION_DURATION_MS,
       reaction:freezeTimeline([
         {offset:0,transform:"translate3d(0,0,0) scale(1) rotate(0deg)",easing:"ease-out"},
@@ -97,7 +97,7 @@
       treasure:"./assets/images/skins/ninja01/dog_samurai_home_decor.png",
       character:"./assets/images/skins/ninja01/dog_samurai_home_character.png",
       supportLayout:Object.freeze({translate:"0 0",scale:"1"}),
-      characterLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      characterLayout:Object.freeze({translate:"-14% 0",scale:"1"}),
       durationMs:HOME_REACTION_DURATION_MS,
       reaction:freezeTimeline([
         {offset:0,transform:"translate3d(0,0,0) scale(1) rotate(0deg)",easing:"ease-out"},
