@@ -42,6 +42,47 @@ test("怪盗にゃん装備時は猫駒を解決する",()=>{
   assert.equal(Skins.resolveCatPiece(data()).src,Catalog.getItem("catSkin","cat_kaitou").pieceImage);
 });
 
+test("忍者にゃん素材は装備・結果・ホームの共通resolverから解決できる",()=>{
+  const ninja=Catalog.getItem("catSkin","cat_coin_01");
+  const state=data();
+  state.ownedCatSkins.push("cat_coin_01");
+  state.equippedAppearance.catSkinId="cat_coin_01";
+  state.favoriteCharacter={category:"catSkin",itemId:"cat_coin_01"};
+  assert.equal(Skins.resolveCatPiece(state).src,ninja.pieceImage);
+  assert.equal(Skins.resolveResultImage(state,"cat","cpuPolice").src,ninja.resultWinImage);
+  assert.equal(Skins.resolveResultImage(state,"dogs","cpuPolice").src,ninja.resultLoseImage);
+  assert.equal(Skins.effectSource(state,"catSkin","move"),ninja.moveEffect);
+  assert.equal(Skins.effectSource(state,"catSkin","found"),ninja.foundFootprintEffect);
+  const favorite=Skins.resolveFavorite(state);
+  assert.equal(favorite.item.id,"cat_coin_01");
+  assert.equal(favorite.mode,"layered");
+  assert.equal(favorite.layered.treasure,ninja.homeDecorImage);
+  assert.equal(favorite.layered.character,ninja.homeCharacterImage);
+});
+
+test("侍しば素材はQA用所有状態で駒・結果・エフェクト・ホームを解決できる",()=>{
+  const samurai=Catalog.getItem("dogSkin","dog_coin_01");
+  const state=data();
+  state.ownedDogSkins.push("dog_coin_01");
+  state.equippedAppearance.dogSkinId="dog_coin_01";
+  state.favoriteCharacter={category:"dogSkin",itemId:"dog_coin_01"};
+  assert.deepEqual([0,1,2].map(index=>Skins.resolveDogPiece(state,index).src),[
+    samurai.pieceImage.red,samurai.pieceImage.black,samurai.pieceImage.white
+  ]);
+  assert.deepEqual([0,1,2].map(index=>Skins.resolveDogCard(state,index).src),[
+    samurai.cardImage.red,samurai.cardImage.black,samurai.cardImage.white
+  ]);
+  assert.equal(Skins.resolveResultImage(state,"dogs","cpuCat").src,samurai.resultWinImage);
+  assert.equal(Skins.resolveResultImage(state,"cat","cpuCat").src,samurai.resultLoseImage);
+  assert.equal(Skins.effectSource(state,"dogSkin","move"),samurai.moveEffect);
+  assert.equal(Skins.effectSource(state,"dogSkin","found"),samurai.foundFootprintEffect);
+  const favorite=Skins.resolveFavorite(state);
+  assert.equal(favorite.item.id,"dog_coin_01");
+  assert.equal(favorite.mode,"layered");
+  assert.equal(favorite.layered.treasure,samurai.homeDecorImage);
+  assert.equal(favorite.layered.character,samurai.homeCharacterImage);
+});
+
 test("default装備と不正装備は従来画像へフォールバックする",()=>{
   const defaults={
     ownedCatSkins:["default"],ownedDogSkins:["default"],
@@ -370,6 +411,32 @@ test("怪盗にゃんは猫レイヤーだけを450ms動かし連打を無視す
   assert.equal(Skins.isHomeAnimationPlaying(view.hero),false);
   assert.equal(view.characterImage.style.transform,"");
   assert.equal(view.characterImage.hasAttribute("aria-busy"),false);
+});
+
+test("忍者にゃんもホームのキャラクターレイヤーだけを450ms動かす",()=>{
+  const view=layeredHomeMock();
+  const state=data();
+  state.ownedCatSkins.push("cat_coin_01");
+  state.favoriteCharacter={category:"catSkin",itemId:"cat_coin_01"};
+  Skins.renderHomeFavorite(state,{document:view.document});
+  const queue=[];
+  const setTimer=(callback,delay)=>{const task={callback,delay};queue.push(task);return task;};
+  assert.equal(Skins.playHomeAnimation(view.hero,{setTimer,clearTimer:()=>{},reducedMotion:false}),true);
+  assert.deepEqual(queue.map(task=>task.delay),[450]);
+  assert.equal(view.characterImage.animationCalls.length,1);
+  assert.equal(view.treasureImage.animationCalls.length,0);
+  assert.equal(view.stage.animationCalls.length,0);
+  queue[0].callback();
+  assert.equal(Skins.isHomeAnimationPlaying(view.hero),false);
+});
+
+test("侍しばは同一座標のホームレイヤーと短い反応を使用する",()=>{
+  const layered=Skins.HOME_LAYERED_SKINS["dogSkin:dog_coin_01"];
+  assert.match(layered.treasure,/dog_samurai_home_decor\.png$/);
+  assert.match(layered.character,/dog_samurai_home_character\.png$/);
+  assert.equal(layered.supportLayout.translate,"0 0");
+  assert.equal(layered.characterLayout.translate,"0 0");
+  assert.equal(layered.durationMs,450);
 });
 
 test("探偵しばもモーション低減時は静止したまま",()=>{

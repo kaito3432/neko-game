@@ -34,6 +34,9 @@
     dogResult:"./assets/images/cutin_police_win.jpg",
     catLoseResult:"./assets/images/default_cat_result_lose.png",
     dogLoseResult:"./assets/images/default_dog_result_lose.png",
+    cardboard:"./assets/images/box.png",
+    paw:"./assets/images/paw.png",
+    board:"./assets/images/bg_day.png",
     home:"./assets/images/home_hero.png"
   });
 
@@ -62,6 +65,20 @@
         {offset:1,transform:"translate3d(0,0,0) scale(1) rotate(0deg)"}
       ])
     }),
+    "catSkin:cat_coin_01":Object.freeze({
+      treasure:"./assets/images/skins/ninja01/cat_ninja_home_decor.png",
+      character:"./assets/images/skins/ninja01/cat_ninja_home_character.png",
+      supportLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      characterLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      durationMs:HOME_REACTION_DURATION_MS,
+      reaction:freezeTimeline([
+        {offset:0,transform:"translate3d(0,0,0) scale(1) rotate(0deg)",easing:"ease-out"},
+        {offset:.18,transform:"translate3d(0,3px,0) scale(.975) rotate(0deg)",easing:"ease-in"},
+        {offset:.49,transform:"translate3d(9px,-6px,0) scale(1.02) rotate(-1.2deg)",easing:"ease-out"},
+        {offset:.71,transform:"translate3d(5px,-2px,0) scale(1.012) rotate(.8deg)",easing:"ease-in-out"},
+        {offset:1,transform:"translate3d(0,0,0) scale(1) rotate(0deg)"}
+      ])
+    }),
     "dogSkin:dog_detective":Object.freeze({
       treasure:"./assets/home-skins/detective-shiba/detective-shiba-home-clues.png",
       character:"./assets/home-skins/detective-shiba/detective-shiba-home-character.png",
@@ -73,6 +90,20 @@
         {offset:.167,transform:"translate3d(0,3px,0) scale(.985) rotate(0deg)",easing:"ease-in"},
         {offset:.458,transform:"translate3d(8px,-5px,0) scale(1.03) rotate(-1deg)",easing:"ease-out"},
         {offset:.667,transform:"translate3d(4px,-1px,0) scale(1.015) rotate(.8deg)",easing:"ease-in-out"},
+        {offset:1,transform:"translate3d(0,0,0) scale(1) rotate(0deg)"}
+      ])
+    }),
+    "dogSkin:dog_coin_01":Object.freeze({
+      treasure:"./assets/images/skins/ninja01/dog_samurai_home_decor.png",
+      character:"./assets/images/skins/ninja01/dog_samurai_home_character.png",
+      supportLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      characterLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      durationMs:HOME_REACTION_DURATION_MS,
+      reaction:freezeTimeline([
+        {offset:0,transform:"translate3d(0,0,0) scale(1) rotate(0deg)",easing:"ease-out"},
+        {offset:.18,transform:"translate3d(0,3px,0) scale(.98) rotate(0deg)",easing:"ease-in"},
+        {offset:.49,transform:"translate3d(8px,-5px,0) scale(1.02) rotate(-.8deg)",easing:"ease-out"},
+        {offset:.71,transform:"translate3d(4px,-2px,0) scale(1.01) rotate(.6deg)",easing:"ease-in-out"},
         {offset:1,transform:"translate3d(0,0,0) scale(1) rotate(0deg)"}
       ])
     })
@@ -164,6 +195,41 @@
       ? card[DOG_KEYS[safeIndex]]
       : null;
     return {src:src || DEFAULTS.dogCards[safeIndex],fallback:DEFAULTS.dogCards[safeIndex],itemId:item?.id || "default"};
+  }
+
+  function resolveLocalCosmetic(data,categoryId,assetField,fallback,{catalog=defaultCatalog}={}){
+    const category=catalog?.getCategory(categoryId);
+    const requested=data?.equippedAppearance?.[category?.equippedField];
+    const owned=Array.isArray(data?.[category?.ownedField]) ? data[category.ownedField] : ["default"];
+    const itemId=typeof requested==="string" && owned.includes(requested) ? requested : "default";
+    const item=catalog?.getItem(categoryId,itemId) || catalog?.getItem(categoryId,"default");
+    return {
+      src:item?.[assetField] || fallback,
+      fallback,
+      itemId:item?.id || "default"
+    };
+  }
+
+  function resolveCardboard(data,options={}){
+    return resolveLocalCosmetic(data,"cardboard","cardboardImage",DEFAULTS.cardboard,options);
+  }
+
+  function resolvePaw(data,options={}){
+    return resolveLocalCosmetic(data,"paw","pawImage",DEFAULTS.paw,options);
+  }
+
+  function resolveBoardTheme(data,options={}){
+    return resolveLocalCosmetic(data,"boardTheme","boardImage",DEFAULTS.board,options);
+  }
+
+  function renderHomeBoardTheme(data,{document=root?.document,catalog=defaultCatalog}={}){
+    const home=document?.getElementById?.("modeOverlay") || document?.querySelector?.(".visual-update3");
+    if(!home)return resolveBoardTheme(data,{catalog});
+    const theme=resolveBoardTheme(data,{catalog});
+    const safeSrc=String(theme.src||theme.fallback).replace(/["\\]/g,"\\$&");
+    home.style.setProperty("--nyan-home-theme-image",`url("${safeSrc}")`);
+    home.dataset.boardThemeId=theme.itemId;
+    return theme;
   }
 
   function resolveOutcomeImage(data,categoryId,outcome,{catalog=defaultCatalog,playMode="local"}={}){
@@ -722,7 +788,11 @@
     const document=root?.document;
     const playerData=root?.NyanPlayerData;
     if(!document || !playerData) return;
-    const refresh=()=>renderHomeFavorite(playerData.getSnapshot?.());
+    const refresh=()=>{
+      const data=playerData.getSnapshot?.();
+      renderHomeFavorite(data);
+      renderHomeBoardTheme(data,{document});
+    };
     Promise.resolve(playerData.ready).then(refresh).catch(refresh);
     root.addEventListener?.("nyan-player-appearance-changed",refresh);
     const hero=document.querySelector(".vu3-hero");
@@ -746,8 +816,9 @@
     DOG_KEYS,DEFAULTS,HOME_ANIMATIONS,HOME_LAYERED_SKINS,
     HOME_ANIMATION_DURATION_MS,HOME_CROSSFADE_MS,HOME_REACTION_DURATION_MS,
     isOnlineMode,equippedItem,resolveCatPiece,resolveDogPiece,resolveDogCard,
+    resolveCardboard,resolvePaw,resolveBoardTheme,
     resolveOutcomeImage,resolveResultImage,resolveFavorite,setImageWithFallback,
-    effectSource,showEffectAtElement,showBoardEffect,renderHomeFavorite,
+    effectSource,showEffectAtElement,showBoardEffect,renderHomeFavorite,renderHomeBoardTheme,
     renderedHomeFavorite,preloadHomeAnimation,playHomeAnimation,
     stopHomeAnimation,isHomeAnimationPlaying,initializeHome
   });

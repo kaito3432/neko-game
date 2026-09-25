@@ -12,6 +12,22 @@
     return window.NyanPlayerData?.getSnapshot?.() || null;
   }
 
+  function localPawAsset(){
+    return Skins.resolvePaw(playerAppearance());
+  }
+
+  function imageAttributes(asset){
+    return `src="${asset.src}" data-skin-fallback="${asset.fallback}"`;
+  }
+
+  function applyBoardTheme(element){
+    if(!element)return;
+    const theme=Skins.resolveBoardTheme(playerAppearance());
+    const safeSrc=String(theme.src||theme.fallback).replace(/["\\]/g,"\\$&");
+    element.style.setProperty("--nyan-board-theme-image",`url("${safeSrc}")`);
+    element.dataset.boardThemeId=theme.itemId;
+  }
+
   function applySkinFallbacks(scope){
     scope?.querySelectorAll?.("img[data-skin-fallback]").forEach(image=>{
       Skins.setImageWithFallback(image,image.getAttribute("src"),image.dataset.skinFallback);
@@ -1480,6 +1496,7 @@ requestAnimationFrame(()=>{
     renderControls();
   }
    function renderTrackLayer(){
+  const pawAsset=localPawAsset();
   let layer=board.querySelector(".track-layer");
 
   if(!layer){
@@ -1534,7 +1551,7 @@ if(turn===1){
         <span class="track-badge">
           <img
             class="track-art"
-            src="./assets/images/paw.png"
+            ${imageAttributes(pawAsset)}
             alt="足跡"
           >
           ${turnBadge}
@@ -1548,10 +1565,16 @@ if(turn===1){
   // 今は存在しなくなった痕跡だけ削除
   existing.forEach(el=>el.remove());
 
+  layer.querySelectorAll(".track-art").forEach(image=>{
+    Skins.setImageWithFallback(image,pawAsset.src,pawAsset.fallback);
+  });
+
   board.appendChild(layer);
 }
 
   function renderBoard(){
+    const cardboardAsset=Skins.resolveCardboard(playerAppearance());
+    applyBoardTheme(board.closest(".board-shell"));
     board.querySelectorAll(
   ":scope > .box, :scope > .node"
 ).forEach(el=>el.remove());
@@ -1629,7 +1652,7 @@ if(
 
       const catPiece=Skins.resolveCatPiece(playerAppearance(),{playMode});
       b.innerHTML=`<span class="boxnum">${i+1}</span>
-        <img class="box-art" src="./assets/images/box.png" alt="">
+        <img class="box-art" ${imageAttributes(cardboardAsset)} alt="">
         ${playMode!=="cpuCat"&&game.phase==="cat"&&game.catVisible&&game.catPos===i?`<span class="cat"><img class="cat-art" src="${catPiece.src}" data-skin-id="${catPiece.itemId}" data-skin-fallback="${catPiece.fallback}" alt="ネコ"></span>`:""}
         ${privateHistoryHTML(i)}
         ${game.phase==="cat" &&
@@ -1745,7 +1768,7 @@ function privateHistoryHTML(i){
     return'<span class="private-foot private-start"><img src="./assets/images/start.png" alt="スタート"></span>';
   }
 
-  return'<span class="private-foot"><img src="./assets/images/paw.png" alt="足跡"></span>';
+  return`<span class="private-foot"><img ${imageAttributes(localPawAsset())} alt="足跡"></span>`;
 }
   function shouldShowTrackTurn(turn){
     // ターン数字は「プレイヤー＝警察 / CPUネコ戦」の難易度ヒントだけ。
@@ -1756,6 +1779,7 @@ function privateHistoryHTML(i){
   }
 
 function publicTrackHTML(i){
+  const pawAsset=localPawAsset();
   if(!game.revealedTracks.has(i)) return "";
 
   const turn =
@@ -1783,10 +1807,10 @@ function publicTrackHTML(i){
 
   return `
     <span class="track-badge">
-      <img
-        class="track-art"
-        src="./assets/images/paw.png"
-        alt="足跡"
+        <img
+          class="track-art"
+          ${imageAttributes(pawAsset)}
+          alt="足跡"
         decoding="sync"
         draggable="false"
       >
@@ -5422,6 +5446,9 @@ if(remainingDogs<=searchesNeeded){
 
 function renderResultCpuCatRoute(){
 
+  const pawAsset=localPawAsset();
+  applyBoardTheme(resultRouteBoard);
+
   const ordered=cpuCatRoute.length
     ? cpuCatRoute.slice().sort((a,b)=>a.turn-b.turn)
     : [...game.catHistory.entries()]
@@ -5582,7 +5609,7 @@ const y=10+fromR*20;
     mark.style.top=`${y}%`;
 
 mark.innerHTML=`
-  <img src="./assets/images/paw.png" alt="忍び足">
+  <img ${imageAttributes(pawAsset)} alt="忍び足">
   <span>忍び足</span>
 `;
 
@@ -5607,7 +5634,7 @@ mark.innerHTML=`
     mark.style.top=`${10+r*20}%`;
 
 mark.innerHTML=`
-  <img src="./assets/images/paw.png" alt="フェイク肉球">
+  <img ${imageAttributes(pawAsset)} alt="フェイク肉球">
   <span>フェイク</span>
 `;
 
@@ -5691,6 +5718,8 @@ if(resultRouteNote){
 }
   }
 
+
+  applySkinFallbacks(resultRouteBoard);
 
   if(resultRoute){
     resultRoute.classList.add("show");

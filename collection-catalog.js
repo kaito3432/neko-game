@@ -94,6 +94,36 @@
   });
 
   const MYSTERY_ROOT="./assets/images/skins/mystery01";
+  const NINJA_ROOT="./assets/images/skins/ninja01";
+  const JAPANESE_COSMETIC_ROOT="./assets/images/cosmetics/japanese01";
+  const CAT_NINJA_PLANNED_ASSETS=Object.freeze({
+    collectionImage:`${NINJA_ROOT}/cat_ninja_collection.png`,
+    profileImage:`${NINJA_ROOT}/cat_ninja_profile.png`,
+    pieceImage:`${NINJA_ROOT}/cat_ninja_piece.png`,
+    resultWinImage:`${NINJA_ROOT}/cat_ninja_result_win.png`,
+    resultLoseImage:`${NINJA_ROOT}/cat_ninja_result_lose.png`,
+    moveEffect:`${NINJA_ROOT}/cat_ninja_effect_smoke.png`,
+    foundFootprintEffect:`${NINJA_ROOT}/cat_ninja_effect_found.png`,
+    homeDecorImage:`${NINJA_ROOT}/cat_ninja_home_decor.png`,
+    homeCharacterImage:`${NINJA_ROOT}/cat_ninja_home_character.png`,
+    homeImage:`${NINJA_ROOT}/cat_ninja_home.png`
+  });
+  const DOG_SAMURAI_PLANNED_ASSETS=Object.freeze({
+    collectionImage:`${NINJA_ROOT}/dog_samurai_collection.png`,
+    profileImage:`${NINJA_ROOT}/dog_samurai_profile.png`,
+    pieceImage:Object.freeze({
+      red:`${NINJA_ROOT}/dog_samurai_red_piece.png`,
+      black:`${NINJA_ROOT}/dog_samurai_black_piece.png`,
+      white:`${NINJA_ROOT}/dog_samurai_white_piece.png`
+    }),
+    resultWinImage:`${NINJA_ROOT}/dog_samurai_result_win.png`,
+    resultLoseImage:`${NINJA_ROOT}/dog_samurai_result_lose.png`,
+    moveEffect:`${NINJA_ROOT}/dog_samurai_effect_slash.png`,
+    foundFootprintEffect:`${NINJA_ROOT}/dog_samurai_effect_found.png`,
+    homeDecorImage:`${NINJA_ROOT}/dog_samurai_home_decor.png`,
+    homeCharacterImage:`${NINJA_ROOT}/dog_samurai_home_character.png`,
+    homeImage:`${NINJA_ROOT}/dog_samurai_home.png`
+  });
   const ITEMS=Object.freeze([
     Object.freeze({
       id:"default",category:"catSkin",name:"デフォルト",
@@ -144,15 +174,47 @@
       moveEffect:`${MYSTERY_ROOT}/dog_detective_effect_clue.png`,
       foundFootprintEffect:`${MYSTERY_ROOT}/dog_detective_effect_search.png`
     }),
-    Object.freeze({id:"default",category:"cardboard",name:"デフォルト",preview:"./assets/images/box.png",acquisitionType:"default",rarity:"Common"}),
-    Object.freeze({id:"default",category:"paw",name:"デフォルト",preview:"./assets/images/paw.png",acquisitionType:"default",rarity:"Common"}),
-    Object.freeze({id:"default",category:"boardTheme",name:"デフォルト",preview:"./assets/images/bg_day.png",acquisitionType:"default",rarity:"Common"}),
-    // The first coin products intentionally remain unavailable until approved art is added.
-    Object.freeze({id:"cat_coin_01",category:"catSkin",name:"にゃんコイン限定ネコスキン",acquisitionType:"coins",currency:"nyanCoins",priceCoins:500,rarity:"Rare",materialStatus:"pending"}),
-    Object.freeze({id:"dog_coin_01",category:"dogSkin",name:"にゃんコイン限定柴犬スキン（3匹セット）",acquisitionType:"coins",currency:"nyanCoins",priceCoins:500,rarity:"Rare",materialStatus:"pending"}),
-    Object.freeze({id:"cardboard_coin_01",category:"cardboard",name:"にゃんコイン限定ダンボール",acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common",materialStatus:"pending"}),
-    Object.freeze({id:"paw_coin_01",category:"paw",name:"にゃんコイン限定肉球テーマ",acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common",materialStatus:"pending"}),
-    Object.freeze({id:"board_coin_01",category:"boardTheme",name:"にゃんコイン限定盤面テーマ",acquisitionType:"coins",currency:"nyanCoins",priceCoins:60,rarity:"Common",materialStatus:"pending"}),
+    Object.freeze({id:"default",category:"cardboard",name:"デフォルト",preview:"./assets/images/box.png",cardboardImage:"./assets/images/box.png",acquisitionType:"default",rarity:"Common"}),
+    Object.freeze({id:"default",category:"paw",name:"デフォルト",preview:"./assets/images/paw.png",pawImage:"./assets/images/paw.png",acquisitionType:"default",rarity:"Common"}),
+    Object.freeze({id:"default",category:"boardTheme",name:"デフォルト",preview:"./assets/images/bg_day.png",boardImage:"./assets/images/bg_day.png",acquisitionType:"default",rarity:"Common"}),
+    // Production art passed display QA and is available for local coin-purchase verification.
+    Object.freeze({
+      id:"cat_coin_01",category:"catSkin",name:"忍者にゃん",
+      preview:CAT_NINJA_PLANNED_ASSETS.collectionImage,
+      ...CAT_NINJA_PLANNED_ASSETS,
+      acquisitionType:"coins",currency:"nyanCoins",priceCoins:500,rarity:"Rare",
+      materialStatus:"ready",assetStatus:"ready",plannedAssets:CAT_NINJA_PLANNED_ASSETS
+    }),
+    // Production art passed display QA and is available for local coin-purchase verification.
+    Object.freeze({
+      id:"dog_coin_01",category:"dogSkin",name:"侍しば（3匹セット）",
+      preview:DOG_SAMURAI_PLANNED_ASSETS.collectionImage,
+      ...DOG_SAMURAI_PLANNED_ASSETS,
+      cardImage:DOG_SAMURAI_PLANNED_ASSETS.pieceImage,
+      acquisitionType:"coins",currency:"nyanCoins",priceCoins:500,rarity:"Rare",
+      materialStatus:"ready",assetStatus:"ready",plannedAssets:DOG_SAMURAI_PLANNED_ASSETS
+    }),
+    Object.freeze({
+      id:"cardboard_coin_01",category:"cardboard",name:"忍者屋敷の木箱",
+      preview:`${JAPANESE_COSMETIC_ROOT}/cardboard_ninja_crate.png`,
+      cardboardImage:`${JAPANESE_COSMETIC_ROOT}/cardboard_ninja_crate.png`,
+      acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common",
+      materialStatus:"ready",assetStatus:"ready"
+    }),
+    Object.freeze({
+      id:"paw_coin_01",category:"paw",name:"墨の足跡",
+      preview:`${JAPANESE_COSMETIC_ROOT}/paw_sumi.png`,
+      pawImage:`${JAPANESE_COSMETIC_ROOT}/paw_sumi.png`,
+      acquisitionType:"coins",currency:"nyanCoins",priceCoins:30,rarity:"Common",
+      materialStatus:"ready",assetStatus:"ready"
+    }),
+    Object.freeze({
+      id:"board_coin_01",category:"boardTheme",name:"月夜の城下町",
+      preview:`${JAPANESE_COSMETIC_ROOT}/board_moonlit_castle_town.png`,
+      boardImage:`${JAPANESE_COSMETIC_ROOT}/board_moonlit_castle_town.png`,
+      acquisitionType:"coins",currency:"nyanCoins",priceCoins:60,rarity:"Common",
+      materialStatus:"ready",assetStatus:"ready"
+    }),
     Object.freeze({id:"cat_master_reward_pending",category:"catSkin",name:"マスター限定ネコスキン",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
     Object.freeze({id:"dog_master_reward_pending",category:"dogSkin",name:"マスター限定柴犬スキン（3匹セット）",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
     ...["silver","gold","platinum","diamond","master"].map(rank=>Object.freeze({

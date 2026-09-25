@@ -45,17 +45,172 @@ test("コイン追加も同一requestIdで冪等になる",()=>{
   assert.equal(replay.nyanCoins,30);
 });
 
-test("素材未設定品とランク報酬は購入・装備できない",async()=>{
+test("ランク報酬はコイン購入できない",async()=>{
   const data=PlayerData.createDefaultData("ncp_collectiontest1");
-  assert.equal(Collection.validatePurchase({...data,nyanCoins:999},"catSkin","cat_coin_01").reason,"material_unavailable");
   assert.equal(Collection.validatePurchase({...data,nyanCoins:999},"profileFrame","rank_gold").reason,"not_coin_purchasable");
   assert.equal(Collection.validatePurchase({...data,nyanCoins:999},"catSkin","cat_master_reward_pending").reason,"not_coin_purchasable");
+});
+
+const LOCAL_COSMETIC_CASES=[
+  {category:"cardboard",id:"cardboard_coin_01",price:30,ownedField:"ownedCardboards",equippedField:"cardboardId",fallback:"default"},
+  {category:"paw",id:"paw_coin_01",price:30,ownedField:"ownedPaws",equippedField:"pawId",fallback:"default"},
+  {category:"boardTheme",id:"board_coin_01",price:60,ownedField:"ownedBoardThemes",equippedField:"boardThemeId",fallback:"default"}
+];
+
+for(const itemCase of LOCAL_COSMETIC_CASES){
+  test(`${itemCase.id}は100コインから正規価格だけ減算し再送・再起動でも一度だけ所有する`,async()=>{
+    const storage=new MemoryStorage();
+    const store=PlayerData.createStore({storage});
+    await store.load();
+    await store.addCoins(100,"test:grant",`test:${itemCase.id}:grant`);
+    const item=Catalog.getItem(itemCase.category,itemCase.id);
+    assert.equal(item.materialStatus,"ready");
+    assert.equal(item.assetStatus,"ready");
+    assert.equal(item.priceCoins,itemCase.price);
+    assert.equal(Collection.validatePurchase(store.getSnapshot(),itemCase.category,itemCase.id).ok,true);
+
+    const purchased=await store.purchaseCollectionItem(itemCase.category,itemCase.id);
+    assert.equal(purchased.nyanCoins,100-itemCase.price);
+    assert.equal(purchased[itemCase.ownedField].includes(itemCase.id),true);
+    const transactionId=`collection:${itemCase.category}:${itemCase.id}`;
+    assert.deepEqual(purchased.coinTransactions.filter(id=>id===transactionId),[transactionId]);
+
+    const replay=await store.purchaseCollectionItem(itemCase.category,itemCase.id);
+    assert.equal(replay.nyanCoins,100-itemCase.price);
+    assert.equal(replay[itemCase.ownedField].filter(id=>id===itemCase.id).length,1);
+    for(const other of LOCAL_COSMETIC_CASES.filter(value=>value.category!==itemCase.category)){
+      assert.equal(replay[other.ownedField].includes(other.id),false);
+    }
+
+    await store.updateEquipment(itemCase.category,itemCase.id);
+    assert.equal(store.getSnapshot().equippedAppearance[itemCase.equippedField],itemCase.id);
+    await store.updateEquipment(itemCase.category,itemCase.fallback);
+    assert.equal(store.getSnapshot().equippedAppearance[itemCase.equippedField],itemCase.fallback);
+    await store.updateEquipment(itemCase.category,itemCase.id);
+
+    const restoredStore=PlayerData.createStore({storage});
+    const restored=await restoredStore.load();
+    assert.equal(restored.nyanCoins,100-itemCase.price);
+    assert.equal(restored[itemCase.ownedField].filter(id=>id===itemCase.id).length,1);
+    assert.equal(restored.equippedAppearance[itemCase.equippedField],itemCase.id);
+  });
+
+  test(`${itemCase.id}は不足コイン時に購入せず指定メッセージと残高を維持する`,async()=>{
+    const store=PlayerData.createStore({storage:new MemoryStorage()});
+    await store.load();
+    const balance=itemCase.price-1;
+    await store.addCoins(balance,"test:grant",`test:${itemCase.id}:short-grant`);
+    assert.equal(Collection.validatePurchase(store.getSnapshot(),itemCase.category,itemCase.id).reason,"insufficient_coins");
+    await assert.rejects(store.purchaseCollectionItem(itemCase.category,itemCase.id),/insufficient_coins/);
+    assert.equal(store.getSnapshot().nyanCoins,balance);
+    assert.equal(store.getSnapshot()[itemCase.ownedField].includes(itemCase.id),false);
+
+    let message="";
+    const controller=Collection.createController({playerData:store,view:{showError(value){message=value;}}});
+    await controller.load();
+    const result=await controller.purchase(itemCase.category,itemCase.id);
+    assert.equal(result.reason,"insufficient_coins");
+    assert.equal(message,"にゃんコインが足りません");
+    assert.equal(controller.getState().data.nyanCoins,balance);
+  });
+}
+
+test("侍しばは500コインで一度だけ購入でき、装備・プロフィール・ホームへ設定できる",async()=>{
   const store=PlayerData.createStore({storage:new MemoryStorage()});
   await store.load();
-  await store.addCoins(999,"test:grant","test:grant:coins");
-  await assert.rejects(store.purchaseCollectionItem("catSkin","cat_coin_01"),/collection_material_unavailable/);
-  assert.equal(store.getSnapshot().nyanCoins,999);
-  assert.deepEqual(store.getSnapshot().ownedCatSkins,["default"]);
+  await store.addCoins(600,"test:grant","test:samurai:grant");
+  const item=Catalog.getItem("dogSkin","dog_coin_01");
+  assert.equal(item.materialStatus,"ready");
+  assert.equal(item.assetStatus,"ready");
+  assert.equal(item.priceCoins,500);
+  assert.equal(Collection.validatePurchase(store.getSnapshot(),"dogSkin",item.id).ok,true);
+
+  const purchased=await store.purchaseCollectionItem("dogSkin",item.id);
+  assert.equal(purchased.nyanCoins,100);
+  assert.equal(purchased.ownedDogSkins.includes(item.id),true);
+  assert.deepEqual(purchased.coinTransactions.filter(id=>id===`collection:dogSkin:${item.id}`),[`collection:dogSkin:${item.id}`]);
+
+  const replay=await store.purchaseCollectionItem("dogSkin",item.id);
+  assert.equal(replay.nyanCoins,100);
+  assert.equal(replay.ownedDogSkins.filter(id=>id===item.id).length,1);
+
+  await store.updateEquipment("dogSkin",item.id);
+  await store.updateProfileCharacter("dogSkin",item.id);
+  await store.updateFavoriteCharacter("dogSkin",item.id);
+  const configured=store.getSnapshot();
+  assert.equal(configured.equippedAppearance.dogSkinId,item.id);
+  assert.deepEqual(configured.profileCharacter,{category:"dogSkin",itemId:item.id});
+  assert.deepEqual(configured.favoriteCharacter,{category:"dogSkin",itemId:item.id});
+});
+
+test("侍しばは499コイン以下で購入できず残高と所有状態を維持する",async()=>{
+  const store=PlayerData.createStore({storage:new MemoryStorage()});
+  await store.load();
+  await store.addCoins(499,"test:grant","test:samurai:short-grant");
+  assert.equal(Collection.validatePurchase(store.getSnapshot(),"dogSkin","dog_coin_01").reason,"insufficient_coins");
+  await assert.rejects(store.purchaseCollectionItem("dogSkin","dog_coin_01"),/insufficient_coins/);
+  assert.equal(store.getSnapshot().nyanCoins,499);
+  assert.equal(store.getSnapshot().ownedDogSkins.includes("dog_coin_01"),false);
+
+  let message="";
+  const controller=Collection.createController({
+    playerData:store,
+    view:{showError(value){message=value;}}
+  });
+  await controller.load();
+  const result=await controller.purchase("dogSkin","dog_coin_01");
+  assert.equal(result.reason,"insufficient_coins");
+  assert.equal(message,"にゃんコインが足りません");
+  assert.equal(controller.getState().data.nyanCoins,499);
+});
+
+test("忍者にゃんは500コインで一度だけ購入でき、装備・プロフィール・ホームへ設定できる",async()=>{
+  const store=PlayerData.createStore({storage:new MemoryStorage()});
+  await store.load();
+  await store.addCoins(600,"test:grant","test:ninja:grant");
+  const item=Catalog.getItem("catSkin","cat_coin_01");
+  assert.equal(item.materialStatus,"ready");
+  assert.equal(item.assetStatus,"ready");
+  assert.equal(item.priceCoins,500);
+  assert.equal(Collection.validatePurchase(store.getSnapshot(),"catSkin",item.id).ok,true);
+
+  const purchased=await store.purchaseCollectionItem("catSkin",item.id);
+  assert.equal(purchased.nyanCoins,100);
+  assert.equal(purchased.ownedCatSkins.includes(item.id),true);
+  assert.deepEqual(purchased.coinTransactions.filter(id=>id===`collection:catSkin:${item.id}`),[`collection:catSkin:${item.id}`]);
+
+  const replay=await store.purchaseCollectionItem("catSkin",item.id);
+  assert.equal(replay.nyanCoins,100);
+  assert.equal(replay.ownedCatSkins.filter(id=>id===item.id).length,1);
+
+  await store.updateEquipment("catSkin",item.id);
+  await store.updateProfileCharacter("catSkin",item.id);
+  await store.updateFavoriteCharacter("catSkin",item.id);
+  const configured=store.getSnapshot();
+  assert.equal(configured.equippedAppearance.catSkinId,item.id);
+  assert.deepEqual(configured.profileCharacter,{category:"catSkin",itemId:item.id});
+  assert.deepEqual(configured.favoriteCharacter,{category:"catSkin",itemId:item.id});
+});
+
+test("忍者にゃんは499コイン以下で購入できず残高と所有状態を維持する",async()=>{
+  const store=PlayerData.createStore({storage:new MemoryStorage()});
+  await store.load();
+  await store.addCoins(499,"test:grant","test:ninja:short-grant");
+  assert.equal(Collection.validatePurchase(store.getSnapshot(),"catSkin","cat_coin_01").reason,"insufficient_coins");
+  await assert.rejects(store.purchaseCollectionItem("catSkin","cat_coin_01"),/insufficient_coins/);
+  assert.equal(store.getSnapshot().nyanCoins,499);
+  assert.equal(store.getSnapshot().ownedCatSkins.includes("cat_coin_01"),false);
+
+  let message="";
+  const controller=Collection.createController({
+    playerData:store,
+    view:{showError(value){message=value;}}
+  });
+  await controller.load();
+  const result=await controller.purchase("catSkin","cat_coin_01");
+  assert.equal(result.reason,"insufficient_coins");
+  assert.equal(message,"にゃんコインが足りません");
+  assert.equal(controller.getState().data.nyanCoins,499);
 });
 
 test("購入可能素材では購入後に所持へ移り再購入で二重控除しない",async()=>{

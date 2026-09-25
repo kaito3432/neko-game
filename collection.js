@@ -57,8 +57,14 @@
   }
 
   function displayImage(item,state,kind="collection"){
-    if(state==="unowned") return (kind==="profile" ? item.lockedProfileImage : item.silhouetteImage) || "";
+    if(state==="unowned" && item?.acquisitionType!=="coins"){
+      return (kind==="profile" ? item.lockedProfileImage : item.silhouetteImage) || "";
+    }
     return (kind==="profile" ? item.profileImage : item.collectionImage) || item.preview;
+  }
+
+  function usesLockedImage(item,state){
+    return state==="unowned" && item?.acquisitionType!=="coins";
   }
 
   function sanitizeCatalogEquipment(data,catalog=defaultCatalog){
@@ -364,7 +370,7 @@
       preview.className="collection-item-preview";
       preview.setAttribute("aria-label",`${item.name}の詳細を見る`);
       const image=document.createElement("img");
-      const silhouetteSource=state==="unowned";
+      const silhouetteSource=usesLockedImage(item,state);
       const source=displayImage(item,state);
       if(source) image.src=source;
       image.onerror=()=>image.removeAttribute("src");
@@ -377,6 +383,13 @@
       detailBadge.setAttribute("aria-hidden","true");
       detailBadge.textContent="🔍 詳細を見る";
       preview.append(image,detailBadge);
+
+      if(state==="unowned" && item.acquisitionType==="coins"){
+        const priceBadge=document.createElement("span");
+        priceBadge.className="collection-price-badge";
+        priceBadge.textContent=`🪙 ×${item.priceCoins}`;
+        preview.appendChild(priceBadge);
+      }
 
       if(state==="unowned" && !source){
         const unownedCover=document.createElement("span");
@@ -467,7 +480,7 @@
       detail.dataset.category=item.category;
       detail.dataset.itemId=item.id;
       if(collectionImage){
-        const silhouetteSource=state==="unowned";
+        const silhouetteSource=usesLockedImage(item,state);
         collectionImage.onerror=()=>{
           collectionImage.onerror=null;
           if(silhouetteSource) collectionImage.removeAttribute("src");
@@ -483,7 +496,7 @@
       if(profileImage && showProfilePreview){
         profileImage.onerror=()=>{
           profileImage.onerror=null;
-          if(state==="unowned") profileImage.removeAttribute("src");
+          if(usesLockedImage(item,state)) profileImage.removeAttribute("src");
           else profileImage.src=item.preview;
         };
         const source=displayImage(item,state,"profile");
@@ -684,6 +697,7 @@
     getEquipLabel,
     getItemState,
     displayImage,
+    usesLockedImage,
     sanitizeCatalogEquipment,
     validateEquip,
     validatePurchase,
