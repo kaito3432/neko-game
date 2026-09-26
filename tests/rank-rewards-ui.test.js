@@ -9,15 +9,16 @@ const byId=id=>rewards.ranks.find(rank=>rank.id===id);
 
 test('ランク報酬一覧は必要RPとシーズンコイン仕様を一元管理する',()=>{
   assert.deepEqual(rewards.ranks.map(rank=>[rank.id,rank.min,rank.max,rank.seasonCoins]),[
-    ['bronze',0,99,0],['silver',100,249,200],['gold',250,449,400],
-    ['platinum',450,699,700],['diamond',700,999,1100],['master',1000,null,1500]
+    ['bronze',0,99,0],['silver',100,199,200],['gold',200,349,400],
+    ['platinum',350,549,800],['diamond',550,799,1200],['master',800,null,1500]
   ]);
-  assert.equal(rewards.formatCoins(1100),'1,100');
+  assert.equal(rewards.formatCoins(1200),'1,200');
   assert.equal(rewards.formatCoins(1500),'1,500');
 });
 
-test('ブロンズは到達報酬なし、シルバー以上は対応フレームを持つ',()=>{
-  assert.deepEqual(byId('bronze').arrivalRewards,[]);
+test('ブロンズは初期フレーム、シルバー以上は到達フレームを持つ',()=>{
+  assert.equal(byId('bronze').frameId,'rank_bronze');
+  assert.match(byId('bronze').arrivalRewards[0],/初期所持/);
   for(const id of ['silver','gold','platinum','diamond']){
     assert.ok(byId(id).frameId?.startsWith('rank_'));
     assert.equal(byId(id).arrivalRewards.length,1);

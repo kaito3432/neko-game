@@ -1,13 +1,13 @@
 export const RANKS=Object.freeze([
   {id:'bronze',name:'ブロンズ',min:0,frameId:'rank_bronze',frameName:'肉球ブロンズフレーム'},
   {id:'silver',name:'シルバー',min:100,frameId:'rank_silver',frameName:'足あとシルバーフレーム'},
-  {id:'gold',name:'ゴールド',min:250,frameId:'rank_gold',frameName:'きらめきゴールドフレーム'},
-  {id:'platinum',name:'プラチナ',min:450,frameId:'rank_platinum',frameName:'月夜のプラチナフレーム'},
-  {id:'diamond',name:'ダイヤ',min:700,frameId:'rank_diamond',frameName:'宝石肉球ダイヤフレーム'},
-  {id:'master',name:'マスター',min:1000,frameId:'rank_master',frameName:'にゃんチェイス・マスターフレーム'}
+  {id:'gold',name:'ゴールド',min:200,frameId:'rank_gold',frameName:'きらめきゴールドフレーム'},
+  {id:'platinum',name:'プラチナ',min:350,frameId:'rank_platinum',frameName:'月夜のプラチナフレーム'},
+  {id:'diamond',name:'ダイヤ',min:550,frameId:'rank_diamond',frameName:'宝石肉球ダイヤフレーム'},
+  {id:'master',name:'マスター',min:800,frameId:'rank_master',frameName:'にゃんチェイス・マスターフレーム'}
 ]);
 const SEASON_COINS={silver:200,gold:400,platinum:800,diamond:1200};
-const RESET_RP={bronze:0,silver:50,gold:150,platinum:300,diamond:500,master:750};
+const RESET_RP={bronze:0,silver:50,gold:150,platinum:200,diamond:200,master:200};
 export const seasonId=now=>new Date(now+9*60*60*1000).toISOString().slice(0,7);
 export const rankForRp=rp=>[...RANKS].reverse().find(r=>rp>=r.min)||RANKS[0];
 export function validateProfileFrame(profile,id=profile?.equippedProfileFrameId){
@@ -49,6 +49,8 @@ export function normalizeRanked(profile,now=Date.now(),periods={},knownSkins={})
   p.ranked={rp:Math.max(0,Number(old.rp)||0),seasonId:typeof old.seasonId==='string'?old.seasonId:current,
     seasonWins:Math.max(0,Number(old.seasonWins)||0),seasonLosses:Math.max(0,Number(old.seasonLosses)||0),
     lifetimeWins:Math.max(0,Number(old.lifetimeWins)||0),lifetimeLosses:Math.max(0,Number(old.lifetimeLosses)||0)};
+  const achievedBeforeReset=rankForRp(p.ranked.rp);
+  for(const reached of RANKS)if(reached.min<=achievedBeforeReset.min&&!p.ownedProfileFrames.includes(reached.frameId))p.ownedProfileFrames.push(reached.frameId);
   if(p.ranked.seasonId!==current){
     const final=rankForRp(p.ranked.rp);
     if(!p.seasonHistory.some(h=>h.seasonId===p.ranked.seasonId))p.seasonHistory.push({seasonId:p.ranked.seasonId,finalRP:p.ranked.rp,finalRank:final.id,
@@ -57,6 +59,8 @@ export function normalizeRanked(profile,now=Date.now(),periods={},knownSkins={})
   }
   for(const h of p.seasonHistory)if(h.finalRank==='master'&&h.rewardStatus==='pendingConfiguration')Object.assign(h,rewardFor(p,h.seasonId,'master',periods,knownSkins));
   const rank=rankForRp(p.ranked.rp);p.ranked.rank=rank.id;
+  // Also cover a current-season profile after its RP was normalized.
+  for(const reached of RANKS)if(reached.min<=rank.min&&!p.ownedProfileFrames.includes(reached.frameId))p.ownedProfileFrames.push(reached.frameId);
   p.seasonHistory=p.seasonHistory.slice(-36);
   return p;
 }

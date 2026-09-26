@@ -59,10 +59,24 @@ test("本番カタログは既存品とコイン・ランク報酬の土台を�
   assert.equal(Catalog.getItem("paw","paw_coin_01").priceCoins,30);
   assert.equal(Catalog.getItem("boardTheme","board_coin_01").priceCoins,60);
   assert.equal(Catalog.getItem("profileFrame","rank_master").acquisitionType,"rankReward");
+  assert.deepEqual(Catalog.getItemsByCategory("profileFrame").map(item=>item.id),[
+    "rank_bronze","rank_silver","rank_gold","rank_platinum","rank_diamond","rank_master"
+  ]);
+  for(const item of Catalog.getItemsByCategory("profileFrame")){
+    assert.match(item.frameImage,/assets\/images\/rank\/profile-frames\/rank_.+_frame\.png$/);
+    assert.equal(item.materialStatus,"ready");
+  }
   assert.equal(Catalog.getItem("catSkin","cat_master_reward_pending").acquisitionType,"masterRankReward");
   assert.equal(Catalog.getItem("dogSkin","dog_master_reward_pending").acquisitionType,"masterRankReward");
   assert.deepEqual(Collection.SECTION_CATEGORIES.rank,["profileFrame"]);
   assert.equal(Catalog.getItemsByCategory("profileFrame").some(item=>item.acquisitionType==="masterRankReward"),false);
+});
+
+test("未獲得ランクフレームは正式PNGを見せず、獲得後だけ表示する",()=>{
+  const silver=Catalog.getItem("profileFrame","rank_silver");
+  assert.equal(Collection.displayImage(silver,"unowned"),"");
+  assert.equal(Collection.displayImage(silver,"owned"),silver.collectionImage);
+  assert.equal(Collection.usesLockedImage(silver,"unowned"),true);
 });
 
 test("デフォルト猫は立ち絵と盤面駒の画像を分離する",()=>{

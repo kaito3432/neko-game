@@ -12,7 +12,7 @@
   panel.className='ranked-profile-card';
   panel.hidden=true;
   panel.innerHTML=`<div class="ranked-profile-main">
-    <span class="ranked-frame-preview" data-rank-frame-preview data-frame-id="default"><img data-rank-icon alt="プロフィールアイコン"></span>
+    <span class="ranked-frame ranked-frame-preview" data-rank-frame-preview data-frame-id="default"><span class="ranked-avatar-clip"><img data-rank-icon alt="プロフィールアイコン"></span></span>
     <div><strong data-rank-name>ブロンズ</strong><small data-rank-rp>RP 0 / 100</small><small data-rank-next>次のシルバーまで あと100RP</small></div>
   </div>
   <div class="ranked-record" data-rank-record>今シーズン 0勝 0敗</div>

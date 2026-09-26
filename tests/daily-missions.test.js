@@ -190,7 +190,7 @@ test("途中離脱は保存せず、CPU側の名称をプレイヤー側と取�
   assert.equal(store.getSnapshot().battleReceipts.length,1);
 });
 test("未所持一覧/詳細/プロフィールはlockedだけを選び、素材が無くても元画像へ戻さない",()=>{
-  for(const item of Catalog.ITEMS.filter(i=>i.unlockCondition)){
+  for(const item of Catalog.ITEMS.filter(i=>i.acquisitionType==="achievement"&&i.unlockCondition)){
     assert.match(Collection.displayImage(item,"unowned"),/_collection_locked\.png$/);
     assert.match(Collection.displayImage(item,"unowned","profile"),/_profile_locked\.png$/);
     assert.equal(Collection.displayImage(item,"owned"),item.collectionImage);

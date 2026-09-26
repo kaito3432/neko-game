@@ -96,6 +96,7 @@
   const MYSTERY_ROOT="./assets/images/skins/mystery01";
   const NINJA_ROOT="./assets/images/skins/ninja01";
   const JAPANESE_COSMETIC_ROOT="./assets/images/cosmetics/japanese01";
+  const RANK_FRAME_ROOT="./assets/images/rank/profile-frames";
   const CAT_NINJA_PLANNED_ASSETS=Object.freeze({
     collectionImage:`${NINJA_ROOT}/cat_ninja_collection.png`,
     profileImage:`${NINJA_ROOT}/cat_ninja_profile.png`,
@@ -217,9 +218,17 @@
     }),
     Object.freeze({id:"cat_master_reward_pending",category:"catSkin",name:"マスター限定ネコスキン",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
     Object.freeze({id:"dog_master_reward_pending",category:"dogSkin",name:"マスター限定柴犬スキン（3匹セット）",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
-    ...["silver","gold","platinum","diamond","master"].map(rank=>Object.freeze({
-      id:`rank_${rank}`,category:"profileFrame",name:`${({silver:"シルバー",gold:"ゴールド",platinum:"プラチナ",diamond:"ダイヤ",master:"マスター"})[rank]}フレーム`,
-      acquisitionType:"rankReward",rarity:rank==="master"?"Legendary":"Epic",materialStatus:"css"
+    ...["bronze","silver","gold","platinum","diamond","master"].map((rank,index)=>Object.freeze({
+      id:`rank_${rank}`,category:"profileFrame",rank,
+      name:`${({bronze:"ブロンズ",silver:"シルバー",gold:"ゴールド",platinum:"プラチナ",diamond:"ダイヤモンド",master:"マスター"})[rank]}フレーム`,
+      preview:`${RANK_FRAME_ROOT}/rank_${rank}_frame.png`,
+      collectionImage:`${RANK_FRAME_ROOT}/rank_${rank}_frame.png`,
+      profileImage:`${RANK_FRAME_ROOT}/rank_${rank}_frame.png`,
+      frameImage:`${RANK_FRAME_ROOT}/rank_${rank}_frame.png`,
+      lockedImage:null,
+      unlockCondition:Object.freeze({rank,minRp:[0,100,200,350,550,800][index],text:rank==="bronze"?"初期所持":`${[0,100,200,350,550,800][index]} RP到達で永久解放`}),
+      acquisitionType:"rankReward",rarity:rank==="master"?"Legendary":rank==="bronze"?"Common":"Epic",
+      materialStatus:"ready",assetStatus:"ready"
     }))
   ]);
 

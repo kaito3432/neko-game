@@ -58,7 +58,7 @@
 
   function displayImage(item,state,kind="collection"){
     if(state==="unowned" && item?.acquisitionType!=="coins"){
-      return (kind==="profile" ? item.lockedProfileImage : item.silhouetteImage) || "";
+      return (kind==="profile" ? item.lockedProfileImage : (item.lockedImage||item.silhouetteImage)) || "";
     }
     return (kind==="profile" ? item.profileImage : item.collectionImage) || item.preview;
   }

@@ -17,13 +17,39 @@ test('プロフィールフレームは共通定義だけを許可し、不正�
   const element={dataset:{}};UI.setFrame(element,'rank_gold');assert.equal(element.dataset.frameId,'rank_gold');
   UI.setFrame(element,'bad');assert.equal(element.dataset.frameId,'default');
 });
+test('正式6ランクはカタログPNGを解決しdefaultと未知IDはCSS fallback',()=>{
+  for(const id of ['rank_bronze','rank_silver','rank_gold','rank_platinum','rank_diamond','rank_master']){
+    assert.equal(UI.frameSource(id),Catalog.getItem('profileFrame',id).frameImage);
+  }
+  assert.equal(UI.frameSource('default'),null);
+  assert.equal(UI.frameSource('forged'),null);
+});
 test('相手表示はplayerId照合、viewer所持状態に非依存、旧試合は明示クリア',()=>{
   const peer={playerId:'b',profileCharacter:{category:'dogSkin',itemId:'dog_detective'},equippedProfileFrameId:'rank_gold'};
-  const data={matchType:'randomMatch',matchId:'rm_test',player:'host',playerId:'a',participants:{host:'a',guest:'b'},playerProfiles:{guest:peer}};
+  const own={playerId:'a',profileCharacter:{category:'catSkin',itemId:'cat_kaitou'},equippedProfileFrameId:'rank_bronze'};
+  const data={matchType:'randomMatch',matchId:'rm_test',player:'host',playerId:'a',participants:{host:'a',guest:'b'},profile:own,playerProfiles:{host:own,guest:peer}};
   assert.deepEqual(UI.opponentProfile(data),peer);
+  assert.deepEqual(UI.ownProfile(data),own);
   assert.equal(UI.opponentProfile({...data,playerId:'b'}),null);
+  assert.equal(UI.ownProfile({...data,playerId:'b'}),null);
   assert.equal(UI.opponentProfile({...data,participants:{host:'a',guest:'c'}}),null);
   assert.equal(UI.opponentProfile(null),null);
+  assert.equal(UI.ownProfile(null),null);
+  assert.deepEqual(UI.opponentProfile({...data,matchType:'roomMatch'}),peer);
+  assert.deepEqual(UI.ownProfile({...data,matchType:'roomMatch'}),own);
+});
+
+test('待機プロフィールは自分・VS・相手を共通frame DOMで表示する',()=>{
+  const fs=require('node:fs'),path=require('node:path');
+  const source=fs.readFileSync(path.resolve(__dirname,'../online-profile-ui.js'),'utf8');
+  const css=fs.readFileSync(path.resolve(__dirname,'../style.css'),'utf8');
+  assert.match(source,/profileSide\('self','あなた'\)/);
+  assert.match(source,/profileSide\('opponent','対戦相手'\)/);
+  assert.match(source,/className='online-profile-vs'/);
+  assert.match(source,/className='ranked-frame ranked-frame-preview online-profile-frame'/);
+  assert.match(css,/\.online-opponent-profile \.online-profile-frame\{[^}]*clamp\(88px,24vw,96px\)/);
+  assert.match(css,/\.online-opponent-profile \.online-profile-frame:not\(\.has-frame-image\) \.ranked-avatar-clip\{[^}]*clamp\(62px,17vw,68px\)/);
+  assert.match(css,/\.online-profile-name\{[^}]*text-overflow:ellipsis[^}]*white-space:nowrap/);
 });
 test('復帰データは検証済みプロフィールを再配信し、相手の非公開データは含めない',async()=>{
   const {publicRecovery}=await import('../server/reconnection.mjs');

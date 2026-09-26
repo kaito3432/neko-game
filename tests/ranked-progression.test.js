@@ -4,17 +4,17 @@ const base=async(rp=0,id='2026-09')=>{const {normalizeRanked}=await mod;const p=
 test('RP増減、最低値、昇格・降格はRPから再計算',async()=>{const {applyRankedResult}=await mod;
  let a=applyRankedResult(await base(0),{matchId:'m1',won:true,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(a.profile.ranked.rp,10);
  a=applyRankedResult(await base(100),{matchId:'m2',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.deepEqual([a.profile.ranked.rp,a.profile.ranked.rank],[94,'bronze']);
- a=applyRankedResult(await base(245),{matchId:'m3',won:true,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.deepEqual([a.profile.ranked.rp,a.profile.ranked.rank],[255,'gold']);
- a=applyRankedResult(await base(451),{matchId:'m4',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.deepEqual([a.profile.ranked.rp,a.profile.ranked.rank],[445,'gold']);
+ a=applyRankedResult(await base(195),{matchId:'m3',won:true,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.deepEqual([a.profile.ranked.rp,a.profile.ranked.rank],[205,'gold']);
+ a=applyRankedResult(await base(351),{matchId:'m4',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.deepEqual([a.profile.ranked.rp,a.profile.ranked.rank],[345,'gold']);
  a=applyRankedResult(await base(2),{matchId:'m5',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(a.profile.ranked.rp,0);
 });
 test('勝利は5コインと戦績、敗北はコインなし、フレームは永久所持',async()=>{const {applyRankedResult}=await mod;
  const win=applyRankedResult(await base(95),{matchId:'w',won:true,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(win.profile.serverNyanCoins,5);assert.equal(win.profile.ranked.seasonWins,1);assert.ok(win.profile.ownedProfileFrames.includes('rank_silver'));
  const lose=applyRankedResult(win.profile,{matchId:'l',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(lose.profile.serverNyanCoins,5);assert.equal(lose.profile.ranked.seasonLosses,1);assert.ok(lose.profile.ownedProfileFrames.includes('rank_silver'));
 });
-test('勝敗確定月へ加算し、ダイヤ報酬確定後500RPへ再配置',async()=>{const {applyRankedResult}=await mod,p=await base(864,'2026-09');
+test('勝敗確定月へ加算し、マスター資格確定後200RPへ再配置',async()=>{const {applyRankedResult}=await mod,p=await base(864,'2026-09');
  const a=applyRankedResult(p,{matchId:'oct',won:true,completedAt:Date.parse('2026-10-01T00:02:00+09:00')});const sep=a.profile.seasonHistory.find(h=>h.seasonId==='2026-09');
- assert.deepEqual([sep.finalRP,sep.finalRank,sep.rewardAmount],[864,'diamond',1200]);assert.deepEqual([a.profile.ranked.seasonId,a.receipt.seasonId,a.profile.ranked.rp],["2026-10","2026-10",510]);
+ assert.deepEqual([sep.finalRP,sep.finalRank,sep.rewardStatus],[864,'master','pendingConfiguration']);assert.deepEqual([a.profile.ranked.seasonId,a.receipt.seasonId,a.profile.ranked.rp],["2026-10","2026-10",210]);
 });
 test('マスター未設定は資格固定、設定後に確定し所持済みだけ1500コイン',async()=>{const {normalizeRanked}=await mod,p=await base(1100,'2026-09');
  let n=normalizeRanked(p,Date.parse('2026-10-01T00:01:00+09:00'),{},{}),h=n.seasonHistory[0];assert.equal(h.rewardStatus,'pendingConfiguration');assert.equal(h.finalRP,1100);
@@ -22,7 +22,7 @@ test('マスター未設定は資格固定、設定後に確定し所持済み�
  n.ownedCatSkins.push('cat_kaitou');n.seasonHistory[0].rewardStatus='pendingConfiguration';n.seasonHistory[0].rewardSkinId=null;
  n=normalizeRanked(n,Date.parse('2026-10-03T00:00:00+09:00'),{'2026-Q3':'cat_kaitou'},{cat_kaitou:'catSkin'});assert.deepEqual([n.seasonHistory[0].rewardType,n.seasonHistory[0].rewardAmount],['coins',1500]);
 });
-test('シーズン報酬は二重受取不可',async()=>{const {normalizeRanked,claimSeasonReward}=await mod,p=await base(864,'2026-09');let n=normalizeRanked(p,Date.parse('2026-10-01T00:00:00+09:00'));
+test('シーズン報酬は二重受取不可',async()=>{const {normalizeRanked,claimSeasonReward}=await mod,p=await base(600,'2026-09');let n=normalizeRanked(p,Date.parse('2026-10-01T00:00:00+09:00'));
  const first=claimSeasonReward(n,'2026-09',Date.parse('2026-10-02T00:00:00+09:00'));assert.equal(first.profile.serverNyanCoins,1200);
  const twice=claimSeasonReward(first.profile,'2026-09',Date.parse('2026-10-03T00:00:00+09:00'));assert.equal(twice.error,'already_claimed');assert.equal(twice.profile.serverNyanCoins,1200);
 });
@@ -31,6 +31,22 @@ test('既存オンラインプロフィールは資産を維持してランク�
  const migrated=normalizeRanked(old,Date.parse('2026-09-15T00:00:00+09:00'));
  assert.equal(migrated.version,2);assert.equal(migrated.ranked.rp,0);assert.equal(migrated.ranked.rank,'bronze');assert.equal(migrated.ranked.seasonId,'2026-09');
  assert.deepEqual(migrated.ownedCatSkins,old.ownedCatSkins);assert.deepEqual(migrated.equippedAppearance,old.equippedAppearance);assert.ok(migrated.ownedProfileFrames.includes('rank_bronze'));
+});
+test('正規化は現在RPまでの全フレームを補完し、降格や季節更新でも維持する',async()=>{
+ const {normalizeRanked}=await mod;const profile=await base(560,'2026-09');profile.ownedProfileFrames=['rank_bronze'];
+ let normalized=normalizeRanked(profile,Date.parse('2026-09-20T00:00:00+09:00'));
+ assert.deepEqual(normalized.ownedProfileFrames,['rank_bronze','rank_silver','rank_gold','rank_platinum','rank_diamond']);
+ normalized.ranked.rp=10;normalized=normalizeRanked(normalized,Date.parse('2026-09-21T00:00:00+09:00'));
+ assert.ok(normalized.ownedProfileFrames.includes('rank_diamond'));
+});
+test('確定ランク境界とソフトリセット値を使用する',async()=>{
+ const {rankForRp,normalizeRanked}=await mod;
+ assert.deepEqual([0,99,100,199,200,349,350,549,550,799,800].map(value=>rankForRp(value).id),
+   ['bronze','bronze','silver','silver','gold','gold','platinum','platinum','diamond','diamond','master']);
+ for(const [rp,reset] of [[10,0],[120,50],[250,150],[400,200],[600,200],[850,200]]){
+   const p=await base(rp,'2026-09');const next=normalizeRanked(p,Date.parse('2026-10-01T00:01:00+09:00'));
+   assert.equal(next.ranked.rp,reset);
+ }
 });
 test('未設定マスター報酬APIは受取を拒否して資格を保持',async()=>{
  const {profileRequest,digestToken}=await import('../server/online-profile.mjs');

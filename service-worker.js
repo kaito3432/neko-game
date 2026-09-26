@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v44-collection-online-skin-fixes-20260925";
+const CACHE_NAME = "nyan-chase-v46-online-profile-versus-20260926";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",
@@ -100,6 +100,12 @@ const PRECACHE = [
   "./assets/images/cosmetics/japanese01/cardboard_ninja_crate.png",
   "./assets/images/cosmetics/japanese01/paw_sumi.png",
   "./assets/images/cosmetics/japanese01/board_moonlit_castle_town.png",
+  "./assets/images/rank/profile-frames/rank_bronze_frame.png",
+  "./assets/images/rank/profile-frames/rank_silver_frame.png",
+  "./assets/images/rank/profile-frames/rank_gold_frame.png",
+  "./assets/images/rank/profile-frames/rank_platinum_frame.png",
+  "./assets/images/rank/profile-frames/rank_diamond_frame.png",
+  "./assets/images/rank/profile-frames/rank_master_frame.png",
   "./audio.js",
   "./collection-catalog.js",
   "./collection.js",
