@@ -100,6 +100,15 @@
     season.classList.remove('show');
   };
 
+  async function equipFrame(frameId){
+    const requested=root.NyanOnlineProfileUI.frameId(frameId);
+    const owned=profile?.ownedProfileFrames||[];
+    if(requested!=='default'&&!owned.includes(requested))throw new Error('frame_not_owned');
+    const response=await api('profile-frame',{frameId:requested});
+    update(response.profile);
+    return response.profile;
+  }
+
   async function refresh(){
     try{
       const prepared=await root.NyanOnline.prepareIdentity();
@@ -149,6 +158,6 @@
       const unlocked=document.createElement('em');unlocked.textContent='新しいプロフィールフレームを獲得！';result.append(unlocked);
     }
   });
-  root.NyanRankedUI={refresh,updateProfile:update,getProfile:()=>profile,setSelectionVisible,
+  root.NyanRankedUI={refresh,equipFrame,updateProfile:update,getProfile:()=>profile,setSelectionVisible,
     totalCoins:local=>(Number(local)||0)+(Number(profile?.serverNyanCoins)||0)};
 })(globalThis);

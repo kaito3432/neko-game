@@ -32,6 +32,27 @@
     return isCharacterSkin(categoryId) || categoryId==="profileFrame";
   }
 
+  function preserveOwnership(before,after,catalog=defaultCatalog){
+    if(!before || !after || !catalog)return after;
+    const ownership={};
+    for(const category of Object.values(catalog.CATEGORIES)){
+      if(category.ownedField && Array.isArray(before[category.ownedField])){
+        ownership[category.ownedField]=[...before[category.ownedField]];
+      }
+    }
+    return {...after,...ownership};
+  }
+
+  function presentedCollectionData(data,rankedProfile,selectors=root?.NyanKingQaSelectors){
+    if(!data)return data;
+    const hydrated=rankedProfile?{
+      ...data,
+      ownedProfileFrames:rankedProfile.ownedProfileFrames||[],
+      equippedProfileFrameId:rankedProfile.equippedProfileFrameId||"default"
+    }:data;
+    return selectors?.collectionState?.(hydrated)||hydrated;
+  }
+
   function getEquipLabel(categoryId,state){
     if(state==="unowned") return "🔒 未所持";
     if(isCharacterSkin(categoryId)){
@@ -54,6 +75,12 @@
     const isEquipped=isOwned && equippedId===item.id;
 
     return isEquipped ? "equipped" : isOwned ? "owned" : "unowned";
+  }
+
+  function canEquipItem(data,item,catalog=defaultCatalog){
+    const scope=catalog?.getCategory(item?.category)?.equipmentScope;
+    return getItemState(data,item,catalog)==="owned"&&["appearance","onlineProfile"].includes(scope)&&
+      item?.materialStatus!=="pending";
   }
 
   function displayImage(item,state,kind="collection"){
@@ -301,8 +328,9 @@
       view.setBusy?.(true);
       render();
       try{
+        const before=currentData;
         const saved=await playerData.updateFavoriteCharacter(categoryId,nextItemId);
-        currentData=sanitizeCatalogEquipment(saved,catalog).data;
+        currentData=sanitizeCatalogEquipment(preserveOwnership(before,saved,catalog),catalog).data;
         root?.dispatchEvent?.(new root.CustomEvent("nyan-player-appearance-changed"));
         render();
         return {ok:true,data:currentData};
@@ -332,8 +360,9 @@
       view.setBusy?.(true);
       render();
       try{
+        const before=currentData;
         const saved=await playerData.updateProfileCharacter(categoryId,nextItemId);
-        currentData=sanitizeCatalogEquipment(saved,catalog).data;
+        currentData=sanitizeCatalogEquipment(preserveOwnership(before,saved,catalog),catalog).data;
         root?.dispatchEvent?.(new root.CustomEvent("nyan-player-appearance-changed"));
         render();
         return {ok:true,data:currentData};
@@ -471,7 +500,7 @@
       button.textContent=state==="unowned"&&coinItem?`🪙 ${item.priceCoins}で購入`:getEquipLabel(item.category,state);
       if(state==="unowned"&&!coinItem)button.textContent=catalog.acquisitionLabel(item);
       if(coinItem&&(item.materialStatus!=="ready"||item.assetStatus!=="ready"))button.textContent="素材未設定";
-      button.disabled=saving || (state==="unowned" ? !purchasable : state!=="owned") || (category.equipmentScope!=="appearance"&&state!=="unowned");
+      button.disabled=saving || (state==="unowned" ? !purchasable : !canEquipItem(data,item,catalog));
       button.addEventListener("click",event=>{
         event.stopPropagation();
         if(state==="unowned")requestPurchase(item,data,saving);
@@ -577,8 +606,8 @@
       }
       if(equipButton){
         equipButton.textContent=getEquipLabel(item.category,state);
-        equipButton.hidden=catalog.getCategory(item.category)?.equipmentScope!=="appearance";
-        equipButton.disabled=saving || state!=="owned" || item.materialStatus==="pending";
+        equipButton.hidden=!["appearance","onlineProfile"].includes(catalog.getCategory(item.category)?.equipmentScope);
+        equipButton.disabled=saving || !canEquipItem(data,item,catalog);
         equipButton.onclick=()=>actions.onEquip(item.category,item.id);
       }
       if(favoriteButton){
@@ -651,12 +680,7 @@
     function render({data,activeSection,selectedItem,saving}){
       if(!data || !content) return;
       const rankedProfile=root?.NyanRankedUI?.getProfile?.();
-      const hydratedData=rankedProfile?{
-        ...data,
-        ownedProfileFrames:rankedProfile.ownedProfileFrames||[],
-        equippedProfileFrameId:rankedProfile.equippedProfileFrameId||"default",
-      }:data;
-      const presentedData=root?.NyanKingQaSelectors?.collectionState?.(hydratedData) || hydratedData;
+      const presentedData=presentedCollectionData(data,rankedProfile);
       const renderedBalance=root?.NyanKingQaSelectors?.coinBalance?.(presentedData)
         ?? window.NyanRankedUI?.totalCoins(data.nyanCoins) ?? data.nyanCoins;
       setText(balance,String(renderedBalance));
@@ -711,7 +735,13 @@
 
     let controller=null;
     const view=createDomView(document,catalog,{
-      onEquip(categoryId,itemId){controller?.equip(categoryId,itemId);},
+      async onEquip(categoryId,itemId){
+        if(catalog.getCategory(categoryId)?.equipmentScope==="onlineProfile"){
+          await root.NyanRankedUI?.equipFrame?.(itemId);
+          return controller?.load();
+        }
+        return controller?.equip(categoryId,itemId);
+      },
       onPurchase(categoryId,itemId){return controller?.purchase(categoryId,itemId);},
       onSelect(categoryId,itemId){controller?.selectItem(categoryId,itemId);},
       onFavorite(categoryId,itemId){controller?.setFavorite(categoryId,itemId);},
@@ -757,8 +787,11 @@
     SECTION_CATEGORIES,
     isCharacterSkin,
     supportsProfilePreview,
+    preserveOwnership,
+    presentedCollectionData,
     getEquipLabel,
     getItemState,
+    canEquipItem,
     displayImage,
     usesLockedImage,
     sanitizeCatalogEquipment,

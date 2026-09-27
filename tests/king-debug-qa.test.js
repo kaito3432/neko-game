@@ -25,10 +25,18 @@ test('KING Debugは全スキンと2000コインだけを仮付与しHome選択�
     ownedCatSkinCount:4,ownedDogSkinCount:3,ownedFrameCount:6,kingOwned:true});
   const sanitized=context.__KING_SKIN_PLAY_QA__.serverSafe(qa.getSnapshot());
   assert.equal(sanitized.nyanCoins,0);assert.deepEqual(Array.from(sanitized.ownedCatSkins),['default']);
-  await qa.updateFavoriteCharacter('catSkin',null);assert.equal(qa.getSnapshot().favoriteCharacter,null);
-  await qa.updateFavoriteCharacter('catSkin','cat_master_s01_king');assert.equal(qa.getSnapshot().favoriteCharacter.itemId,'cat_master_s01_king');
-  await qa.updateFavoriteCharacter('catSkin',null);assert.equal(qa.getSnapshot().favoriteCharacter,null);
-  await qa.updateFavoriteCharacter('catSkin','cat_master_s01_king');assert.equal(qa.getSnapshot().favoriteCharacter.itemId,'cat_master_s01_king');
+  for(let i=0;i<5;i++){
+    await qa.updateFavoriteCharacter('catSkin',null);assert.equal(qa.getSnapshot().favoriteCharacter,null);
+    assert.equal(qa.getSnapshot().ownedCatSkins.includes('cat_master_s01_king'),true);
+    await qa.updateFavoriteCharacter('catSkin','cat_master_s01_king');assert.equal(qa.getSnapshot().favoriteCharacter.itemId,'cat_master_s01_king');
+    assert.equal(qa.getSnapshot().ownedCatSkins.includes('cat_master_s01_king'),true);
+  }
+  for(let i=0;i<5;i++){
+    await qa.updateProfileCharacter('catSkin',null);assert.equal(qa.getSnapshot().profileCharacter,null);
+    assert.equal(qa.getSnapshot().ownedCatSkins.includes('cat_master_s01_king'),true);
+    await qa.updateProfileCharacter('catSkin','cat_master_s01_king');assert.equal(qa.getSnapshot().profileCharacter.itemId,'cat_master_s01_king');
+    assert.equal(qa.getSnapshot().ownedCatSkins.includes('cat_master_s01_king'),true);
+  }
   await qa.purchaseCollectionItem('cardboard','cardboard_coin_01');assert.equal(qa.getSnapshot().nyanCoins,1970);
   assert.ok(qa.getSnapshot().ownedCardboards.includes('cardboard_coin_01'));
   assert.equal(Player.getSnapshot().nyanCoins,0);assert.deepEqual(Player.getSnapshot().ownedCardboards,undefined);
@@ -70,4 +78,7 @@ test('KING QA online wrapperはAPI baseを保持し、QAプロフィールだけ
   assert.equal(result.profile.profileCharacter.itemId,'cat_master_s01_king');
   assert.deepEqual(Array.from(result.profile.ownedProfileFrames),['rank_bronze','rank_master']);
   assert.equal(result.headers.Authorization,'Bearer server');
+  const equipped=await context.NyanOnlineIdentity.request('https://sandbox.example','profile-frame',{frameId:'rank_master'});
+  assert.equal(equipped.profile.equippedProfileFrameId,'rank_master');
+  assert.equal(context.__KING_SKIN_PLAY_QA__.selections.frame,'rank_master');
 });

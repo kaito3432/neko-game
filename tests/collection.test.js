@@ -405,3 +405,42 @@ test("詳細用途カードは操作ボタンで、バイブ設定は表示し�
   assert.match(html,/<button class="collection-usage-item" data-detail-usage-profile type="button">/);
   assert.match(html,/id="vibrationToggleBtn" type="button" hidden aria-hidden="true"/);
 });
+
+test("Home/Profile切替を各5回繰り返しても表示用ownershipを失わない",async()=>{
+  const item=Catalog.getItem("catSkin","cat_master_s01_king");
+  const initial={...createData(),ownedCatSkins:["default",item.id],favoriteCharacter:null,profileCharacter:null};
+  let favorite=null,profile=null;
+  const official=()=>({...createData(),favoriteCharacter:favorite,profileCharacter:profile});
+  const playerData={
+    async load(){return initial;},getSnapshot:official,
+    async updateFavoriteCharacter(category,itemId){favorite=itemId?{category,itemId}:null;return official();},
+    async updateProfileCharacter(category,itemId){profile=itemId?{category,itemId}:null;return official();}
+  };
+  const controller=Collection.createController({playerData,catalog:Catalog});
+  await controller.load();
+  for(let i=0;i<5;i++){
+    await controller.setFavorite("catSkin",item.id);
+    assert.notEqual(Collection.getItemState(controller.getState().data,item,Catalog),"unowned");
+    await controller.setFavorite("catSkin",item.id);
+    assert.equal(Collection.getItemState(controller.getState().data,item,Catalog),"owned");
+  }
+  for(let i=0;i<5;i++){
+    await controller.setProfile("catSkin",item.id);
+    assert.notEqual(Collection.getItemState(controller.getState().data,item,Catalog),"unowned");
+    await controller.setProfile("catSkin",item.id);
+    assert.equal(Collection.getItemState(controller.getState().data,item,Catalog),"owned");
+  }
+});
+
+test("QA最終ownershipでは6フレームすべてが装備可能",()=>{
+  const frames=Catalog.getItemsByCategory("profileFrame");
+  const base={...createData(),ownedProfileFrames:["rank_bronze"],equippedProfileFrameId:"default"};
+  const ranked={ownedProfileFrames:["rank_bronze"],equippedProfileFrameId:"default"};
+  const selectors={collectionState:data=>({...data,ownedProfileFrames:frames.map(item=>item.id)})};
+  const presented=Collection.presentedCollectionData(base,ranked,selectors);
+  assert.equal(frames.length,6);
+  for(const frame of frames){
+    assert.equal(Collection.getItemState(presented,frame,Catalog),"owned");
+    assert.equal(Collection.canEquipItem(presented,frame,Catalog),true);
+  }
+});

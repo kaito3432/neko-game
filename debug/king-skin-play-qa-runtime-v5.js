@@ -5,13 +5,14 @@
   if(!qa||!root.document)return;
   const identity=root.NyanOnlineIdentity;
   if(identity){
-    let selectedFrame=null,lastServerProfile=null;
+    let lastServerProfile=null;
     const qaProfile=profile=>{
       if(!profile)return profile;
       lastServerProfile=profile;
-      return {...profile,profileCharacter:qa.selections.profile??profile.profileCharacter,
+      return root.NyanKingQaSelectors?.profileState?.(profile)||{...profile,
+        profileCharacter:qa.selections.profile??profile.profileCharacter,
         ownedProfileFrames:[...new Set([...(profile.ownedProfileFrames||[]),...qa.allProfileFrames])],
-        equippedProfileFrameId:selectedFrame??profile.equippedProfileFrameId??"default"};
+        equippedProfileFrameId:qa.selections.frame??profile.equippedProfileFrameId??"default"};
     };
     const augment=response=>response?.profile?{...response,profile:qaProfile(response.profile)}:response;
     const cleanBody=body=>qa.serverPayload(body);
@@ -22,7 +23,7 @@
         if(path==="profile-frame"){
           const requested=body?.frameId;
           if(requested!=="default"&&!qa.allProfileFrames.includes(requested))throw new Error("frame_not_owned");
-          selectedFrame=requested||"default";
+          qa.selections.frame=requested||"default";
           return {profile:qaProfile(lastServerProfile)};
         }
         return augment(await serverCall(()=>identity.request(api,path,cleanBody(body),method)));

@@ -62,7 +62,11 @@
     const own=data.profile?.playerId===data.playerId?data.profile:data.playerProfiles?.[seat];
     return own?.playerId===data.playerId?own:null;
   }
-  const api={imageSource,setImage,frameId,frameSource,setFrame,frames,opponentProfile,ownProfile};
+  function matchProfiles(data,presentOwn){
+    const own=ownProfile(data),opponent=opponentProfile(data);
+    return {own:own&&typeof presentOwn==='function'?presentOwn(own):own,opponent};
+  }
+  const api={imageSource,setImage,frameId,frameSource,setFrame,frames,opponentProfile,ownProfile,matchProfiles};
   if(typeof module==='object'&&module.exports)module.exports=api;
   root.NyanOnlineProfileUI=api;
   if(!root.document)return;
@@ -83,6 +87,8 @@
     const rank=card.querySelector('.online-profile-rank');
     const rankId=profile.ranked?.rank;
     rank.hidden=!rankId;rank.textContent=rankId?String(rankId).toUpperCase():'';
+    card.querySelector('.online-profile-name').textContent=profile.displayName||profile.name||
+      card.querySelector('.online-profile-label').textContent;
   }
   const badges=[];
   for(const selector of ['#onlineStatus','#onlineRuleOverlay h2','#catAbilityOverlay .ability-select-header',
@@ -97,7 +103,7 @@
     anchor.after(badge);badges.push(badge);
   }
   root.addEventListener('nyan-online-player-profiles',({detail})=>{
-    const own=ownProfile(detail),peer=opponentProfile(detail);
+    const {own,opponent:peer}=matchProfiles(detail,root.NyanKingQaSelectors?.profileState);
     for(const badge of badges){
       badge.hidden=!(own&&peer);
       if(own&&peer){updateSide(badge.querySelector('[data-side="self"]'),own);updateSide(badge.querySelector('[data-side="opponent"]'),peer);}

@@ -18,7 +18,7 @@
   let qaCoins=2000;
   const qaPurchases={ownedCardboards:new Set(),ownedPaws:new Set(),ownedBoardThemes:new Set()};
   const selections={equippedCat:ITEM_ID,equippedDog:null,
-    favorite:{category:"catSkin",itemId:ITEM_ID},profile:{category:"catSkin",itemId:ITEM_ID}};
+    favorite:{category:"catSkin",itemId:ITEM_ID},profile:{category:"catSkin",itemId:ITEM_ID},frame:null};
   function presented(data){
     if(!data||serverReadDepth>0)return data;
     return {...data,nyanCoins:qaCoins,
@@ -64,6 +64,10 @@
     return copy;
   }
   const snapshot=()=>presented(basePlayerData.getSnapshot());
+  const presentedOnlineProfile=profile=>profile?{...profile,
+    profileCharacter:selections.profile??profile.profileCharacter,
+    ownedProfileFrames:[...new Set([...(profile.ownedProfileFrames||[]),...allProfileFrames])],
+    equippedProfileFrameId:selections.frame??profile.equippedProfileFrameId??"default"}:profile;
   root.NyanPlayerData=Object.freeze({...basePlayerData,
     ready:Promise.resolve(basePlayerData.ready).then(()=>snapshot()),load:async()=>presented(await basePlayerData.load()),getSnapshot:snapshot,
     save:async value=>presented(await basePlayerData.save(serverSafe(value))),
@@ -99,6 +103,7 @@
   });
   root.NyanKingQaSelectors=Object.freeze({
     collectionState:presented,
+    profileState:presentedOnlineProfile,
     coinBalance:()=>qaCoins,
     diagnostics:()=>{const state=presented(basePlayerData.getSnapshot());return {
       qaEnabled:true,qaCoinBalance:qaCoins,renderedCoinBalance:qaCoins,

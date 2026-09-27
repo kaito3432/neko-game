@@ -39,6 +39,22 @@ test('相手表示はplayerId照合、viewer所持状態に非依存、旧試合
   assert.deepEqual(UI.ownProfile({...data,matchType:'roomMatch'}),own);
 });
 
+test('match found後はselfだけ表示用overrideを適用しopponentはserver profileを維持',()=>{
+  const self={playerId:'self',profileCharacter:{category:'catSkin',itemId:'default'},equippedProfileFrameId:'rank_bronze',
+    ranked:{rank:'silver'},displayName:'自分'};
+  const opponent={playerId:'peer',profileCharacter:{category:'dogSkin',itemId:'dog_coin_01'},
+    equippedProfileFrameId:'rank_gold',ranked:{rank:'gold'},displayName:'相手'};
+  const data={matchType:'randomMatch',matchId:'rm_profile',player:'host',playerId:'self',
+    participants:{host:'self',guest:'peer'},profile:self,playerProfiles:{host:self,guest:opponent}};
+  const profiles=UI.matchProfiles(data,profile=>({...profile,
+    profileCharacter:{category:'catSkin',itemId:'cat_master_s01_king'},equippedProfileFrameId:'rank_master'}));
+  assert.equal(UI.imageSource(profiles.own.profileCharacter),Catalog.getItem('catSkin','cat_master_s01_king').profileImage);
+  assert.equal(profiles.own.equippedProfileFrameId,'rank_master');
+  assert.equal(UI.imageSource(profiles.opponent.profileCharacter),Catalog.getItem('dogSkin','dog_coin_01').profileImage);
+  assert.equal(profiles.opponent.equippedProfileFrameId,'rank_gold');
+  assert.equal(profiles.opponent,opponent);
+});
+
 test('待機プロフィールは自分・VS・相手を共通frame DOMで表示する',()=>{
   const fs=require('node:fs'),path=require('node:path');
   const source=fs.readFileSync(path.resolve(__dirname,'../online-profile-ui.js'),'utf8');
