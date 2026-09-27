@@ -95,6 +95,7 @@
 
   const MYSTERY_ROOT="./assets/images/skins/mystery01";
   const NINJA_ROOT="./assets/images/skins/ninja01";
+  const MASTER_S01_KING_ROOT="./assets/images/skins/master_s01/king";
   const JAPANESE_COSMETIC_ROOT="./assets/images/cosmetics/japanese01";
   const RANK_FRAME_ROOT="./assets/images/rank/profile-frames";
   const CAT_NINJA_PLANNED_ASSETS=Object.freeze({
@@ -124,6 +125,20 @@
     homeDecorImage:`${NINJA_ROOT}/dog_samurai_home_decor.png`,
     homeCharacterImage:`${NINJA_ROOT}/dog_samurai_home_character.png`,
     homeImage:`${NINJA_ROOT}/dog_samurai_home.png`
+  });
+  const CAT_MASTER_S01_KING_PLANNED_ASSETS=Object.freeze({
+    collectionImage:`${MASTER_S01_KING_ROOT}/cat_master_king_collection.png`,
+    silhouetteImage:`${MASTER_S01_KING_ROOT}/cat_master_king_collection_locked.png`,
+    profileImage:`${MASTER_S01_KING_ROOT}/cat_master_king_profile.png`,
+    lockedProfileImage:`${MASTER_S01_KING_ROOT}/cat_master_king_profile_locked.png`,
+    pieceImage:`${MASTER_S01_KING_ROOT}/cat_master_king_piece.png`,
+    resultWinImage:`${MASTER_S01_KING_ROOT}/cat_master_king_result_win.png`,
+    resultLoseImage:`${MASTER_S01_KING_ROOT}/cat_master_king_result_lose.png`,
+    moveEffect:`${MASTER_S01_KING_ROOT}/cat_master_king_effect_move.png`,
+    foundFootprintEffect:`${MASTER_S01_KING_ROOT}/cat_master_king_effect_found.png`,
+    homeDecorImage:`${MASTER_S01_KING_ROOT}/cat_master_king_home_decor.png`,
+    homeCharacterImage:`${MASTER_S01_KING_ROOT}/cat_master_king_home_character.png`,
+    homeImage:`${MASTER_S01_KING_ROOT}/cat_master_king_home.png`
   });
   const ITEMS=Object.freeze([
     Object.freeze({
@@ -216,7 +231,12 @@
       acquisitionType:"coins",currency:"nyanCoins",priceCoins:60,rarity:"Common",
       materialStatus:"ready",assetStatus:"ready"
     }),
-    Object.freeze({id:"cat_master_reward_pending",category:"catSkin",name:"マスター限定ネコスキン",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
+    Object.freeze({
+      id:"cat_master_s01_king",category:"catSkin",name:"王様ネコ",
+      acquisitionType:"masterRankReward",rarity:"Legendary",
+      rewardSeason:"season01",materialStatus:"pending",assetStatus:"placeholder",
+      plannedAssets:CAT_MASTER_S01_KING_PLANNED_ASSETS
+    }),
     Object.freeze({id:"dog_master_reward_pending",category:"dogSkin",name:"マスター限定柴犬スキン（3匹セット）",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
     ...["bronze","silver","gold","platinum","diamond","master"].map((rank,index)=>Object.freeze({
       id:`rank_${rank}`,category:"profileFrame",rank,

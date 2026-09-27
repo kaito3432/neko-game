@@ -143,7 +143,22 @@
   }
 
   function homeLayeredSkinForItem(item){
-    return item ? HOME_LAYERED_SKINS[`${item.category}:${item.id}`] || null : null;
+    if(!item) return null;
+    const configured=HOME_LAYERED_SKINS[`${item.category}:${item.id}`];
+    if(configured) return configured;
+    if(!item.homeDecorImage || !item.homeCharacterImage) return null;
+    return {
+      treasure:item.homeDecorImage,
+      character:item.homeCharacterImage,
+      supportLayout:{translate:"0 0",scale:"1"},
+      characterLayout:{translate:"0 0",scale:"1"},
+      durationMs:HOME_REACTION_DURATION_MS,
+      reaction:freezeTimeline([
+        {offset:0,transform:"translate3d(0,0,0) scale(1)"},
+        {offset:.45,transform:"translate3d(8px,-6px,0) scale(1.02)",easing:"ease-out"},
+        {offset:1,transform:"translate3d(0,0,0) scale(1)"}
+      ])
+    };
   }
 
   function isOnlineMode(playMode){

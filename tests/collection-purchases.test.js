@@ -23,7 +23,7 @@ test("カテゴリごとの同期範囲と入手表示を一元定義する",()=
     assert.equal(Catalog.isLocalOnly(category),true);
   }
   assert.equal(Catalog.acquisitionLabel(Catalog.getItem("profileFrame","rank_gold")),"ランク報酬");
-  assert.equal(Catalog.acquisitionLabel(Catalog.getItem("catSkin","cat_master_reward_pending")),"ランク報酬（マスター限定）");
+  assert.equal(Catalog.acquisitionLabel(Catalog.getItem("catSkin","cat_master_s01_king")),"ランク報酬（マスター限定）");
   assert.equal(Catalog.acquisitionLabel(Catalog.getItem("dogSkin","dog_master_reward_pending")),"ランク報酬（マスター限定）");
 });
 
@@ -48,7 +48,7 @@ test("コイン追加も同一requestIdで冪等になる",()=>{
 test("ランク報酬はコイン購入できない",async()=>{
   const data=PlayerData.createDefaultData("ncp_collectiontest1");
   assert.equal(Collection.validatePurchase({...data,nyanCoins:999},"profileFrame","rank_gold").reason,"not_coin_purchasable");
-  assert.equal(Collection.validatePurchase({...data,nyanCoins:999},"catSkin","cat_master_reward_pending").reason,"not_coin_purchasable");
+  assert.equal(Collection.validatePurchase({...data,nyanCoins:999},"catSkin","cat_master_s01_king").reason,"not_coin_purchasable");
 });
 
 test("購入確認はreadyかつ十分な残高だけ有効で、確定前は残高を変更しない",async()=>{

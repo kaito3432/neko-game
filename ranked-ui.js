@@ -30,10 +30,15 @@
   document.querySelector('#resultText')?.after(result);
   document.querySelector('#matchmakingStatus')?.after(panel);
 
+  function attachPanel(){
+    if(!panel.isConnected)document.querySelector('#matchmakingStatus')?.after(panel);
+    return panel.isConnected;
+  }
+
   function update(next){
     profile=next?{...profile,...next}:profile;
     if(!profile?.ranked)return;
-    if(!panel.isConnected)document.querySelector('#matchmakingStatus')?.after(panel);
+    attachPanel();
     panel.hidden=!selectionVisible;
     const current=rank(profile.ranked.rank),index=ranks.indexOf(current),nextRank=ranks[index+1];
     root.NyanOnlineProfileUI.setImage(panel.querySelector('[data-rank-icon]'),profile.profileCharacter);
@@ -99,9 +104,11 @@
   }
   function setSelectionVisible(visible){
     selectionVisible=visible===true;
+    attachPanel();
     panel.hidden=!selectionVisible||!profile?.ranked;
     if(!selectionVisible)season.classList.remove('show');
-    else showSeason();
+    else if(profile?.ranked)showSeason();
+    else refresh();
   }
   root.addEventListener('nyan-online-profile',event=>update(event.detail.profile));
   root.addEventListener('nyan-online-matched',()=>{result.hidden=true;result.replaceChildren();});

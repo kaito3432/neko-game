@@ -66,7 +66,7 @@ test("本番カタログは既存品とコイン・ランク報酬の土台を�
     assert.match(item.frameImage,/assets\/images\/rank\/profile-frames\/rank_.+_frame\.png$/);
     assert.equal(item.materialStatus,"ready");
   }
-  assert.equal(Catalog.getItem("catSkin","cat_master_reward_pending").acquisitionType,"masterRankReward");
+  assert.equal(Catalog.getItem("catSkin","cat_master_s01_king").acquisitionType,"masterRankReward");
   assert.equal(Catalog.getItem("dogSkin","dog_master_reward_pending").acquisitionType,"masterRankReward");
   assert.deepEqual(Collection.SECTION_CATEGORIES.rank,["profileFrame"]);
   assert.equal(Catalog.getItemsByCategory("profileFrame").some(item=>item.acquisitionType==="masterRankReward"),false);

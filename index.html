@@ -1885,6 +1885,7 @@
 <script src="./player-data.js?v=1.1.collection-coins"></script>
 <script src="./daily-missions.js?v=1.0.daily1"></script>
 <script src="./collection-catalog.js?v=1.7.rank-profile-frames"></script>
+<script src="./debug/king-skin-play-qa-bootstrap-v5.js"></script>
 <script src="./collection.js?v=1.2.purchase-confirm"></script>
 <script src="./skin-presentation.js?v=1.3.home-layout"></script>
 <script src="./skill-catalog.js?v=1.0.phase2"></script>
@@ -1906,6 +1907,7 @@
 <script src="./result-presentation.js?v=1"></script>
 <script src="./api-environment.js?v=1.0.sandbox-ready"></script>
 <script src="./online-identity.js?v=1.1.coin-skins"></script>
+<script src="./debug/king-skin-play-qa-runtime-v5.js"></script>
 <script src="./online-appearance.js?v=1"></script>
 <script src="./online.js?v=3.0.result-recovery1"></script>
 <script src="./online-profile-ui.js?v=1.1.rank-profile-frames"></script>
@@ -1915,8 +1917,9 @@
 <script src="./random-match.js?v=1.0"></script>
 <script src="./game.js?v=2.3.skill-unlock-entry"></script>
 
+<script src="./debug/king-debug-v7.js"></script>
 <script>
-if ("serviceWorker" in navigator) {
+if (!/KING_DEBUG_V7/.test(navigator.userAgent) && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
       .catch(err => console.warn("Service Worker registration failed:", err));

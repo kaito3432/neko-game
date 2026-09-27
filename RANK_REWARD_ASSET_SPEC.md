@@ -80,7 +80,7 @@ Bronze / Silver / Gold終了者は、現行のソフトリセット値`0 / 50 / 
 
 | シーズン例 | 種別 | 正式ID候補 | 配置カテゴリ |
 |---|---|---|---|
-| Season 01 | ネコ | `cat_master_s01` | `catSkin` |
+| Season 01 | ネコ（王様ネコ） | `cat_master_s01_king` | `catSkin` |
 | Season 02 | 柴犬 | `dog_master_s02` | `dogSkin` |
 | Season 03 | ネコ | `cat_master_s03` | `catSkin` |
 | Season 04 | 柴犬 | `dog_master_s04` | `dogSkin` |
@@ -122,7 +122,7 @@ Bronze / Silver / Gold終了者は、現行のソフトリセット値`0 / 50 / 
 - 所持済み時は`rewardType: coins`で1,500コインだけを付与。
 - したがって「1,500コイン常時 + 未所持時だけスキン」ではない。
 - サーバー既知報酬スキンは現在`cat_kaitou` / `dog_detective`だけで、Master専用正式スキンは未登録。
-- 仮カタログIDは`cat_master_reward_pending` / `dog_master_reward_pending`。
+- Season 01ネコは正式候補ID `cat_master_s01_king` と12素材の`plannedAssets`をpending登録済み。柴犬は仮ID `dog_master_reward_pending`。
 
 ### 現在のプロフィールフレーム
 
@@ -150,7 +150,7 @@ Bronze / Silver / Gold終了者は、現行のソフトリセット値`0 / 50 / 
 | Bronzeフレーム一覧 | 表示 | 表示 | 完了 |
 | フレーム画像 | PNG優先＋CSS fallback | 専用通常画像 | 完了 |
 | 未獲得フレーム | CSS表示 | 専用ロック画像 | 必要 |
-| Master仮ID | pending ID | シーズン別正式ID | 必要 |
+| Master猫ID | `cat_master_s01_king`（pending） | シーズン別正式ID | 受け入れ準備完了 |
 
 ## 8. 今後コード修正が必要な箇所
 
@@ -183,20 +183,20 @@ Bronze / Silver / Gold終了者は、現行のソフトリセット値`0 / 50 / 
 
 ### Season 01 Master限定ネコ
 
-推奨配置: `assets/images/skins/master_s01/`。既存ネコスキンと同等の実装範囲を満たす。
+正式ID: `cat_master_s01_king`。推奨配置: `assets/images/skins/master_s01/king/`。既存ネコスキンと同等の実装範囲を満たす。
 
-- `cat_master_s01_collection.png`
-- `cat_master_s01_collection_locked.png`
-- `cat_master_s01_profile.png`
-- `cat_master_s01_profile_locked.png`
-- `cat_master_s01_piece.png`
-- `cat_master_s01_result_win.png`
-- `cat_master_s01_result_lose.png`
-- `cat_master_s01_effect_move.png`
-- `cat_master_s01_effect_found.png`
-- `cat_master_s01_home_decor.png`
-- `cat_master_s01_home_character.png`
-- `cat_master_s01_home.png`
+- `cat_master_king_collection.png`
+- `cat_master_king_collection_locked.png`
+- `cat_master_king_profile.png`
+- `cat_master_king_profile_locked.png`
+- `cat_master_king_piece.png`
+- `cat_master_king_result_win.png`
+- `cat_master_king_result_lose.png`
+- `cat_master_king_effect_move.png`
+- `cat_master_king_effect_found.png`
+- `cat_master_king_home_decor.png`
+- `cat_master_king_home_character.png`
+- `cat_master_king_home.png`
 
 合計: **12枚**。collection/profileのロック版は通常画像からCSS生成せず、別PNGとして制作する。
 
@@ -431,3 +431,76 @@ Masterのみ、基本外径928pxと中央顔抜きを維持したまま、安全
 > 1024 x 1024pxの透過PNG。中央直径700pxを完全に空け、外径928px以内に、赤みのある落ち着いた銅色の丸い二重リングを描く。弱いサテン光沢と柔らかな段差で安っぽく見せず、下部中央に小さな丸いプレートとごく控えめな抽象肉球刻印を置く。発光、宝石、王冠、羽根、細密装飾は入れない。38pxへ縮小しても輪郭と赤銅色が明確で、どのプロフィール顔も隠さないこと。
 
 この仕様をBronzeの承認基準とし、Bronzeの実画像QAが完了するまでSilver以上の制作へ進まない。
+
+## 14. Season 01 Master限定ネコ「王様ネコ」受け入れ仕様
+
+### 14.1 正式識別子と安全状態
+
+- 正式item ID: `cat_master_s01_king`
+- category: `catSkin`
+- acquisitionType: `masterRankReward`
+- rarity: `Legendary`
+- 保存先: `assets/images/skins/master_s01/king/`
+- 素材受け入れ完了前は `materialStatus:"pending"` / `assetStatus:"placeholder"` を維持する。
+- 12素材の予定パスはカタログの`plannedAssets`だけへ登録する。ファイルが揃う前に`preview`や`profileImage`等の実表示フィールドへ展開しない。
+- 12素材すべての存在・寸法・透過・実画面QAが完了するまで、付与設定、通常装備、オンラインallowlistへ追加しない。
+- 旧仮ID `cat_master_reward_pending` をSeason 01報酬IDとして使用しない。
+
+### 14.2 アートディレクション
+
+テーマは「王様ネコ」。かっこいい7：かわいい3で、威厳、高級感、限定感を持たせながらネコらしい丸みと親しみやすさを残す。
+
+- 主色: 深いネイビー。
+- 金属・縁取り: 上品なゴールド。黄色一色にしない。
+- 差し色: 赤。マント裏、首元、宝石の一部などへ限定する。
+- 必須造形: 小〜中サイズの王冠、上品なマント、王族らしい首元装飾、自信と愛嬌のある表情。
+- 王冠、顔つき、毛色、マント、首元装飾、配色を全12素材で固定する。
+- 固定Master紋章、重い鎧、過剰な宝石、人間的すぎる体格、悪役的な表情は使用しない。
+
+### 14.3 12素材の制作表
+
+| カタログフィールド | ファイル名 | 推奨寸法 | 透過 | 制作・QA要点 |
+|---|---|---:|---|---|
+| `collectionImage` | `cat_master_king_collection.png` | 1254×1254 | RGBA | 全身立ち絵。王冠・マント・ネイビー／金／赤を小表示でも識別。既存一覧の中央配置と占有率へ合わせる |
+| `silhouetteImage` | `cat_master_king_collection_locked.png` | 1254×1254 | RGBA | 専用黒塗りシルエット。通常画像のCSS黒塗りは禁止。耳と王冠の輪郭を残す |
+| `profileImage` | `cat_master_king_profile.png` | 1254×1254 | RGBA | 顔中心。円形トリミングで王冠・耳・首元が切れない。背景は完全透過 |
+| `lockedProfileImage` | `cat_master_king_profile_locked.png` | 1254×1254 | RGBA | プロフィール専用黒塗り。円内で王冠と顔のシルエットが崩れない |
+| `pieceImage` | `cat_master_king_piece.png` | 1536×1024 | RGBA | 実表示約47〜66px。王冠、顔、ネイビーと金を太い形で表現し、細密装飾へ依存しない |
+| `resultWinImage` | `cat_master_king_result_win.png` | 1536×1024 | 非透過 | 胸を張る誇らしいポーズ。華やかで明るく、既存の勝敗文字・ボタン領域を確保 |
+| `resultLoseImage` | `cat_master_king_result_lose.png` | 1536×1024 | 非透過 | しょんぼりしつつ気品を維持。勝利版と姿勢・表情・色調を明確に分ける |
+| `moveEffect` | `cat_master_king_effect_move.png` | 1536×1024 | RGBA | 実表示約54px。金のきらめきや布の残像を中央へまとめ、盤面を隠しすぎない |
+| `foundFootprintEffect` | `cat_master_king_effect_found.png` | 1254×1254 | RGBA | 実表示約44px。発見・驚きを最優先し、王冠ニュアンスは補助に留める |
+| `homeDecorImage` | `cat_master_king_home_decor.png` | 2172×724 | RGBA | 王座、カーテン、金装飾等の非操作レイヤー。キャラクター本体を入れずUIを避ける |
+| `homeCharacterImage` | `cat_master_king_home_character.png` | 2172×724 | RGBA | decorと同一座標系。王冠・マントを見せ、キャラクターレイヤーだけのタップ反応に対応 |
+| `homeImage` | `cat_master_king_home.png` | 1086×1448 | RGBA | ホーム設定可否判定兼独立基準画像。王様ネコ単体で成立する全身構図 |
+
+### 14.4 接続ポイント
+
+- `collection-catalog.js`: 受け入れ中は`plannedAssets`だけを保持。ready化時に同じ値を表示／ゲーム用フィールドへ展開する。
+- `collection.js`: `masterRankReward`のため未獲得時は専用`silhouetteImage`／`lockedProfileImage`を使用し、購入ボタンを出さない。
+- `skin-presentation.js`: ready化時にpiece、勝敗result、move/found effectを既存resolverから解決する。商品別パスをゲーム処理へ直書きしない。
+- `HOME_LAYERED_SKINS`: `catSkin:cat_master_s01_king`へdecor／character、配置補正、450ms前後の反応を素材QA後に登録する。
+- `server/ranked-progression.mjs`: 対象月のMaster報酬設定からitem IDを参照する。素材pending中は設定しない。
+- `server/online-profile.mjs`等: サーバー所有確認後だけprofile／appearance IDを許可し、画像URLは同期しない。
+
+### 14.5 ready化ゲート
+
+1. 12ファイルが予定パスへ揃っている。
+2. collection／profile／pieceの顔、王冠、衣装、配色が同一キャラクターとして一致する。
+3. locked 2枚が専用画像で、通常画像を表示DOMへ使用しない。
+4. リザルト、エフェクト、ホームを実表示サイズで確認する。
+5. iOS／Android／Webで画像欠落や見切れがない。
+6. 関連テストと全テストが成功する。
+7. 以上の完了後にのみ`materialStatus`と`assetStatus`を`ready`へ変更し、月別報酬設定とサーバーallowlistを別工程で有効化する。
+
+### 14.6 Debug実機QAの保留事項（2026-09-27）
+
+Season 1「王様ネコ」は12素材とDebug QA用実プレイ確認コードを保持するが、以下3点は未解決のため正式有効化を保留する。
+
+1. 王様ネコ詳細の「ホームに表示」ON/OFFトグルが、iPhone実機では期待どおり切り替わらない。
+2. オンライン対戦入口のプロフィール表示が期待どおり出ない。
+3. 盤面の王様ネコ画像が既存ネコ駒の見せ方と一致しない。
+
+HomeトグルはBuild 7およびBuild 8で、最新Debug bundleのBundle ID／Version／Build NumberとApp.app内asset SHA-256が端末側と一致することを確認済み。DebugではService Worker登録を止め、既存registrationとCache Storageも削除して確認したため、単純なService Worker／Web cache原因ではない。実装ロジック側の未解決問題として扱う。
+
+Debug QAコードは`KING_DEBUG_V7`を含むDebug User-Agentでのみ動作し、Productionではno-opとする。`materialStatus:"pending"`／`assetStatus:"placeholder"`、購入不可、正式装備不可、Master報酬未設定、server allowlist未追加を維持する。
