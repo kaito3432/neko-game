@@ -1881,6 +1881,7 @@
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
 <script src="./progression-model.js?v=1.1.collection-coins"></script>
+<script src="./api-environment.js?v=1.0.sandbox-ready"></script>
 <script src="./cpu-unlock-sync.js?v=1.0"></script>
 <script src="./player-data.js?v=1.1.collection-coins"></script>
 <script src="./daily-missions.js?v=1.0.daily1"></script>
@@ -1905,21 +1906,20 @@
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./result-presentation.js?v=1"></script>
-<script src="./api-environment.js?v=1.0.sandbox-ready"></script>
 <script src="./online-identity.js?v=1.1.coin-skins"></script>
 <script src="./debug/king-skin-play-qa-runtime-v5.js"></script>
 <script src="./online-appearance.js?v=1"></script>
 <script src="./online.js?v=3.0.result-recovery1"></script>
 <script src="./online-profile-ui.js?v=1.1.rank-profile-frames"></script>
 <script src="./rank-rewards.js?v=1.1.final-ranks"></script>
-<script src="./ranked-ui.js?v=1.0"></script>
-<script src="./ranked-stamina-ui.js?v=1.0"></script>
 <script src="./random-match.js?v=1.0"></script>
+<script src="./ranked-ui.js?v=1.1.late-attach"></script>
+<script src="./ranked-stamina-ui.js?v=1.0"></script>
 <script src="./game.js?v=2.3.skill-unlock-entry"></script>
 
 <script src="./debug/king-debug-v7.js"></script>
 <script>
-if (!/KING_DEBUG_V7/.test(navigator.userAgent) && "serviceWorker" in navigator) {
+if (globalThis.NYAN_KING_QA_BUILD !== 13 && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
       .catch(err => console.warn("Service Worker registration failed:", err));

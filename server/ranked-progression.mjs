@@ -21,7 +21,10 @@ export function eligibleRankedResult(match,input){
     [undefined,'disconnectForfeit','turnTimeout'].includes(input.result?.finishReason);
 }
 function configuredMaster(id,periods,knownSkins){
-  const skinId=masterPeriods(periods)[periodId(id)];
+  const configured=masterPeriods(periods);
+  // Monthly season IDs are canonical. Quarter keys remain a read-compatible
+  // fallback for already configured deployments while new seasons stay isolated.
+  const skinId=configured[id]??configured[periodId(id)];
   if(typeof skinId!=='string'||!knownSkins?.[skinId])return null;
   return {skinId,category:knownSkins[skinId]};
 }
@@ -32,11 +35,11 @@ function rewardFor(profile,id,rank,periods,knownSkins){
       {rewardType:'none',rewardAmount:0,rewardStatus:'none'};
   }
   const configured=configuredMaster(id,periods,knownSkins);
-  if(!configured)return {rewardType:'masterSkin',rewardSkinId:null,rewardStatus:'pendingConfiguration',rewardPeriodId:periodId(id)};
+  if(!configured)return {rewardType:'masterSkin',rewardSkinId:null,rewardStatus:'pendingConfiguration',rewardPeriodId:id};
   const ownedField=configured.category==='catSkin'?'ownedCatSkins':'ownedDogSkins';
-  return profile[ownedField]?.includes(configured.skinId)
-    ?{rewardType:'coins',rewardAmount:1500,rewardSkinId:configured.skinId,rewardStatus:'claimable',rewardPeriodId:periodId(id)}
-    :{rewardType:'skin',rewardSkinId:configured.skinId,rewardSkinCategory:configured.category,rewardStatus:'claimable',rewardPeriodId:periodId(id)};
+  return {rewardType:'coinsAndSkin',rewardAmount:1500,rewardSkinId:configured.skinId,
+    rewardSkinCategory:configured.category,rewardSkinAlreadyOwned:profile[ownedField]?.includes(configured.skinId)===true,
+    rewardStatus:'claimable',rewardPeriodId:id};
 }
 export function normalizeRanked(profile,now=Date.now(),periods={},knownSkins={}){
   const p=structuredClone(profile);p.version=Math.max(2,Number(p.version)||1);
@@ -80,8 +83,8 @@ export function claimSeasonReward(profile,id,now=Date.now(),periods={},knownSkin
   if(p.seasonRewardsClaimed.includes(id)||reward.rewardStatus==='claimed')return {profile:p,reward,error:'already_claimed'};
   if(reward.rewardStatus==='pendingConfiguration')return {profile:p,reward,error:'pending_configuration'};
   if(reward.rewardStatus!=='claimable')return {profile:p,reward,error:'not_claimable'};
-  if(reward.rewardType==='coins')p.serverNyanCoins+=reward.rewardAmount;
-  if(reward.rewardType==='skin'){
+  if(reward.rewardType==='coins'||reward.rewardType==='coinsAndSkin')p.serverNyanCoins+=reward.rewardAmount;
+  if(reward.rewardType==='skin'||reward.rewardType==='coinsAndSkin'){
     const field=reward.rewardSkinCategory==='catSkin'?'ownedCatSkins':'ownedDogSkins';p[field]=[...new Set([...p[field],reward.rewardSkinId])];
   }
   reward.rewardStatus='claimed';reward.claimedAt=now;p.seasonRewardsClaimed.push(id);

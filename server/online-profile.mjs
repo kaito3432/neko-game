@@ -2,8 +2,12 @@
 // IMPORTANT: first registration imports client claims, NOT verified purchases or wins.
 // Never reuse this migration endpoint as an ongoing ownership synchronization API.
 export const SKINS = Object.freeze({
-  ownedCatSkins: Object.freeze(['default', 'cat_kaitou', 'cat_coin_01']),
+  ownedCatSkins: Object.freeze(['default', 'cat_kaitou', 'cat_coin_01', 'cat_master_s01_king']),
   ownedDogSkins: Object.freeze(['default', 'dog_detective', 'dog_coin_01'])
+});
+const CLIENT_REGISTER_SKINS=Object.freeze({
+  ownedCatSkins:Object.freeze(['default','cat_kaitou','cat_coin_01']),
+  ownedDogSkins:Object.freeze(['default','dog_detective','dog_coin_01'])
 });
 const CLIENT_COIN_SKINS=Object.freeze({
   ownedCatSkins:Object.freeze(['cat_coin_01']),
@@ -16,13 +20,13 @@ import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
 import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
 import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
 import {STAMINA_REWARD_TYPE,applyVerifiedStaminaAd,withRankedStamina,recoverStaminaWithCoins,publicRankedStamina} from './ranked-stamina.mjs';
-const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
+const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 
 export function initialProfile(input, playerId, now = Date.now()) {
   const profile = {version: 1, playerId, createdAt: now,
     legacyPlayerId: typeof input.playerId === 'string' ? input.playerId.slice(0, 128) : null,
     ownershipSource: 'unverified-local-migration', equippedAppearance: {}};
-  for (const [key, allowed] of Object.entries(SKINS)) {
+  for (const [key, allowed] of Object.entries(CLIENT_REGISTER_SKINS)) {
     profile[key] = [...new Set(['default', ...(Array.isArray(input[key]) ? input[key] : [])
       .filter(id => allowed.includes(id))])];
   }

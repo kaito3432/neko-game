@@ -16,11 +16,22 @@ test('勝敗確定月へ加算し、マスター資格確定後200RPへ再配置
  const a=applyRankedResult(p,{matchId:'oct',won:true,completedAt:Date.parse('2026-10-01T00:02:00+09:00')});const sep=a.profile.seasonHistory.find(h=>h.seasonId==='2026-09');
  assert.deepEqual([sep.finalRP,sep.finalRank,sep.rewardStatus],[864,'master','pendingConfiguration']);assert.deepEqual([a.profile.ranked.seasonId,a.receipt.seasonId,a.profile.ranked.rp],["2026-10","2026-10",210]);
 });
-test('マスター未設定は資格固定、設定後に確定し所持済みだけ1500コイン',async()=>{const {normalizeRanked}=await mod,p=await base(1100,'2026-09');
+test('マスター未設定は資格固定、設定後は所持状態に関係なく1500コインと限定スキン',async()=>{const {normalizeRanked}=await mod,p=await base(1100,'2026-09');
  let n=normalizeRanked(p,Date.parse('2026-10-01T00:01:00+09:00'),{},{}),h=n.seasonHistory[0];assert.equal(h.rewardStatus,'pendingConfiguration');assert.equal(h.finalRP,1100);
- n=normalizeRanked(n,Date.parse('2026-10-02T00:00:00+09:00'),{'2026-Q3':'cat_kaitou'},{cat_kaitou:'catSkin'});h=n.seasonHistory[0];assert.deepEqual([h.rewardType,h.rewardSkinId,h.rewardStatus],['skin','cat_kaitou','claimable']);
- n.ownedCatSkins.push('cat_kaitou');n.seasonHistory[0].rewardStatus='pendingConfiguration';n.seasonHistory[0].rewardSkinId=null;
- n=normalizeRanked(n,Date.parse('2026-10-03T00:00:00+09:00'),{'2026-Q3':'cat_kaitou'},{cat_kaitou:'catSkin'});assert.deepEqual([n.seasonHistory[0].rewardType,n.seasonHistory[0].rewardAmount],['coins',1500]);
+ n=normalizeRanked(n,Date.parse('2026-10-02T00:00:00+09:00'),{'2026-09':'cat_master_s01_king'},{cat_master_s01_king:'catSkin'});h=n.seasonHistory[0];assert.deepEqual([h.rewardType,h.rewardAmount,h.rewardSkinId,h.rewardStatus],['coinsAndSkin',1500,'cat_master_s01_king','claimable']);
+ n.ownedCatSkins.push('cat_master_s01_king');n.seasonHistory[0].rewardStatus='pendingConfiguration';n.seasonHistory[0].rewardSkinId=null;
+ n=normalizeRanked(n,Date.parse('2026-10-03T00:00:00+09:00'),{'2026-09':'cat_master_s01_king'},{cat_master_s01_king:'catSkin'});assert.deepEqual([n.seasonHistory[0].rewardType,n.seasonHistory[0].rewardAmount,n.seasonHistory[0].rewardSkinAlreadyOwned],['coinsAndSkin',1500,true]);
+});
+test('Master報酬は未所持ならスキンと1500コイン、所持済みも1500コイン、再受取不可',async()=>{
+ const {normalizeRanked,claimSeasonReward}=await mod,periods={'2026-09':'cat_master_s01_king'},known={cat_master_s01_king:'catSkin'};
+ for(const alreadyOwned of [false,true]){
+   const p=await base(900,'2026-09');if(alreadyOwned)p.ownedCatSkins.push('cat_master_s01_king');
+   const closed=normalizeRanked(p,Date.parse('2026-10-01T00:01:00+09:00'),periods,known);
+   const claimed=claimSeasonReward(closed,'2026-09',Date.parse('2026-10-02T00:00:00+09:00'),periods,known);
+   assert.equal(claimed.profile.serverNyanCoins,1500);assert.equal(claimed.profile.ownedCatSkins.filter(id=>id==='cat_master_s01_king').length,1);
+   const retry=claimSeasonReward(claimed.profile,'2026-09',Date.parse('2026-10-03T00:00:00+09:00'),periods,known);
+   assert.equal(retry.error,'already_claimed');assert.equal(retry.profile.serverNyanCoins,1500);
+ }
 });
 test('シーズン報酬は二重受取不可',async()=>{const {normalizeRanked,claimSeasonReward}=await mod,p=await base(600,'2026-09');let n=normalizeRanked(p,Date.parse('2026-10-01T00:00:00+09:00'));
  const first=claimSeasonReward(n,'2026-09',Date.parse('2026-10-02T00:00:00+09:00'));assert.equal(first.profile.serverNyanCoins,1200);

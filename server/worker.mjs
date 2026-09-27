@@ -13,7 +13,7 @@ import {verifyStoreKitTransaction} from './storekit-verification.mjs';
 import {verifyGooglePlayPurchase,acknowledgeGooglePlayPurchase} from './google-play-verification.mjs';
 import {consumeRankedStamina,publicRankedStamina,withRankedStamina} from './ranked-stamina.mjs';
 
-const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin'});
+const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 const withWinnerPlayerId=(room,result)=>{
   if(!result?.winner)return result;
   const seat=Object.keys(room.roles||{}).find(key=>room.roles[key]===result.winner);

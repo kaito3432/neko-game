@@ -79,6 +79,20 @@
         {offset:1,transform:"translate3d(0,0,0) scale(1) rotate(0deg)"}
       ])
     }),
+    "catSkin:cat_master_s01_king":Object.freeze({
+      treasure:"./assets/images/skins/master_s01/king/cat_master_king_home_decor.png",
+      character:"./assets/images/skins/master_s01/king/cat_master_king_home_character.png",
+      supportLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      // The source character sits left of the shared home canvas; align its
+      // visual center without modifying the artwork or the generic home DOM.
+      characterLayout:Object.freeze({translate:"15% 0",scale:"1"}),
+      durationMs:HOME_REACTION_DURATION_MS,
+      reaction:freezeTimeline([
+        {offset:0,transform:"translate3d(0,0,0) scale(1)",easing:"ease-out"},
+        {offset:.45,transform:"translate3d(7px,-5px,0) scale(1.02)",easing:"ease-out"},
+        {offset:1,transform:"translate3d(0,0,0) scale(1)"}
+      ])
+    }),
     "dogSkin:dog_detective":Object.freeze({
       treasure:"./assets/home-skins/detective-shiba/detective-shiba-home-clues.png",
       character:"./assets/home-skins/detective-shiba/detective-shiba-home-character.png",

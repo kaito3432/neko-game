@@ -8652,8 +8652,7 @@ body.sneak-mode .board-shell{
 }
 
 /* Phase 2B: 丸い駒素材は盤面の丸枠を使い切る。標準駒の寸法は維持する。 */
-.cat-art[data-skin-id="cat_kaitou"],
-.cat-art[data-skin-id="cat_coin_01"]{
+.cat-art:not([data-skin-id="default"]){
   width:94%;
   height:auto;
   aspect-ratio:1 / 1;
@@ -9203,6 +9202,7 @@ body.sneak-mode .board-shell{
 .online-profile-side{display:grid;grid-template-rows:auto auto auto;justify-items:center;gap:2px;min-width:0;flex:1 1 0;overflow:visible}
 .online-profile-label{font-size:9px;font-weight:900;line-height:1;color:#9b765f;white-space:nowrap}
 .online-profile-name{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:900;line-height:1.2;text-align:center}
+.online-profile-rank{font-size:8px;font-weight:900;line-height:1;color:#9b765f;letter-spacing:.04em}
 .online-profile-vs{flex:0 0 auto;padding-top:10px;color:#d27455;font-size:clamp(14px,4vw,18px);font-style:italic;line-height:1;text-shadow:0 1px 0 #fff}
 .online-opponent-profile img{object-fit:contain;background:transparent}
 .online-opponent-profile .online-profile-frame{width:clamp(88px,24vw,96px);height:clamp(88px,24vw,96px);flex:0 0 clamp(88px,24vw,96px);overflow:visible}

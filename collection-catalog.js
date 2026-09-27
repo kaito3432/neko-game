@@ -140,6 +140,10 @@
     homeCharacterImage:`${MASTER_S01_KING_ROOT}/cat_master_king_home_character.png`,
     homeImage:`${MASTER_S01_KING_ROOT}/cat_master_king_home.png`
   });
+  const CAT_MASTER_S01_KING_PRESENTATION=Object.freeze({
+    profileImage:`${MASTER_S01_KING_ROOT}/cat_master_king_profile_round.png`,
+    pieceImage:`${MASTER_S01_KING_ROOT}/cat_master_king_piece_round.png`
+  });
   const ITEMS=Object.freeze([
     Object.freeze({
       id:"default",category:"catSkin",name:"デフォルト",
@@ -234,7 +238,11 @@
     Object.freeze({
       id:"cat_master_s01_king",category:"catSkin",name:"王様ネコ",
       acquisitionType:"masterRankReward",rarity:"Legendary",
-      rewardSeason:"season01",materialStatus:"pending",assetStatus:"placeholder",
+      rewardSeason:"season01",materialStatus:"ready",assetStatus:"ready",
+      ...CAT_MASTER_S01_KING_PLANNED_ASSETS,
+      preview:CAT_MASTER_S01_KING_PLANNED_ASSETS.collectionImage,
+      profileImage:CAT_MASTER_S01_KING_PRESENTATION.profileImage,
+      pieceImage:CAT_MASTER_S01_KING_PRESENTATION.pieceImage,
       plannedAssets:CAT_MASTER_S01_KING_PLANNED_ASSETS
     }),
     Object.freeze({id:"dog_master_reward_pending",category:"dogSkin",name:"マスター限定柴犬スキン（3匹セット）",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),

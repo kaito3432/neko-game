@@ -211,24 +211,28 @@ test("忍者にゃんと侍しばはreadyのコイン商品として本番素材
   samuraiAssets.forEach(asset=>assert.equal(fs.existsSync(path.resolve(__dirname,"..",asset)),true,asset));
 });
 
-test("王様ネコは12素材の受け入れパスだけを持つpendingのMaster報酬",()=>{
+test("王様ネコは12素材を正式resolverへ接続したMaster報酬",()=>{
   const king=Catalog.getItem("catSkin","cat_master_s01_king");
   assert.equal(king.name,"王様ネコ");
   assert.equal(king.acquisitionType,"masterRankReward");
-  assert.equal(king.materialStatus,"pending");
-  assert.equal(king.assetStatus,"placeholder");
+  assert.equal(king.materialStatus,"ready");
+  assert.equal(king.assetStatus,"ready");
   assert.equal(king.rewardSeason,"season01");
   assert.equal(Object.keys(king.plannedAssets).length,12);
   assert.equal(king.plannedAssets.collectionImage,"./assets/images/skins/master_s01/king/cat_master_king_collection.png");
   assert.equal(king.plannedAssets.silhouetteImage,"./assets/images/skins/master_s01/king/cat_master_king_collection_locked.png");
   assert.equal(king.plannedAssets.lockedProfileImage,"./assets/images/skins/master_s01/king/cat_master_king_profile_locked.png");
   assert.equal(king.plannedAssets.homeImage,"./assets/images/skins/master_s01/king/cat_master_king_home.png");
-  for(const field of ["preview","collectionImage","profileImage","pieceImage","homeImage"]){
-    assert.equal(Object.hasOwn(king,field),false,`${field} must remain inactive before QA`);
-  }
+  assert.equal(king.preview,king.plannedAssets.collectionImage);
+  assert.equal(king.collectionImage,king.plannedAssets.collectionImage);
+  assert.equal(king.profileImage,"./assets/images/skins/master_s01/king/cat_master_king_profile_round.png");
+  assert.equal(king.pieceImage,"./assets/images/skins/master_s01/king/cat_master_king_piece_round.png");
+  assert.notEqual(king.profileImage,king.plannedAssets.profileImage);
+  assert.notEqual(king.pieceImage,king.plannedAssets.pieceImage);
+  assert.equal(king.homeImage,king.plannedAssets.homeImage);
 });
 
-test("王様ネコの12素材は制作仕様どおり配置済みだが商品画像として未有効化",()=>{
+test("王様ネコの12素材は制作仕様どおり配置済みで正式有効",()=>{
   const king=Catalog.getItem("catSkin","cat_master_s01_king");
   const expected=new Map([
     [king.plannedAssets.collectionImage,[1254,1254,6]],
@@ -250,11 +254,10 @@ test("王様ネコの12素材は制作仕様どおり配置済みだが商品画
     assert.equal(buffer.readUInt32BE(20),height,asset);
     assert.equal(buffer[25],colorType,`${asset} PNG color type`);
   });
-  assert.equal(king.materialStatus,"pending");
-  assert.equal(king.assetStatus,"placeholder");
-  for(const field of ["preview","collectionImage","silhouetteImage","profileImage","lockedProfileImage","pieceImage"]){
-    assert.equal(Object.hasOwn(king,field),false,`${field} must stay inactive until all assets pass QA`);
-  }
+  assert.equal(king.materialStatus,"ready");
+  assert.equal(king.assetStatus,"ready");
+  for(const field of ["preview","collectionImage","silhouetteImage","profileImage","lockedProfileImage","pieceImage"])
+    assert.equal(typeof king[field],"string",`${field} must be active`);
 });
 
 test("侍しば12素材は制作仕様の寸法・透過条件を満たす",()=>{
@@ -308,4 +311,19 @@ test("和風ホームcharacterは忍者を下端へ、侍しばを左へ配置�
     assert.match(config.treasure,/home_decor\.png$/);
     assert.equal(config.reaction.at(-1).transform,"translate3d(0,0,0) scale(1) rotate(0deg)");
   }
+});
+
+test("王様ネコは専用丸型画像と中央Home配置を使用する",()=>{
+  const king=Catalog.getItem("catSkin","cat_master_s01_king");
+  const home=Skins.HOME_LAYERED_SKINS["catSkin:cat_master_s01_king"];
+  assert.match(king.profileImage,/cat_master_king_profile_round\.png$/);
+  assert.match(king.pieceImage,/cat_master_king_piece_round\.png$/);
+  for(const [field,width,height] of [["profileImage",1254,1254],["pieceImage",1536,1024]]){
+    const buffer=fs.readFileSync(path.resolve(__dirname,"..",king[field]));
+    assert.equal(buffer.readUInt32BE(16),width,field);
+    assert.equal(buffer.readUInt32BE(20),height,field);
+  }
+  assert.equal(home.characterLayout.translate,"15% 0");
+  assert.equal(home.characterLayout.scale,"1");
+  assert.match(home.character,/cat_master_king_home_character\.png$/);
 });

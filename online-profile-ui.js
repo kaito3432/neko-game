@@ -73,12 +73,16 @@
     const clip=document.createElement('span');clip.className='ranked-avatar-clip';
     const image=document.createElement('img');image.alt=`${label}のプロフィールアイコン`;clip.append(image);frame.append(clip);
     const name=document.createElement('span');name.className='online-profile-name';name.textContent=label;
-    card.append(caption,frame,name);return card;
+    const rank=document.createElement('small');rank.className='online-profile-rank';rank.hidden=true;
+    card.append(caption,frame,name,rank);return card;
   }
   function updateSide(card,profile){
     card.dataset.playerId=profile.playerId;
     setFrame(card.querySelector('.online-profile-frame'),profile.equippedProfileFrameId);
     setImage(card.querySelector('.ranked-avatar-clip>img'),profile.profileCharacter);
+    const rank=card.querySelector('.online-profile-rank');
+    const rankId=profile.ranked?.rank;
+    rank.hidden=!rankId;rank.textContent=rankId?String(rankId).toUpperCase():'';
   }
   const badges=[];
   for(const selector of ['#onlineStatus','#onlineRuleOverlay h2','#catAbilityOverlay .ability-select-header',
@@ -97,7 +101,7 @@
     for(const badge of badges){
       badge.hidden=!(own&&peer);
       if(own&&peer){updateSide(badge.querySelector('[data-side="self"]'),own);updateSide(badge.querySelector('[data-side="opponent"]'),peer);}
-      else for(const card of badge.querySelectorAll('.online-profile-side')){delete card.dataset.playerId;setFrame(card.querySelector('.online-profile-frame'),'default');card.querySelector('.ranked-avatar-clip>img').removeAttribute('src');}
+      else for(const card of badge.querySelectorAll('.online-profile-side')){delete card.dataset.playerId;setFrame(card.querySelector('.online-profile-frame'),'default');card.querySelector('.ranked-avatar-clip>img').removeAttribute('src');card.querySelector('.online-profile-rank').hidden=true;}
     }
   });
   // Reuse the authenticated prepare boundary; no offline data is overwritten.

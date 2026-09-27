@@ -123,6 +123,7 @@
     cancel.textContent = '戻る'; status.textContent = '遊び方を選んでね';
     setSelectionVisible(true);
     overlay.hidden = false; start.focus();
+    root.dispatchEvent(new CustomEvent('nyan-online-selection-opened'));
     root.NyanRankedUI?.refresh();
   }
   root.NyanRandomMatch = {show};

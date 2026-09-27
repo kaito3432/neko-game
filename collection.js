@@ -651,12 +651,15 @@
     function render({data,activeSection,selectedItem,saving}){
       if(!data || !content) return;
       const rankedProfile=root?.NyanRankedUI?.getProfile?.();
-      const presentedData=rankedProfile?{
+      const hydratedData=rankedProfile?{
         ...data,
         ownedProfileFrames:rankedProfile.ownedProfileFrames||[],
         equippedProfileFrameId:rankedProfile.equippedProfileFrameId||"default",
       }:data;
-      setText(balance,String(window.NyanRankedUI?.totalCoins(data.nyanCoins)??data.nyanCoins));
+      const presentedData=root?.NyanKingQaSelectors?.collectionState?.(hydratedData) || hydratedData;
+      const renderedBalance=root?.NyanKingQaSelectors?.coinBalance?.(presentedData)
+        ?? window.NyanRankedUI?.totalCoins(data.nyanCoins) ?? data.nyanCoins;
+      setText(balance,String(renderedBalance));
 
       tabs.forEach(tab=>{
         const selected=tab.dataset.collectionSection===activeSection;

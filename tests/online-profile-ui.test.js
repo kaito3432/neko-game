@@ -46,10 +46,23 @@ test('待機プロフィールは自分・VS・相手を共通frame DOMで表示
   assert.match(source,/profileSide\('self','あなた'\)/);
   assert.match(source,/profileSide\('opponent','対戦相手'\)/);
   assert.match(source,/className='online-profile-vs'/);
+  assert.match(source,/className='online-profile-rank'/);
   assert.match(source,/className='ranked-frame ranked-frame-preview online-profile-frame'/);
   assert.match(css,/\.online-opponent-profile \.online-profile-frame\{[^}]*clamp\(88px,24vw,96px\)/);
   assert.match(css,/\.online-opponent-profile \.online-profile-frame:not\(\.has-frame-image\) \.ranked-avatar-clip\{[^}]*clamp\(62px,17vw,68px\)/);
   assert.match(css,/\.online-profile-name\{[^}]*text-overflow:ellipsis[^}]*white-space:nowrap/);
+});
+
+test('オンライン入口は既存の共有identity経路を使い、表示後もmatch listenerを維持する',()=>{
+  const fs=require('node:fs'),path=require('node:path');
+  const ranked=fs.readFileSync(path.resolve(__dirname,'../ranked-ui.js'),'utf8');
+  const match=fs.readFileSync(path.resolve(__dirname,'../random-match.js'),'utf8');
+  assert.match(ranked,/await root\.NyanOnline\.prepareIdentity\(\)/);
+  assert.doesNotMatch(ranked,/NyanOnlineIdentity\?\.prepare/);
+  assert.match(ranked,/if\(selectionVisible&&!profile\?\.ranked\)update\(fallbackProfile\(\)\)/);
+  assert.match(match,/start\.onclick = async \(\) =>/);
+  assert.match(match,/root\.dispatchEvent\(new CustomEvent\('nyan-online-selection-opened'\)\)/);
+  assert.match(match,/root\.NyanRankedUI\?\.refresh\(\)/);
 });
 test('復帰データは検証済みプロフィールを再配信し、相手の非公開データは含めない',async()=>{
   const {publicRecovery}=await import('../server/reconnection.mjs');
@@ -107,4 +120,20 @@ test('コイン購入スキンは固定allowlistだけ同期しプロフィー�
   assert.deepEqual(profile.equippedAppearance,{catSkinId:'cat_coin_01',dogSkinId:'dog_coin_01'});
   assert.deepEqual(publicPlayerProfiles({guest:profile}).guest.profileCharacter,{category:'dogSkin',itemId:'dog_coin_01'});
   assert.equal(UI.imageSource({category:'dogSkin',itemId:'dog_coin_01'}),Catalog.getItem('dogSkin','dog_coin_01').profileImage);
+});
+
+test('王様ネコはクライアント自己申告を拒否し、サーバー付与後だけprofileとappearanceを許可する',async()=>{
+  const {initialProfile,validateAppearance,validateProfileCharacter,appearanceSnapshot}=await import('../server/online-profile.mjs');
+  const forged=initialProfile({ownedCatSkins:['cat_master_s01_king'],equippedAppearance:{catSkinId:'cat_master_s01_king'},
+    profileCharacter:{category:'catSkin',itemId:'cat_master_s01_king'}},'forged');
+  assert.deepEqual(forged.ownedCatSkins,['default']);
+  assert.equal(forged.equippedAppearance.catSkinId,'default');
+  assert.equal(forged.profileCharacter.itemId,'default');
+  const granted={...forged,ownedCatSkins:['default','cat_master_s01_king']};
+  granted.equippedAppearance=validateAppearance(granted,{catSkinId:'cat_master_s01_king'});
+  granted.profileCharacter=validateProfileCharacter(granted,{category:'catSkin',itemId:'cat_master_s01_king'});
+  assert.equal(granted.equippedAppearance.catSkinId,'cat_master_s01_king');
+  assert.equal(granted.profileCharacter.itemId,'cat_master_s01_king');
+  assert.equal(appearanceSnapshot(granted,initialProfile({},'dog')).catPlayer.catSkinId,'cat_master_s01_king');
+  assert.equal(UI.imageSource(granted.profileCharacter),Catalog.getItem('catSkin','cat_master_s01_king').profileImage);
 });

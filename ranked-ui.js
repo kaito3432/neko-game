@@ -81,7 +81,9 @@
     const rankName=rank(reward.finalRank)[1];
     const rewardText=reward.rewardStatus==='pendingConfiguration'
       ?'マスター限定スキン：準備中（受取資格は保存済み）'
-      :reward.rewardType==='coins'?`${reward.rewardAmount} にゃんコイン`:'マスター限定スキン';
+      :reward.rewardType==='coins'?`${reward.rewardAmount} にゃんコイン`
+        :reward.rewardType==='coinsAndSkin'?`${reward.rewardAmount} にゃんコイン＋マスター限定スキン`
+          :'マスター限定スキン';
     season.querySelector('[data-season-copy]').textContent=
       `${reward.seasonId} 最終ランク ${rankName}（${reward.finalRP} RP）／報酬：${rewardText}`;
     const button=season.querySelector('[data-season-claim]');
@@ -99,18 +101,34 @@
   };
 
   async function refresh(){
-    try{const prepared=await root.NyanOnline.prepareIdentity();update(prepared.profile);return prepared.profile;}
+    try{
+      const prepared=await root.NyanOnline.prepareIdentity();
+      update(prepared.profile);return prepared.profile;
+    }
     catch(_){return null;}
+  }
+  function fallbackProfile(){
+    const local=root.NyanPlayerData?.getSnapshot?.()||{};
+    return {
+      profileCharacter:local.profileCharacter||{category:'catSkin',itemId:'default'},
+      ownedProfileFrames:local.ownedProfileFrames||[],
+      equippedProfileFrameId:profile?.equippedProfileFrameId||'default',
+      ranked:profile?.ranked||{rank:'bronze',rp:0,seasonWins:0,seasonLosses:0},
+      serverNyanCoins:profile?.serverNyanCoins||0
+    };
   }
   function setSelectionVisible(visible){
     selectionVisible=visible===true;
     attachPanel();
+    if(selectionVisible&&!profile?.ranked)update(fallbackProfile());
     panel.hidden=!selectionVisible||!profile?.ranked;
     if(!selectionVisible)season.classList.remove('show');
     else if(profile?.ranked)showSeason();
-    else refresh();
   }
   root.addEventListener('nyan-online-profile',event=>update(event.detail.profile));
+  // random-match creates its overlay after this module on some cached/native
+  // bundles. Reattach whenever the entry screen is opened.
+  root.addEventListener('nyan-online-selection-opened',()=>{attachPanel();setSelectionVisible(true);});
   root.addEventListener('nyan-online-matched',()=>{result.hidden=true;result.replaceChildren();});
   root.addEventListener('nyan-ranked-result',event=>{
     const receipt=event.detail?.ranked;

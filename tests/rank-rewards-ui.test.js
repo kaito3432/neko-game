@@ -60,5 +60,13 @@ test('自分のランク情報と説明はオンライン遊び方選択中だ�
   assert.match(ranked,/panel\.hidden=!selectionVisible/);
   assert.match(ranked,/if\(!selectionVisible\)season\.classList\.remove\('show'\)/);
   assert.match(ranked,/setSelectionVisible/);
+  assert.match(matchmaking,/nyan-online-selection-opened/);
+  assert.match(ranked,/nyan-online-selection-opened/);
+  assert.match(ranked,/coinsAndSkin/);
   assert.doesNotMatch(matchmaking,/online-opponent-profile/);
+});
+
+test('オンライン入口はoverlay生成後にranked profileを接続する',()=>{
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.ok(html.indexOf('random-match.js')<html.indexOf('ranked-ui.js'));
 });
