@@ -244,9 +244,6 @@
       </header>
       <div class="collection-detail-scroll">
         <div class="collection-detail-main-image">
-          <span class="collection-lock" aria-hidden="true">
-            <strong>?</strong>
-          </span>
           <img data-detail-collection-image src="" alt="">
           <span class="collection-material-pending" data-detail-material hidden>素材未設定</span>
         </div>
@@ -492,6 +489,12 @@
     「特殊スキルあり」では、<br>
     ネコと柴犬警察が特殊スキルを使えます。
   </p>
+
+  <section class="skill-usage-rules howto-skill-usage-rules" aria-label="対戦モード別のスキル利用範囲">
+    <div><strong>対人戦／オンライン部屋対戦</strong><p data-skill-usage-room-description>参加者のどちらかが利用できるスキルは、その対戦中は両者が使用できます。</p></div>
+    <div><strong>オンライン ランクマッチ</strong><p data-skill-usage-ranked-description>各プレイヤー本人が利用権を持っているスキルのみ使用できます。</p></div>
+    <p class="skill-usage-entitlement" data-skill-usage-entitlement>スキル利用権には、買い切りで購入したスキルと、有効期間中のにゃんチェイスパス対象スキルが含まれます。</p>
+  </section>
 
   <!-- ネコ / 警察 切り替え -->
   <div class="howto-skill-tabs">
@@ -1813,7 +1816,7 @@
     <nav class="shop-categories" aria-label="商品カテゴリ"><button type="button" class="active" data-shop-category="skills">スキル</button><button type="button" data-shop-category="ads">広告</button></nav>
     <div class="shop-content">
       <section class="storekit-panel" id="storeKitPanel">
-        <div id="shopSkillBrowser" class="shop-skill-browser"><nav class="howto-skill-tabs" aria-label="スキルの役割"><button type="button" class="howto-skill-tab active" data-shop-role="cat">🐱 ネコ</button><button type="button" class="howto-skill-tab" data-shop-role="police">🐕 警察</button></nav><div id="shopSkillList" class="shop-skill-list"></div><div class="shop-pack-section"><h3 tabindex="-1">スキルパック</h3><div id="shopPackProducts" class="storekit-products"></div></div></div>
+        <div id="shopSkillBrowser" class="shop-skill-browser"><p class="shop-skill-usage-summary" data-skill-usage-summary>部屋対戦では、どちらかが持っているスキルを2人で使用できます。ランクマッチでは、自分が利用できるスキルのみ使用できます。</p><nav class="howto-skill-tabs" aria-label="スキルの役割"><button type="button" class="howto-skill-tab active" data-shop-role="cat">🐱 ネコ</button><button type="button" class="howto-skill-tab" data-shop-role="police">🐕 警察</button></nav><div id="shopSkillList" class="shop-skill-list"></div><div class="shop-pack-section"><h3 tabindex="-1">スキルパック</h3><div id="shopPackProducts" class="storekit-products"></div></div></div>
         <div id="storeKitProducts" class="storekit-products"></div>
       </section>
       <section class="monetization-dev" id="monetizationDevPanel" hidden aria-label="開発用広告・課金確認">
@@ -1850,6 +1853,10 @@
         <div class="howto-ability-desc" id="shopPreviewDescription"></div>
         <div class="howto-ability-visual" id="shopPreviewVisual"></div>
         <div class="howto-ability-detail" id="shopPreviewDetail"></div>
+        <section class="skill-usage-rules shop-skill-usage-rules" aria-label="利用範囲">
+          <strong>利用範囲</strong>
+          <dl><div><dt>部屋対戦</dt><dd data-skill-usage-room-scope>共有</dd></div><div><dt>ランクマッチ</dt><dd data-skill-usage-ranked-scope>本人のみ</dd></div></dl>
+        </section>
       </div>
       <div class="shop-preview-actions">
         <p id="shopPreviewPrice" hidden></p>

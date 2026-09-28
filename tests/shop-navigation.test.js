@@ -58,3 +58,17 @@ test('全5スキルの図解を遊び方とショップで共用する',()=>{
   assert.match(html,/id="shopPreviewVisual"/);
   assert.match(read('style.css'),/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });
+
+test('ショップと遊び方に対戦モード別のスキル利用範囲を表示する',()=>{
+  const html=read('index.html'),shop=read('storekit-ui.js');
+  const Skills=require('../skill-catalog.js');
+  assert.equal(Skills.USAGE_POLICY.room.scope,'共有');
+  assert.equal(Skills.USAGE_POLICY.ranked.scope,'本人のみ');
+  assert.match(Skills.USAGE_POLICY.summary,/部屋対戦では/);
+  assert.match(Skills.USAGE_POLICY.entitlementDescription,/にゃんチェイスパス/);
+  assert.match(html,/data-skill-usage-summary/);
+  assert.match(html,/data-skill-usage-room-scope>共有/);
+  assert.match(html,/data-skill-usage-ranked-scope>本人のみ/);
+  assert.match(html,/対人戦／オンライン部屋対戦/);
+  assert.match(shop,/NyanSkillCatalog\.USAGE_POLICY/);
+});

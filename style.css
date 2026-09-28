@@ -6454,6 +6454,12 @@ body.sneak-mode .board-shell{
   color:#765f56;
 }
 
+.skill-usage-rules{box-sizing:border-box;color:#765f56}
+.howto-skill-usage-rules{display:grid;gap:5px;margin:0 0 9px;padding:8px 10px;border:2px solid #eadfd9;border-radius:13px;background:rgba(255,255,255,.78);font-size:10.5px;line-height:1.35}
+.howto-skill-usage-rules div strong{display:block;color:#6b4b42}
+.howto-skill-usage-rules p{margin:1px 0 0}
+.howto-skill-usage-rules .skill-usage-entitlement{padding-top:5px;border-top:1px solid #eadfd9}
+
 
 /* ネコ / 警察 タブ */
 .howto-skill-tabs{
@@ -7946,23 +7952,6 @@ body.sneak-mode .board-shell{
   width:100%;height:100%;object-fit:contain;display:block;
 }
 .collection-material-pending{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:8px 12px;border:1px dashed #bca38e;border-radius:10px;background:#fff9ed;color:#8f776b;font-size:12px;font-weight:900}.collection-material-pending[hidden]{display:none}
-.collection-lock{
-  position:absolute;
-  z-index:2;
-  left:50%;top:50%;
-  display:none;
-  min-width:96px;
-  color:#fff;
-  text-align:center;
-  transform:translate(-50%,-50%);
-}
-.collection-lock strong{display:block}
-.collection-lock strong{
-  font-size:64px;
-  line-height:.85;
-  text-shadow:0 3px 8px rgba(0,0,0,.45);
-}
-.collection-detail.is-unowned .collection-lock{display:none}
 .collection-detail-usage{
   padding:8px;
   border:2px solid #ead0b6;
@@ -8404,25 +8393,6 @@ body.sneak-mode .board-shell{
   pointer-events:none;
 }
 
-.collection-unowned-cover{
-  position:absolute;
-  inset:0;
-  z-index:2;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  background:transparent;
-  color:#fff;
-  pointer-events:none;
-}
-.collection-unowned-cover strong{
-  font-size:52px;
-  line-height:.8;
-  text-shadow:0 3px 7px rgba(0,0,0,.45);
-}
-.collection-unowned-cover strong:not(:only-child){font-size:12px}
-.collection-item-preview:not(:has(img[src])) .collection-unowned-cover strong{max-width:90%;font-size:12px;line-height:1.25;text-align:center;text-shadow:none;color:#8f776b}
 .collection-item.is-unowned .collection-item-preview img{
   filter:none;
   opacity:1;
@@ -9327,9 +9297,20 @@ body.sneak-mode .board-shell{
 .shop-overlay .shop-preview-overlay .howto-ability-preview{width:min(100%,380px);max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:18px;border:2px solid #dfba9a;border-radius:18px;background:#fffaf1!important;text-align:center}
 .shop-overlay .shop-preview-art{display:block;width:92px;height:92px;object-fit:contain;margin:6px auto 10px}
 .shop-overlay .shop-preview-overlay .howto-ability-detail{text-align:left}
+.shop-skill-usage-summary{margin:0;padding:8px 10px;border-radius:12px;background:#fff7df;color:#765f56;font-size:11px;line-height:1.45;text-align:left}
+.shop-skill-usage-rules{margin-top:9px;padding:9px 11px;border:2px solid #eadfd9;border-radius:12px;background:#fff;color:#765f56;text-align:left}
+.shop-skill-usage-rules>strong{display:block;margin-bottom:5px;font-size:12px}
+.shop-skill-usage-rules dl{display:grid;gap:3px;margin:0;font-size:12px}
+.shop-skill-usage-rules dl div{display:flex;justify-content:space-between;gap:12px}
+.shop-skill-usage-rules dt,.shop-skill-usage-rules dd{margin:0}
+.shop-skill-usage-rules dd{font-weight:900}
 .shop-overlay #shopPreviewPrice{margin:6px 0;font-size:17px;font-weight:900}
 .shop-overlay #shopPreviewPurchase,.shop-overlay #shopPreviewClose{box-sizing:border-box;width:100%;min-height:44px;margin-top:8px;white-space:nowrap}
 @media(max-width:390px),(max-height:700px){.shop-overlay .shop-categories{margin:6px 0 8px}.shop-overlay .shop-skill-browser{gap:9px}.shop-overlay .shop-skill-item{height:64px;min-height:64px;max-height:64px}.shop-overlay .shop-skill-item img{width:42px;height:42px;flex-basis:42px}.shop-overlay .shop-preview-art{width:76px;height:76px}.shop-overlay .shop-preview-overlay .howto-ability-preview{padding:12px}}
+
+@media(max-height:700px){
+  #howToOverlay .howto-page[data-howto-page="3"].show{max-height:calc(100dvh - 118px);padding-right:3px;overflow-y:auto;overscroll-behavior:contain}
+}
 
 /* Equal-width home shortcuts, aligned to the three existing bottom controls. */
 .visual-update3 .home-collection-daily{box-sizing:border-box;justify-self:stretch;width:100%;max-width:none;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important;height:40px;padding:0!important;border:0;border-radius:0;background:transparent;box-shadow:none}

@@ -13,6 +13,12 @@
     POLICE_GROUP_SEARCH:"POLICE_GROUP_SEARCH"
   });
   const SKILL_PACK_IDS=Object.freeze({SKILL_PACK_01:"SKILL_PACK_01"});
+  const USAGE_POLICY=Object.freeze({
+    summary:"部屋対戦では、どちらかが持っているスキルを2人で使用できます。ランクマッチでは、自分が利用できるスキルのみ使用できます。",
+    room:Object.freeze({label:"部屋対戦",scope:"共有",description:"参加者のどちらかが利用できるスキルは、その対戦中は両者が使用できます。"}),
+    ranked:Object.freeze({label:"オンライン ランクマッチ",scope:"本人のみ",description:"各プレイヤー本人が利用権を持っているスキルのみ使用できます。"}),
+    entitlementDescription:"スキル利用権には、買い切りで購入したスキルと、有効期間中のにゃんチェイスパス対象スキルが含まれます。"
+  });
 
   const SKILLS=Object.freeze({
     [SKILL_IDS.CAT_STEALTH]:Object.freeze({id:SKILL_IDS.CAT_STEALTH,role:"cat",runtimeId:"sneak",name:"忍び足",free:true}),
@@ -42,5 +48,5 @@
   }
   function toRuntimeId(skillId){return SKILLS[skillId]?.runtimeId||null;}
 
-  return Object.freeze({SKILL_IDS,SKILL_PACK_IDS,SKILLS,SKILL_PACKS,FREE_SKILL_IDS,isKnownSkillId,isKnownSkillPackId,fromRuntimeId,toRuntimeId});
+  return Object.freeze({SKILL_IDS,SKILL_PACK_IDS,SKILLS,SKILL_PACKS,FREE_SKILL_IDS,USAGE_POLICY,isKnownSkillId,isKnownSkillPackId,fromRuntimeId,toRuntimeId});
 });

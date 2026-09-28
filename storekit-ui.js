@@ -10,6 +10,15 @@
   let activeProductId=null,products=[],category='skills',role='cat',selectedSkillId=null;
   const platformAvailable=Boolean(root.NyanPurchases.nativePlugin());
   const skills=root.NyanSkillCatalog.SKILLS;
+  const usagePolicy=root.NyanSkillCatalog.USAGE_POLICY;
+  if(usagePolicy){
+    document.querySelectorAll('[data-skill-usage-summary]').forEach(node=>{node.textContent=usagePolicy.summary;});
+    document.querySelectorAll('[data-skill-usage-room-description]').forEach(node=>{node.textContent=usagePolicy.room.description;});
+    document.querySelectorAll('[data-skill-usage-ranked-description]').forEach(node=>{node.textContent=usagePolicy.ranked.description;});
+    document.querySelectorAll('[data-skill-usage-entitlement]').forEach(node=>{node.textContent=usagePolicy.entitlementDescription;});
+    document.querySelectorAll('[data-skill-usage-room-scope]').forEach(node=>{node.textContent=usagePolicy.room.scope;});
+    document.querySelectorAll('[data-skill-usage-ranked-scope]').forEach(node=>{node.textContent=usagePolicy.ranked.scope;});
+  }
   async function buy(productId){
     activeProductId=productId;render();const result=await root.NyanPurchases.provider.purchaseProduct(productId);activeProductId=null;
     if(result.purchased)status.textContent='購入を確認しました';else if(result.pending)status.textContent='購入承認待ちです';

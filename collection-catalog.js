@@ -254,7 +254,7 @@
       profileImage:`${RANK_FRAME_ROOT}/rank_${rank}_frame.png`,
       frameImage:`${RANK_FRAME_ROOT}/rank_${rank}_frame.png`,
       lockedImage:null,
-      unlockCondition:Object.freeze({rank,minRp:[0,100,200,350,550,800][index],text:rank==="bronze"?"初期所持":`${[0,100,200,350,550,800][index]} RP到達で永久解放`}),
+      unlockCondition:Object.freeze({rank,minRp:[0,100,200,350,550,800][index],text:rank==="bronze"?"初期所持":`${({silver:"Silver",gold:"Gold",platinum:"Platinum",diamond:"Diamond",master:"Master"})[rank]}ランク到達で永久解放`}),
       acquisitionType:"rankReward",rarity:rank==="master"?"Legendary":rank==="bronze"?"Common":"Epic",
       materialStatus:"ready",assetStatus:"ready"
     }))

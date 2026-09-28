@@ -84,6 +84,9 @@
   }
 
   function displayImage(item,state,kind="collection"){
+    if(item?.category==="profileFrame"){
+      return (kind==="profile" ? item.profileImage : item.collectionImage) || item.frameImage || item.preview;
+    }
     if(state==="unowned" && item?.acquisitionType!=="coins"){
       return (kind==="profile" ? item.lockedProfileImage : (item.lockedImage||item.silhouetteImage)) || "";
     }
@@ -91,7 +94,11 @@
   }
 
   function usesLockedImage(item,state){
-    return state==="unowned" && item?.acquisitionType!=="coins";
+    return item?.category!=="profileFrame" && state==="unowned" && item?.acquisitionType!=="coins";
+  }
+
+  function isCollectionVisible(item){
+    return item?.materialStatus!=="pending" && item?.assetStatus!=="placeholder";
   }
 
   function sanitizeCatalogEquipment(data,catalog=defaultCatalog){
@@ -471,16 +478,6 @@
         preview.appendChild(priceBadge);
       }
 
-      if(state==="unowned" && !source){
-        const unownedCover=document.createElement("span");
-        unownedCover.className="collection-unowned-cover";
-        unownedCover.setAttribute("aria-hidden","true");
-        const question=document.createElement("strong");
-        question.textContent=item.materialStatus==="pending"?"素材未設定":"?";
-        unownedCover.appendChild(question);
-        preview.appendChild(unownedCover);
-      }
-
       const copy=document.createElement("div");
       copy.className="collection-item-copy";
       const name=document.createElement("strong");
@@ -523,7 +520,11 @@
         return;
       }
       const item=catalog.getItem(selectedItem.categoryId,selectedItem.itemId);
-      if(!item) return;
+      if(!item || !isCollectionVisible(item)){
+        detail.classList.remove("show");
+        detail.setAttribute("aria-hidden","true");
+        return;
+      }
       const state=getItemState(data,item,catalog);
       const collectionImage=detail.querySelector("[data-detail-collection-image]");
       const materialPending=detail.querySelector("[data-detail-material]");
@@ -700,7 +701,7 @@
         heading.textContent=category.label;
         const grid=document.createElement("div");
         grid.className="collection-grid";
-        catalog.getItemsByCategory(categoryId).forEach(item=>{
+        catalog.getItemsByCategory(categoryId).filter(isCollectionVisible).forEach(item=>{
           grid.appendChild(createItemCard(item,presentedData,saving));
         });
         group.append(heading,grid);
@@ -794,6 +795,7 @@
     canEquipItem,
     displayImage,
     usesLockedImage,
+    isCollectionVisible,
     sanitizeCatalogEquipment,
     validateEquip,
     validatePurchase,

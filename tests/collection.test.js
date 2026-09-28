@@ -72,11 +72,31 @@ test("本番カタログは既存品とコイン・ランク報酬の土台を�
   assert.equal(Catalog.getItemsByCategory("profileFrame").some(item=>item.acquisitionType==="masterRankReward"),false);
 });
 
-test("未獲得ランクフレームは正式PNGを見せず、獲得後だけ表示する",()=>{
+test("未獲得ランクフレームも正式PNGを見せるが装備権限は付与しない",()=>{
   const silver=Catalog.getItem("profileFrame","rank_silver");
-  assert.equal(Collection.displayImage(silver,"unowned"),"");
+  assert.equal(Collection.displayImage(silver,"unowned"),silver.collectionImage);
   assert.equal(Collection.displayImage(silver,"owned"),silver.collectionImage);
-  assert.equal(Collection.usesLockedImage(silver,"unowned"),true);
+  assert.equal(Collection.usesLockedImage(silver,"unowned"),false);
+  assert.equal(Collection.canEquipItem({...createData(),ownedProfileFrames:[]},silver,Catalog),false);
+  assert.equal(Collection.canEquipItem({...createData(),ownedProfileFrames:[silver.id]},silver,Catalog),true);
+  assert.equal(silver.unlockCondition.text,"Silverランク到達で永久解放");
+});
+
+test("王様ネコは未所持時だけ疑問符入り専用locked画像を使う",()=>{
+  const king=Catalog.getItem("catSkin","cat_master_s01_king");
+  assert.match(Collection.displayImage(king,"unowned"),/cat_master_king_collection_locked\.png$/);
+  assert.equal(Collection.usesLockedImage(king,"unowned"),true);
+  assert.equal(Collection.displayImage(king,"owned"),king.collectionImage);
+  assert.match(Collection.displayImage(king,"unowned","profile"),/cat_master_king_profile_locked\.png$/);
+});
+
+test("pendingまたはplaceholder素材はCollection一覧から除外する",()=>{
+  const pending=Catalog.getItem("dogSkin","dog_master_reward_pending");
+  assert.equal(Collection.isCollectionVisible(pending),false);
+  assert.equal(Collection.isCollectionVisible({materialStatus:"ready",assetStatus:"placeholder"}),false);
+  assert.equal(Collection.isCollectionVisible({materialStatus:"ready",assetStatus:"ready"}),true);
+  const source=fs.readFileSync(path.resolve(__dirname,"..","collection.js"),"utf8");
+  assert.match(source,/if\(!item \|\| !isCollectionVisible\(item\)\)/);
 });
 
 test("デフォルト猫は立ち絵と盤面駒の画像を分離する",()=>{
@@ -100,13 +120,11 @@ test("コレクション操作ラベルは状態と用途を明示する",()=>{
   assert.equal(Collection.getEquipLabel("catSkin","unowned"),"🔒 未所持");
 });
 
-test("未所持立ち絵内は中央の疑問符だけを表示する",()=>{
+test("未所持の疑問符は専用locked画像だけに含めDOMでは重ねない",()=>{
   const collectionSource=fs.readFileSync(path.resolve(__dirname,"..","collection.js"),"utf8");
   const detailSource=fs.readFileSync(path.resolve(__dirname,"..","index.html"),"utf8");
-  assert.match(collectionSource,/unownedCover\.appendChild\(question\)/);
-  assert.doesNotMatch(collectionSource,/unownedLabel/);
-  assert.match(detailSource,/class="collection-lock"[\s\S]*?<strong>\?<\/strong>[\s\S]*?<\/span>/);
-  assert.doesNotMatch(detailSource,/collection-lock[\s\S]{0,180}🔒 未所持/);
+  assert.doesNotMatch(collectionSource,/collection-unowned-cover|unownedCover|question\.textContent/);
+  assert.doesNotMatch(detailSource,/class="collection-lock"/);
 });
 
 test("非プロフィールカテゴリは詳細だけを維持しプロフィールプレビューを隠す",()=>{
