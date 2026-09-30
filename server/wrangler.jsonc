@@ -4,6 +4,9 @@
   "name": "nyan-chase-online",
   "main": "worker.mjs",
   "compatibility_date": "2026-08-16",
+  "vars": {
+    "MASTER_REWARD_PERIODS": "{\"2026-09\":\"cat_master_s01_king\"}"
+  },
 
   "durable_objects": {
     "bindings": [
