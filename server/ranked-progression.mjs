@@ -11,7 +11,8 @@ const RESET_RP={bronze:0,silver:50,gold:150,platinum:200,diamond:200,master:200}
 export const seasonId=now=>new Date(now+9*60*60*1000).toISOString().slice(0,7);
 export const rankForRp=rp=>[...RANKS].reverse().find(r=>rp>=r.min)||RANKS[0];
 export function validateProfileFrame(profile,id=profile?.equippedProfileFrameId){
-  return id==='default'||RANKS.some(rank=>rank.frameId===id)&&profile?.ownedProfileFrames?.includes(id)?id:'default';
+  return RANKS.some(rank=>rank.frameId===id)&&
+    (id==='rank_bronze'||profile?.ownedProfileFrames?.includes(id))?id:'rank_bronze';
 }
 export const periodId=id=>`${id.slice(0,4)}-Q${Math.floor((Number(id.slice(5,7))-1)/3)+1}`;
 export function masterPeriods(value){try{return typeof value==='string'?(JSON.parse(value)||{}):(value||{});}catch(_){return {};}}

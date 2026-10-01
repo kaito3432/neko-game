@@ -14,7 +14,7 @@ const CLIENT_COIN_SKINS=Object.freeze({
   ownedDogSkins:Object.freeze(['dog_coin_01'])
 });
 import {applyCpuUnlockClaim} from './cpu-unlock-claims.mjs';
-import {normalizeRanked,claimSeasonReward,masterPeriods,validateProfileFrame} from './ranked-progression.mjs';
+import {normalizeRanked,claimSeasonReward,masterPeriods,validateProfileFrame,rankForRp} from './ranked-progression.mjs';
 import {applyVerifiedRewardedAdCompletion,normalizeServerSkillEntitlements} from './skill-entitlements.mjs';
 import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
 import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
@@ -71,7 +71,8 @@ export function mergeClientCoinSkinOwnership(profile,claims={}){
 export function publicPlayerProfiles(profiles = {}) {
   return Object.fromEntries(Object.entries(profiles).filter(([, p]) => p?.playerId).map(([seat, p]) =>
     [seat, {playerId: p.playerId, profileCharacter: validateProfileCharacter(p, p.profileCharacter),
-      equippedProfileFrameId:validateProfileFrame(p)}]));
+      equippedProfileFrameId:validateProfileFrame(p),ranked:{rank:rankForRp(Math.max(0,Number(p.ranked?.rp)||0)).id},
+      ...(typeof p.displayName==='string'&&p.displayName.trim()?{displayName:p.displayName.slice(0,40)}:{})}]));
 }
 
 export function appearanceSnapshot(cat, police) {
@@ -197,8 +198,10 @@ export async function profileRequest(storage, request, options={}) {
   }
   if(path==='/profile-frame'&&request.method==='POST'){
     const {frameId}=await request.json();
-    if(frameId!=='default'&&!profile.ownedProfileFrames.includes(frameId))return reply({error:'frame_not_owned'},400);
-    profile.equippedProfileFrameId=frameId;await storage.put(key,profile);return reply({profile});
+    if(frameId!=='rank_bronze'&&!profile.ownedProfileFrames.includes(frameId))return reply({error:'frame_not_owned'},400);
+    profile.equippedProfileFrameId=validateProfileFrame(profile,frameId);
+    if(profile.equippedProfileFrameId!==frameId)return reply({error:'invalid_frame'},400);
+    await storage.put(key,profile);return reply({profile});
   }
   if(path==='/season-reward'&&request.method==='POST'){
     const {seasonId}=await request.json();const claimed=claimSeasonReward(profile,seasonId,now,periods,KNOWN_REWARD_SKINS);

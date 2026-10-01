@@ -75,6 +75,16 @@ test('プロフィールフレームAPIは所持済みだけ装備可能',async(
  await profileRequest(storage,new Request('https://test/register',{method:'POST',headers,body:'{}'}),{now:Date.parse('2026-09-01T00:00:00+09:00')});
  let response=await profileRequest(storage,new Request('https://test/profile-frame',{method:'POST',headers,body:JSON.stringify({frameId:'rank_master'})}),{now:Date.parse('2026-09-01T00:00:00+09:00')});assert.equal(response.status,400);
  response=await profileRequest(storage,new Request('https://test/profile-frame',{method:'POST',headers,body:JSON.stringify({frameId:'rank_bronze'})}),{now:Date.parse('2026-09-01T00:00:00+09:00')});assert.equal(response.status,200);assert.equal((await response.json()).profile.equippedProfileFrameId,'rank_bronze');
+ response=await profileRequest(storage,new Request('https://test/profile-frame',{method:'POST',headers,body:JSON.stringify({frameId:'default'})}),{now:Date.parse('2026-09-01T00:00:00+09:00')});assert.equal(response.status,400);
+});
+test('新規・旧frameなし・不正IDをBronzeへ補完し永久所持する',async()=>{
+ const {normalizeRanked,validateProfileFrame}=await mod;
+ for(const frameId of [undefined,null,'','default','forged']){
+   const profile=normalizeRanked({ownedProfileFrames:[],equippedProfileFrameId:frameId},Date.parse('2026-09-15T00:00:00+09:00'));
+   assert.equal(profile.equippedProfileFrameId,'rank_bronze');
+   assert.ok(profile.ownedProfileFrames.includes('rank_bronze'));
+   assert.equal(validateProfileFrame(profile,frameId),'rank_bronze');
+ }
 });
 test('正式random結果だけを対象にし、切断敗北と時間切れは含める',async()=>{
  const {eligibleRankedResult}=await mod,match={matchType:'randomMatch'},normal={status:'finished',hasStarted:true,result:{winner:'cat'}};

@@ -32,3 +32,17 @@ test('role/recovery share server availability, never a local unlock claim',()=>{
   assert.doesNotMatch(html,/id="onlineSkillUnlockOpen"/);
   assert.match(html,/この対戦では通常戦のみ/);
 });
+
+test('Sandbox QA entitlement and appearance overrides are absent from runtime',()=>{
+  const base=path.resolve(__dirname,'..');
+  const sandbox=JSON.parse(fs.readFileSync(path.join(base,'server/wrangler.sandbox.jsonc'),'utf8'));
+  const production=JSON.parse(fs.readFileSync(path.join(base,'server/wrangler.jsonc'),'utf8'));
+  for(const config of [sandbox,production]){
+    assert.equal(config.vars?.SKILL_MODE_QA_PLAYER_IDS,undefined);
+    assert.equal(config.vars?.QA_PROFILE_OVERRIDES,undefined);
+  }
+  const worker=fs.readFileSync(path.join(base,'server/worker.mjs'),'utf8');
+  const game=fs.readFileSync(path.join(base,'game.js'),'utf8');
+  assert.doesNotMatch(worker,/qaSkillProfiles|publicQaPlayerProfiles/);
+  assert.doesNotMatch(game,/NyanSkillModeQa/);
+});

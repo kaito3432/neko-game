@@ -457,8 +457,9 @@ test("QA最終ownershipでは6フレームすべてが装備可能",()=>{
   const selectors={collectionState:data=>({...data,ownedProfileFrames:frames.map(item=>item.id)})};
   const presented=Collection.presentedCollectionData(base,ranked,selectors);
   assert.equal(frames.length,6);
+  assert.equal(presented.equippedProfileFrameId,'rank_bronze');
   for(const frame of frames){
-    assert.equal(Collection.getItemState(presented,frame,Catalog),"owned");
-    assert.equal(Collection.canEquipItem(presented,frame,Catalog),true);
+    assert.equal(Collection.getItemState(presented,frame,Catalog),frame.id==='rank_bronze'?'equipped':'owned');
+    assert.equal(Collection.canEquipItem(presented,frame,Catalog),frame.id!=='rank_bronze');
   }
 });

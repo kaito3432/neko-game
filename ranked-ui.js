@@ -12,7 +12,7 @@
   panel.className='ranked-profile-card';
   panel.hidden=true;
   panel.innerHTML=`<div class="ranked-profile-main">
-    <span class="ranked-frame ranked-frame-preview" data-rank-frame-preview data-frame-id="default"><span class="ranked-avatar-clip"><img data-rank-icon alt="プロフィールアイコン"></span></span>
+    <span class="ranked-frame ranked-frame-preview" data-rank-frame-preview data-frame-id="rank_bronze"><span class="ranked-avatar-clip"><img data-rank-icon alt="プロフィールアイコン"></span></span>
     <div><strong data-rank-name>ブロンズ</strong><small data-rank-rp>RP 0 / 100</small><small data-rank-next>次のシルバーまで あと100RP</small></div>
   </div>
   <div class="ranked-record" data-rank-record>今シーズン 0勝 0敗</div>
@@ -38,6 +38,8 @@
   function update(next){
     profile=next?{...profile,...next}:profile;
     if(!profile?.ranked)return;
+    profile={...profile,ownedProfileFrames:[...new Set(['rank_bronze',...(profile.ownedProfileFrames||[])])],
+      equippedProfileFrameId:root.NyanOnlineProfileUI.frameId(profile.equippedProfileFrameId)};
     attachPanel();
     panel.hidden=!selectionVisible;
     const current=rank(profile.ranked.rank),index=ranks.indexOf(current),nextRank=ranks[index+1];
@@ -51,20 +53,20 @@
     panel.querySelector('[data-rank-coins]').textContent=`オンライン報酬 ${profile.serverNyanCoins||0} にゃんコイン`;
 
     const select=panel.querySelector('[data-rank-frame]');
-    const owned=profile.ownedProfileFrames||[];
+    const owned=[...new Set(['rank_bronze',...(profile.ownedProfileFrames||[])])];
     select.replaceChildren();
-    for(const id of ['default',...owned]){
+    for(const id of owned){
       const option=document.createElement('option');
       option.value=id;
-      option.textContent=id==='default'?'フレームなし':frameNames[id]||id;
+      option.textContent=frameNames[id]||id;
       select.append(option);
     }
-    select.value=profile.equippedProfileFrameId||'default';
+    select.value=root.NyanOnlineProfileUI.frameId(profile.equippedProfileFrameId);
     root.NyanOnlineProfileUI.setFrame(panel.querySelector('[data-rank-frame-preview]'),select.value);
     select.onchange=async()=>{
       select.disabled=true;
       try{const response=await api('profile-frame',{frameId:select.value});update(response.profile);}
-      catch(_){select.value=profile.equippedProfileFrameId||'default';}
+      catch(_){select.value=root.NyanOnlineProfileUI.frameId(profile.equippedProfileFrameId);}
       finally{select.disabled=false;}
     };
     if(selectionVisible)showSeason();
@@ -103,7 +105,7 @@
   async function equipFrame(frameId){
     const requested=root.NyanOnlineProfileUI.frameId(frameId);
     const owned=profile?.ownedProfileFrames||[];
-    if(requested!=='default'&&!owned.includes(requested))throw new Error('frame_not_owned');
+    if(requested!=='rank_bronze'&&!owned.includes(requested))throw new Error('frame_not_owned');
     const response=await api('profile-frame',{frameId:requested});
     update(response.profile);
     return response.profile;
@@ -120,8 +122,8 @@
     const local=root.NyanPlayerData?.getSnapshot?.()||{};
     return {
       profileCharacter:local.profileCharacter||{category:'catSkin',itemId:'default'},
-      ownedProfileFrames:local.ownedProfileFrames||[],
-      equippedProfileFrameId:profile?.equippedProfileFrameId||'default',
+      ownedProfileFrames:[...new Set(['rank_bronze',...(local.ownedProfileFrames||[])])],
+      equippedProfileFrameId:root.NyanOnlineProfileUI.frameId(profile?.equippedProfileFrameId),
       ranked:profile?.ranked||{rank:'bronze',rp:0,seasonWins:0,seasonLosses:0},
       serverNyanCoins:profile?.serverNyanCoins||0
     };

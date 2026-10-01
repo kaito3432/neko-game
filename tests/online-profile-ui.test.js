@@ -11,18 +11,18 @@ test('プロフィール画像は設定だけから解決し、未設定・未�
   const image={};UI.setImage(image,{category:'dogSkin',itemId:'dog_detective'});image.onerror();
   assert.equal(image.src,fallback);assert.equal(image.onerror,null);
 });
-test('プロフィールフレームは共通定義だけを許可し、不正・未設定はdefault',()=>{
+test('プロフィールフレームは共通定義だけを許可し、不正・未設定はBronze',()=>{
   for(const id of Object.keys(UI.frames))assert.equal(UI.frameId(id),id);
-  for(const id of [null,undefined,'rank_unknown','gold'])assert.equal(UI.frameId(id),'default');
+  for(const id of [null,undefined,'rank_unknown','gold','default'])assert.equal(UI.frameId(id),'rank_bronze');
   const element={dataset:{}};UI.setFrame(element,'rank_gold');assert.equal(element.dataset.frameId,'rank_gold');
-  UI.setFrame(element,'bad');assert.equal(element.dataset.frameId,'default');
+  UI.setFrame(element,'bad');assert.equal(element.dataset.frameId,'rank_bronze');
 });
 test('正式6ランクはカタログPNGを解決しdefaultと未知IDはCSS fallback',()=>{
   for(const id of ['rank_bronze','rank_silver','rank_gold','rank_platinum','rank_diamond','rank_master']){
     assert.equal(UI.frameSource(id),Catalog.getItem('profileFrame',id).frameImage);
   }
-  assert.equal(UI.frameSource('default'),null);
-  assert.equal(UI.frameSource('forged'),null);
+  assert.equal(UI.frameSource('default'),Catalog.getItem('profileFrame','rank_bronze').frameImage);
+  assert.equal(UI.frameSource('forged'),Catalog.getItem('profileFrame','rank_bronze').frameImage);
 });
 test('相手表示はplayerId照合、viewer所持状態に非依存、旧試合は明示クリア',()=>{
   const peer={playerId:'b',profileCharacter:{category:'dogSkin',itemId:'dog_detective'},equippedProfileFrameId:'rank_gold'};
@@ -53,6 +53,26 @@ test('match found後はselfだけ表示用overrideを適用しopponentはserver 
   assert.equal(UI.imageSource(profiles.opponent.profileCharacter),Catalog.getItem('dogSkin','dog_coin_01').profileImage);
   assert.equal(profiles.opponent.equippedProfileFrameId,'rank_gold');
   assert.equal(profiles.opponent,opponent);
+});
+test('自分のローカル表示補正は相手のserver-verified状態へ漏れない',async()=>{
+  const {initialProfile,publicPlayerProfiles}=await import('../server/online-profile.mjs');
+  const serverSelf=initialProfile({},'iphone');
+  const web=initialProfile({ownedCatSkins:['cat_kaitou'],profileCharacter:{category:'catSkin',itemId:'cat_kaitou'}},'web');
+  const verified=publicPlayerProfiles({host:serverSelf,guest:web});
+  const webView={matchType:'randomMatch',matchId:'m1',player:'guest',playerId:'web',
+    participants:{host:'iphone',guest:'web'},playerProfiles:verified,profile:verified.guest};
+  const shown=UI.matchProfiles(webView,own=>({...own,profileCharacter:{category:'catSkin',itemId:'cat_master_s01_king'}}));
+  assert.equal(shown.own.profileCharacter.itemId,'cat_master_s01_king');
+  assert.equal(shown.opponent.profileCharacter.itemId,'default');
+  assert.equal(shown.opponent.equippedProfileFrameId,'rank_bronze');
+  assert.deepEqual(shown.opponent.ranked,{rank:'bronze'});
+  assert.equal(UI.opponentProfile({...webView,matchId:'m2'}).profileCharacter.itemId,'default');
+});
+test('フレーム選択UIからフレームなしを削除しBronzeを保証する',()=>{
+  const fs=require('node:fs'),path=require('node:path');
+  const ranked=fs.readFileSync(path.resolve(__dirname,'../ranked-ui.js'),'utf8');
+  assert.doesNotMatch(ranked,/フレームなし|\['default',\.\.\.owned\]/);
+  assert.match(ranked,/new Set\(\['rank_bronze',/);
 });
 
 test('待機プロフィールは自分・VS・相手を共通frame DOMで表示する',()=>{
@@ -89,7 +109,7 @@ test('復帰データは検証済みプロフィールを再配信し、相手�
   const message=publicRecovery(room,'host');
   assert.equal(UI.opponentProfile(message).profileCharacter.itemId,'cat_kaitou');
   assert.equal(message.playerProfiles.guest.ownedCatSkins,undefined);
-  assert.equal(message.playerProfiles.guest.ranked,undefined);
+  assert.deepEqual(message.playerProfiles.guest.ranked,{rank:'bronze'});
   assert.equal('catPos' in message.state,false);
 });
 test('サーバーは所有者だけを検証し、認証更新・旧クライアント互換・公開情報制限',async()=>{
@@ -112,11 +132,11 @@ test('サーバーは所有者だけを検証し、認証更新・旧クライ�
     assert.equal(profile.profileCharacter.itemId,'default');
   }
   const publicData=publicPlayerProfiles({host:profile}).host;
-  assert.deepEqual(Object.keys(publicData).sort(),['equippedProfileFrameId','playerId','profileCharacter']);
+  assert.deepEqual(Object.keys(publicData).sort(),['equippedProfileFrameId','playerId','profileCharacter','ranked']);
   profile.ownedProfileFrames.push('rank_gold');profile.equippedProfileFrameId='rank_gold';
   assert.equal(publicPlayerProfiles({host:profile}).host.equippedProfileFrameId,'rank_gold');
   profile.ownedProfileFrames.push('rank_unknown');profile.equippedProfileFrameId='rank_unknown';
-  assert.equal(publicPlayerProfiles({host:profile}).host.equippedProfileFrameId,'default');
+  assert.equal(publicPlayerProfiles({host:profile}).host.equippedProfileFrameId,'rank_bronze');
   const token='ef'.repeat(32);await call('register',{},token);
   const unowned=await (await call('appearance',{profileCharacter:{category:'dogSkin',itemId:'dog_detective'}},token)).json();
   assert.equal(unowned.profile.profileCharacter.itemId,'default');

@@ -45,11 +45,14 @@
 
   function presentedCollectionData(data,rankedProfile,selectors=root?.NyanKingQaSelectors){
     if(!data)return data;
-    const hydrated=rankedProfile?{
+    const source=rankedProfile?{
       ...data,
-      ownedProfileFrames:rankedProfile.ownedProfileFrames||[],
-      equippedProfileFrameId:rankedProfile.equippedProfileFrameId||"default"
+      ownedProfileFrames:rankedProfile.ownedProfileFrames,
+      equippedProfileFrameId:rankedProfile.equippedProfileFrameId
     }:data;
+    const hydrated={...source,
+      ownedProfileFrames:[...new Set(['rank_bronze',...(source.ownedProfileFrames||[])])],
+      equippedProfileFrameId:root?.NyanOnlineProfileUI?.frameId(source.equippedProfileFrameId)||'rank_bronze'};
     return selectors?.collectionState?.(hydrated)||hydrated;
   }
 

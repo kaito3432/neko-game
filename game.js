@@ -154,6 +154,10 @@ let resultFakeTracks=[];
 
   const $=id=>document.getElementById(id);
   const board=$("board");
+  const matchSkillInfo=window.NyanMatchSkillInfo?.mount({
+    document,container:$("matchSkillHud"),catalog:window.NyanSkillCatalog,
+    getDescriptions:()=>window.NyanHowToSkillDescriptions
+  });
   const modeOverlay=$("modeOverlay"),localModeBtn=$("localModeBtn"),cpuModeBtn=$("cpuModeBtn");
 
    // 対人戦：ルール選択
@@ -1492,6 +1496,7 @@ requestAnimationFrame(()=>{
     }
 
     renderStatus();
+    matchSkillInfo?.render({playMode,game,active:battleBgmActive});
     renderDogCards();
     renderControls();
   }

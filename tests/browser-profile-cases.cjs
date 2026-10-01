@@ -20,7 +20,7 @@ module.exports=async(pages,output)=>{
   }
   await Promise.all(pages.map(p=>p.waitForFunction(()=>NyanOnline.getSession().role)));
   const host=await a.evaluate(()=>NyanOnline.getSession().player==='host')?a:b;
-  for(const [p,id,frameId] of [[a,'dog_detective','default'],[b,'cat_kaitou','rank_bronze']]){
+  for(const [p,id,frameId] of [[a,'dog_detective','rank_bronze'],[b,'cat_kaitou','rank_bronze']]){
     const badge=p.locator('.online-opponent-profile:visible').first();await badge.waitFor();
     assert.match(await badge.locator('img').getAttribute('src'),new RegExp(id+'_profile.png$'));
     await badge.locator('img').evaluate(img=>new Promise((resolve,reject)=>{if(img.complete&&img.naturalWidth)return resolve();img.onload=resolve;img.onerror=reject;}));
@@ -69,7 +69,7 @@ module.exports=async(pages,output)=>{
     dispatchEvent(new CustomEvent('nyan-online-player-profiles',{detail:{...s,matchId:'rm_next',participants:{[s.player]:s.playerId,[other]:peer},
       playerProfiles:{[other]:{playerId:peer,profileCharacter:{category:'catSkin',itemId:'default'},equippedProfileFrameId:'default'}}}}));
   });
-  assert.equal(await gold.locator('.online-profile-frame').getAttribute('data-frame-id'),'default');
+  assert.equal(await gold.locator('.online-profile-frame').getAttribute('data-frame-id'),'rank_bronze');
   await a.evaluate(()=>NyanOnline.reset());
   assert.equal(await a.locator('.online-opponent-profile:not([hidden])').count(),0);
   await b.evaluate(()=>NyanOnline.reset());

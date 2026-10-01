@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   const catalog=typeof module==='object'&&module.exports?require('./collection-catalog.js'):root.NyanCollectionCatalog;
-  const frames=Object.freeze({default:'フレームなし',rank_bronze:'肉球ブロンズフレーム',
+  const frames=Object.freeze({rank_bronze:'肉球ブロンズフレーム',
     rank_silver:'足あとシルバーフレーム',rank_gold:'きらめきゴールドフレーム',
     rank_platinum:'月夜のプラチナフレーム',rank_diamond:'宝石肉球ダイヤフレーム',
     rank_master:'にゃんチェイス・マスターフレーム'});
@@ -27,10 +27,10 @@
     clip.append(avatar);
     return clip;
   }
-  const frameId=id=>Object.hasOwn(frames,id)?id:'default';
+  const frameId=id=>Object.hasOwn(frames,id)?id:'rank_bronze';
   function frameSource(id){
     const valid=frameId(id);
-    return valid==='default'?null:catalog.getItem('profileFrame',valid)?.frameImage||null;
+    return catalog.getItem('profileFrame',valid)?.frameImage||null;
   }
   function setFrame(element,id){
     const valid=frameId(id);element.dataset.frameId=valid;
@@ -107,7 +107,7 @@
     for(const badge of badges){
       badge.hidden=!(own&&peer);
       if(own&&peer){updateSide(badge.querySelector('[data-side="self"]'),own);updateSide(badge.querySelector('[data-side="opponent"]'),peer);}
-      else for(const card of badge.querySelectorAll('.online-profile-side')){delete card.dataset.playerId;setFrame(card.querySelector('.online-profile-frame'),'default');card.querySelector('.ranked-avatar-clip>img').removeAttribute('src');card.querySelector('.online-profile-rank').hidden=true;}
+      else for(const card of badge.querySelectorAll('.online-profile-side')){delete card.dataset.playerId;setFrame(card.querySelector('.online-profile-frame'),'rank_bronze');card.querySelector('.ranked-avatar-clip>img').removeAttribute('src');card.querySelector('.online-profile-rank').hidden=true;}
     }
   });
   // Reuse the authenticated prepare boundary; no offline data is overwritten.

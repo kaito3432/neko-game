@@ -280,7 +280,7 @@ const server=http.createServer(async(req,res)=>{
       assert.equal(await page.locator('.online-opponent-profile:not([hidden])').count(),0);
       assert.equal(await page.locator('.online-opponent-profile[data-player-id]').count(),0);
       assert.equal(await page.locator('.online-opponent-profile img[src]').count(),0);
-      assert.equal(await page.locator('.online-opponent-profile .online-profile-frame:not([data-frame-id="default"])').count(),0);
+      assert.equal(await page.locator('.online-opponent-profile .online-profile-frame:not([data-frame-id="rank_bronze"])').count(),0);
       await page.reload();await page.evaluate(()=>NyanPlayerData.updateEquipment('catSkin','cat_kaitou'));
       await page.locator('#onlineModeBtn').click();await page.locator('#roomMatchStart').click();
     }
