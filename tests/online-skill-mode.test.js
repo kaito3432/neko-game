@@ -25,8 +25,10 @@ test('role/recovery share server availability, never a local unlock claim',()=>{
   const recovery=fs.readFileSync(path.join(base,'server/reconnection.mjs'),'utf8');
   const game=fs.readFileSync(path.join(base,'game.js'),'utf8');
   const html=fs.readFileSync(path.join(base,'index.html'),'utf8');
-  assert.match(worker,/skillModeAvailable:canUseOnlineSkillMode\(room\.profiles\)/);
-  assert.match(recovery,/skillModeAvailable:canUseOnlineSkillMode\(room\.profiles\)/);
+  assert.match(worker,/skillModeAvailable:canUseOnlineSkillMode\(room\)/);
+  assert.match(recovery,/skillModeAvailable:canUseOnlineSkillMode\(room\)/);
+  assert.match(worker,/effectiveSkillEntitlements:resolveEffectiveSkillEntitlements\(room,player\)/);
+  assert.match(recovery,/effectiveSkillEntitlements:resolveEffectiveSkillEntitlements\(room,seat\)/);
   assert.match(game,/onlineSkillModeAvailable=data\.skillModeAvailable===true/);
   assert.match(game,/if\(!onlineSkillModeAvailable\) return/);
   assert.doesNotMatch(html,/id="onlineSkillUnlockOpen"/);
@@ -40,6 +42,7 @@ test('Sandbox QA entitlement and appearance overrides are absent from runtime',(
   for(const config of [sandbox,production]){
     assert.equal(config.vars?.SKILL_MODE_QA_PLAYER_IDS,undefined);
     assert.equal(config.vars?.QA_PROFILE_OVERRIDES,undefined);
+    assert.equal(config.vars?.QA_SKILL_ENTITLEMENTS,undefined);
   }
   const worker=fs.readFileSync(path.join(base,'server/worker.mjs'),'utf8');
   const game=fs.readFileSync(path.join(base,'game.js'),'utf8');

@@ -108,19 +108,56 @@ export function resolveServerOwnedSkillIds(value={}){
 export function skillDefinition(skillId){return SERVER_SKILLS[skillId]||BY_RUNTIME[skillId]||null;}
 export function runtimeSkillId(skillId){return skillDefinition(skillId)?.runtimeId||null;}
 
-// Match profiles are server snapshots; never derive this from a viewer's local storage.
-export function canUseOnlineSkillMode(profiles){
-  return ['host','guest'].every(seat=>normalizeServerSkillEntitlements(profiles?.[seat]?.skillEntitlements).skillModeUnlocked);
+// Only authenticated server profile snapshots enter this boundary. A future pass
+// grant belongs in the personal resolver; room sharing then needs no pass branch.
+function personalSkillAccess(profile){
+  const entitlements=normalizeServerSkillEntitlements(profile?.skillEntitlements);
+  const owned=new Set(resolveServerOwnedSkillIds(entitlements));
+  return {skillModeUnlocked:entitlements.skillModeUnlocked,
+    availableSkillIds:entitlements.skillModeUnlocked?Object.values(SERVER_SKILLS)
+      .filter(skill=>skill.free||owned.has(skill.id)).map(skill=>skill.id):[]};
 }
 
-export function validateSkillSelectionForMatch({role,skillId,entitlements}={}){
+export function resolvePersonalEffectiveSkillEntitlements(profile){
+  return {...personalSkillAccess(profile),borrowedSkillIds:[]};
+}
+
+export function captureMatchSkillEntitlements(room){
+  const matchType=room?.matchType==='roomMatch'?'roomMatch':'randomMatch';
+  const host=personalSkillAccess(room?.profiles?.host),guest=personalSkillAccess(room?.profiles?.guest);
+  return {matchType,host,guest,
+    roomSharedSkillIds:matchType==='roomMatch'?[...new Set([...host.availableSkillIds,...guest.availableSkillIds])]:[]};
+}
+
+function matchSkillSnapshot(room){return room?.skillEntitlementSnapshot||captureMatchSkillEntitlements(room);}
+
+export function resolveEffectiveSkillEntitlements(room,seat){
+  const snapshot=matchSkillSnapshot(room),personal=snapshot[seat]||{skillModeUnlocked:false,availableSkillIds:[]};
+  if(snapshot.matchType!=='roomMatch')return {...personal,borrowedSkillIds:[]};
+  if(!room?.profiles?.host||!room?.profiles?.guest)return {skillModeUnlocked:false,availableSkillIds:[],borrowedSkillIds:[]};
+  const availableSkillIds=snapshot.roomSharedSkillIds||[];
+  return {skillModeUnlocked:snapshot.host.skillModeUnlocked||snapshot.guest.skillModeUnlocked,
+    availableSkillIds:[...availableSkillIds],
+    borrowedSkillIds:availableSkillIds.filter(id=>!personal.availableSkillIds.includes(id))};
+}
+
+// Room match shares one unlocked player's access; random/ranked never unions it.
+export function canUseOnlineSkillMode(room){
+  if(!room?.profiles?.host||!room?.profiles?.guest)return false;
+  const snapshot=matchSkillSnapshot(room);
+  return snapshot.matchType==='roomMatch'
+    ?snapshot.host.skillModeUnlocked||snapshot.guest.skillModeUnlocked
+    :snapshot.host.skillModeUnlocked&&snapshot.guest.skillModeUnlocked;
+}
+
+export function validateSkillSelectionForMatch({role,skillId,entitlements,effectiveEntitlements}={}){
   if(Array.isArray(skillId))return {ok:false,error:SKILL_ERROR_CODES.MULTIPLE_SKILLS_NOT_ALLOWED};
   const skill=skillDefinition(skillId);
   if(!skill)return {ok:false,error:SKILL_ERROR_CODES.INVALID_SKILL_ID};
   if(skill.role!==role)return {ok:false,error:SKILL_ERROR_CODES.SKILL_ROLE_MISMATCH};
-  const normalized=normalizeServerSkillEntitlements(entitlements);
-  if(!normalized.skillModeUnlocked)return {ok:false,error:SKILL_ERROR_CODES.SKILL_MODE_LOCKED};
-  if(!skill.free&&!resolveServerOwnedSkillIds(normalized).includes(skill.id))return {ok:false,error:SKILL_ERROR_CODES.SKILL_NOT_OWNED};
+  const access=effectiveEntitlements||personalSkillAccess({skillEntitlements:entitlements});
+  if(!access.skillModeUnlocked)return {ok:false,error:SKILL_ERROR_CODES.SKILL_MODE_LOCKED};
+  if(!access.availableSkillIds.includes(skill.id))return {ok:false,error:SKILL_ERROR_CODES.SKILL_NOT_OWNED};
   return {ok:true,skillId:skill.id,runtimeId:skill.runtimeId};
 }
 

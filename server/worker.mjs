@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { profileRequest, appearanceSnapshot, publicPlayerProfiles } from './online-profile.mjs';
-import {canUseOnlineSkillMode} from './skill-entitlements.mjs';
+import {canUseOnlineSkillMode,captureMatchSkillEntitlements,resolveEffectiveSkillEntitlements,resolvePersonalEffectiveSkillEntitlements} from './skill-entitlements.mjs';
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
 import { acceptRandomAction,validateAbilityUse } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
@@ -218,6 +218,7 @@ export class GameRoom extends DurableObject {
       await this.ctx.storage.put('room', {
         roomCode:match.matchId,createdAt: match.createdAt, hostToken: match.hostToken, guestToken: match.guestToken,
         roles: match.roles, profiles, matchId: match.matchId, matchType: 'randomMatch', status: 'matched', hasStarted:false, requiresRuleSelection:true,
+        skillEntitlementSnapshot:captureMatchSkillEntitlements({matchType:'randomMatch',profiles}),
         appearanceSnapshot: appearanceSnapshot(profiles[match.roles.host === 'cat' ? 'host' : 'guest'], profiles[match.roles.host === 'police' ? 'host' : 'guest']),
         secretCat: {pos: null, history: [], turn: 0, noTrackBoxes: [], fakeTracks: []}, publicFoundTracks: []
       });
@@ -523,6 +524,8 @@ async broadcastPresence() {
   }
 
   // 各プレイヤーへ自分の役割だけ通知
+  if(!room.skillEntitlementSnapshot&&room.profiles?.host&&room.profiles?.guest)
+    room.skillEntitlementSnapshot=captureMatchSkillEntitlements(room);
   syncTurnClock(room);await this.ctx.storage.put('room',room);
   for (const socket of this.ctx.getWebSockets()) {
     const info = socket.deserializeAttachment();
@@ -541,7 +544,8 @@ async broadcastPresence() {
           playerId: room.profiles?.[player]?.playerId || null,
           profile:room.profiles?.[player]||null,
           playerProfiles:publicPlayerProfiles(room.profiles),
-          skillModeAvailable:canUseOnlineSkillMode(room.profiles),
+          skillModeAvailable:canUseOnlineSkillMode(room),
+          effectiveSkillEntitlements:resolveEffectiveSkillEntitlements(room,player),
           participants: {host:room.profiles?.host?.playerId||null,guest:room.profiles?.guest?.playerId||null},
           appearanceSnapshot: room.appearanceSnapshot,
           matchType: room.matchType || 'roomMatch',
@@ -1522,6 +1526,14 @@ export default {
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));
+      // A read-only view of authenticated, formal skill rights. Match-specific
+      // sharing is resolved later from the two verified player snapshots.
+      if(response.ok&&['appearance','profile'].includes(profileRoute[1])){
+        const result=await response.json();
+        if(result.profile)return json({...result,
+          effectiveSkillEntitlements:resolvePersonalEffectiveSkillEntitlements(result.profile)},response.status);
+        return json(result,response.status);
+      }
       return new Response(response.body, {status: response.status, headers: JSON_HEADERS});
     }
     const queueRoute = url.pathname.match(/^\/api\/matchmaking\/(join|status|cancel|result)$/);

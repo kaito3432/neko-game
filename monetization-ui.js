@@ -20,6 +20,7 @@
   const skillPackButton=document.getElementById("monetizationPurchaseSkillPack01");
   const restoreButton=document.getElementById("monetizationRestoreTest");
   if(!panel) return;
+  let onlineEffectiveSkillEntitlements=null;
 
   function render(message=""){
     const state=root.NyanMonetization.getState();
@@ -27,7 +28,8 @@
     ads.textContent=state.adsRemoved?"削除済み":"広告あり";
     purchases.textContent=state.purchasedProductIds.length?state.purchasedProductIds.join(", "):"なし";
     reward.textContent=message || (state.lastRewardedAdAt?new Date(state.lastRewardedAdAt).toLocaleString():"未実行");
-    skillMode.textContent=state.skillModeUnlocked?"永久解放済み":`未解放 ${state.skillModeUnlockAdViews}/3`;
+    skillMode.textContent=state.skillModeUnlocked?"永久解放済み":
+      `未解放 ${state.skillModeUnlockAdViews}/3${onlineEffectiveSkillEntitlements?.skillModeUnlocked===true?'（オンライン対戦では利用可）':''}`;
     ownedSkills.textContent=state.ownedSkillIds.join(", ");
     const status=root.NyanMonetization.getSkillPackOwnershipStatus(root.NyanSkillCatalog.SKILL_PACK_IDS.SKILL_PACK_01);
     skillPack.textContent=root.NyanMonetization.isSkillPackOwned(status.packId)
@@ -62,6 +64,10 @@
   restoreButton?.addEventListener("click",async()=>{
     await root.NyanMonetization.restorePurchases();
     render("モック復元完了");
+  });
+  root.addEventListener('nyan-online-profile',event=>{
+    onlineEffectiveSkillEntitlements=event.detail?.effectiveSkillEntitlements||null;
+    render();
   });
   render();
 })(typeof globalThis!=="undefined" ? globalThis : this);

@@ -8,6 +8,7 @@
   const preview=document.getElementById('shopSkillPreview'),previewBuy=document.getElementById('shopPreviewPurchase');
   if(!panel||!list||!restore)return;
   let activeProductId=null,products=[],category='skills',role='cat',selectedSkillId=null;
+  let onlineEffectiveSkillEntitlements=null;
   const platformAvailable=Boolean(root.NyanPurchases.nativePlugin());
   const skills=root.NyanSkillCatalog.SKILLS;
   const usagePolicy=root.NyanSkillCatalog.USAGE_POLICY;
@@ -54,7 +55,9 @@
         const img=document.createElement('img');img.src=info?.image||'';img.alt='';
         const copy=document.createElement('div');copy.className='howto-preview-copy';
         const title=document.createElement('strong');title.textContent=skill.name;
-        const state=document.createElement('span');state.textContent=skill.free?'無料':root.NyanMonetization.isSkillOwned(skill.id)?'所持済み':'🔒 未所持';
+        const state=document.createElement('span');state.textContent=skill.free?'無料':root.NyanMonetization.isSkillOwned(skill.id)?'所持済み':
+          onlineEffectiveSkillEntitlements?.skillModeUnlocked===true&&onlineEffectiveSkillEntitlements.availableSkillIds?.includes(skill.id)?
+            'オンラインで利用可能':'🔒 未所持';
         copy.append(title,state);const arrow=document.createElement('span');arrow.className='howto-preview-arrow';arrow.textContent='›';
         item.append(img,copy,arrow);item.addEventListener('click',()=>showPreview(skill.id));return item;
       }));
@@ -106,7 +109,10 @@
   root.addEventListener('nyan-purchase-state',purchaseState);
   root.addEventListener('nyan-storekit-entitlements',()=>{activeProductId=null;render();});
   root.addEventListener('nyan-purchase-entitlements',()=>{activeProductId=null;render();});
-  root.addEventListener('nyan-online-profile',render);
+  root.addEventListener('nyan-online-profile',event=>{
+    onlineEffectiveSkillEntitlements=event.detail?.effectiveSkillEntitlements||null;
+    render();
+  });
   root.NyanShopRefresh=render;
   restore.addEventListener('click',async()=>{
     activeProductId='restore';render();const value=await root.NyanPurchases.provider.restorePurchases();activeProductId=null;

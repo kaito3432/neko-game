@@ -1,18 +1,21 @@
-import {canUseOnlineSkillMode,validateSkillSelectionForMatch,validateSkillUseForMatch} from './skill-entitlements.mjs';
+import {canUseOnlineSkillMode,captureMatchSkillEntitlements,resolveEffectiveSkillEntitlements,
+  validateSkillSelectionForMatch,validateSkillUseForMatch} from './skill-entitlements.mjs';
 
 // Only public, whitelisted lobby/selection fields can leave this boundary.
 export function sessionEvent(room,sender,p){
   const role=room.roles[sender];
   if(p.type==='ruleSelect'){
     if(sender!=='host'||room.started||room.ready?.host||room.ready?.guest||!['normal','ability'].includes(p.rule))return false;
-    if(p.rule==='ability'&&!canUseOnlineSkillMode(room.profiles))return {skillError:'SKILL_MODE_LOCKED'};
+    room.skillEntitlementSnapshot||=captureMatchSkillEntitlements(room);
+    if(p.rule==='ability'&&!canUseOnlineSkillMode(room))return {skillError:'SKILL_MODE_LOCKED'};
     room.rule=p.rule;return {type:'ruleSelect',rule:p.rule};
   }
   if(['abilityReady','abilityRevealRequest','abilityReveal'].includes(p.type)){
     if(room.rule!=='ability'||room.started)return false;
     if(p.type==='abilityRevealRequest')return sender==='host'?{type:p.type}:false;
     if(p.type==='abilityReady'){
-      const checked=validateSkillSelectionForMatch({role,skillId:p.ability,entitlements:room.profiles?.[sender]?.skillEntitlements});
+      const checked=validateSkillSelectionForMatch({role,skillId:p.ability,
+        effectiveEntitlements:resolveEffectiveSkillEntitlements(room,sender)});
       if(!checked.ok)return {skillError:checked.error};
       room.approvedSkills||={};
       if(room.approvedSkills[role]&&room.approvedSkills[role]!==checked.skillId)return {skillError:'MULTIPLE_SKILLS_NOT_ALLOWED'};

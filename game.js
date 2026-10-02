@@ -226,23 +226,29 @@ let onlineGameStarted=false;
 let onlinePeerDisconnected = false;
 let onlineFoundTrackCount=0;
 let onlineSkillModeAvailable=false;
+let onlineEffectiveSkillEntitlements=null;
 
 function skillIdForRuntime(role,runtimeId){
   return window.NyanSkillCatalog?.fromRuntimeId(role,runtimeId)||null;
 }
 function canChooseRuntimeSkill(role,runtimeId){
   const skillId=skillIdForRuntime(role,runtimeId);
+  if(onlineAssignedRole&&onlineEffectiveSkillEntitlements)
+    return Boolean(skillId&&onlineEffectiveSkillEntitlements?.skillModeUnlocked===true&&
+      onlineEffectiveSkillEntitlements.availableSkillIds?.includes(skillId));
   return Boolean(skillId && window.NyanMonetization?.canEquipSkill(role,skillId));
 }
 function refreshSkillEntitlementUI(){
-  const unlocked=window.NyanMonetization?.isSkillModeUnlocked()===true;
+  const localUnlocked=window.NyanMonetization?.isSkillModeUnlocked()===true;
+  const onlineSelection=Boolean(onlineAssignedRole&&onlineEffectiveSkillEntitlements);
+  const unlocked=onlineSelection?onlineEffectiveSkillEntitlements?.skillModeUnlocked===true:localUnlocked;
   const localUnlockButton=document.getElementById("localSkillUnlockOpen");
-  if(localUnlockButton)localUnlockButton.hidden=unlocked;
-  if(unlocked && document.getElementById("skillUnlockOverlay"))document.getElementById("skillUnlockOverlay").hidden=true;
+  if(localUnlockButton)localUnlockButton.hidden=localUnlocked;
+  if(localUnlocked && document.getElementById("skillUnlockOverlay"))document.getElementById("skillUnlockOverlay").hidden=true;
   if(localAbilityRuleBtn){
-    localAbilityRuleBtn.disabled=!unlocked;
-    localAbilityRuleBtn.setAttribute("aria-disabled",String(!unlocked));
-    localAbilityRuleBtn.title=unlocked?"":"リワード広告を3回視聴すると永久解放されます";
+    localAbilityRuleBtn.disabled=!localUnlocked;
+    localAbilityRuleBtn.setAttribute("aria-disabled",String(!localUnlocked));
+    localAbilityRuleBtn.title=localUnlocked?"":"リワード広告を3回視聴すると永久解放されます";
   }
   if(onlineAbilityRuleBtn){
     onlineAbilityRuleBtn.disabled=!onlineSkillModeAvailable;
@@ -262,7 +268,11 @@ function refreshSkillEntitlementUI(){
     const skillId=skillIdForRuntime(role,runtimeId),skill=window.NyanSkillCatalog?.SKILLS?.[skillId];
     let badge=button.querySelector(".ability-entitlement-badge");
     if(!badge){badge=document.createElement("span");badge.className="ability-entitlement-badge";button.querySelector(".ability-card-summary")?.append(badge);}
-    badge.textContent=!unlocked?"🔒 モード未解放":available?(skill?.free?"無料":"所持済み"):"🔒 未所持・ストアで購入";
+    const borrowed=onlineSelection&&onlineEffectiveSkillEntitlements?.borrowedSkillIds?.includes(skillId);
+    const personallyOwned=window.NyanMonetization?.isSkillOwned(skillId)===true;
+    badge.textContent=!unlocked?"🔒 モード未解放":available?
+      (borrowed?"この部屋で利用可能":skill?.free?"無料":onlineSelection&&!personallyOwned?"この対戦で利用可能":"所持済み"):
+      "🔒 未所持・ストアで購入";
   });
 }
 window.addEventListener("nyan-storekit-entitlements",refreshSkillEntitlementUI);
@@ -284,6 +294,7 @@ let onlineIsHost=false;
 onlinePeerDisconnected=false;
       onlineIsHost=false;
       onlineSkillModeAvailable=false;
+      onlineEffectiveSkillEntitlements=null;
 
       onlineRule=null;
 onlineSelfAbility=null;
@@ -562,6 +573,7 @@ const backToTitleBtn=$("backToTitleBtn");
     document.documentElement.classList.remove('online-boot');
     onlineAssignedRole=d.role;onlineIsHost=d.player==='host';onlinePeerDisconnected=false;
     onlineSkillModeAvailable=d.skillModeAvailable===true;
+    onlineEffectiveSkillEntitlements=d.effectiveSkillEntitlements||null;
     onlineRule=d.rule;onlineSelfReady=Boolean(d.ready[d.player]);onlinePeerReady=Boolean(d.ready[d.player==='host'?'guest':'host']);
     if(!onlineSelfReady||!onlinePeerReady){
       onlineOverlay.classList.add('show');
@@ -994,7 +1006,7 @@ function beginOnlineAbilitySelection(){
 
   if(onlineRule!=="ability") return;
   if(!onlineAssignedRole) return;
-  if(!window.NyanMonetization?.isSkillModeUnlocked()){
+  if(!onlineSkillModeAvailable||onlineEffectiveSkillEntitlements?.skillModeUnlocked!==true){
     onlineRuleOverlay?.classList.remove("show");
     onlineOverlay.classList.add("show");
     onlineStatus.textContent="特殊スキルモードは未解放です。";
@@ -6333,6 +6345,8 @@ bindPress(
        onRole:(data)=>{
   onlineAssignedRole=data.role;
   onlineSkillModeAvailable=data.skillModeAvailable===true;
+  onlineEffectiveSkillEntitlements=data.effectiveSkillEntitlements||null;
+  refreshSkillEntitlementUI();
 onlineStartGameBtn.hidden=false;
   if(window.NyanOnline.getSession().matchType==='randomMatch') {
     if(onlineRule || onlineGameStarted)return;
@@ -7431,6 +7445,8 @@ if(isNewTrack){
        onRole:(data)=>{
     onlineAssignedRole=data.role;
     onlineSkillModeAvailable=data.skillModeAvailable===true;
+    onlineEffectiveSkillEntitlements=data.effectiveSkillEntitlements||null;
+    refreshSkillEntitlementUI();
     onlineStartGameBtn.hidden=false;      
 
     if(data.role==="cat"){
