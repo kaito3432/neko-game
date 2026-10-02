@@ -38,7 +38,7 @@ export function reconnected(room,seat,now){
   return true;
 }
 export function publicRecovery(room,seat){
-  const role=room.roles?.[seat],s=room.validationState||{};
+  const role=room.roles?.[seat]||null,s=room.validationState||{};
   // Explicit allowlist, not spread/delete: police never receive hidden state.
   const state={turn:s.turn||0,phase:s.phase||'dogSetup',dogs:s.dogs||[null,null,null],
     dogAction:s.dogAction||[false,false,false],selectedDog:room.selectedDog??null,
@@ -52,6 +52,8 @@ export function publicRecovery(room,seat){
   }
   if(role==='police'&&state.phase==='dogSetup'&&room.partialDogs)state.dogs=room.partialDogs;
   return {matchId:room.matchId,matchType:room.matchType,player:seat,role,
+    roleState:room.roles?'selected':'waiting',selectedRolePreference:room.selectedRolePreference||null,
+    roleSelectionReady:Boolean(room.guestToken&&!Object.keys(room.disconnects||{}).length),
     playerId:room.profiles?.[seat]?.playerId,appearanceSnapshot:room.appearanceSnapshot,
     participants:{host:room.profiles?.host?.playerId,guest:room.profiles?.guest?.playerId},
     playerProfiles:publicPlayerProfiles(room.profiles),skillModeAvailable:canUseOnlineSkillMode(room),

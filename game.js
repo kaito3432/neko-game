@@ -194,6 +194,21 @@ const abilityStartBtn=$("abilityStartBtn");
    const onlineStartGameBtn=$("onlineStartGameBtn");
 const createOnlineRoomBtn=$("createOnlineRoomBtn"),joinOnlineRoomBtn=$("joinOnlineRoomBtn");
 const onlineRoomCodeInput=$("onlineRoomCodeInput"),onlineStatus=$("onlineStatus"); 
+const roomRolePicker=$("roomRolePicker");
+const confirmRoomRoleBtn=$("confirmRoomRoleBtn");
+const selectedRoomRole=()=>roomRolePicker?.querySelector('input[name="roomHostRole"]:checked')?.value||'random';
+function showRoomRoleSelection(canSelect){
+  if(onlineAssignedRole||window.NyanOnline?.getSession().matchType==='randomMatch')return;
+  roomRolePicker.hidden=!canSelect;
+  onlineStartGameBtn.hidden=true;
+  onlineStatus.textContent=canSelect?'2人そろいました。あなたの役割を選択してください':'ホストが役割を選択しています…';
+  if(canSelect)confirmRoomRoleBtn.disabled=false;
+}
+bindPress(confirmRoomRoleBtn,()=>{
+  if(confirmRoomRoleBtn.disabled||!window.NyanOnline?.selectRoomRole(selectedRoomRole()))return;
+  confirmRoomRoleBtn.disabled=true;
+  onlineStatus.textContent='役割を確定しています…';
+});
 
    // =====================================
 // オンライン：ルール選択
@@ -317,6 +332,12 @@ onlineAbilityRevealSent=false;
   if(onlineRoomCodeInput){
     onlineRoomCodeInput.value="";
   }
+  if(roomRolePicker){
+    roomRolePicker.hidden=true;
+    const defaultRole=roomRolePicker.querySelector('input[value="random"]');
+    if(defaultRole)defaultRole.checked=true;
+  }
+  if(confirmRoomRoleBtn)confirmRoomRoleBtn.disabled=false;
 
   if(createOnlineRoomBtn){
     createOnlineRoomBtn.disabled=false;
@@ -574,6 +595,13 @@ const backToTitleBtn=$("backToTitleBtn");
     onlineAssignedRole=d.role;onlineIsHost=d.player==='host';onlinePeerDisconnected=false;
     onlineSkillModeAvailable=d.skillModeAvailable===true;
     onlineEffectiveSkillEntitlements=d.effectiveSkillEntitlements||null;
+    if(d.matchType==='roomMatch'&&!d.role){
+      onlineOverlay.classList.add('show');
+      if(d.roleSelectionReady)showRoomRoleSelection(d.player==='host');
+      else{roomRolePicker.hidden=true;onlineStatus.textContent='相手の接続を待っています…';}
+      return;
+    }
+    roomRolePicker.hidden=true;
     onlineRule=d.rule;onlineSelfReady=Boolean(d.ready[d.player]);onlinePeerReady=Boolean(d.ready[d.player==='host'?'guest':'host']);
     if(!onlineSelfReady||!onlinePeerReady){
       onlineOverlay.classList.add('show');
@@ -6342,7 +6370,17 @@ bindPress(
         }
       },
 
+      onRoleSelection:data=>{
+        if(data.type==='roleSelectionRejected'){
+          if(data.error==='already_selected')return;
+          onlineStatus.textContent='役割を確定できませんでした。もう一度お試しください。';
+          confirmRoomRoleBtn.disabled=false;return;
+        }
+        showRoomRoleSelection(data.canSelect===true);
+      },
+
        onRole:(data)=>{
+  roomRolePicker.hidden=true;
   onlineAssignedRole=data.role;
   onlineSkillModeAvailable=data.skillModeAvailable===true;
   onlineEffectiveSkillEntitlements=data.effectiveSkillEntitlements||null;
@@ -7442,6 +7480,9 @@ if(isNewTrack){
           `<strong style="font-size:32px">${room.roomCode}</strong><br>`+
           `相手と接続しました！`;
       },
+      onRoleSelection:data=>{
+        if(data.type==='roleSelectionRequired')showRoomRoleSelection(false);
+      },
        onRole:(data)=>{
     onlineAssignedRole=data.role;
     onlineSkillModeAvailable=data.skillModeAvailable===true;
@@ -8501,6 +8542,8 @@ if(isNewTrack){
 
   }catch(err){
     console.error(err);
+
+    if(roomRolePicker)roomRolePicker.hidden=true;
 
     if(err.message==="room_not_found"){
       onlineStatus.textContent="その部屋は見つかりませんでした";

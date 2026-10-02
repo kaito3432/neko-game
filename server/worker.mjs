@@ -12,6 +12,7 @@ import {acceptVerifiedAdMobSsv,verifyStoredRewardedAd} from './rewarded-ad-verif
 import {verifyStoreKitTransaction} from './storekit-verification.mjs';
 import {verifyGooglePlayPurchase,acknowledgeGooglePlayPurchase} from './google-play-verification.mjs';
 import {consumeRankedStamina,publicRankedStamina,withRankedStamina} from './ranked-stamina.mjs';
+import {selectRoomRoles} from './room-role-preference.mjs';
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -243,6 +244,7 @@ await this.ctx.storage.put("room", {
   hostToken,
   guestToken: null,
   roles: null,
+  roleState:'waiting',selectedRolePreference:null,
   profiles: {host: registration.profile || null, guest: null},
   matchType: 'roomMatch',
   roomCode:registration.roomCode,matchId,status:'waiting',hasStarted:false,
@@ -494,26 +496,29 @@ async broadcastPresence() {
     } catch (_) {}
   }
 
-  // 2人そろったら役割を決定・通知
+  // Random Match already has frozen roles. A private Room waits for its host.
   if (ready) {
-    await this.assignRoles();
+    const room=await this.ctx.storage.get('room');
+    if(room?.roles)await this.assignRoles();
+    else if(room?.matchType==='roomMatch')for(const socket of this.ctx.getWebSockets()){
+      const seat=socket.deserializeAttachment()?.player;
+      if(!['host','guest'].includes(seat))continue;
+      try{socket.send(JSON.stringify({type:'roleSelectionRequired',matchId:room.matchId,canSelect:seat==='host'}));}catch(_){}
+    }
   }
 }
 
-  async assignRoles() {
+  async assignRoles(selection) {
   const room = await this.ctx.storage.get("room");
 
   if (!room||terminal(room)) return;
 
-  // まだ役割が決まっていなければ1度だけ抽選
+  // Only the authenticated host WebSocket can supply a Room preference.
   if (!room.roles) {
-    const hostIsCat =
-      crypto.getRandomValues(new Uint32Array(1))[0] % 2 === 0;
-
-    room.roles = {
-      host: hostIsCat ? "cat" : "police",
-      guest: hostIsCat ? "police" : "cat",
-    };
+    if(!selection?.roles)return;
+    room.roles=selection.roles;
+    room.selectedRolePreference=selection.selectedRolePreference;room.roleState='selected';
+    const hostIsCat=room.roles.host==='cat';
     const fallback = {playerId: null, ownedCatSkins: ['default'], ownedDogSkins: ['default'], equippedAppearance: {}};
     room.appearanceSnapshot = appearanceSnapshot(
       room.profiles?.[hostIsCat ? 'host' : 'guest'] || fallback,
@@ -621,6 +626,17 @@ async broadcastPresence() {
       })
     );
 
+    return;
+  }
+
+  if(data.type==='roleSelect'){
+    const room=current;
+    if(terminal(room)||room.disconnects?.host||room.disconnects?.guest)return;
+    const ready=this.connectedPlayers().includes('host')&&this.connectedPlayers().includes('guest');
+    const selected=selectRoomRoles(room,sender,data.preference,ready,
+      crypto.getRandomValues(new Uint32Array(1))[0]%2===0);
+    if(selected.error){try{ws.send(JSON.stringify({type:'roleSelectionRejected',error:selected.error}));}catch(_){}return;}
+    await this.assignRoles(selected);
     return;
   }
 

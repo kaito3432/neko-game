@@ -177,6 +177,7 @@ window.NyanOnline = (() => {
     return data;
   }
 
+  const ROOM_ROLE_PREFERENCE=Object.freeze({RANDOM:'random',CAT:'cat',POLICE:'police'});
   async function createRoom() {
     disconnect();clearMatchVisuals();
     if (reserved) {
@@ -276,6 +277,7 @@ window.NyanOnline = (() => {
 function connect({
   onOpen,
   onPresence,
+  onRoleSelection,
   onRole,
   onGame,
   onClose,
@@ -284,7 +286,7 @@ function connect({
 } = {}) {
     if(socket){const old=socket;socket=null;try{old.close();}catch(_){}}
     clearInterval(heartbeat);closed=false;
-    callbacks={onOpen,onPresence,onRole,onGame,onClose,onError,onPeerDisconnected};
+    callbacks={onOpen,onPresence,onRoleSelection,onRole,onGame,onClose,onError,onPeerDisconnected};
 
     if (!roomCode || !token) {
       throw new Error("room_not_ready");
@@ -338,6 +340,8 @@ socket.addEventListener("message", event => {
     return;
   }
   if(data.type==='matchCancelled'){finishNotification({status:'cancelled',matchId:data.matchId});return;}
+  if(data.type==='roleSelectionRequired'&&onRoleSelection)onRoleSelection(data);
+  if(data.type==='roleSelectionRejected'&&onRoleSelection)onRoleSelection(data);
   if (data.type === 'role') {
     if(closed||finishedMatches.has(data.matchId)||matchId&&data.matchId!==matchId)return;
     role = data.role;
@@ -416,6 +420,13 @@ socket.addEventListener("message", event => {
     return true;
   }
 
+  function selectRoomRole(preference){
+    if(player!=='host'||matchType==='randomMatch'||role||paused||closed||
+       !Object.values(ROOM_ROLE_PREFERENCE).includes(preference)||socket?.readyState!==WebSocket.OPEN)return false;
+    socket.send(JSON.stringify({type:'roleSelect',preference}));
+    return true;
+  }
+
   function disconnect() {
     sessionGeneration++;
     clearTimeout(retryTimer);clearInterval(heartbeat);closed=true;reconnectUntil=0;paused=false;resuming=false;ticket='';
@@ -471,6 +482,7 @@ socket.addEventListener("message", event => {
     getStatus,
     connect,
     sendGame,
+    selectRoomRole,
     disconnect,
     acknowledgeResult,
     reset,

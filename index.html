@@ -13,7 +13,7 @@
 <title>にゃんチェイス</title>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
-<link rel="stylesheet" href="./style.css?v=2.4.skill-detail-bronze">
+<link rel="stylesheet" href="./style.css?v=2.4.room-role2">
 </head>
 <body>
 <div class="app">
@@ -909,6 +909,16 @@
     </div>
 
 <div id="onlineStatus" aria-live="polite"></div>
+<fieldset class="room-role-picker" id="roomRolePicker" hidden>
+  <legend>役割を選択</legend>
+  <div class="room-role-options">
+    <label><input type="radio" name="roomHostRole" value="random" checked><span>おまかせ</span></label>
+    <label><input type="radio" name="roomHostRole" value="cat"><span>ネコ</span></label>
+    <label><input type="radio" name="roomHostRole" value="police"><span>警察</span></label>
+  </div>
+  <small>選んだ役割の反対側を相手が担当します</small>
+  <button class="btn pink" id="confirmRoomRoleBtn" type="button">この役割に決定</button>
+</fieldset>
 
 <button
   class="btn pink"
@@ -1918,14 +1928,14 @@
 <script src="./online-identity.js?v=1.2.effective-skills"></script>
 <script src="./debug/king-skin-play-qa-runtime-v5.js"></script>
 <script src="./online-appearance.js?v=1"></script>
-<script src="./online.js?v=3.0.result-recovery1"></script>
+<script src="./online.js?v=3.0.room-role2"></script>
 <script src="./online-profile-ui.js?v=1.2.bronze-default"></script>
 <script src="./rank-rewards.js?v=1.1.final-ranks"></script>
 <script src="./random-match.js?v=1.0"></script>
 <script src="./ranked-ui.js?v=1.2.bronze-default"></script>
 <script src="./ranked-stamina-ui.js?v=1.0"></script>
 <script src="./match-skill-info.js?v=2"></script>
-<script src="./game.js?v=2.4.server-skills"></script>
+<script src="./game.js?v=2.4.room-role2"></script>
 
 <script src="./debug/king-debug-v7.js"></script>
 <script>

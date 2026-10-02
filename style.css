@@ -2521,6 +2521,18 @@ body.turn-last .turn-pill{
   font-size:16px;
   text-align:center;
 }
+.room-role-picker{box-sizing:border-box;width:100%;margin:0 0 12px;padding:10px;border:1px solid #c9a987;border-radius:14px;text-align:center}
+.room-role-picker legend{font-weight:700;padding:0 6px}
+.room-role-picker small{display:block;margin-top:6px;line-height:1.35}
+.room-role-picker .btn{width:100%;margin-top:10px}
+.room-role-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.room-role-options label{position:relative;min-width:0}
+.room-role-options input{position:absolute;opacity:0;width:1px;height:1px}
+.room-role-options span{display:block;box-sizing:border-box;min-height:44px;padding:9px 2px;border:2px solid #c9a987;border-radius:12px;background:#fff7e5;font-weight:700;cursor:pointer}
+.room-role-options input:checked+span{border-color:#a367b1;background:#f7e8fc}
+.room-role-options input:checked+span::before{content:'✓ ';}
+.room-role-options input:focus-visible+span{outline:3px solid #2563eb;outline-offset:2px}
+.room-role-picker[hidden]{display:none}
 /* ==================================================
    v1.0 iPhone / Mobile Responsive Final
    ホーム画面を端末サイズに合わせて1画面に収める
