@@ -35,6 +35,11 @@ window.NyanOnline = (() => {
     {detail:profileEventDetail(detail)}));
   async function resumeRequest(code=roomCode,signal){
     if(!credentialHeaders)await identity();
+    if(!personalSkillView()){
+      // A cold reconnect has no in-memory personal view. A read-only profile
+      // refresh restores CTA eligibility without changing the match snapshot.
+      try{await window.NyanOnlineIdentity.refreshSkillView(API_BASE);}catch(_){/* Unknown access hides the CTA. */}
+    }
     return readJson(await fetch(api(`/api/rooms/${code}/resume`),{method:'POST',headers:credentialHeaders,signal}));
   }
   function finishNotification(data){
@@ -469,6 +474,11 @@ socket.addEventListener("message", event => {
         socket?.readyState === WebSocket.OPEN
     };
   }
+  function personalSkillView(){
+    const view=window.NyanOnlineIdentity?.getAuthenticatedSkillView?.();
+    return view?.apiBase===API_BASE&&(!sessionProfile?.playerId||view.playerId===sessionProfile.playerId)
+      ?view.effectiveSkillEntitlements:null;
+  }
 
   // The daily module is loaded earlier than this transport. Retry after the
   // authenticated result verifier becomes available, without blocking startup.
@@ -487,6 +497,8 @@ socket.addEventListener("message", event => {
     acknowledgeResult,
     reset,
     getSession
+    ,getPermanentSkillEntitlements:()=>sessionProfile?.skillEntitlements||null
+    ,getPersonalSkillEntitlements:personalSkillView
     ,activeMatch
     ,isPaused:()=>paused
     ,prepareIdentity: async()=>{const value=await identity();if(value.legacy)throw new Error('online_server_update_required');return value;}

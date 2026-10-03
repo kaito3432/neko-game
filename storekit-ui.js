@@ -114,6 +114,14 @@
     render();
   });
   root.NyanShopRefresh=render;
+  root.NyanShopOpenSkillDetail=skillId=>{
+    const skill=skills[skillId];
+    if(!skill||!root.NyanStoreUIModel.DEFINITIONS.some(item=>
+      item.skillId===skillId&&item.productId===skill.purchaseProductId&&
+      item.hidden!==true&&item.purchasable!==false))return false;
+    category='skills';role=skill.role;render();showPreview(skillId);
+    return true;
+  };
   restore.addEventListener('click',async()=>{
     activeProductId='restore';render();const value=await root.NyanPurchases.provider.restorePurchases();activeProductId=null;
     status.textContent=value.restored?`購入を復元しました（${value.count}件）`:'購入を復元できませんでした';await load();

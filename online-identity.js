@@ -3,6 +3,14 @@
   'use strict';
   const KEY = 'nyanChaseOnlineCredentialV1';
   let active = null;
+  let authenticatedSkillView = null;
+  function acceptSkillView(apiBase,{profile,effectiveSkillEntitlements}={}){
+    // This is the authenticated personal view, never a Room-shared match view.
+    authenticatedSkillView=profile?.playerId&&effectiveSkillEntitlements
+      ?{playerId:profile.playerId,apiBase,effectiveSkillEntitlements}:null;
+    if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function')
+      root.dispatchEvent(new root.CustomEvent('nyan-online-profile',{detail:{profile,effectiveSkillEntitlements}}));
+  }
   async function request(apiBase,path,body,method='POST'){
     const headers=savedHeaders();if(!headers)throw new Error('online_credential_missing');
     const controller=new root.AbortController(),timeout=root.setTimeout(()=>controller.abort(),15000);
@@ -46,8 +54,8 @@
       const {profile,effectiveSkillEntitlements} = await post('appearance', {equippedAppearance: local.equippedAppearance,
         profileCharacter: local.profileCharacter || null,
         collectionOwnership:{ownedCatSkins:local.ownedCatSkins,ownedDogSkins:local.ownedDogSkins}});
-      if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function')
-        root.dispatchEvent(new root.CustomEvent('nyan-online-profile',{detail:{profile,effectiveSkillEntitlements}}));
+      // Display-only, authenticated server view. Never persist this as ownership.
+      acceptSkillView(apiBase,{profile,effectiveSkillEntitlements});
       return {headers, profile,effectiveSkillEntitlements};
     })();
     try { return await active; } finally { active = null; }
@@ -55,5 +63,11 @@
   function savedHeaders(){
     try{const secret=root.localStorage.getItem(KEY);return /^[a-f0-9]{64}$/.test(secret||'')?{'Content-Type':'application/json',Authorization:`Bearer ${secret}`}:null;}catch(_){return null;}
   }
-  root.NyanOnlineIdentity = {prepare,request,savedHeaders,hasCredential:()=>Boolean(savedHeaders())};
+  async function refreshSkillView(apiBase){
+    const result=await request(apiBase,'profile',null,'GET');
+    acceptSkillView(apiBase,result);
+    return result;
+  }
+  root.NyanOnlineIdentity = {prepare,request,savedHeaders,hasCredential:()=>Boolean(savedHeaders()),
+    getAuthenticatedSkillView:()=>authenticatedSkillView,refreshSkillView};
 })(globalThis);

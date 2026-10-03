@@ -78,6 +78,13 @@ button{font:inherit;color:inherit;touch-action:manipulation;-webkit-user-select:
 #resultOverlay{align-items:flex-start;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-top:max(15px,env(safe-area-inset-top));padding-bottom:max(15px,env(safe-area-inset-bottom))}
 #resultOverlay .modal{flex:none;margin:auto}
 #resultOverlay .modal-icon{display:none}
+.result-opponent-skill{display:grid;gap:7px;margin:10px 0;padding:10px;border:2px solid #d9bddf;border-radius:14px;background:#faf3ff;text-align:left}
+.result-opponent-skill[hidden]{display:none}
+.result-opponent-skill-label{font-size:11px;font-weight:900;color:#704976}
+.result-opponent-skill-info{display:flex;align-items:center;gap:9px;min-width:0}
+.result-opponent-skill-info img{width:42px;height:42px;object-fit:contain;flex:none;border-radius:10px;background:#fff}
+.result-opponent-skill-info strong{overflow-wrap:anywhere;font-size:13px}
+.result-opponent-skill .btn{width:100%;min-height:40px}
 .modal{width:min(94vw,430px);padding:20px;border:3px solid var(--brown);border-radius:23px;background:var(--ivory);box-shadow:0 9px 0 rgba(93,64,55,.18);text-align:center}.modal-icon{font-size:52px}.modal h2{margin:6px 0 8px;font-size:22px}.modal p{margin:0 0 13px;font-size:13px;line-height:1.55;font-weight:800}
 
 /* ===== Ver1.5.1 演出強化 ===== */

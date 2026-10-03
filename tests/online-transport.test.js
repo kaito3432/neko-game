@@ -1,13 +1,15 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const Visual=require('../online-appearance.js');
 const own=(dog='default')=>({playerId:'A',ownedCatSkins:['default'],ownedDogSkins:['default','dog_detective'],equippedAppearance:{catSkinId:'default',dogSkinId:dog}});
-async function transport({active=null,storage=new Map()}={}){
+async function transport({active=null,storage=new Map(),personal=null}={}){
  const events=[];
  class Socket{static OPEN=1;constructor(){this.readyState=1;this.events={};Socket.last=this;}addEventListener(k,fn){this.events[k]=fn;}close(){}send(){}emit(data){this.events.message({data:JSON.stringify(data)});}}
  const ctx={WebSocket:Socket,URL,AbortController,console,JSON,CustomEvent:class{constructor(type,init){this.type=type;this.detail=init?.detail;}},setTimeout,clearTimeout,setInterval,clearInterval,queueMicrotask:()=>{},
   localStorage:{setItem:(key,value)=>storage.set(key,value),getItem:key=>storage.get(key)||null},dispatchEvent:e=>events.push(e),
   NyanDailyMissions:{recordOnline(){}},
-  NyanOnlineAppearance:Visual,NyanOnlineIdentity:{prepare:async()=>({profile:own(),headers:{}}),savedHeaders:()=>({Authorization:'Bearer test'})},
+  NyanOnlineAppearance:Visual,NyanOnlineIdentity:{prepare:async()=>({profile:own(),headers:{}}),
+    savedHeaders:()=>({Authorization:'Bearer test'}),getAuthenticatedSkillView:()=>personal&&({
+      playerId:'A',apiBase:'https://nyan-chase-online.honda19990602.workers.dev',effectiveSkillEntitlements:personal})},
   fetch:async url=>({ok:!url.endsWith('/profile'),status:url.endsWith('/profile')?401:200,
     json:async()=>active&&url.endsWith('/api/online/active')?{roomCode:active.roomCode}:active&&url.endsWith('/resume')?active:{status:'cancelled'}})};
  ctx.window=ctx;vm.runInNewContext(fs.readFileSync(require.resolve('../online.js'),'utf8'),ctx);
@@ -28,6 +30,18 @@ test('サーバー操作担当判定で待機側切断はロックせず、操�
 test('古いdefaultキャッシュでも試合のサーバープロフィールで探偵しばと相手猫を表示',async()=>{
  const t=await transport();await enter(t,'m1');t.Socket.last.emit(role());
  assert.equal(t.api.resolveAppearance('dogSkin').id,'dog_detective');assert.equal(t.api.resolveAppearance('catSkin').id,'cat_kaitou');
+});
+test('Room roleとrecovery後もCTA用の正式Skill所有は自己profile snapshotから取得する',async()=>{
+ const personal={skillModeUnlocked:true,availableSkillIds:['POLICE_HOWL'],borrowedSkillIds:[]};
+ const t=await transport({personal});await enter(t,'m1');
+ const formal={skillModeUnlocked:true,ownedSkillIds:['POLICE_DASH'],purchasedProductIds:[]};
+ t.Socket.last.emit({...role(),matchType:'roomMatch',profile:{...own(),skillEntitlements:formal},
+   effectiveSkillEntitlements:{skillModeUnlocked:true,availableSkillIds:['POLICE_DASH','CAT_FAKE_PAW'],borrowedSkillIds:['CAT_FAKE_PAW']}});
+ assert.deepEqual(t.api.getPermanentSkillEntitlements(),formal);
+ assert.deepEqual(t.api.getPersonalSkillEntitlements(),personal);
+ t.Socket.last.emit({type:'recovery',matchId:'m1',matchType:'roomMatch',role:'police',
+   profile:{...own(),skillEntitlements:formal},game:{},appearanceSnapshot:role().appearanceSnapshot});
+ assert.deepEqual(t.api.getPermanentSkillEntitlements(),formal);
 });
 test('snapshot未取得はpending、後から届いたsnapshotで再描画通知',async()=>{
  const t=await transport();await enter(t,'m1');t.Socket.last.emit({...role(),appearanceSnapshot:null});

@@ -13,7 +13,7 @@
 <title>にゃんチェイス</title>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
-<link rel="stylesheet" href="./style.css?v=2.4.room-role2">
+<link rel="stylesheet" href="./style.css?v=2.5.opponent-skill-cta">
 </head>
 <body>
 <div class="app">
@@ -1770,6 +1770,14 @@
     </div>
 
     <button class="daily-result-notice" id="dailyResultNotice" type="button" hidden></button>
+    <div class="result-opponent-skill" id="resultOpponentSkill" hidden>
+      <span class="result-opponent-skill-label">相手が使っていたスキル</span>
+      <div class="result-opponent-skill-info">
+        <img id="resultOpponentSkillIcon" alt="">
+        <strong id="resultOpponentSkillName"></strong>
+      </div>
+      <button class="btn yellow" id="resultOpponentSkillShop" type="button">ショップで見る</button>
+    </div>
     <button class="btn pink" id="againBtn">🔄 もう一度遊ぶ</button>
     <button
   class="btn secondary"
@@ -1919,23 +1927,23 @@
 <script src="./google-play-provider.js?v=1.0.phase8"></script>
 <script src="./purchase-provider.js?v=1.0.phase8"></script>
 <script src="./store-ui-model.js?v=1.0.phase7"></script>
-<script src="./storekit-ui.js?v=2.4.effective-skills"></script>
+<script src="./storekit-ui.js?v=2.5.opponent-skill-cta"></script>
 <script src="./engine.js?v=2.0.phase5"></script>
 <script src="./police-hard-ai.js?v=1.0"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./result-presentation.js?v=1"></script>
-<script src="./online-identity.js?v=1.2.effective-skills"></script>
+<script src="./online-identity.js?v=1.4.personal-skill-cta"></script>
 <script src="./debug/king-skin-play-qa-runtime-v5.js"></script>
 <script src="./online-appearance.js?v=1"></script>
-<script src="./online.js?v=3.0.room-role2"></script>
+<script src="./online.js?v=3.2.personal-skill-cta"></script>
 <script src="./online-profile-ui.js?v=1.2.bronze-default"></script>
 <script src="./rank-rewards.js?v=1.1.final-ranks"></script>
 <script src="./random-match.js?v=1.0"></script>
 <script src="./ranked-ui.js?v=1.2.bronze-default"></script>
 <script src="./ranked-stamina-ui.js?v=1.0"></script>
-<script src="./match-skill-info.js?v=2"></script>
-<script src="./game.js?v=2.4.room-role2"></script>
+<script src="./match-skill-info.js?v=2.3.personal-skill-cta"></script>
+<script src="./game.js?v=2.7.personal-skill-cta"></script>
 
 <script src="./debug/king-debug-v7.js"></script>
 <script>

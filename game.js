@@ -544,6 +544,11 @@ const resultTitle=$("resultTitle"),
       resultText=$("resultText"),
       againBtn=$("againBtn"),
       resultHomeBtn=$("resultHomeBtn");
+  const resultOpponentSkill=$("resultOpponentSkill"),
+    resultOpponentSkillIcon=$("resultOpponentSkillIcon"),
+    resultOpponentSkillName=$("resultOpponentSkillName"),
+    resultOpponentSkillShop=$("resultOpponentSkillShop");
+  let resultOpponentSkillId=null,resultOpponentShopOpening=false;
    const resultRoute=$("resultRoute"),resultRouteBoard=$("resultRouteBoard"),resultRouteNote=$("resultRouteNote");
   const settingsOverlay=$("settingsOverlay"),sfxToggleBtn=$("sfxToggleBtn"),bgmToggleBtn=$("bgmToggleBtn");
   const vibrationToggleBtn=$("vibrationToggleBtn"),sfxState=$("sfxState"),bgmState=$("bgmState");
@@ -5888,6 +5893,23 @@ if(resultRouteNote){
   }
 
   function endGame(winner,reason,officialResult=null){
+    // Capture the server-confirmed match selection before gameover hides the in-match skill UI.
+    const catalog=window.NyanSkillCatalog;
+    const opponentSkill=window.NyanMatchSkillInfo?.opponentShopSkill({
+      playMode,game,catalog,shopDefinitions:window.NyanStoreUIModel?.DEFINITIONS,
+      permanentSkillEntitlements:window.NyanOnline?.getPermanentSkillEntitlements?.(),
+      personalSkillEntitlements:window.NyanOnline?.getPersonalSkillEntitlements?.(),
+      products:window.NyanMonetizationProducts
+    });
+    const opponentPreview=opponentSkill&&window.NyanMatchSkillInfo?.resolveSkill(
+      opponentSkill.role,opponentSkill.runtimeId,catalog,window.NyanHowToSkillDescriptions);
+    resultOpponentSkillId=opponentPreview?.id||null;
+    resultOpponentShopOpening=false;
+    if(resultOpponentSkill)resultOpponentSkill.hidden=!resultOpponentSkillId;
+    if(resultOpponentSkillId){
+      resultOpponentSkillIcon.src=opponentPreview.image;
+      resultOpponentSkillName.textContent=opponentPreview.name;
+    }
     const session=window.NyanOnline?.getSession?.();
     if(officialResult)celebrateResult=window.NyanResultPresentation.shouldCelebrate({playMode,winner,session,
       winnerPlayerId:officialResult.winnerPlayerId,resultStatus:officialResult.status,finishReason:officialResult.finishReason,official:true});
@@ -9111,6 +9133,15 @@ bindPress(resultHomeBtn,()=>{
 
   // ゲーム状態を初期化してホームへ
   initGame(true);
+});
+bindPress(resultOpponentSkillShop,()=>{
+  if(resultOpponentShopOpening||!resultOpponentSkillId||!resultOverlay.classList.contains('show'))return;
+  const skillId=resultOpponentSkillId;
+  if(typeof window.NyanShopOpenSkillDetail!=='function')return;
+  resultOpponentShopOpening=true;
+  resultHomeBtn.click();
+  shopOpenBtn.click();
+  if(!window.NyanShopOpenSkillDetail(skillId))resultOpponentShopOpening=false;
 });
 bindPress(againBtn,()=>{
   // オンライン対戦終了後はホームへ戻す

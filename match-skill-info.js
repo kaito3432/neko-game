@@ -27,6 +27,42 @@
     return order.map(([side,role])=>({side,role,runtimeId:selected[role]||null}));
   }
 
+  // Durable grants are one source of personal access. Room borrowing is not.
+  function permanentlyOwnsSkill(skillId,entitlements,catalog,products){
+    if(!entitlements||typeof entitlements!=='object')return null;
+    if(entitlements.ownedSkillIds?.includes(skillId))return true;
+    const packIds=new Set(entitlements.ownedSkillPackIds||[]);
+    for(const productId of entitlements.purchasedProductIds||[]){
+      const grant=products?.PRODUCTS?.[productId]?.grants;
+      if(grant?.skillId===skillId)return true;
+      if(grant?.skillPackId)packIds.add(grant.skillPackId);
+    }
+    return [...packIds].some(id=>catalog?.SKILL_PACKS?.[id]?.skillIds?.includes(skillId));
+  }
+
+  function canPersonallyUseSkill(skillId,{permanentSkillEntitlements,personalSkillEntitlements,catalog,products}={}){
+    if(permanentlyOwnsSkill(skillId,permanentSkillEntitlements,catalog,products)===true)return true;
+    // Personal access is returned by the authenticated profile endpoint. A
+    // future pass can enter that resolver without adding a CTA-specific branch.
+    if(typeof personalSkillEntitlements?.skillModeUnlocked!=='boolean'||
+        !Array.isArray(personalSkillEntitlements.availableSkillIds))return null;
+    return personalSkillEntitlements.skillModeUnlocked&&personalSkillEntitlements.availableSkillIds.includes(skillId);
+  }
+
+  // Match availability (including Room borrowing) is deliberately not personal access.
+  function opponentShopSkill({playMode,game,catalog,shopDefinitions,permanentSkillEntitlements,personalSkillEntitlements,products}){
+    if(!['onlineCat','onlinePolice'].includes(playMode)||game?.abilitiesEnabled!==true)return null;
+    const role=playMode==='onlineCat'?'police':'cat';
+    const skillId=catalog?.fromRuntimeId?.(role,game.selectedAbilities?.[role]);
+    const skill=skillId&&catalog.SKILLS?.[skillId];
+    if(!skill||skill.free||!skill.purchaseProductId)return null;
+    if(!Array.isArray(shopDefinitions)||!shopDefinitions.some(item=>
+      item.skillId===skillId&&item.productId===skill.purchaseProductId&&
+      item.hidden!==true&&item.purchasable!==false))return null;
+    if(canPersonallyUseSkill(skillId,{permanentSkillEntitlements,personalSkillEntitlements,catalog,products})!==false)return null;
+    return skill;
+  }
+
   function mount({document,container,catalog,getDescriptions}){
     if(!document||!container||!catalog)return null;
     const layer=document.createElement('div');layer.className='match-skill-info-layer';layer.hidden=true;
@@ -105,5 +141,5 @@
     return {render,close,layer,slots};
   }
 
-  return Object.freeze({resolveSkill,selectedSlots,mount});
+  return Object.freeze({resolveSkill,selectedSlots,permanentlyOwnsSkill,canPersonallyUseSkill,opponentShopSkill,mount});
 });
