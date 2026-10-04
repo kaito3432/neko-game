@@ -9,15 +9,13 @@ const match=(matchType,host,guest,roles={host:'police',guest:'cat'})=>({
   matchType,profiles:{host,guest},roles,requiresRuleSelection:true,status:'matched'
 });
 
-test('room shares host cat purchase and unlock with locked guest without persisting rights',async()=>{
+test('room does not share Skill Mode unlock with locked guest',async()=>{
   const {sessionEvent}=await events,{resolveEffectiveSkillEntitlements:effective}=await skill;
   const host=profile(true,['CAT_FAKE_PAW']),guest=profile(false),before=structuredClone(guest);
   const room=match('roomMatch',host,guest,{host:'police',guest:'cat'});
-  assert.deepEqual(sessionEvent(room,'host',{type:'ruleSelect',rule:'ability'}),{type:'ruleSelect',rule:'ability'});
-  assert.equal(effective(room,'guest').skillModeUnlocked,true);
-  assert.ok(effective(room,'guest').borrowedSkillIds.includes('CAT_FAKE_PAW'));
-  assert.deepEqual(sessionEvent(room,'guest',{type:'abilityReady',ability:'fakePaw'}),{type:'abilityReady'});
-  assert.equal(room.approvedSkills.cat,'CAT_FAKE_PAW');
+  assert.equal(sessionEvent(room,'host',{type:'ruleSelect',rule:'ability'}).skillError,'SKILL_MODE_LOCKED');
+  assert.equal(effective(room,'guest').skillModeUnlocked,false);
+  assert.equal(room.approvedSkills,undefined);
   assert.deepEqual(guest,before);
   assert.equal(guest.skillEntitlements.skillModeUnlocked,false);
 });
@@ -60,7 +58,7 @@ test('random/ranked keeps each player personal; opponent purchase and unlock can
 
 test('room snapshot keeps borrowed selection and recovery stable after source profile changes',async()=>{
   const {sessionEvent}=await events,{publicRecovery}=await recovery;
-  const room=match('roomMatch',profile(true,['CAT_FAKE_PAW']),profile(false));
+  const room=match('roomMatch',profile(true,['CAT_FAKE_PAW']),profile(true));
   room.profiles.host.playerId='A';room.profiles.guest.playerId='B';
   sessionEvent(room,'host',{type:'ruleSelect',rule:'ability'});
   sessionEvent(room,'guest',{type:'abilityReady',ability:'fakePaw'});
@@ -70,5 +68,5 @@ test('room snapshot keeps borrowed selection and recovery stable after source pr
   assert.equal(state.skillModeAvailable,true);
   assert.equal(state.ownAbility,'fakePaw');
   assert.ok(state.effectiveSkillEntitlements.availableSkillIds.includes('CAT_FAKE_PAW'));
-  assert.deepEqual(room.profiles.guest.skillEntitlements,{skillModeUnlocked:false,ownedSkillIds:[]});
+  assert.deepEqual(room.profiles.guest.skillEntitlements,{skillModeUnlocked:true,ownedSkillIds:[]});
 });

@@ -34,10 +34,14 @@ test('profile response and online skill UI use server-derived view without calli
   const identity=fs.readFileSync(path.join(base,'online-identity.js'),'utf8');
   const game=fs.readFileSync(path.join(base,'game.js'),'utf8');
   const shop=fs.readFileSync(path.join(base,'storekit-ui.js'),'utf8');
+  const ranked=fs.readFileSync(path.join(base,'ranked-ui.js'),'utf8');
   assert.match(worker,/effectiveSkillEntitlements:resolvePersonalEffectiveSkillEntitlements\(result\.profile\)/);
-  assert.match(identity,/new root\.CustomEvent\('nyan-online-profile',\{detail:\{profile,effectiveSkillEntitlements\}\}\)/);
+  assert.match(identity,/new root\.CustomEvent\('nyan-online-profile',\{detail:\{profile,effectiveSkillEntitlements,passSummary\}\}\)/);
   assert.match(game,/onlineEffectiveSkillEntitlements\.availableSkillIds\?\.includes\(skillId\)/);
   assert.match(game,/borrowed\?"この部屋で利用可能"/);
   assert.match(shop,/オンラインで利用可能/);
   assert.match(shop,/root\.NyanMonetization\.isSkillOwned\(skill\.id\)\?'所持済み'/);
+  assert.match(ranked,/getAuthenticatedSkillView\?\.\(\)/);
+  assert.match(ranked,/skillView\?\.playerId===profile\.playerId&&skillView\.apiBase===root\.NyanOnline\.API_BASE/);
+  assert.match(ranked,/Skill Mode：オンライン利用可能/);
 });

@@ -17,6 +17,7 @@
   </div>
   <div class="ranked-record" data-rank-record>今シーズン 0勝 0敗</div>
   <label>プロフィールフレーム<select data-rank-frame></select></label>
+  <div class="ranked-skill-access" data-rank-skill-access>Skill Mode：確認中</div>
   <div class="ranked-coins" data-rank-coins>オンライン報酬 0 にゃんコイン</div>`;
   const result=document.createElement('div');
   result.className='ranked-result-notice';
@@ -51,6 +52,13 @@
     nextCopy.textContent=nextRank?`次の${nextRank[1]}まで あと${nextRank[2]-profile.ranked.rp}RP`:'';
     panel.querySelector('[data-rank-record]').textContent=`今シーズン ${profile.ranked.seasonWins}勝 ${profile.ranked.seasonLosses}敗`;
     panel.querySelector('[data-rank-coins]').textContent=`オンライン報酬 ${profile.serverNyanCoins||0} にゃんコイン`;
+    const skillView=root.NyanOnlineIdentity.getAuthenticatedSkillView?.();
+    const access=skillView?.playerId===profile.playerId&&skillView.apiBase===root.NyanOnline.API_BASE
+      ?skillView.effectiveSkillEntitlements:null;
+    const skillStatus=panel.querySelector('[data-rank-skill-access]');
+    skillStatus.textContent=access?.skillModeUnlocked===true
+      ?`Skill Mode：オンライン利用可能（${access.availableSkillIds?.length||0}スキル）`
+      :access?'Skill Mode：未解放':'Skill Mode：サーバー確認中';
 
     const select=panel.querySelector('[data-rank-frame]');
     const owned=[...new Set(['rank_bronze',...(profile.ownedProfileFrames||[])])];

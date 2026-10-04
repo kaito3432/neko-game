@@ -4,12 +4,30 @@
   const KEY = 'nyanChaseOnlineCredentialV1';
   let active = null;
   let authenticatedSkillView = null;
-  function acceptSkillView(apiBase,{profile,effectiveSkillEntitlements}={}){
+  let authenticatedPassSummary = null;
+  async function cacheVerifiedPassSkin(profile){
+    // The authenticated server profile is the only source for this offline display cache.
+    // Local ownership is never sent back as proof of a Pass grant or online entitlement.
+    const passIds=(profile?.ownedCatSkins||[]).filter(id=>
+      root.NyanCollectionCatalog?.getItem?.('catSkin',id)?.passMonthlyReward===true);
+    if(!passIds.length)return;
+    try{
+      const local=root.NyanPlayerData.getSnapshot()||await root.NyanPlayerData.load();
+      const owned=[...new Set([...(local.ownedCatSkins||[]),...passIds])];
+      if(owned.length!==local.ownedCatSkins?.length){
+        await root.NyanPlayerData.save({...local,ownedCatSkins:owned});
+        root.dispatchEvent?.(new root.CustomEvent('nyan-player-progress-changed'));
+      }
+    }catch(_){/* Profile rendering and matchmaking must not depend on the offline cache. */}
+  }
+  async function acceptSkillView(apiBase,{profile,effectiveSkillEntitlements,passSummary}={}){
     // This is the authenticated personal view, never a Room-shared match view.
     authenticatedSkillView=profile?.playerId&&effectiveSkillEntitlements
       ?{playerId:profile.playerId,apiBase,effectiveSkillEntitlements}:null;
+    authenticatedPassSummary=profile?.playerId&&passSummary?passSummary:null;
+    await cacheVerifiedPassSkin(profile);
     if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function')
-      root.dispatchEvent(new root.CustomEvent('nyan-online-profile',{detail:{profile,effectiveSkillEntitlements}}));
+      root.dispatchEvent(new root.CustomEvent('nyan-online-profile',{detail:{profile,effectiveSkillEntitlements,passSummary}}));
   }
   async function request(apiBase,path,body,method='POST'){
     const headers=savedHeaders();if(!headers)throw new Error('online_credential_missing');
@@ -51,12 +69,12 @@
       await post('register', {playerId: local.playerId, ownedCatSkins: local.ownedCatSkins,
         ownedDogSkins: local.ownedDogSkins, equippedAppearance: local.equippedAppearance});
       await root.NyanCpuUnlockSync.flush(root.NyanPlayerData,body=>post('cpu-unlock',body));
-      const {profile,effectiveSkillEntitlements} = await post('appearance', {equippedAppearance: local.equippedAppearance,
+      const {profile,effectiveSkillEntitlements,passSummary} = await post('appearance', {equippedAppearance: local.equippedAppearance,
         profileCharacter: local.profileCharacter || null,
         collectionOwnership:{ownedCatSkins:local.ownedCatSkins,ownedDogSkins:local.ownedDogSkins}});
       // Display-only, authenticated server view. Never persist this as ownership.
-      acceptSkillView(apiBase,{profile,effectiveSkillEntitlements});
-      return {headers, profile,effectiveSkillEntitlements};
+      await acceptSkillView(apiBase,{profile,effectiveSkillEntitlements,passSummary});
+      return {headers, profile,effectiveSkillEntitlements,passSummary};
     })();
     try { return await active; } finally { active = null; }
   }
@@ -65,9 +83,10 @@
   }
   async function refreshSkillView(apiBase){
     const result=await request(apiBase,'profile',null,'GET');
-    acceptSkillView(apiBase,result);
+    await acceptSkillView(apiBase,result);
     return result;
   }
   root.NyanOnlineIdentity = {prepare,request,savedHeaders,hasCredential:()=>Boolean(savedHeaders()),
-    getAuthenticatedSkillView:()=>authenticatedSkillView,refreshSkillView};
+    getAuthenticatedSkillView:()=>authenticatedSkillView,
+    getAuthenticatedPassSummary:()=>authenticatedPassSummary,refreshSkillView};
 })(globalThis);
