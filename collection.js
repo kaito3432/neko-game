@@ -90,18 +90,22 @@
     if(item?.category==="profileFrame"){
       return (kind==="profile" ? item.profileImage : item.collectionImage) || item.frameImage || item.preview;
     }
-    if(state==="unowned" && item?.acquisitionType!=="coins"){
+    if(state==="unowned" && item?.acquisitionType!=="coins" && item?.acquisitionType!=="passMonthlyReward"){
       return (kind==="profile" ? item.lockedProfileImage : (item.lockedImage||item.silhouetteImage)) || "";
     }
     return (kind==="profile" ? item.profileImage : item.collectionImage) || item.preview;
   }
 
   function usesLockedImage(item,state){
-    return item?.category!=="profileFrame" && state==="unowned" && item?.acquisitionType!=="coins";
+    return item?.category!=="profileFrame" && state==="unowned" &&
+      item?.acquisitionType!=="coins" && item?.acquisitionType!=="passMonthlyReward";
   }
 
-  function isCollectionVisible(item){
-    return item?.materialStatus!=="pending" && item?.assetStatus!=="placeholder";
+  function isCollectionVisible(item,data=null,passSummary=null,catalog=defaultCatalog){
+    if(item?.materialStatus==="pending" || item?.assetStatus==="placeholder")return false;
+    if(item?.acquisitionType!=="passMonthlyReward")return true;
+    if(data&&getItemState(data,item,catalog)!=="unowned")return true;
+    return passSummary?.currentSkinAvailable===true&&passSummary.currentSkinId===item.id;
   }
 
   function sanitizeCatalogEquipment(data,catalog=defaultCatalog){
@@ -487,7 +491,9 @@
       name.textContent=item.name;
       const badge=document.createElement("span");
       badge.className="collection-state";
-      badge.textContent=state==="equipped" ? "装備中" : state==="owned" ? "所持" : "未所持";
+      badge.textContent=item.acquisitionType==="passMonthlyReward"
+        ?`Pass限定・${state==="equipped"?"装備中":state==="owned"?"獲得済み":"未獲得"}`
+        :state==="equipped" ? "装備中" : state==="owned" ? "所持" : "未所持";
       copy.append(name,badge);
 
       const button=document.createElement("button");
@@ -514,7 +520,7 @@
       return card;
     }
 
-    function renderDetail(data,selectedItem,saving){
+    function renderDetail(data,selectedItem,saving,passSummary){
       if(!detail) return;
       if(!selectedItem){
         detail.classList.remove("show");
@@ -523,7 +529,7 @@
         return;
       }
       const item=catalog.getItem(selectedItem.categoryId,selectedItem.itemId);
-      if(!item || !isCollectionVisible(item)){
+      if(!item || !isCollectionVisible(item,data,passSummary,catalog)){
         detail.classList.remove("show");
         detail.setAttribute("aria-hidden","true");
         return;
@@ -599,7 +605,9 @@
       setText(acquisition,catalog.acquisitionLabel(item));
       setText(price,item.acquisitionType==="coins"?`🪙 ×${item.priceCoins}`:"—");
       if(localNote)localNote.hidden=!catalog.isLocalOnly(item.category);
-      setText(stateLabel,state==="equipped" ? "装備中" : state==="owned" ? "所持" : "🔒 未所持");
+      setText(stateLabel,item.acquisitionType==="passMonthlyReward"
+        ?`Pass限定・${state==="equipped"?"装備中":state==="owned"?"獲得済み":"未獲得"}`
+        :state==="equipped" ? "装備中" : state==="owned" ? "所持" : "🔒 未所持");
       if(purchaseButton){
         const purchaseValidation=validatePurchase(data,item.category,item.id,catalog);
         purchaseButton.hidden=item.acquisitionType!=="coins"||state!=="unowned";
@@ -681,6 +689,9 @@
       detail.setAttribute("aria-hidden","false");
     }
 
+    let currentPassSummary=null;
+    function setPassSummary(summary){currentPassSummary=summary||null;}
+
     function render({data,activeSection,selectedItem,saving}){
       if(!data || !content) return;
       const rankedProfile=root?.NyanRankedUI?.getProfile?.();
@@ -702,15 +713,24 @@
         group.className="collection-group";
         const heading=document.createElement("h2");
         heading.textContent=category.label;
-        const grid=document.createElement("div");
-        grid.className="collection-grid";
-        catalog.getItemsByCategory(categoryId).filter(isCollectionVisible).forEach(item=>{
-          grid.appendChild(createItemCard(item,presentedData,saving));
-        });
-        group.append(heading,grid);
+        group.append(heading);
+        const available=catalog.getItemsByCategory(categoryId)
+          .filter(item=>isCollectionVisible(item,presentedData,currentPassSummary,catalog));
+        for(const [bucket,label] of [["owned","所持済み"],["unowned","未所持"]]){
+          const items=available.filter(item=>(getItemState(presentedData,item,catalog)==="unowned")
+            ===(bucket==="unowned"));
+          const section=document.createElement("section");section.className="collection-ownership-group";
+          const title=document.createElement("h3");title.textContent=`${label} ${items.length}`;
+          const grid=document.createElement("div");grid.className="collection-grid";
+          items.forEach(item=>grid.appendChild(createItemCard(item,presentedData,saving)));
+          if(!items.length){const empty=document.createElement("p");empty.className="collection-empty";
+            empty.textContent=bucket==="owned"?"まだありません":"現在表示できるアイテムはありません";section.append(title,empty);}
+          else section.append(title,grid);
+          group.append(section);
+        }
         content.appendChild(group);
       });
-      renderDetail(presentedData,selectedItem,saving);
+      renderDetail(presentedData,selectedItem,saving,currentPassSummary);
     }
 
     function setBusy(isBusy){
@@ -723,7 +743,7 @@
       root?.setTimeout?.(()=>status?.classList.remove("show"),2600);
     }
 
-    return {render,setBusy,showError,closePurchaseConfirm};
+    return {render,setBusy,showError,closePurchaseConfirm,setPassSummary};
   }
 
   function initializeBrowser(){
@@ -752,6 +772,11 @@
       onProfile(categoryId,itemId){controller?.setProfile(categoryId,itemId);}
     });
     controller=createController({playerData,catalog,view});
+    root.addEventListener("nyan-online-profile",event=>{
+      if(!overlay.classList.contains("show"))return;
+      view.setPassSummary(event.detail?.passSummary);
+      controller.load();
+    });
     root.addEventListener("nyan-player-progress-changed",()=>{
       if(overlay.classList.contains("show") && !controller.getState().saving) controller.load();
     });
@@ -759,7 +784,15 @@
     openButton.addEventListener("click",async()=>{
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden","false");
+      view.setPassSummary(null);
       await controller.load();
+      try{
+        const base=root.NyanOnline?.API_BASE;
+        if(base&&root.NyanOnlineIdentity){
+          await root.NyanOnlineIdentity.prepare(base);
+          await root.NyanOnlineIdentity.refreshSkillView(base);
+        }
+      }catch(_){/* Offline Collection stays usable; an unverified monthly preview stays hidden. */}
     });
 
     backButton.addEventListener("click",()=>{

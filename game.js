@@ -36,11 +36,13 @@
 
   function showMoveSkinEffect(type,index,dogIndex=0){
     const category=type==="box" ? "catSkin" : "dogSkin";
-    const src=Skins.effectSource(playerAppearance(),category,"move",{playMode});
+    const appearance=playerAppearance();
+    const src=Skins.effectSource(appearance,category,"move",{playMode});
+    const scale=Skins.effectDisplayScale(appearance,category,"move",{playMode});
     const target=type==="box"
       ? board.querySelector(`.box[data-box-index="${index}"]`)
       : board.querySelectorAll(".node")[index];
-    Skins.showEffectAtElement(target,src,type==="box" ? "cat-move" : `dog-move-${dogIndex}`);
+    Skins.showEffectAtElement(target,src,type==="box" ? "cat-move" : `dog-move-${dogIndex}`,scale);
   }
 
   function showFoundFootprintSkinEffects(boxIndex){
@@ -48,7 +50,8 @@
     const data=playerAppearance();
     ["catSkin","dogSkin"].forEach(category=>{
       const src=Skins.effectSource(data,category,"found",{playMode});
-      Skins.showEffectAtElement(target,src,category==="catSkin" ? "found-cat" : "found-dog");
+      const scale=Skins.effectDisplayScale(data,category,"found",{playMode});
+      Skins.showEffectAtElement(target,src,category==="catSkin" ? "found-cat" : "found-dog",scale);
     });
   }
   window.addEventListener('nyan-online-visual-event',event=>{
@@ -56,7 +59,7 @@
     const payload=event.detail || {};
     // Cat movement is private: the police only see skin effects on found tracks.
     if(payload.type==='dogMove' && Number.isInteger(payload.node)) showMoveSkinEffect('node',payload.node,payload.dogIndex);
-    if((payload.type==='trackCount' || payload.type==='searchResult' && payload.result==='track') && Number.isInteger(payload.box)) {
+    if((payload.type==='trackCount' || payload.type==='searchResult' && (payload.result==='track'||payload.result==='capture')) && Number.isInteger(payload.box)) {
       showFoundFootprintSkinEffects(payload.box);
     }
   });

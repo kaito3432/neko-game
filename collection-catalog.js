@@ -96,6 +96,7 @@
   const MYSTERY_ROOT="./assets/images/skins/mystery01";
   const NINJA_ROOT="./assets/images/skins/ninja01";
   const MASTER_S01_KING_ROOT="./assets/images/skins/master_s01/king";
+  const PASS_STARLIGHT_ROOT="./assets/images/skins/pass_2026_11/starlight";
   const JAPANESE_COSMETIC_ROOT="./assets/images/cosmetics/japanese01";
   const RANK_FRAME_ROOT="./assets/images/rank/profile-frames";
   const CAT_NINJA_PLANNED_ASSETS=Object.freeze({
@@ -143,6 +144,19 @@
   const CAT_MASTER_S01_KING_PRESENTATION=Object.freeze({
     profileImage:`${MASTER_S01_KING_ROOT}/cat_master_king_profile_round.png`,
     pieceImage:`${MASTER_S01_KING_ROOT}/cat_master_king_piece_round.png`
+  });
+  const CAT_PASS_STARLIGHT_ASSETS=Object.freeze({
+    collectionImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_collection.png`,
+    profileImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_profile.png`,
+    pieceImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_piece.png`,
+    resultWinImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_result_win.png`,
+    resultLoseImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_result_lose.png`,
+    moveEffect:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_effect_move.png`,
+    foundFootprintEffect:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_effect_found.png`,
+    effectDisplayScale:Object.freeze({move:2,found:1.75}),
+    homeDecorImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_home_decor.png`,
+    homeCharacterImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_home_character.png`,
+    homeImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_home_character.png`
   });
   const ITEMS=Object.freeze([
     Object.freeze({
@@ -245,6 +259,13 @@
       pieceImage:CAT_MASTER_S01_KING_PRESENTATION.pieceImage,
       plannedAssets:CAT_MASTER_S01_KING_PLANNED_ASSETS
     }),
+    Object.freeze({
+      id:"cat_pass_2026_11_starlight",category:"catSkin",name:"星灯りの旅ねこ",
+      acquisitionType:"passMonthlyReward",passMonthlyReward:true,releaseMonth:"2026-11",
+      passPreviewDescription:"星明かりを道しるべに旅する、Pass限定の特別なネコ。",
+      limited:true,passExclusive:true,rarity:"Epic",materialStatus:"ready",assetStatus:"ready",
+      ...CAT_PASS_STARLIGHT_ASSETS,preview:CAT_PASS_STARLIGHT_ASSETS.collectionImage
+    }),
     Object.freeze({id:"dog_master_reward_pending",category:"dogSkin",name:"マスター限定柴犬スキン（3匹セット）",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
     ...["bronze","silver","gold","platinum","diamond","master"].map((rank,index)=>Object.freeze({
       id:`rank_${rank}`,category:"profileFrame",rank,
@@ -278,6 +299,7 @@
 
   function acquisitionLabel(item){
     if(item?.acquisitionType==="coins")return "にゃんコイン";
+    if(item?.acquisitionType==="passMonthlyReward")return "Pass加入で獲得";
     if(item?.acquisitionType==="masterRankReward")return "ランク報酬（マスター限定）";
     if(item?.acquisitionType==="rankReward")return "ランク報酬";
     if(item?.acquisitionType==="achievement")return "プレイ実績";

@@ -96,7 +96,7 @@ test("pendingまたはplaceholder素材はCollection一覧から除外する",()
   assert.equal(Collection.isCollectionVisible({materialStatus:"ready",assetStatus:"placeholder"}),false);
   assert.equal(Collection.isCollectionVisible({materialStatus:"ready",assetStatus:"ready"}),true);
   const source=fs.readFileSync(path.resolve(__dirname,"..","collection.js"),"utf8");
-  assert.match(source,/if\(!item \|\| !isCollectionVisible\(item\)\)/);
+  assert.match(source,/if\(!item \|\| !isCollectionVisible\(item,data,passSummary,catalog\)\)/);
 });
 
 test("デフォルト猫は立ち絵と盤面駒の画像を分離する",()=>{

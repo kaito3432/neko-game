@@ -356,7 +356,13 @@
     return item?.id==="default" ? null : item?.[field] || null;
   }
 
-  function showEffectAtElement(element,src,variant="move"){
+  function effectDisplayScale(data,categoryId,kind,{catalog=defaultCatalog,playMode="local"}={}){
+    const item=equippedItem(data,categoryId,catalog,!isOnlineMode(playMode));
+    const value=item?.effectDisplayScale?.[kind];
+    return Number.isFinite(value) && value>=1 && value<=2 ? value : 1;
+  }
+
+  function showEffectAtElement(element,src,variant="move",scale=1){
     const document=root?.document;
     if(!document || !element || !src) return false;
     const rect=element.getBoundingClientRect();
@@ -364,6 +370,7 @@
     if(active.length>=6) active[0].remove();
     const image=document.createElement("img");
     image.className=`skin-decorative-effect skin-effect-${variant}`;
+    image.style.setProperty('--effect-scale',String(Number.isFinite(scale)&&scale>=1&&scale<=2?scale:1));
     image.alt="";
     image.setAttribute("aria-hidden","true");
     image.style.left=`${rect.left+rect.width/2}px`;
@@ -847,7 +854,7 @@
     isOnlineMode,equippedItem,resolveCatPiece,resolveDogPiece,resolveDogCard,
     resolveCardboard,resolvePaw,resolveBoardTheme,
     resolveOutcomeImage,resolveResultImage,resolveFavorite,setImageWithFallback,
-    effectSource,showEffectAtElement,showBoardEffect,renderHomeFavorite,renderHomeBoardTheme,
+    effectSource,effectDisplayScale,showEffectAtElement,showBoardEffect,renderHomeFavorite,renderHomeBoardTheme,
     renderedHomeFavorite,preloadHomeAnimation,playHomeAnimation,
     stopHomeAnimation,isHomeAnimationPlaying,initializeHome
   });
