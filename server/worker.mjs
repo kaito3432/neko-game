@@ -10,6 +10,7 @@ import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile} from './ranked-progression.mjs';
 import {acceptVerifiedAdMobSsv,verifyStoredRewardedAd} from './rewarded-ad-verification.mjs';
 import {verifyStoreKitTransaction} from './storekit-verification.mjs';
+import {verifyApplePassStatus,passStoreConfig} from './pass-storekit.mjs';
 import {verifyGooglePlayPurchase,acknowledgeGooglePlayPurchase} from './google-play-verification.mjs';
 import {consumeRankedStamina,publicRankedStamina,withRankedStamina} from './ranked-stamina.mjs';
 import {selectRoomRoles} from './room-role-preference.mjs';
@@ -25,7 +26,17 @@ const withWinnerPlayerId=(room,result)=>{
 export class OnlinePlayers extends DurableObject {
   profileOptions(){
     const verifier=this.env.REWARDED_AD_VERIFIER;
+    let passProductId=null,passGroupId=null;
+    try{const config=passStoreConfig(this.env);passProductId=config.productId;passGroupId=config.groupId;
+      if(!this.env.APP_STORE_CONNECT_PRIVATE_KEY||!this.env.APP_STORE_CONNECT_KEY_ID||!this.env.APP_STORE_CONNECT_ISSUER_ID){passProductId=null;passGroupId=null;}
+    }catch(_){/* Pass purchase stays unavailable until formal Store configuration exists. */}
     return {masterRewardPeriods:this.env.MASTER_REWARD_PERIODS,
+      passSkinPeriods:this.env.PASS_SKIN_PERIODS,
+      environment:this.env.NYAN_ENVIRONMENT,
+      passProductId,
+      passGroupId,
+      verifyPassSubscription:signedTransaction=>verifyApplePassStatus({signedTransaction,env:this.env}),
+      refreshPassSubscription:originalTransactionId=>verifyApplePassStatus({originalTransactionId,env:this.env}),
       verifyRewardedAd:async claim=>{
         if(await verifyStoredRewardedAd(this.ctx.storage,claim))return true;
         if(!verifier)return false;
@@ -1538,7 +1549,7 @@ export default {
       const response=await players().fetch(new Request('https://players/internal/admob-ssv',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:request.url})}));
       return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
     }
-    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|stamina-coin|storekit-transaction|google-play-purchase)$/);
+    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|gifts|gift-claim|pass-storekit-transaction|pass-subscription-refresh|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|stamina-coin|storekit-transaction|google-play-purchase)$/);
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));

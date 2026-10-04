@@ -8,7 +8,8 @@ export const RANKS=Object.freeze([
 ]);
 const SEASON_COINS={silver:200,gold:400,platinum:800,diamond:1200};
 const RESET_RP={bronze:0,silver:50,gold:150,platinum:200,diamond:200,master:200};
-export const seasonId=now=>new Date(now+9*60*60*1000).toISOString().slice(0,7);
+export const gameDateKey=now=>new Date(now+9*60*60*1000).toISOString().slice(0,10);
+export const seasonId=now=>gameDateKey(now).slice(0,7);
 export const rankForRp=rp=>[...RANKS].reverse().find(r=>rp>=r.min)||RANKS[0];
 export function validateProfileFrame(profile,id=profile?.equippedProfileFrameId){
   return RANKS.some(rank=>rank.frameId===id)&&

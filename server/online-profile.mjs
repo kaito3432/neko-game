@@ -16,6 +16,12 @@ const CLIENT_COIN_SKINS=Object.freeze({
 import {applyCpuUnlockClaim} from './cpu-unlock-claims.mjs';
 import {normalizeRanked,claimSeasonReward,masterPeriods,validateProfileFrame,rankForRp} from './ranked-progression.mjs';
 import {applyVerifiedRewardedAdCompletion,normalizeServerSkillEntitlements} from './skill-entitlements.mjs';
+import {normalizePassSubscription} from './pass-subscription.mjs';
+import {PASS_MONTHLY_SKINS,passSkinPeriods,normalizePassSkinRewardsClaimed,
+  applyCurrentPassMonthlySkinReward} from './pass-monthly-skins.mjs';
+import {normalizePassLoginProgress,normalizeGiftBox,publicGiftBox,applyPassLoginGift,claimGiftReward} from './pass-gift-box.mjs';
+import {passSummary} from './pass-summary.mjs';
+import {applyVerifiedApplePass} from './pass-storekit.mjs';
 import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
 import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
 import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
@@ -33,12 +39,20 @@ export function initialProfile(input, playerId, now = Date.now()) {
   profile.equippedAppearance = validateAppearance(profile, input.equippedAppearance);
   profile.profileCharacter = validateProfileCharacter(profile, input.profileCharacter);
   profile.skillEntitlements=normalizeServerSkillEntitlements();
+  profile.passSubscription=normalizePassSubscription();
+  profile.passSkinRewardsClaimed=[];
+  profile.passLoginProgress=normalizePassLoginProgress();
+  profile.giftBox=normalizeGiftBox();
   return withRankedStamina(normalizeRanked(profile,now,{},KNOWN_REWARD_SKINS),now);
 }
 
 function normalizeOnlineProfile(profile,now,periods){
   const normalized=normalizeRanked(profile,now,periods,KNOWN_REWARD_SKINS);
-  return withRankedStamina({...normalized,skillEntitlements:normalizeServerSkillEntitlements(normalized.skillEntitlements)},now);
+  return withRankedStamina({...normalized,skillEntitlements:normalizeServerSkillEntitlements(normalized.skillEntitlements),
+    passSubscription:normalizePassSubscription(normalized.passSubscription),
+    passSkinRewardsClaimed:normalizePassSkinRewardsClaimed(normalized.passSkinRewardsClaimed),
+    passLoginProgress:normalizePassLoginProgress(normalized.passLoginProgress),
+    giftBox:normalizeGiftBox(normalized.giftBox)},now);
 }
 
 export function validateAppearance(profile, requested = {}) {
@@ -100,6 +114,16 @@ export async function applyVerifiedUnlock(profile, category, skinId, evidence, v
 export async function profileRequest(storage, request, options={}) {
   const path = new URL(request.url).pathname;
   const now=options.now??Date.now(),periods=masterPeriods(options.masterRewardPeriods);
+  const passPeriods=passSkinPeriods(options.passSkinPeriods);
+  const summarize=profile=>passSummary(profile,{now,periods:passPeriods,
+    catalog:options.passSkinCatalog||PASS_MONTHLY_SKINS,knownSkins:options.passSkinKnownSkins||SKINS,
+    passProductId:options.passProductId,passGroupId:options.passGroupId});
+  const passReward=async key=>{
+    if(!Object.keys(passPeriods).length)return null;
+    const args={storage,profileKey:key,now,periods:passPeriods,
+      catalog:options.passSkinCatalog||PASS_MONTHLY_SKINS,knownSkins:options.passSkinKnownSkins||SKINS};
+    return applyCurrentPassMonthlySkinReward(args);
+  };
   const reply = (data, status = 200) => Response.json(data, {status});
   if (path === '/register' && request.method === 'POST') {
     const input = await request.json();
@@ -119,7 +143,9 @@ export async function profileRequest(storage, request, options={}) {
       if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
       profile=normalized;
     }
-    return reply({profile});
+    const reward=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});
+    return reply({profile:gift.profile,passSummary:summarize(gift.profile),...(gift.granted?{passLoginGift:gift.reward}:{}),...(reward?.granted?{passSkinReward:{granted:true,
+      skinId:reward.skinId,monthKey:reward.monthKey}}:{})});
   }
   const token = request.headers.get('Authorization')?.replace(/^Bearer /, '');
   if (!/^[a-f0-9]{64}$/.test(token || '')) return reply({error: 'unauthorized'}, 401);
@@ -130,7 +156,46 @@ export async function profileRequest(storage, request, options={}) {
   if(JSON.stringify(normalized)!==JSON.stringify(profile))await storage.put(key,normalized);
   if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
   profile=normalized;
-  if (path === '/profile' && request.method === 'GET') return reply({profile:{...profile,rankedStamina:publicRankedStamina(profile,now),disconnectStats:await storage.get(`disconnectStats:${profile.playerId}`)||{totalDisconnectForfeits:0,recentDisconnects:[]}}});
+  if (path === '/profile' && request.method === 'GET') {
+    const reward=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});profile=gift.profile;
+    return reply({profile:{...profile,rankedStamina:publicRankedStamina(profile,now),disconnectStats:await storage.get(`disconnectStats:${profile.playerId}`)||{totalDisconnectForfeits:0,recentDisconnects:[]}},passSummary:summarize(profile),
+      ...(gift.granted?{passLoginGift:gift.reward}:{}),
+      ...(reward?.granted?{passSkinReward:{granted:true,skinId:reward.skinId,monthKey:reward.monthKey}}:{})});
+  }
+  if(path==='/gifts'&&request.method==='GET')return reply({giftBox:publicGiftBox(profile,now),passSummary:summarize(profile),
+    passLoginProgress:profile.passLoginProgress});
+  if(path==='/gift-claim'&&request.method==='POST'){
+    try{
+      const {rewardId}=await request.json(),result=await claimGiftReward({storage,profileKey:key,rewardId,now});
+      return reply({reward:result.reward,giftBox:publicGiftBox(result.profile,now),passSummary:summarize(result.profile),
+        profile:{...result.profile,rankedStamina:publicRankedStamina(result.profile,now)}});
+    }catch(error){const code=error?.message||'gift_claim_failed';
+      return reply({error:code},code==='gift_not_found'?404:code==='gift_already_claimed'||code==='gift_expired'?409:400);}
+  }
+  if((path==='/pass-storekit-transaction'&&request.method==='POST')||
+      (path==='/pass-subscription-refresh'&&request.method==='GET')){
+    try{
+      const receipt=path==='/pass-storekit-transaction'
+        ?await options.verifyPassSubscription?.((await request.json()).signedTransaction)
+        :await (async()=>{
+          const sidecar=await storage.get(`pass-store:${profile.playerId}`);
+          return sidecar?.originalTransactionId
+            ?options.refreshPassSubscription?.(sidecar.originalTransactionId):null;
+        })();
+      if(!receipt){
+        if(path==='/pass-storekit-transaction')throw new Error('pass_verification_unavailable');
+        return reply({profile,passSummary:summarize(profile),refreshed:false});
+      }
+      const applied=await applyVerifiedApplePass({storage,profileKey:key,profile,receipt,now});
+      const skin=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});
+      const current=gift.profile;
+      return reply({profile:current,passSummary:summarize(current),receipt:{productId:receipt.productId,
+        periodId:receipt.periodId,environment:receipt.environment},duplicate:applied.duplicate,
+        ...(skin?.granted?{passSkinReward:{granted:true,skinId:skin.skinId,monthKey:skin.monthKey}}:{}),
+        ...(gift.granted?{passLoginGift:gift.reward}:{})});
+    }catch(error){const code=error?.message||'pass_verification_failed';
+      return reply({error:code},code.includes('unavailable')||code.includes('not_configured')?503:403);}
+  }
   if(path==='/cpu-unlock' && request.method==='POST'){
     try{
       const input=await request.json();
@@ -150,7 +215,7 @@ export async function profileRequest(storage, request, options={}) {
     if (Object.hasOwn(input, 'profileCharacter'))
       profile.profileCharacter = validateProfileCharacter(profile, input.profileCharacter);
     await storage.put(key, profile);
-    return reply({profile});
+    return reply({profile,passSummary:summarize(profile)});
   }
   if(path==='/rewarded-ad-completion'&&request.method==='POST'){
     try{

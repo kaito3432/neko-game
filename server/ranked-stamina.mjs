@@ -13,7 +13,9 @@ export const serverDateKey=now=>new Date(now).toISOString().slice(0,10);
 export function normalizeRankedStamina(value,now=Date.now()){
   const source=value&&typeof value==='object'?value:{};
   const hasSaved=Number.isFinite(Number(source.lastRecoveryAt));
-  let stamina=Number.isFinite(Number(source.stamina))?Math.max(0,Math.min(RANKED_STAMINA_CONFIG.MAX_STAMINA,Math.floor(Number(source.stamina)))):RANKED_STAMINA_CONFIG.MAX_STAMINA;
+  // Gift Box grants may exceed the natural-recovery cap. Only recovery, coin and
+  // ad purchases are capped at MAX_STAMINA; normalization must preserve bonuses.
+  let stamina=Number.isFinite(Number(source.stamina))?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(Number(source.stamina)))):RANKED_STAMINA_CONFIG.MAX_STAMINA;
   let lastRecoveryAt=hasSaved?Number(source.lastRecoveryAt):now;
   if(lastRecoveryAt>now)lastRecoveryAt=now;
   if(stamina<RANKED_STAMINA_CONFIG.MAX_STAMINA){

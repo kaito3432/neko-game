@@ -10,6 +10,7 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "loadProducts", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "currentEntitlements", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "finishTransaction", returnType: CAPPluginReturnPromise)
     ]
     private var updatesTask: Task<Void, Never>?
@@ -30,9 +31,17 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         Task {
             do {
                 let products = try await Product.products(for: ids)
-                call.resolve(["products": products.map { product in
-                    ["productId": product.id, "displayName": product.displayName, "description": product.description,
-                     "displayPrice": product.displayPrice, "productType": String(describing: product.type)]
+                call.resolve(["products": products.map { product -> [String: Any] in
+                    var item: [String: Any] = ["productId": product.id, "displayName": product.displayName,
+                        "description": product.description, "displayPrice": product.displayPrice,
+                        "currencyCode": product.priceFormatStyle.currencyCode,
+                        "productType": String(describing: product.type)]
+                    if let subscription = product.subscription {
+                        let period = subscription.subscriptionPeriod
+                        item["subscriptionGroupId"] = subscription.subscriptionGroupID
+                        item["subscriptionPeriod"] = ["unit": String(describing: period.unit), "value": period.value]
+                    }
+                    return item
                 }])
             } catch { call.reject("PRODUCT_LOAD_FAILED", error.localizedDescription, error) }
         }
@@ -69,6 +78,19 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
                 }
                 call.resolve(["transactions": transactions])
             } catch { call.reject("RESTORE_FAILED", error.localizedDescription, error) }
+        }
+    }
+
+    @objc func currentEntitlements(_ call: CAPPluginCall) {
+        let ids = Set(call.getArray("productIds", String.self) ?? [])
+        Task {
+            var transactions: [[String: Any]] = []
+            for await result in Transaction.currentEntitlements {
+                if case .verified(let transaction) = result, ids.isEmpty || ids.contains(transaction.productID) {
+                    transactions.append(transactionPayload(result, transaction: transaction))
+                }
+            }
+            call.resolve(["transactions": transactions])
         }
     }
 
