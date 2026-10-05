@@ -10,6 +10,7 @@ import java.util.*;
 public class NyanGooglePlayPlugin extends Plugin implements PurchasesUpdatedListener {
     private BillingClient billingClient;
     private final Map<String, ProductDetails> products = new HashMap<>();
+    private final Map<String, ProductDetails> subscriptionProducts = new HashMap<>();
     private PluginCall pendingPurchase;
 
     @Override public void load() {
@@ -68,6 +69,59 @@ public class NyanGooglePlayPlugin extends Plugin implements PurchasesUpdatedList
         if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) { pendingPurchase = null; call.reject("purchase_launch_failed", String.valueOf(result.getResponseCode())); }
     }
 
+    @PluginMethod public void loadSubscriptionProducts(PluginCall call) {
+        JSArray ids=call.getArray("productIds",new JSArray());
+        List<QueryProductDetailsParams.Product> requested=new ArrayList<>();
+        try {
+            for(Object value:ids.toList())requested.add(QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(String.valueOf(value)).setProductType(BillingClient.ProductType.SUBS).build());
+        } catch(org.json.JSONException error){call.reject("invalid_product_ids",error);return;}
+        if(requested.isEmpty()){call.reject("invalid_product_ids");return;}
+        ready(call,()->billingClient.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder()
+            .setProductList(requested).build(),(result,detailsResult)->{
+            if(result.getResponseCode()!=BillingClient.BillingResponseCode.OK){call.reject("subscription_query_failed",String.valueOf(result.getResponseCode()));return;}
+            JSArray list=new JSArray();subscriptionProducts.clear();
+            for(ProductDetails detail:detailsResult.getProductDetailsList()){
+                subscriptionProducts.put(detail.getProductId(),detail);
+                if(detail.getSubscriptionOfferDetails()==null)continue;
+                for(ProductDetails.SubscriptionOfferDetails offer:detail.getSubscriptionOfferDetails()){
+                    if(offer.getOfferId()!=null)continue; // No trials or discounts in Phase 7.
+                    List<ProductDetails.PricingPhase> phases=offer.getPricingPhases().getPricingPhaseList();
+                    if(phases.isEmpty())continue;
+                    ProductDetails.PricingPhase phase=phases.get(phases.size()-1);
+                    JSObject item=new JSObject();item.put("productId",detail.getProductId());
+                    item.put("displayName",detail.getName());item.put("description",detail.getDescription());
+                    item.put("displayPrice",phase.getFormattedPrice());
+                    item.put("currencyCode",phase.getPriceCurrencyCode());
+                    item.put("billingPeriod",phase.getBillingPeriod());
+                    item.put("basePlanId",offer.getBasePlanId());item.put("offerToken",offer.getOfferToken());
+                    list.put(item);
+                }
+            }
+            JSObject response=new JSObject();response.put("products",list);call.resolve(response);
+        }));
+    }
+
+    @PluginMethod public void purchaseSubscription(PluginCall call) {
+        String id=call.getString("productId",""),offerToken=call.getString("offerToken","");
+        String account=call.getString("obfuscatedAccountId","");
+        if(pendingPurchase!=null){call.reject("purchase_busy");return;}
+        ProductDetails detail=subscriptionProducts.get(id);
+        if(detail==null||offerToken.isEmpty()||detail.getSubscriptionOfferDetails()==null){call.reject("subscription_not_loaded");return;}
+        boolean valid=false;
+        for(ProductDetails.SubscriptionOfferDetails offer:detail.getSubscriptionOfferDetails())
+            if(offerToken.equals(offer.getOfferToken())&&offer.getOfferId()==null)valid=true;
+        if(!valid){call.reject("invalid_offer_token");return;}
+        BillingFlowParams.ProductDetailsParams product=BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(detail).setOfferToken(offerToken).build();
+        BillingFlowParams.Builder flow=BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(Collections.singletonList(product));
+        if(!account.isEmpty())flow.setObfuscatedAccountId(account);
+        pendingPurchase=call;
+        BillingResult result=billingClient.launchBillingFlow(getActivity(),flow.build());
+        if(result.getResponseCode()!=BillingClient.BillingResponseCode.OK){pendingPurchase=null;call.reject("purchase_launch_failed",String.valueOf(result.getResponseCode()));}
+    }
+
     @Override public void onPurchasesUpdated(BillingResult result, List<Purchase> purchases) {
         PluginCall call = pendingPurchase; pendingPurchase = null; if (call == null) return;
         if (result.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) { JSObject value=new JSObject();value.put("status","cancelled");call.resolve(value);return; }
@@ -76,11 +130,22 @@ public class NyanGooglePlayPlugin extends Plugin implements PurchasesUpdatedList
     }
 
     private JSObject purchaseValue(Purchase purchase) {
-        JSObject value=new JSObject(); value.put("status", purchase.getPurchaseState()==Purchase.PurchaseState.PENDING?"pending":"purchased");
+        JSObject value=new JSObject(); value.put("status", purchase.getPurchaseState()==Purchase.PurchaseState.PENDING?"pending":
+            purchase.getPurchaseState()==Purchase.PurchaseState.PURCHASED?"purchased":"unknown");
         value.put("purchaseToken", purchase.getPurchaseToken()); value.put("orderId", purchase.getOrderId()); value.put("purchaseTime", purchase.getPurchaseTime()); value.put("acknowledged", purchase.isAcknowledged());
         value.put("productId", purchase.getProducts().isEmpty()?"":purchase.getProducts().get(0));
+        JSArray ids=new JSArray();for(String id:purchase.getProducts())ids.put(id);value.put("productIds",ids);
         if (purchase.getAccountIdentifiers()!=null) value.put("obfuscatedAccountId", purchase.getAccountIdentifiers().getObfuscatedAccountId());
         return value;
+    }
+
+    @PluginMethod public void currentSubscriptions(PluginCall call) {
+        ready(call,()->billingClient.queryPurchasesAsync(QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.SUBS).build(),(result,purchases)->{
+            if(result.getResponseCode()!=BillingClient.BillingResponseCode.OK){call.reject("subscription_sync_failed",String.valueOf(result.getResponseCode()));return;}
+            JSArray list=new JSArray();for(Purchase purchase:purchases)list.put(purchaseValue(purchase));
+            JSObject value=new JSObject();value.put("purchases",list);call.resolve(value);
+        }));
     }
 
     @PluginMethod public void restorePurchases(PluginCall call) {

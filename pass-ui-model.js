@@ -17,12 +17,17 @@
     const loginCount=Math.max(0,Math.min(maxLoginCount,Number(summary.loginRewardCount)||0));
     const productId=typeof summary.productId==='string'?summary.productId:null;
     const subscriptionGroupId=typeof summary.subscriptionGroupId==='string'?summary.subscriptionGroupId:null;
-    const validProduct=storeProduct?.productId===productId&&storeProduct?.subscriptionGroupId===subscriptionGroupId&&
-      storeProduct?.subscriptionPeriod?.unit==='month'&&storeProduct?.subscriptionPeriod?.value===1&&
-      typeof storeProduct?.displayPrice==='string'&&Boolean(storeProduct.displayPrice);
+    const googleProductId=typeof summary.googleProductId==='string'?summary.googleProductId:null;
+    const googleBasePlanId=typeof summary.googleBasePlanId==='string'?summary.googleBasePlanId:null;
+    const validApple=storeProduct?.productId===productId&&storeProduct?.subscriptionGroupId===subscriptionGroupId&&
+      storeProduct?.subscriptionPeriod?.unit==='month'&&storeProduct?.subscriptionPeriod?.value===1;
+    const validGoogle=storeProduct?.productId===googleProductId&&storeProduct?.basePlanId===googleBasePlanId&&
+      storeProduct?.billingPeriod==='P1M';
+    const validProduct=(validApple||validGoogle)&&typeof storeProduct?.displayPrice==='string'&&
+      Boolean(storeProduct.displayPrice);
     return {active,expired,expiresAt:Number.isSafeInteger(summary.expiresAt)?summary.expiresAt:null,
       autoRenew:summary.autoRenew===true,periodId:summary.periodId||null,
-      productId,subscriptionGroupId,canPurchase:Boolean(validProduct),
+      productId,subscriptionGroupId,googleProductId,googleBasePlanId,canPurchase:Boolean(validProduct),
       currentMonthKey:summary.currentMonthKey||null,
       currentSkinPreview:summary.currentSkinPreview===true,
       currentSkin:item?{name:item.name,image:item.collectionImage||item.preview||null,
@@ -33,8 +38,8 @@
       nextLoginReward:active&&loginCount<maxLoginCount?Number(summary.nextLoginStaminaReward)||null:null,
       giftCount:Math.max(0,Number(summary.unclaimedPassGiftCount)||0),
       giftBadgeCount:Math.max(0,Number(summary.giftBadgeCount)||0),
-      price:validProduct?{text:`${storeProduct.displayPrice} / 月`,source:'app-store',currencyCode:storeProduct.currencyCode||null}:
-        productId?{text:'価格を取得できませんでした',source:'unavailable'}:
+      price:validProduct?{text:`${storeProduct.displayPrice} / 月`,source:validGoogle?'google-play':'app-store',currencyCode:storeProduct.currencyCode||null}:
+        productId||googleProductId?{text:'価格を取得できませんでした',source:'unavailable'}:
           {text:PRICE_DISPLAY.preview,source:PRICE_DISPLAY.source}};
   }
   return Object.freeze({fromServer,PRICE_DISPLAY});

@@ -47,7 +47,9 @@
   document.body.append(modal);
   const q=selector=>modal.querySelector(selector);
   let summary=null;
-  const store=root.NyanPassStoreKit?.provider;
+  const platform=root.Capacitor?.getPlatform?.();
+  const store=platform==='ios'?root.NyanPassStoreKit?.provider:
+    platform==='android'?root.NyanPassGooglePlay?.provider:null;
   let storeBusy=false,storeMessage='',loadedProductKey=null,productLoadPromise=null,syncedKey=null;
   const date=timestamp=>new Date(timestamp).toLocaleDateString('ja-JP',
     {timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric'});
@@ -90,18 +92,21 @@
     const join=q('[data-pass-join]');
     join.disabled=storeBusy||state.active||!state.canPurchase;
     join.textContent=storeBusy?'処理中…':state.canPurchase?'にゃんチェイスパスに加入':'にゃんチェイスパスに加入（準備中）';
-    q('[data-pass-retry]').hidden=state.canPurchase||!state.productId;
+    q('[data-pass-retry]').hidden=state.canPurchase||!(platform==='android'?state.googleProductId:state.productId);
     q('[data-pass-retry]').disabled=storeBusy;
-    q('[data-pass-restore]').disabled=storeBusy||!state.productId||!store?.isAvailable();
+    q('[data-pass-restore]').disabled=storeBusy||!(platform==='android'?state.googleProductId:state.productId)||!store?.isAvailable();
+    q('[data-pass-restore]').textContent=platform==='android'?'購入情報を再同期':'購入を復元';
     q('[data-pass-store-note]').textContent=storeMessage||(!state.canPurchase?'購入準備中。現在は加入手続きを開始できません。':'');
     q('.pass-cta').hidden=false;
     join.hidden=state.active;
     q('[data-pass-retry]').hidden=state.active||q('[data-pass-retry]').hidden;
   }
   async function loadProduct(){
-    if(!summary?.productId||!summary?.subscriptionGroupId||!store)return;
-    const key=`${summary.productId}:${summary.subscriptionGroupId}`;
-    store.configure({productId:summary.productId,groupId:summary.subscriptionGroupId});
+    const id=platform==='android'?summary?.googleProductId:summary?.productId;
+    const plan=platform==='android'?summary?.googleBasePlanId:summary?.subscriptionGroupId;
+    if(!id||!plan||!store)return;
+    const key=`${id}:${plan}`;
+    store.configure(platform==='android'?{productId:id,basePlanId:plan}:{productId:id,groupId:plan});
     if(loadedProductKey===key&&store.getProduct())return;
     if(productLoadPromise)return productLoadPromise;
     storeMessage='価格を読み込み中…';render();
@@ -155,4 +160,5 @@
   root.addEventListener('nyan-online-profile',event=>{if(event.detail?.passSummary){summary=event.detail.passSummary;render();loadProduct();}});
   root.addEventListener('nyan-gift-box-updated',event=>{if(event.detail?.passSummary){summary=event.detail.passSummary;render();}});
   root.addEventListener('nyan-pass-storekit-state',event=>{if(event.detail?.state==='verified'&&!modal.hidden)refresh();});
+  root.addEventListener('nyan-pass-google-play-state',event=>{if(event.detail?.state==='verified'&&!modal.hidden)refresh();});
 })(globalThis);

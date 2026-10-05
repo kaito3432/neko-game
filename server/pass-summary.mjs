@@ -6,7 +6,7 @@ import {SERVER_SKILLS} from './skill-entitlements.mjs';
 
 // Read-only, authenticated presentation. It grants no entitlement and never
 // accepts a client-supplied subscription or reward state.
-export function passSummary(profile,{now=Date.now(),periods={},catalog=PASS_MONTHLY_SKINS,knownSkins={},passProductId=null,passGroupId=null}={}){
+export function passSummary(profile,{now=Date.now(),periods={},catalog=PASS_MONTHLY_SKINS,knownSkins={},passProductId=null,passGroupId=null,googleProductId=null,googleBasePlanId=null}={}){
   const subscription=normalizePassSubscription(profile?.passSubscription),period=subscription.period;
   const active=isPassActive(subscription,now),monthKey=seasonId(now);
   const configured=passSkinPeriods(periods);
@@ -19,6 +19,8 @@ export function passSummary(profile,{now=Date.now(),periods={},catalog=PASS_MONT
   return {active,expired:Boolean(period&&now>=period.expiresAt),expiresAt:period?.expiresAt??null,
     productId:typeof passProductId==='string'&&passProductId?passProductId:null,
     subscriptionGroupId:typeof passGroupId==='string'&&passGroupId?passGroupId:null,
+    googleProductId:typeof googleProductId==='string'&&googleProductId?googleProductId:null,
+    googleBasePlanId:typeof googleBasePlanId==='string'&&googleBasePlanId?googleBasePlanId:null,
     autoRenew:subscription.autoRenewing,periodId:period?.id??null,currentMonthKey:monthKey,
     currentSkinPreview:false,
     currentSkinAvailable:Boolean(currentSkinId),

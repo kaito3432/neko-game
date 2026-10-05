@@ -22,6 +22,7 @@ import {PASS_MONTHLY_SKINS,passSkinPeriods,normalizePassSkinRewardsClaimed,
 import {normalizePassLoginProgress,normalizeGiftBox,publicGiftBox,applyPassLoginGift,claimGiftReward} from './pass-gift-box.mjs';
 import {passSummary} from './pass-summary.mjs';
 import {applyVerifiedApplePass} from './pass-storekit.mjs';
+import {applyVerifiedGooglePass} from './pass-google-play.mjs';
 import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
 import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
 import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
@@ -117,7 +118,8 @@ export async function profileRequest(storage, request, options={}) {
   const passPeriods=passSkinPeriods(options.passSkinPeriods);
   const summarize=profile=>passSummary(profile,{now,periods:passPeriods,
     catalog:options.passSkinCatalog||PASS_MONTHLY_SKINS,knownSkins:options.passSkinKnownSkins||SKINS,
-    passProductId:options.passProductId,passGroupId:options.passGroupId});
+    passProductId:options.passProductId,passGroupId:options.passGroupId,
+    googleProductId:options.googleProductId,googleBasePlanId:options.googleBasePlanId});
   const passReward=async key=>{
     if(!Object.keys(passPeriods).length)return null;
     const args={storage,profileKey:key,now,periods:passPeriods,
@@ -194,6 +196,26 @@ export async function profileRequest(storage, request, options={}) {
         ...(skin?.granted?{passSkinReward:{granted:true,skinId:skin.skinId,monthKey:skin.monthKey}}:{}),
         ...(gift.granted?{passLoginGift:gift.reward}:{})});
     }catch(error){const code=error?.message||'pass_verification_failed';
+      return reply({error:code},code.includes('unavailable')||code.includes('not_configured')?503:403);}
+  }
+  if(path==='/pass-google-play-purchase'&&request.method==='POST'){
+    try{
+      const {purchaseToken}=await request.json();
+      if(typeof options.verifyGooglePass!=='function')throw new Error('google_pass_verification_unavailable');
+      const rateKey=`pass-google-verify-rate:${profile.playerId}`;
+      const previousRate=await storage.get(rateKey);
+      const rate=previousRate?.until>now?previousRate:{until:now+60000,count:0};
+      if(rate.count>=30)return reply({error:'google_pass_rate_limited'},429);
+      await storage.put(rateKey,{until:rate.until,count:rate.count+1});
+      const receipt=await options.verifyGooglePass(purchaseToken);
+      const applied=await applyVerifiedGooglePass({storage,profileKey:key,profile,receipt,now});
+      const skin=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});
+      const current=gift.profile;
+      return reply({profile:current,passSummary:summarize(current),
+        receipt:{productId:receipt.productId,periodId:receipt.periodId},duplicate:applied.duplicate,
+        ...(skin?.granted?{passSkinReward:{granted:true,skinId:skin.skinId,monthKey:skin.monthKey}}:{}),
+        ...(gift.granted?{passLoginGift:gift.reward}:{})});
+    }catch(error){const code=error?.message||'google_pass_verification_failed';
       return reply({error:code},code.includes('unavailable')||code.includes('not_configured')?503:403);}
   }
   if(path==='/cpu-unlock' && request.method==='POST'){
