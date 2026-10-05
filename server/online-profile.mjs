@@ -26,6 +26,7 @@ import {applyVerifiedGooglePass} from './pass-google-play.mjs';
 import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
 import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
 import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
+import {restoreExpiredApplePassSkins,restoreExpiredGooglePassSkins} from './purchase-restore.mjs';
 import {STAMINA_REWARD_TYPE,applyVerifiedStaminaAd,withRankedStamina,recoverStaminaWithCoins,publicRankedStamina} from './ranked-stamina.mjs';
 const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 
@@ -145,6 +146,8 @@ export async function profileRequest(storage, request, options={}) {
       if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
       profile=normalized;
     }
+    try{await options.reverifyPassProfile?.(profile);profile=await storage.get(key)||profile;}
+    catch(_){/* Store outage never removes current ownership. */}
     const reward=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});
     return reply({profile:gift.profile,passSummary:summarize(gift.profile),...(gift.granted?{passLoginGift:gift.reward}:{}),...(reward?.granted?{passSkinReward:{granted:true,
       skinId:reward.skinId,monthKey:reward.monthKey}}:{})});
@@ -158,7 +161,18 @@ export async function profileRequest(storage, request, options={}) {
   if(JSON.stringify(normalized)!==JSON.stringify(profile))await storage.put(key,normalized);
   if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
   profile=normalized;
+  const isRestore=['/storekit-restore','/google-play-restore','/pass-storekit-restore',
+    '/pass-google-play-restore'].includes(path);
+  if(isRestore){
+    if(request.method!=='POST')return reply({error:'method_not_allowed'},405);
+    const rateKey=`purchase-restore-rate:${profile.playerId}`,previous=await storage.get(rateKey);
+    const rate=previous?.until>now?previous:{until:now+60000,count:0};
+    if(rate.count>=10)return reply({error:'restore_rate_limited'},429);
+    await storage.put(rateKey,{until:rate.until,count:rate.count+1});
+  }
   if (path === '/profile' && request.method === 'GET') {
+    try{await options.reverifyPassProfile?.(profile);profile=await storage.get(key)||profile;}
+    catch(_){/* Store outage never removes current ownership. */}
     const reward=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});profile=gift.profile;
     return reply({profile:{...profile,rankedStamina:publicRankedStamina(profile,now),disconnectStats:await storage.get(`disconnectStats:${profile.playerId}`)||{totalDisconnectForfeits:0,recentDisconnects:[]}},passSummary:summarize(profile),
       ...(gift.granted?{passLoginGift:gift.reward}:{}),
@@ -174,21 +188,29 @@ export async function profileRequest(storage, request, options={}) {
     }catch(error){const code=error?.message||'gift_claim_failed';
       return reply({error:code},code==='gift_not_found'?404:code==='gift_already_claimed'||code==='gift_expired'?409:400);}
   }
-  if((path==='/pass-storekit-transaction'&&request.method==='POST')||
+  if((['/pass-storekit-transaction','/pass-storekit-restore'].includes(path)&&request.method==='POST')||
       (path==='/pass-subscription-refresh'&&request.method==='GET')){
     try{
-      const receipt=path==='/pass-storekit-transaction'
-        ?await options.verifyPassSubscription?.((await request.json()).signedTransaction)
+      const receipt=path!=='/pass-subscription-refresh'
+        ?await options.verifyPassSubscription?.((await request.json()).signedTransaction,
+          {restore:path==='/pass-storekit-restore'})
         :await (async()=>{
           const sidecar=await storage.get(`pass-store:${profile.playerId}`);
           return sidecar?.originalTransactionId
             ?options.refreshPassSubscription?.(sidecar.originalTransactionId):null;
         })();
       if(!receipt){
-        if(path==='/pass-storekit-transaction')throw new Error('pass_verification_unavailable');
+        if(path!=='/pass-subscription-refresh')throw new Error('pass_verification_unavailable');
         return reply({profile,passSummary:summarize(profile),refreshed:false});
       }
-      const applied=await applyVerifiedApplePass({storage,profileKey:key,profile,receipt,now});
+      if(path==='/pass-storekit-restore'&&receipt.expiresAt<=now){
+        const restored=await restoreExpiredApplePassSkins({storage,profileKey:key,profile,receipt,now,
+          setAccountToken:options.setAppleAppAccountToken});
+        return reply({profile:restored.profile,passSummary:summarize(restored.profile),
+          restoredSkins:restored.restoredSkins,active:false});
+      }
+      const applied=await applyVerifiedApplePass({storage,profileKey:key,profile,receipt,now,
+        restore:path==='/pass-storekit-restore',setAccountToken:options.setAppleAppAccountToken});
       const skin=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});
       const current=gift.profile;
       return reply({profile:current,passSummary:summarize(current),receipt:{productId:receipt.productId,
@@ -198,7 +220,7 @@ export async function profileRequest(storage, request, options={}) {
     }catch(error){const code=error?.message||'pass_verification_failed';
       return reply({error:code},code.includes('unavailable')||code.includes('not_configured')?503:403);}
   }
-  if(path==='/pass-google-play-purchase'&&request.method==='POST'){
+  if(['/pass-google-play-purchase','/pass-google-play-restore'].includes(path)&&request.method==='POST'){
     try{
       const {purchaseToken}=await request.json();
       if(typeof options.verifyGooglePass!=='function')throw new Error('google_pass_verification_unavailable');
@@ -207,8 +229,20 @@ export async function profileRequest(storage, request, options={}) {
       const rate=previousRate?.until>now?previousRate:{until:now+60000,count:0};
       if(rate.count>=30)return reply({error:'google_pass_rate_limited'},429);
       await storage.put(rateKey,{until:rate.until,count:rate.count+1});
-      const receipt=await options.verifyGooglePass(purchaseToken);
-      const applied=await applyVerifiedGooglePass({storage,profileKey:key,profile,receipt,now});
+      let receipt;
+      try{receipt=await options.verifyGooglePass(purchaseToken);}
+      catch(error){
+        if(path!=='/pass-google-play-restore'||error?.message!=='google_pass_status_not_verified'||
+            typeof options.verifyGoogleExpiredPass!=='function')throw error;
+        receipt=await options.verifyGoogleExpiredPass(purchaseToken);
+      }
+      if(receipt.expired===true){
+        const restored=await restoreExpiredGooglePassSkins({storage,profileKey:key,profile,receipt,now});
+        return reply({profile:restored.profile,passSummary:summarize(restored.profile),
+          restoredSkins:restored.restoredSkins,active:false});
+      }
+      const applied=await applyVerifiedGooglePass({storage,profileKey:key,profile,receipt,now,
+        restore:path==='/pass-google-play-restore'});
       const skin=await passReward(key),gift=await applyPassLoginGift({storage,profileKey:key,now});
       const current=gift.profile;
       return reply({profile:current,passSummary:summarize(current),
@@ -273,13 +307,18 @@ export async function profileRequest(storage, request, options={}) {
     try{return reply(await createRewardedAdAttempt(storage,profile,(await request.json()).rewardType,now));}
     catch(error){return reply({error:error?.message||'invalid_reward_attempt'},400);}
   }
-  if(path==='/storekit-transaction'&&request.method==='POST'){
-    try{const result=await applyVerifiedStoreTransaction({storage,profileKey:key,profile,signedTransaction:(await request.json()).signedTransaction,verify:options.verifyStoreTransaction});
+  if(['/storekit-transaction','/storekit-restore'].includes(path)&&request.method==='POST'){
+    try{const result=await applyVerifiedStoreTransaction({storage,profileKey:key,profile,signedTransaction:(await request.json()).signedTransaction,
+      verify:signed=>options.verifyStoreTransaction?.(signed,{restore:path==='/storekit-restore'}),
+      restore:path==='/storekit-restore',
+      setAccountToken:options.setAppleAppAccountToken});
       return reply({profile:result.profile,transaction:result.receipt,duplicate:result.duplicate});}
     catch(error){const code=error?.message||'invalid_store_transaction';return reply({error:code},code.includes('unavailable')?503:403);}
   }
-  if(path==='/google-play-purchase'&&request.method==='POST'){
-    try{const input=await request.json(),result=await applyVerifiedGooglePlayPurchase({storage,profileKey:key,profile,purchaseToken:input.purchaseToken,productId:input.productId,verify:options.verifyGooglePlayPurchase,acknowledge:options.acknowledgeGooglePlayPurchase});
+  if(['/google-play-purchase','/google-play-restore'].includes(path)&&request.method==='POST'){
+    try{const input=await request.json(),result=await applyVerifiedGooglePlayPurchase({storage,profileKey:key,profile,purchaseToken:input.purchaseToken,productId:input.productId,
+      verify:options.verifyGooglePlayPurchase,acknowledge:options.acknowledgeGooglePlayPurchase,
+      restore:path==='/google-play-restore'});
       return reply({profile:result.profile,purchase:result.receipt,duplicate:result.duplicate});}
     catch(error){const code=error?.message||'invalid_google_play_purchase';return reply({error:code},code.includes('unavailable')?503:403);}
   }

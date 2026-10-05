@@ -4,7 +4,9 @@
   "name": "nyan-chase-online",
   "main": "worker.mjs",
   "compatibility_date": "2026-08-16",
+  "triggers": {"crons": ["0 * * * *"]},
   "vars": {
+    "NYAN_ENVIRONMENT": "production",
     "MASTER_REWARD_PERIODS": "{\"2026-09\":\"cat_master_s01_king\"}"
   },
 

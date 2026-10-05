@@ -3,8 +3,10 @@
   "name": "nyan-chase-online-sandbox",
   "main": "worker.mjs",
   "compatibility_date": "2026-08-16",
+  "triggers": {"crons": ["0 * * * *"]},
   "workers_dev": true,
   "vars": {
+    "NYAN_ENVIRONMENT": "sandbox",
     "MASTER_REWARD_PERIODS": "{\"2026-09\":\"cat_master_s01_king\"}"
   },
   "durable_objects": {

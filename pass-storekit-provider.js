@@ -30,9 +30,9 @@
         return {product,reason:product?null:'product_unavailable'};
       }catch(error){product=null;emit('error');return {product:null,reason:'product_load_failed'};}
     }
-    async function submit(transaction){
+    async function submit(transaction,restore=false){
       if(transaction?.productId!==productId||!transaction?.signedTransaction)throw new Error('invalid_pass_transaction');
-      const verified=await api.verifyTransaction(transaction.signedTransaction);
+      const verified=await api.verifyTransaction(transaction.signedTransaction,{restore});
       await plugin.finishTransaction({transactionId:transaction.transactionId});
       return verified;
     }
@@ -61,7 +61,7 @@
         await api.identity();
         const result=await plugin.restorePurchases();
         const transactions=(result.transactions||[]).filter(t=>t.productId===productId);
-        for(const transaction of transactions)await submit(transaction);
+        for(const transaction of transactions)await submit(transaction,true);
         const refreshed=await api.refresh();
         emit('verified',{verified:refreshed});
         return {restored:true,count:transactions.length,verified:refreshed};
@@ -93,8 +93,8 @@
     const base=()=>root.NyanOnline.API_BASE;
     return {
       async identity(){const result=await root.NyanOnlineIdentity.prepare(base());return {playerId:result.profile.playerId};},
-      async verifyTransaction(signedTransaction){
-        await root.NyanOnlineIdentity.request(base(),'pass-storekit-transaction',{signedTransaction});
+      async verifyTransaction(signedTransaction,{restore=false}={}){
+        await root.NyanOnlineIdentity.request(base(),restore?'pass-storekit-restore':'pass-storekit-transaction',{signedTransaction});
         return root.NyanOnlineIdentity.refreshSkillView(base());
       },
       async refresh(){

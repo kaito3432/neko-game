@@ -1,5 +1,6 @@
 import {createAppStoreServerToken,decodeStoreKitJws} from './storekit-verification.mjs';
 import {normalizePassSubscription} from './pass-subscription.mjs';
+import {restoreRetainedPassSkins} from './purchase-restore.mjs';
 
 const APPLE_BASE={sandbox:'https://api.storekit-sandbox.apple.com',production:'https://api.storekit.apple.com'};
 const numericId=value=>/^[0-9]+$/.test(String(value||''));
@@ -15,7 +16,8 @@ export function passStoreConfig(env={}){
 
 // The client JWS supplies only a lookup key. Entitlement fields are read from
 // Apple's authenticated Server API response, never from the client JWS payload.
-export async function verifyApplePassStatus({signedTransaction,originalTransactionId,env={},fetchFn=fetch,now=Date.now()}={}){
+export async function verifyApplePassStatus({signedTransaction,originalTransactionId,env={},fetchFn=fetch,
+  now=Date.now(),restoreProof=false}={}){
   const config=passStoreConfig(env),expected=config.environment==='sandbox'?'Sandbox':'Production';
   const claim=signedTransaction?decodeStoreKitJws(signedTransaction):null;
   if(claim&&(claim.productId!==config.productId||claim.environment!==expected||!numericId(claim.transactionId)))
@@ -31,6 +33,8 @@ export async function verifyApplePassStatus({signedTransaction,originalTransacti
   const entries=(Array.isArray(body.data)?body.data:[])
     .filter(group=>String(group.subscriptionGroupIdentifier)===config.groupId)
     .flatMap(group=>Array.isArray(group.lastTransactions)?group.lastTransactions:[]);
+  if(restoreProof&&(!signedTransaction||!entries.some(entry=>entry.signedTransactionInfo===signedTransaction)))
+    throw new Error('pass_restore_proof_mismatch');
   const candidates=[];
   for(const entry of entries){
     try{
@@ -39,6 +43,7 @@ export async function verifyApplePassStatus({signedTransaction,originalTransacti
       const original=String(transaction.originalTransactionId||'');
       if(transaction.productId!==config.productId||transaction.bundleId!==config.bundleId||
           transaction.environment!==expected||!numericId(transaction.transactionId)||!numericId(original)||
+          transaction.inAppOwnershipType==='FAMILY_SHARED'||
           (claim&&String(claim.originalTransactionId)!==original)||
           (originalTransactionId&&String(originalTransactionId)!==original)||
           (renewal&&(String(renewal.originalTransactionId)!==original||renewal.environment!==expected||
@@ -46,14 +51,18 @@ export async function verifyApplePassStatus({signedTransaction,originalTransacti
       const startsAt=timestamp(transaction.purchaseDate),appleExpiresAt=timestamp(transaction.expiresDate);
       if(!startsAt||!appleExpiresAt||appleExpiresAt<=startsAt)continue;
       const status=Number(entry.status),revoked=Boolean(transaction.revocationDate);
-      const expiresAt=status===1&&!revoked?appleExpiresAt:
+      const graceUntil=timestamp(renewal?.gracePeriodExpiresDate);
+      const eligible=status===1||status===4&&graceUntil&&graceUntil>now;
+      const expiresAt=eligible&&!revoked?Math.max(appleExpiresAt,graceUntil||0):
         Math.max(startsAt+1,Math.min(appleExpiresAt,timestamp(transaction.revocationDate)||now,now));
       if(expiresAt<=startsAt)continue;
       candidates.push({store:'app_store',environment:config.environment,productId:config.productId,
         groupId:config.groupId,originalTransactionId:original,transactionId:String(transaction.transactionId),
         appAccountToken:transaction.appAccountToken||renewal?.appAccountToken||null,
         startsAt,expiresAt,appleExpiresAt,autoRenewing:status===1&&!revoked&&Number(renewal?.autoRenewStatus)===1,
-        status,verifiedAt:now,periodId:`apple:${transaction.transactionId}`});
+        status,revoked,revokedAt:timestamp(transaction.revocationDate),
+        revokeReason:transaction.revocationReason||null,
+        verifiedAt:now,periodId:`apple:${transaction.transactionId}`});
     }catch(_){/* Malformed Apple status entry is not eligible. */}
   }
   candidates.sort((a,b)=>b.startsAt-a.startsAt||b.appleExpiresAt-a.appleExpiresAt);
@@ -61,19 +70,34 @@ export async function verifyApplePassStatus({signedTransaction,originalTransacti
   return candidates[0];
 }
 
-export async function applyVerifiedApplePass({storage,profileKey,profile,receipt,now=Date.now()}={}){
+export async function applyVerifiedApplePass({storage,profileKey,profile,receipt,now=Date.now(),
+  restore=false,setAccountToken}={}){
   if(!receipt||receipt.store!=='app_store'||!numericId(receipt.originalTransactionId)||
       !numericId(receipt.transactionId)||!Number.isSafeInteger(receipt.expiresAt)||
       !Number.isSafeInteger(receipt.startsAt)||receipt.expiresAt<=receipt.startsAt)
     throw new Error('pass_subscription_not_verified');
   const expectedToken=String(profile?.playerId||'').replace(/^op_/,'').toLowerCase();
-  if(!expectedToken||String(receipt.appAccountToken||'').toLowerCase()!==expectedToken)
-    throw new Error('pass_account_mismatch');
   const bindingKey=`pass-original:${receipt.environment}:${receipt.originalTransactionId}`;
   const sidecarKey=`pass-store:${profile.playerId}`;
+  const prior=await storage.get(bindingKey),deleted=prior?.state==='deleted';
+  if(prior?.status==='revoked')throw new Error('pass_purchase_revoked');
+  const pending=prior?.state==='pending'&&prior.pendingPlayerId===profile.playerId;
+  if(!expectedToken||String(receipt.appAccountToken||'').toLowerCase()!==expectedToken&&!deleted&&!pending)
+    throw new Error('pass_account_mismatch');
+  if(deleted||pending){
+    if(!restore||typeof setAccountToken!=='function'||prior.store!=='app_store'||
+        prior.productId!==receipt.productId||receipt.expiresAt<=now)
+      throw new Error('pass_restore_not_allowed');
+    if(deleted)await storage.put(bindingKey,{...prior,state:'pending',pendingPlayerId:profile.playerId});
+    try{await setAccountToken(receipt,profile.playerId);}
+    catch(error){if(deleted)await storage.put(bindingKey,prior);throw error;}
+  }
   const apply=async tx=>{
     const bound=await tx.get(bindingKey);
-    if(bound&&bound.playerId!==profile.playerId)throw new Error('pass_subscription_bound_to_other_player');
+    if(bound?.state==='pending'&&bound.pendingPlayerId!==profile.playerId)
+      throw new Error('pass_subscription_bound_to_other_player');
+    if(bound&&bound.state!=='pending'&&bound.playerId!==profile.playerId)
+      throw new Error('pass_subscription_bound_to_other_player');
     const current=await tx.get(profileKey)||profile,previous=normalizePassSubscription(current.passSubscription);
     const previousSidecar=await tx.get(sidecarKey);
     if(previousSidecar?.originalTransactionId&&previousSidecar.originalTransactionId!==receipt.originalTransactionId)
@@ -85,11 +109,17 @@ export async function applyVerifiedApplePass({storage,profileKey,profile,receipt
       period:{id:receipt.periodId,startsAt:receipt.startsAt,expiresAt:receipt.expiresAt},
       verifiedAt:now,autoRenewing:receipt.autoRenewing});
     if(!subscription.period)throw new Error('invalid_pass_period');
-    const next={...current,passSubscription:subscription};
+    const next=bound?.state==='pending'
+      ?restoreRetainedPassSkins({...current,passSubscription:subscription},{...bound,state:'bound'},now)
+      :{...current,passSubscription:subscription};
     const sidecar={playerId:profile.playerId,environment:receipt.environment,productId:receipt.productId,
       subscriptionGroupId:receipt.groupId,originalTransactionId:receipt.originalTransactionId,
       lastTransactionId:receipt.transactionId,verifiedAt:now};
-    await tx.put({[profileKey]:next,[bindingKey]:{playerId:profile.playerId},[sidecarKey]:sidecar});
+    await tx.put({[profileKey]:next,[bindingKey]:bound?.state==='pending'
+      ?{...bound,state:'bound',pendingPlayerId:null,playerId:profile.playerId,updatedAt:now,
+        periodIds:[...new Set([...(bound.periodIds||[]),receipt.periodId])]}
+      :{playerId:profile.playerId,store:'app_store',productId:receipt.productId,
+        periodIds:[...new Set([...(bound?.periodIds||[]),receipt.periodId])]},[sidecarKey]:sidecar});
     return {profile:next,receipt,duplicate:Boolean(bound&&previous.period?.id===receipt.periodId&&
       previous.period.expiresAt===receipt.expiresAt&&previous.autoRenewing===receipt.autoRenewing),stale:false};
   };

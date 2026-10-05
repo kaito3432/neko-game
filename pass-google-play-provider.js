@@ -24,10 +24,10 @@
         return {product,reason:product?null:'product_unavailable'};
       }catch(_){product=null;emit('error');return {product:null,reason:'product_load_failed'};}
     }
-    async function submit(purchase){
+    async function submit(purchase,restore=false){
       if(!purchase?.purchaseToken||!purchase.productIds?.includes(productId))
         throw new Error('invalid_pass_purchase');
-      const verified=await api.verifyPurchase(purchase.purchaseToken);
+      const verified=await api.verifyPurchase(purchase.purchaseToken,{restore});
       if(!purchase.acknowledged)await plugin.acknowledgePurchase({purchaseToken:purchase.purchaseToken});
       return verified;
     }
@@ -46,7 +46,7 @@
       }catch(_){emit('error');return {purchased:false,reason:'verification_failed'};}
       finally{busy=false;}
     }
-    async function syncCurrent(){
+    async function syncCurrent(restore=false){
       if(busy||!plugin||!api||!productId)return {synced:false,reason:'unavailable'};
       busy=true;emit('syncing');
       try{
@@ -54,13 +54,13 @@
         const result=await plugin.currentSubscriptions();
         const purchases=(result.purchases||[]).filter(item=>item.status==='purchased'&&
           item.productIds?.includes(productId));
-        for(const purchase of purchases)await submit(purchase);
+        for(const purchase of purchases)await submit(purchase,restore);
         const verified=await api.refresh();emit('verified',{verified});
         return {synced:true,count:purchases.length,verified};
       }catch(_){emit('error');return {synced:false,reason:'sync_failed'};}
       finally{busy=false;}
     }
-    async function restore(){const result=await syncCurrent();return {...result,restored:result.synced};}
+    async function restore(){const result=await syncCurrent(true);return {...result,restored:result.synced};}
     return Object.freeze({configure,loadProduct,purchase,restore,syncCurrent,
       getProduct:()=>product&&{...product},isBusy:()=>busy,isAvailable:()=>Boolean(plugin)});
   }
@@ -68,8 +68,8 @@
     const base=()=>root.NyanOnline.API_BASE;
     return {
       async identity(){const result=await root.NyanOnlineIdentity.prepare(base());return {playerId:result.profile.playerId};},
-      async verifyPurchase(purchaseToken){
-        await root.NyanOnlineIdentity.request(base(),'pass-google-play-purchase',{purchaseToken});
+      async verifyPurchase(purchaseToken,{restore=false}={}){
+        await root.NyanOnlineIdentity.request(base(),restore?'pass-google-play-restore':'pass-google-play-purchase',{purchaseToken});
         return root.NyanOnlineIdentity.refreshSkillView(base());
       },
       async refresh(){return root.NyanOnlineIdentity.refreshSkillView(base());}

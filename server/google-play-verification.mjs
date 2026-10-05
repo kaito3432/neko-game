@@ -28,15 +28,64 @@ export async function verifyGooglePlayPurchase({purchaseToken,productId},{env={}
     acknowledgementState:purchase.acknowledgementState||null,obfuscatedExternalAccountId:purchase.obfuscatedExternalAccountId||null,packageName,accessToken};
 }
 
+export async function verifyGooglePurchaseLifecycle({purchaseToken,productId},{env={},fetchFn=fetch,now=Date.now()}={}){
+  if(!STORE_PRODUCT_IDS.includes(productId)||typeof purchaseToken!=='string'||purchaseToken.length<8)
+    throw new Error('invalid_google_play_purchase');
+  const accessToken=await createGoogleServiceAccountToken(env,{fetchFn,now});
+  const packageName=env.GOOGLE_PLAY_PACKAGE_NAME||'jp.nyanchase.game';
+  const url=`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/productsv2/tokens/${encodeURIComponent(purchaseToken)}`;
+  const response=await fetchFn(url,{headers:{Authorization:`Bearer ${accessToken}`}});
+  if(!response.ok)throw new Error('google_purchase_status_unavailable');
+  const purchase=await response.json();
+  if(!(purchase.productLineItem||[]).some(item=>item.productId===productId))
+    throw new Error('google_purchase_product_mismatch');
+  const state=purchase.purchaseStateContext?.purchaseState;
+  if(!['PURCHASED','CANCELLED'].includes(state))throw new Error('google_purchase_state_unknown');
+  return {status:state==='PURCHASED'?'active':'revoked',productId,
+    identity:await tokenHash(purchaseToken),verifiedAt:now,
+    reason:state==='CANCELLED'?'google_purchase_cancelled':null};
+}
+
+export async function listGoogleVoidedPurchases({env={},fetchFn=fetch,now=Date.now(),
+  startTime=now-86400000,type=1}={}){
+  const accessToken=await createGoogleServiceAccountToken(env,{fetchFn,now});
+  const packageName=env.GOOGLE_PLAY_PACKAGE_NAME||'jp.nyanchase.game';
+  const url=new URL(`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/voidedpurchases`);
+  url.searchParams.set('startTime',String(startTime));
+  url.searchParams.set('endTime',String(now));
+  url.searchParams.set('type',String(type));
+  url.searchParams.set('includeQuantityBasedPartialRefund','false');
+  const rows=[];let token=null;
+  for(let page=0;page<20;page++){
+    if(token)url.searchParams.set('token',token);
+    const response=await fetchFn(url.toString(),{headers:{Authorization:`Bearer ${accessToken}`}});
+    if(!response.ok)throw new Error('google_voided_purchases_unavailable');
+    const body=await response.json();rows.push(...(Array.isArray(body.voidedPurchases)?body.voidedPurchases:[]));
+    token=body.tokenPagination?.nextPageToken||null;
+    if(!token)return rows;
+  }
+  throw new Error('google_voided_purchases_incomplete');
+}
+
 async function tokenHash(token){return b64url(await crypto.subtle.digest('SHA-256',enc(token)));}
-export async function applyVerifiedGooglePlayPurchase({storage,profileKey,profile,purchaseToken,productId,verify,acknowledge}={}){
+export async function applyVerifiedGooglePlayPurchase({storage,profileKey,profile,purchaseToken,productId,verify,acknowledge,
+  restore=false}={}){
   if(typeof verify!=='function')throw new Error('google_play_verification_unavailable');
   const receipt=await verify({purchaseToken,productId});if(!receipt||receipt.productId!==productId||!STORE_PRODUCT_IDS.includes(productId))throw new Error('google_play_purchase_not_verified');
-  if(receipt.obfuscatedExternalAccountId&&receipt.obfuscatedExternalAccountId!==profile.playerId)throw new Error('google_play_account_mismatch');
   const marker=`googleplay:${await tokenHash(receipt.purchaseToken)}`;
-  const apply=async tx=>{const existing=await tx.get(marker);if(existing){if(existing.playerId!==profile.playerId)throw new Error('google_play_purchase_already_claimed');return {profile:await tx.get(profileKey)||profile,receipt:existing,duplicate:true};}
+  const apply=async tx=>{const existing=await tx.get(marker),deleted=existing?.state==='deleted';
+    if(existing?.status==='revoked')throw new Error('google_purchase_revoked');
+    if(receipt.obfuscatedExternalAccountId&&receipt.obfuscatedExternalAccountId!==profile.playerId&&!deleted)
+      throw new Error('google_play_account_mismatch');
+    if(deleted&&(!restore||existing.store!=='google_play'||existing.productId!==productId))
+      throw new Error('google_restore_not_allowed');
+    if(existing&&!deleted){if(existing.playerId!==profile.playerId)throw new Error('google_play_purchase_already_claimed');
+      const {purchaseToken:legacyToken,...safe}=existing;
+      if(legacyToken)await tx.put(marker,safe);
+      return {profile:await tx.get(profileKey)||profile,receipt:safe,duplicate:true};}
     const current=await tx.get(profileKey)||profile,next=await applyVerifiedSkillEntitlement(current,{type:'product',productId},receipt,async()=>true);
-    const stored={playerId:profile.playerId,purchaseToken:receipt.purchaseToken,productId,orderId:receipt.orderId,purchaseDate:receipt.purchaseDate,verification:'verified',verifiedAt:Date.now()};
+    const stored={playerId:profile.playerId,store:'google_play',productId,orderId:receipt.orderId,
+      purchaseDate:receipt.purchaseDate,verification:'verified',verifiedAt:Date.now()};
     await tx.put({[profileKey]:next,[marker]:stored});return {profile:next,receipt:stored,duplicate:false};};
   const result=typeof storage.transaction==='function'?await storage.transaction(apply):await apply(storage);
   // Acknowledge is idempotent and is retried even when entitlement storage was

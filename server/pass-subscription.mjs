@@ -12,11 +12,12 @@ export function normalizePassSubscription(value){
   if(!valid)return {version:1,store:null,period:null,verifiedAt:null,autoRenewing:false};
   return {version:1,store:value.store,
     period:{id:period.id,startsAt:period.startsAt,expiresAt:period.expiresAt},
-    verifiedAt:value.verifiedAt,autoRenewing:value.autoRenewing===true};
+    verifiedAt:value.verifiedAt,autoRenewing:value.autoRenewing===true,
+    revokedAt:Number.isSafeInteger(value.revokedAt)&&value.revokedAt>=0?value.revokedAt:null};
 }
 
 export function isPassActive(value,now=Date.now()){
   const state=normalizePassSubscription(value),period=state.period;
-  return Boolean(period&&Number.isSafeInteger(now)&&
+  return Boolean(period&&!state.revokedAt&&Number.isSafeInteger(now)&&
     period.startsAt<=now&&now<period.expiresAt&&state.verifiedAt<=now);
 }

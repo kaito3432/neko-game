@@ -23,13 +23,18 @@ export function normalizePassSkinRewardsClaimed(value){
     if(!record||!MONTH.test(record.monthKey)||typeof record.skinId!=='string'||
       !Number.isSafeInteger(record.claimedAt)||record.claimedAt<0||seen.has(record.monthKey))return false;
     seen.add(record.monthKey);return true;
-  }).map(({monthKey,skinId,claimedAt})=>({monthKey,skinId,claimedAt,source:'passMonthlyReward'}));
+  }).map(({monthKey,skinId,claimedAt,purchaseIdentity,revokedAt})=>({monthKey,skinId,claimedAt,
+    source:'passMonthlyReward',...(typeof purchaseIdentity==='string'&&purchaseIdentity.length<=200
+      ?{purchaseIdentity}:{}),...(Number.isSafeInteger(revokedAt)&&revokedAt>0?{revokedAt}:{})}));
 }
 
 export function grantCurrentPassMonthlySkinIfEligible(profile,{now=Date.now(),periods={},
   catalog=PASS_MONTHLY_SKINS,knownSkins={}}={}){
   const monthKey=seasonId(now),skinId=passSkinPeriods(periods)[monthKey]||null;
   const unchanged=reason=>({profile,granted:false,monthKey,skinId,reason});
+  // A deleted profile may have had an active Pass without claiming this month.
+  // Restore must not turn that unclaimed month into a new permanent grant.
+  if(profile?.passRestoreBlockedMonths?.includes(monthKey))return unchanged('restore_unclaimed');
   if(!isPassActive(profile?.passSubscription,now))return unchanged('inactive');
   if(!skinId)return unchanged('unconfigured');
   const item=catalog?.[skinId],field=item?.category==='catSkin'?'ownedCatSkins':
@@ -42,7 +47,8 @@ export function grantCurrentPassMonthlySkinIfEligible(profile,{now=Date.now(),pe
   const owned=Array.isArray(profile?.[field])?profile[field]:['default'];
   if(owned.includes(skinId))return unchanged('already_owned');
   return {profile:{...profile,[field]:[...new Set([...owned,skinId])],
-    passSkinRewardsClaimed:[...history,{monthKey,skinId,claimedAt:now,source:'passMonthlyReward'}]},
+    passSkinRewardsClaimed:[...history,{monthKey,skinId,claimedAt:now,source:'passMonthlyReward',
+      purchaseIdentity:profile.passSubscription.period.id}]},
     granted:true,monthKey,skinId,reason:null};
 }
 

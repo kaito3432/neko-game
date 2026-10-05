@@ -9,12 +9,16 @@ import {syncTurnClock,turnTimeout,actorState} from './turn-clock.mjs';
 import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile} from './ranked-progression.mjs';
 import {acceptVerifiedAdMobSsv,verifyStoredRewardedAd} from './rewarded-ad-verification.mjs';
-import {verifyStoreKitTransaction} from './storekit-verification.mjs';
+import {verifyStoreKitTransaction,setAppleAppAccountToken} from './storekit-verification.mjs';
 import {verifyApplePassStatus,passStoreConfig} from './pass-storekit.mjs';
-import {verifyGooglePassSubscription} from './pass-google-play.mjs';
+import {verifyGooglePassSubscription,verifyGoogleExpiredPassOwnership} from './pass-google-play.mjs';
 import {verifyGooglePlayPurchase,acknowledgeGooglePlayPurchase} from './google-play-verification.mjs';
 import {consumeRankedStamina,publicRankedStamina,withRankedStamina} from './ranked-stamina.mjs';
 import {selectRoomRoles} from './room-role-preference.mjs';
+import {verifyAppleSignedPayload,verifyPubSubPush} from './store-notification-auth.mjs';
+import {processAppleNotification,processGoogleNotification,scanGoogleVoidedPurchases,
+  cleanupNotificationDedupe} from './store-notifications.mjs';
+import {reconcileVerifiedPurchase,shouldReverify} from './purchase-lifecycle.mjs';
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -39,18 +43,36 @@ export class OnlinePlayers extends DurableObject {
       googleProductId:googlePassReady?this.env.GOOGLE_PASS_PRODUCT_ID:null,
       googleBasePlanId:googlePassReady?this.env.GOOGLE_PASS_BASE_PLAN_ID:null,
       verifyGooglePass:purchaseToken=>verifyGooglePassSubscription({purchaseToken,env:this.env}),
+      verifyGoogleExpiredPass:purchaseToken=>verifyGoogleExpiredPassOwnership({purchaseToken,env:this.env}),
       environment:this.env.NYAN_ENVIRONMENT,
       passProductId,
       passGroupId,
-      verifyPassSubscription:signedTransaction=>verifyApplePassStatus({signedTransaction,env:this.env}),
+      verifyPassSubscription:(signedTransaction,{restore=false}={})=>verifyApplePassStatus({
+        signedTransaction,env:this.env,restoreProof:restore}),
       refreshPassSubscription:originalTransactionId=>verifyApplePassStatus({originalTransactionId,env:this.env}),
+      reverifyPassProfile:async profile=>{
+        const sidecar=await this.ctx.storage.get(`pass-store:${profile.playerId}`);
+        if(!sidecar?.originalTransactionId||!sidecar.environment)return;
+        const markerKey=`pass-original:${sidecar.environment}:${sidecar.originalTransactionId}`;
+        const marker=await this.ctx.storage.get(markerKey);
+        if(!marker||!shouldReverify(marker,{env:this.env}))return;
+        await reconcileVerifiedPurchase({storage:this.ctx.storage,markerKey,verify:async()=>{
+          const receipt=await verifyApplePassStatus({originalTransactionId:sidecar.originalTransactionId,env:this.env});
+          return {status:receipt.revoked?'revoked':receipt.expiresAt<=Date.now()?'expired':'active',
+            productId:receipt.productId,verifiedAt:Date.now(),revokedAt:receipt.revokedAt,
+            period:{id:receipt.periodId,startsAt:receipt.startsAt,expiresAt:receipt.expiresAt},
+            autoRenewing:receipt.autoRenewing};
+        }});
+      },
       verifyRewardedAd:async claim=>{
         if(await verifyStoredRewardedAd(this.ctx.storage,claim))return true;
         if(!verifier)return false;
         const response=await verifier.fetch('https://reward-verifier/verify',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(claim)});
         if(!response.ok)return false;
         return (await response.json()).verified===true;
-      },verifyStoreTransaction:signedTransaction=>verifyStoreKitTransaction(signedTransaction,{env:this.env}),
+      },verifyStoreTransaction:(signedTransaction,{restore=false}={})=>verifyStoreKitTransaction(
+        signedTransaction,{env:this.env,restoreProof:restore}),
+      setAppleAppAccountToken:(receipt,playerId)=>setAppleAppAccountToken(receipt,playerId,{env:this.env}),
       verifyGooglePlayPurchase:purchase=>verifyGooglePlayPurchase(purchase,{env:this.env}),
       acknowledgeGooglePlayPurchase:receipt=>acknowledgeGooglePlayPurchase(receipt)};
   }
@@ -82,6 +104,19 @@ export class OnlinePlayers extends DurableObject {
     return this.ctx.blockConcurrencyWhile(async () => {
       try {
         const path = new URL(request.url).pathname;
+        if(path==='/internal/store/apple'&&request.method==='POST'){
+          const {payload}=await request.json();
+          return Response.json(await processAppleNotification({storage:this.ctx.storage,payload,env:this.env}));
+        }
+        if(path==='/internal/store/google'&&request.method==='POST'){
+          const {message}=await request.json();
+          return Response.json(await processGoogleNotification({storage:this.ctx.storage,message,env:this.env}));
+        }
+        if(path==='/internal/store/scan'&&request.method==='POST'){
+          const result=await scanGoogleVoidedPurchases({storage:this.ctx.storage,env:this.env});
+          await cleanupNotificationDedupe(this.ctx.storage);
+          return Response.json(result);
+        }
         if(path==='/internal/admob-ssv'){
           if(!this.env.ADMOB_REWARDED_AD_UNIT_ID||!this.env.ADMOB_SKILL_MODE_REWARD_ITEM)throw new Error('admob_ssv_not_configured');
           const {url}=await request.json();
@@ -1552,11 +1587,31 @@ export default {
     }
 
     const players = () => env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
+    if(url.pathname==='/api/store/apple/notifications'&&request.method==='POST'){
+      try{
+        const input=await request.json();
+        const payload=await verifyAppleSignedPayload(input?.signedPayload,{env});
+        const response=await players().fetch(new Request('https://players/internal/store/apple',{
+          method:'POST',body:JSON.stringify({payload})}));
+        return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
+      }catch(error){return json({error:error.message},
+        /unavailable/.test(error.message)?503:400);}
+    }
+    if(url.pathname==='/api/store/google/rtdn'&&request.method==='POST'){
+      try{
+        await verifyPubSubPush(request,{env});
+        const input=await request.json();
+        const response=await players().fetch(new Request('https://players/internal/store/google',{
+          method:'POST',body:JSON.stringify({message:input.message})}));
+        return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
+      }catch(error){return json({error:error.message},
+        /unavailable/.test(error.message)?503:400);}
+    }
     if(url.pathname==='/api/ads/admob/ssv'&&request.method==='GET'){
       const response=await players().fetch(new Request('https://players/internal/admob-ssv',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:request.url})}));
       return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
     }
-    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|gifts|gift-claim|pass-storekit-transaction|pass-google-play-purchase|pass-subscription-refresh|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|stamina-coin|storekit-transaction|google-play-purchase)$/);
+    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|gifts|gift-claim|pass-storekit-transaction|pass-storekit-restore|pass-google-play-purchase|pass-google-play-restore|pass-subscription-refresh|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|stamina-coin|storekit-transaction|storekit-restore|google-play-purchase|google-play-restore)$/);
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));
@@ -1712,5 +1767,14 @@ export default {
       },
       404
     );
+  },
+  async scheduled(_event,env,ctx){
+    if(!env.GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL||!env.GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY)
+      return;
+    const players=env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
+    ctx.waitUntil((async()=>{
+      const response=await players.fetch(new Request('https://players/internal/store/scan',{method:'POST'}));
+      if(!response.ok)throw new Error('store_voided_scan_failed');
+    })());
   },
 };
