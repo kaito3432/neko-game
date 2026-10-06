@@ -8,4 +8,16 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NyanGooglePlayPlugin.class);
         super.onCreate(savedInstanceState);
     }
+
+    @Override
+    public void onBackPressed() {
+        if (getBridge() == null || getBridge().getWebView() == null) {
+            super.onBackPressed();
+            return;
+        }
+        getBridge().getWebView().evaluateJavascript(
+            "Boolean(window.NyanLegalPages && window.NyanLegalPages.closeIfOpen && window.NyanLegalPages.closeIfOpen())",
+            handled -> { if (!"true".equals(handled)) MainActivity.super.onBackPressed(); }
+        );
+    }
 }

@@ -9305,6 +9305,13 @@ body.sneak-mode .board-shell{
 .settings-modal{box-sizing:border-box;max-height:calc(100dvh - max(24px,env(safe-area-inset-top)) - max(24px,env(safe-area-inset-bottom)));overflow-y:auto;overscroll-behavior:contain}
 .settings-privacy{margin:14px 0;padding:12px;border-top:1px solid rgba(255,255,255,.2)}
 .settings-privacy h3{margin:0 0 9px;font-size:15px}
+.settings-privacy .settings-legal-links{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:7px;margin-bottom:10px}
+.settings-privacy .settings-legal-link{display:block;width:100%;min-height:40px;height:auto!important;padding:9px 12px!important;background:#fff;color:#554239;border:1px solid #bda793;font-size:13px!important;line-height:1.35;text-align:left}
+.legal-page-modal{box-sizing:border-box;width:min(96vw,870px);height:min(92dvh,900px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);display:flex;flex-direction:column;padding:10px;overflow:hidden}
+.legal-page-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 4px 8px}
+.legal-page-toolbar .btn{min-height:38px}.legal-page-modal iframe{flex:1;min-height:0;width:100%;border:1px solid #d6dfe4;border-radius:8px;background:#fff}
+.legal-page-modal #legalPageStatus{margin:0;color:#a33232}.legal-page-modal #legalPageStatus:empty{display:none}
+#legalPageOverlay[hidden]{display:none!important}
 .settings-delete-button{background:#6b3441;color:#fff}
 .online-delete-modal{box-sizing:border-box;width:min(94vw,430px);max-height:calc(100dvh - 32px - env(safe-area-inset-bottom));overflow-y:auto;overflow-x:hidden;padding:18px}
 .online-delete-modal p{font-size:13px;line-height:1.55;text-align:left}

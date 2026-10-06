@@ -1,0 +1,68 @@
+# にゃんチェイス ストア申告作業資料（公開前ドラフト）
+
+この表は `online-beta` の実装と同梱文書を照合するための作業資料です。App Store Connect／Google Play Consoleへそのまま転記する確定回答ではありません。第三者SDK・広告設定、対象年齢、提供地域、運営体制を公開前に確認してください。
+
+## 公開前に確定する情報
+
+- 運営者：[運営者名]
+- 所在地：[所在国]
+- 問い合わせ：[お問い合わせメール]
+- 公開Web URL：[公開URL]
+- 施行日：[施行日]
+- 外部削除依頼の本人確認方法：TODO
+- 対象年齢・Families設定：TODO
+- AdMobのパーソナライズ広告、iOS ATT／IDFA、Android広告ID、同意フロー：TODO
+- Cloudflareの実際の通信ログ保持期間：TODO
+- 失効・不正防止情報の具体的保持期間と法令上の要件：TODO
+
+## 実装から確認できる範囲
+
+- 匿名オンラインプロフィールは `op_...` playerIdとBearer credentialで識別し、サーバーはcredentialのハッシュをプロフィール参照に利用する。メール・氏名による通常のアカウント登録はない。
+- 端末は主にlocalStorageへローカル進行、所有・装備、オンラインcredentialと表示用キャッシュを保存する。
+- Cloudflare Workers／Durable Objectsがプロフィール、対戦、ランク、スタミナ、コイン、Pass、購入検証等を扱う。対戦相手へは試合に必要なプロフィール・外観・ランク等を共有する。
+- Apple／Google Playが決済を扱う。運営者はクレジットカード番号を直接受け取らない。商品・取引識別情報、購読期間、返金・失効状態等をStore検証・復元・不正防止のため扱う。
+- Google AdMob SDKを使用する。SDKのIPアドレス、広告・端末識別子、操作・診断データの処理は公開時のSDK版と設定で再確認する。
+- 独立したFirebase Analytics、Google Analytics、Crashlytics、Sentryは現行依存関係から確認されない。AdMob由来の測定とは区別する。
+- アプリ内の認証済みDELETEはオンラインプロフィール本体を削除し、購入復元・失効・不正防止の最小記録は別に保持し得る。過去Room／Matchやインフラログの即時全消去を保証しない。
+
+## App Store App Privacy 回答案（要最終検証）
+
+| Data type候補 | Collected | Linked to user | Tracking | Purpose | Notes / verification needed |
+| --- | --- | --- | --- | --- | --- |
+| User ID | はい | はい（匿名playerIdへの紐付け） | 現行オンライン用途ではいいえ | アプリ機能、対戦、認証、不正防止 | 広告SDKとのID連携有無を別途確認 |
+| Gameplay content / Other user content | はい | はい | いいえ | ランク、戦績、プロフィール、所持品、対戦 | Appleの最終データ型への割当を確認 |
+| Purchase history | はい | はい | いいえ | 権利検証、復元、返金・失効対応 | Store側情報の範囲を確認。カード番号は直接取得しない |
+| Product interaction / Advertising data | AdMob SDKにより収集され得る | SDK設定を確認 | **未確定** | 広告配信、報酬検証、測定、不正防止 | ATT、IDFA、パーソナライズ広告設定を確認 |
+| Device ID / IP address / Diagnostics | SDK・インフラにより処理され得る | **要確認** | **未確定** | 広告、セキュリティ、診断 | Google Mobile Ads SDKとCloudflareの実データ経路を確認 |
+| Contact information | 問い合わせ時のみ | 問い合わせ内容に紐付く | いいえ | サポート対応 | 実際の窓口運用を確定 |
+
+Appleの回答はアプリと第三者SDKを含む実運用を対象にする。匿名IDもプロフィールへ結び付くので「Linked to user」を安易に否定しない。Tracking欄はATT／広告設定が確定するまで提出しない。
+
+## Google Play Data safety 回答案（要最終検証）
+
+| Data type候補 | Collected | Shared | Purpose | Required / optional | Ephemeral | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| User IDs | オンライン利用時 | Cloudflareによる処理 | アカウント管理、ゲーム機能、不正防止 | オンライン利用には必要 | いいえ | 匿名playerId、credentialハッシュ |
+| App activity / Game progress | オンライン利用時 | Cloudflareによる処理 | ゲーム機能、対戦、報酬 | オンライン利用には必要 | いいえ | Rank、RP、結果、所持、Mission等 |
+| Purchase history | 購入・復元時 | Apple／Googleとの検証、Cloudflare処理 | 購入権利、復元、不正防止 | 購入時に必要 | いいえ | Storeの識別情報、期間、返金・失効状態 |
+| App interactions / Device identifiers / Diagnostics | AdMob SDKで収集・共有され得る | Google広告サービス | 広告、測定、不正防止 | 広告表示時 | SDKによるため要確認 | SDK版、広告ID、同意設定、共有区分を確認 |
+| IP address | CloudflareとAdMobで処理され得る | 両提供者の取扱いを確認 | 通信、セキュリティ、広告 | オンライン通信・広告時 | 要確認 | 一般位置推定の扱いを確認 |
+| Email address | サポート依頼時のみ | 窓口サービスを確認 | 問い合わせ対応 | 任意 | いいえ | サポートメール確定後に確認 |
+
+Googleの「Shared」はサービス提供者としての処理やSDK送信の区分をConsoleの定義に従い最終判定する。アプリ内削除と外部Web削除依頼の両方の導線を公開した後、Data deletion回答へURLを登録する。
+
+## 削除・復元・保持に関する回答メモ
+
+- アプリ内：`設定 → データとプライバシー → オンラインデータを削除`。外部：`data-deletion.html`のサポート依頼。匿名プロフィールを第三者のplayerId申告だけで削除しない。
+- 削除するのは通常のオンライン進行・プロフィール。端末のCPUローカル進行は対象外。アプリのアンインストールだけではサーバーデータは消えない。
+- 購入復元、返金・失効、重複利用・不正防止、取得済みPass月間Skin復元に必要な最小記録は保持し得る。永続権利は復元可能な期間、失効記録は目的達成または法令上必要な期間を検討する。固定年数は未確定。
+- 削除後の新匿名プロフィールではユーザー操作によるStore再検証で、買い切りSkill／Pack、有効Pass、対象の取得済み月間Skinを復元できる場合がある。Rank、RP、Coin、Stamina、Daily、Mission、Gift、試合進行は復元しない。
+- プロフィール削除はStoreの購読解約・返金を行わない。過去Room／Match記録およびインフラログは別の保持対象で、即時全消去とは説明しない。
+
+## 公式確認資料
+
+- [Apple App Store Connect：App privacy](https://developer.apple.com/help/app-store-connect/reference/app-privacy/)
+- [Apple App Store Connect：Manage app privacy](https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy)
+- [Google Play：Account deletion requirements](https://support.google.com/googleplay/android-developer/answer/13327111)
+- [Google Mobile Ads SDK：Play data disclosure](https://developers.google.com/admob/android/privacy/play-data-disclosure)
+- [Cloudflare Privacy Policy](https://www.cloudflare.com/policies/privacy/)

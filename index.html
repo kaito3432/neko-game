@@ -13,7 +13,7 @@
 <title>にゃんチェイス</title>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
-<link rel="stylesheet" href="./style.css?v=3.0.home-pass-ui">
+<link rel="stylesheet" href="./style.css?v=3.1.legal-pages">
 </head>
 <body>
 <div class="app">
@@ -1813,12 +1813,25 @@
     </div>
     <section class="settings-privacy" aria-labelledby="settingsPrivacyTitle">
       <h3 id="settingsPrivacyTitle">データとプライバシー</h3>
+      <div class="settings-legal-links">
+        <button class="btn settings-legal-link" type="button" data-legal-page="privacy">プライバシーポリシー</button>
+        <button class="btn settings-legal-link" type="button" data-legal-page="terms">利用規約</button>
+        <button class="btn settings-legal-link" type="button" data-legal-page="support">サポート・お問い合わせ</button>
+      </div>
       <button class="btn settings-delete-button" id="onlineDataDeleteOpen" type="button">オンラインデータを削除</button>
     </section>
     <div class="settings-actions">
       <button class="btn" id="backToTitleBtn" type="button">🏠 タイトルへ戻る</button>
     </div>
     <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
+  </div>
+</div>
+
+<div class="overlay" id="legalPageOverlay" hidden>
+  <div class="modal legal-page-modal" role="dialog" aria-modal="true" aria-label="法務・サポートページ">
+    <div class="legal-page-toolbar"><strong>にゃんチェイス ご案内</strong><button class="btn" id="legalPageClose" type="button">閉じる</button></div>
+    <p id="legalPageStatus" role="status" aria-live="polite"></p>
+    <iframe id="legalPageFrame" title="にゃんチェイスの法務・サポート情報" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
   </div>
 </div>
 
@@ -1969,6 +1982,7 @@
 <script src="./match-skill-info.js?v=2.3.personal-skill-cta"></script>
 <script src="./game.js?v=2.8.starlight-effects"></script>
 <script src="./online-delete-ui.js?v=1"></script>
+<script src="./legal-pages.js?v=5"></script>
 
 <script>
 if (location.protocol === "capacitor:") {

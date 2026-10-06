@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v47-online-profile-delete-20261005";
+const CACHE_NAME = "nyan-chase-v52-legal-pages-20261006";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",
@@ -16,6 +16,12 @@ const PRECACHE = [
   "./cpu-unlock-sync.js",
   "./online-identity.js",
   "./online-delete-ui.js",
+  "./legal-pages.js",
+  "./legal.css",
+  "./privacy.html",
+  "./terms.html",
+  "./support.html",
+  "./data-deletion.html",
   "./online-appearance.js",
   "./random-match.js",
   "./rank-rewards.js",
@@ -144,16 +150,21 @@ self.addEventListener("fetch", event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigation: prefer fresh HTML; fall back to cached app offline.
+  // Navigation: preserve each legal page in its own cache slot.
   if (req.mode === "navigate") {
+    const page = url.pathname.split("/").pop();
+    const cacheKey = ["privacy.html", "terms.html", "support.html", "data-deletion.html"].includes(page)
+      ? `./${page}` : "./index.html";
     event.respondWith(
       fetch(req)
         .then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(cacheKey, copy));
+          }
           return res;
         })
-        .catch(() => caches.match("./index.html"))
+        .catch(() => caches.match(cacheKey))
     );
     return;
   }
