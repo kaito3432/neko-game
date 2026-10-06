@@ -1811,10 +1811,30 @@
         <strong id="bgmVolumeValue">72%</strong>
       </div>
     </div>
+    <section class="settings-privacy" aria-labelledby="settingsPrivacyTitle">
+      <h3 id="settingsPrivacyTitle">データとプライバシー</h3>
+      <button class="btn settings-delete-button" id="onlineDataDeleteOpen" type="button">オンラインデータを削除</button>
+    </section>
     <div class="settings-actions">
       <button class="btn" id="backToTitleBtn" type="button">🏠 タイトルへ戻る</button>
     </div>
     <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
+  </div>
+</div>
+
+<div class="overlay" id="onlineDataDeleteOverlay" hidden>
+  <div class="modal online-delete-modal" role="dialog" aria-modal="true" aria-labelledby="onlineDataDeleteTitle">
+    <h2 id="onlineDataDeleteTitle">オンラインプロフィールを削除しますか？</h2>
+    <p>ランク・RP・戦績、コイン、スタミナ、Daily・Mission、通常のプロフィールと所持情報など、オンラインの進行が削除されます。ゲームのローカル進行は残ります。</p>
+    <p>Apple / Google Playの購入やPass契約そのものは、この操作では解約・返金されません。Passを停止する場合はストアで解約してください。</p>
+    <p>新しいオンラインプロフィールでは、Storeで再確認できる購入済み商品と復元対象の課金特典を「購入を復元」から戻せます。ランクなどのゲーム進行は戻りません。</p>
+    <p id="onlineDataDeleteWarning" class="online-delete-warning" hidden>この操作は取り消せません</p>
+    <p id="onlineDataDeleteStatus" role="status" aria-live="polite"></p>
+    <div class="online-delete-actions">
+      <button class="btn" id="onlineDataDeleteCancel" type="button">キャンセル</button>
+      <button class="btn" id="onlineDataDeleteNext" type="button">次へ</button>
+      <button class="btn settings-delete-button" id="onlineDataDeleteConfirm" type="button" hidden>オンラインデータを削除する</button>
+    </div>
   </div>
 </div>
 
@@ -1933,7 +1953,7 @@
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./result-presentation.js?v=1"></script>
-<script src="./online-identity.js?v=1.7.pass-availability"></script>
+<script src="./online-identity.js?v=1.8.profile-delete"></script>
 <script src="./online-appearance.js?v=1"></script>
 <script src="./online.js?v=3.2.personal-skill-cta"></script>
 <script src="./online-profile-ui.js?v=1.2.bronze-default"></script>
@@ -1948,6 +1968,7 @@
 <script src="./pass-ui.js?v=1.3.skill-guidance"></script>
 <script src="./match-skill-info.js?v=2.3.personal-skill-cta"></script>
 <script src="./game.js?v=2.8.starlight-effects"></script>
+<script src="./online-delete-ui.js?v=1"></script>
 
 <script>
 if (location.protocol === "capacitor:") {

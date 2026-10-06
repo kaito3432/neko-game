@@ -27,6 +27,7 @@ import {createRewardedAdAttempt} from './rewarded-ad-verification.mjs';
 import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
 import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
 import {restoreExpiredApplePassSkins,restoreExpiredGooglePassSkins} from './purchase-restore.mjs';
+import {deleteOnlineProfile} from './profile-deletion.mjs';
 import {STAMINA_REWARD_TYPE,applyVerifiedStaminaAd,withRankedStamina,recoverStaminaWithCoins,publicRankedStamina} from './ranked-stamina.mjs';
 const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 
@@ -135,6 +136,8 @@ export async function profileRequest(storage, request, options={}) {
     const token = request.headers.get('Authorization')?.replace(/^Bearer /, '');
     if (!/^[a-f0-9]{64}$/.test(token || '')) return reply({error: 'invalid_credential'}, 401);
     const key = `profile:${await digestToken(token)}`;
+    const deleted=await storage.get(`profile-deleted:${key.slice('profile:'.length)}`);
+    if(deleted?.expiresAt>now)return reply({error:'profile_deleted'},410);
     let profile = await storage.get(key);
     if (!profile) {
       profile = initialProfile(input, `op_${crypto.randomUUID()}`,now);
@@ -156,11 +159,27 @@ export async function profileRequest(storage, request, options={}) {
   if (!/^[a-f0-9]{64}$/.test(token || '')) return reply({error: 'unauthorized'}, 401);
   const key = `profile:${await digestToken(token)}`;
   let profile = await storage.get(key);
+  if(path==='/profile'&&request.method==='DELETE'&&!profile){
+    const deleted=await storage.get(`profile-deleted:${key.slice('profile:'.length)}`);
+    if(deleted?.expiresAt>now)return reply({deleted:true,duplicate:true});
+  }
   if (!profile) return reply({error: 'unauthorized'}, 401);
   const normalized=normalizeOnlineProfile(profile,now,periods),index=await storage.get(`profile-key:${profile.playerId}`);
   if(JSON.stringify(normalized)!==JSON.stringify(profile))await storage.put(key,normalized);
   if(index!==key)await storage.put(`profile-key:${profile.playerId}`,key);
   profile=normalized;
+  if(path==='/profile'&&request.method==='DELETE'){
+    const rateKey=`profile-delete-rate:${key.slice('profile:'.length)}`;
+    const previous=await storage.get(rateKey),rate=previous?.until>now
+      ?previous:{until:now+600000,count:0};
+    if(rate.count>=3)return reply({error:'delete_rate_limited'},429);
+    await storage.put(rateKey,{until:rate.until,count:rate.count+1});
+    try{return reply(await deleteOnlineProfile({storage,profileKey:key,profile,now,
+      checkActiveRoom:options.checkActiveRoom,googlePassProductId:options.googleProductId}));}
+    catch(error){const code=error?.message||'profile_delete_failed';
+      return reply({error:code},code==='active_match'?409:
+        code==='active_room_check_unavailable'?503:500);}
+  }
   const isRestore=['/storekit-restore','/google-play-restore','/pass-storekit-restore',
     '/pass-google-play-restore'].includes(path);
   if(isRestore){

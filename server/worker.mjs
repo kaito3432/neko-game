@@ -19,6 +19,7 @@ import {verifyAppleSignedPayload,verifyPubSubPush} from './store-notification-au
 import {processAppleNotification,processGoogleNotification,scanGoogleVoidedPurchases,
   cleanupNotificationDedupe} from './store-notifications.mjs';
 import {reconcileVerifiedPurchase,shouldReverify} from './purchase-lifecycle.mjs';
+import {cleanupProfileDeletionReceipts} from './profile-deletion.mjs';
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -41,6 +42,13 @@ export class OnlinePlayers extends DurableObject {
     return {masterRewardPeriods:this.env.MASTER_REWARD_PERIODS,
       passSkinPeriods:this.env.PASS_SKIN_PERIODS,
       googleProductId:googlePassReady?this.env.GOOGLE_PASS_PRODUCT_ID:null,
+      checkActiveRoom:async(roomCode,playerId)=>{
+        const room=this.env.GAME_ROOMS.get(this.env.GAME_ROOMS.idFromName(roomCode));
+        const response=await room.fetch(new Request(
+          `https://room/internal/deletion-status?playerId=${encodeURIComponent(playerId)}`));
+        if(!response.ok)throw new Error('active_room_check_unavailable');
+        return (await response.json()).active===true;
+      },
       googleBasePlanId:googlePassReady?this.env.GOOGLE_PASS_BASE_PLAN_ID:null,
       verifyGooglePass:purchaseToken=>verifyGooglePassSubscription({purchaseToken,env:this.env}),
       verifyGoogleExpiredPass:purchaseToken=>verifyGoogleExpiredPassOwnership({purchaseToken,env:this.env}),
@@ -115,8 +123,11 @@ export class OnlinePlayers extends DurableObject {
         if(path==='/internal/store/scan'&&request.method==='POST'){
           const result=await scanGoogleVoidedPurchases({storage:this.ctx.storage,env:this.env});
           await cleanupNotificationDedupe(this.ctx.storage);
+          await cleanupProfileDeletionReceipts(this.ctx.storage);
           return Response.json(result);
         }
+        if(path==='/internal/profile-delete-cleanup'&&request.method==='POST')
+          return Response.json({cleaned:await cleanupProfileDeletionReceipts(this.ctx.storage)});
         if(path==='/internal/admob-ssv'){
           if(!this.env.ADMOB_REWARDED_AD_UNIT_ID||!this.env.ADMOB_SKILL_MODE_REWARD_ITEM)throw new Error('admob_ssv_not_configured');
           const {url}=await request.json();
@@ -437,6 +448,14 @@ secretCat: {
         guestJoined: Boolean(room.guestToken),
         connectedPlayers: this.connectedPlayers(),
       });
+    }
+    if(url.pathname==='/internal/deletion-status'){
+      const room=await this.ctx.storage.get('room');
+      const playerId=url.searchParams.get('playerId');
+      const participant=room?.profiles?.host?.playerId===playerId||
+        room?.profiles?.guest?.playerId===playerId;
+      return json({active:Boolean(participant&&
+        !['finished','cancelled','invalid'].includes(room.status))});
     }
 
     return new Response("Not Found", { status: 404 });
@@ -1769,10 +1788,12 @@ export default {
     );
   },
   async scheduled(_event,env,ctx){
-    if(!env.GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL||!env.GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY)
-      return;
     const players=env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
     ctx.waitUntil((async()=>{
+      const cleanup=await players.fetch(new Request('https://players/internal/profile-delete-cleanup',{method:'POST'}));
+      if(!cleanup.ok)throw new Error('profile_delete_cleanup_failed');
+      if(!env.GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL||!env.GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY)
+        return;
       const response=await players.fetch(new Request('https://players/internal/store/scan',{method:'POST'}));
       if(!response.ok)throw new Error('store_voided_scan_failed');
     })());

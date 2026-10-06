@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v46-online-profile-versus-20260926";
+const CACHE_NAME = "nyan-chase-v47-online-profile-delete-20261005";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",
@@ -15,6 +15,7 @@ const PRECACHE = [
   "./storekit-ui.js",
   "./cpu-unlock-sync.js",
   "./online-identity.js",
+  "./online-delete-ui.js",
   "./online-appearance.js",
   "./random-match.js",
   "./rank-rewards.js",
@@ -23,7 +24,6 @@ const PRECACHE = [
   "./result-presentation.js",
   "./online-profile-ui.js",
   "./",
-  "./README.md",
   "./animation.js",
   "./assets/audio/bgm_game.wav",
   "./assets/audio/bgm_home.wav",

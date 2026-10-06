@@ -33,7 +33,7 @@
     const headers=savedHeaders();if(!headers)throw new Error('online_credential_missing');
     const controller=new root.AbortController(),timeout=root.setTimeout(()=>controller.abort(),15000);
     try{
-      const response=await root.fetch(`${apiBase}/api/online/${path}`,{method,headers,signal:controller.signal,body:method==='GET'?undefined:JSON.stringify(body||{})});
+      const response=await root.fetch(`${apiBase}/api/online/${path}`,{method,headers,signal:controller.signal,body:method==='GET'||method==='DELETE'?undefined:JSON.stringify(body||{})});
       const value=await response.json().catch(()=>({}));if(!response.ok){const error=new Error(value.error||`online_profile_${response.status}`);error.status=response.status;throw error;}return value;
     }finally{root.clearTimeout(timeout);}
   }
@@ -86,7 +86,19 @@
     await acceptSkillView(apiBase,result);
     return result;
   }
+  async function deleteProfile(apiBase){
+    const result=await request(apiBase,'profile',null,'DELETE');
+    if(result.deleted!==true)throw new Error('profile_delete_unconfirmed');
+    root.localStorage.removeItem(KEY);
+    try{root.localStorage.removeItem('nyanOnlineLastResultV1');}catch(_){}
+    authenticatedSkillView=null;
+    authenticatedPassSummary=null;
+    active=null;
+    if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function')
+      root.dispatchEvent(new root.CustomEvent('nyan-online-profile',{detail:{profile:null,effectiveSkillEntitlements:null,passSummary:null}}));
+    return result;
+  }
   root.NyanOnlineIdentity = {prepare,request,savedHeaders,hasCredential:()=>Boolean(savedHeaders()),
     getAuthenticatedSkillView:()=>authenticatedSkillView,
-    getAuthenticatedPassSummary:()=>authenticatedPassSummary,refreshSkillView};
+    getAuthenticatedPassSummary:()=>authenticatedPassSummary,refreshSkillView,deleteProfile};
 })(globalThis);

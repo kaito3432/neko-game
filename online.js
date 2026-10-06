@@ -463,6 +463,14 @@ socket.addEventListener("message", event => {
     matchType = 'roomMatch'; matchId = null; reserved = null; role = null;
   }
 
+  function clearDeletedProfile(){
+    matchId=null;
+    reset();
+    credentialHeaders=null;
+    verifiedProfile=null;
+    finishedMatches.clear();
+  }
+
   function getSession() {
     return {
       roomCode,
@@ -496,6 +504,7 @@ socket.addEventListener("message", event => {
     disconnect,
     acknowledgeResult,
     reset,
+    clearDeletedProfile,
     getSession
     ,getPermanentSkillEntitlements:()=>sessionProfile?.skillEntitlements||null
     ,getPersonalSkillEntitlements:personalSkillView
