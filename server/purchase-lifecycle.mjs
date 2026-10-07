@@ -124,8 +124,10 @@ export async function reconcileVerifiedPurchase({storage,markerKey,verify,now=Da
 // No default legal retention term is inferred. Operators must configure a
 // positive technical retention window before deleting fraud-prevention records.
 export function revokeRetentionDays(env={}){
-  const days=Number(env.PURCHASE_REVOKE_RETENTION_DAYS);
-  return Number.isSafeInteger(days)&&days>0?days:null;
+  const raw=env.PURCHASE_REVOKE_RETENTION_DAYS;
+  if(typeof raw!=='string'||!(/^[1-9]\d*$/.test(raw)))return null;
+  const days=Number(raw);
+  return Number.isSafeInteger(days)?days:null;
 }
 export function retentionDecision(record,{now=Date.now(),env={}}={}){
   if(record?.retentionClass===RETENTION_CLASS.ACTIVE_ENTITLEMENT||
@@ -137,7 +139,7 @@ export function retentionDecision(record,{now=Date.now(),env={}}={}){
       reason:'temporary_operational'};
   if(record?.status==='revoked'||record?.retentionClass===RETENTION_CLASS.FRAUD_PREVENTION){
     const days=revokeRetentionDays(env);
-    return {deletable:Boolean(days&&Number.isSafeInteger(record.revokedAt)&&
+    return {deletable:Boolean(days&&Number.isSafeInteger(record.revokedAt)&&record.revokedAt>0&&
       record.revokedAt+days*86400000<=now),reason:'fraud_prevention'};
   }
   return {deletable:false,reason:'unclassified'};

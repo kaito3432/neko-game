@@ -73,6 +73,40 @@ test('retention protects active and permanent records; configured revoked and te
   assert.equal(await db.get('googleplay:d'),undefined);
   assert.ok(await db.get('pass-original:b'));
 });
+test('失効記録は確認時刻から365日未満を保持し、境界到達でcleanup候補になる',async()=>{
+  const [life]=await load(),db=new Store(),day=86400000,revokedAt=Date.UTC(2025,0,1);
+  const key='googleplay:revoked';
+  await db.put(key,{state:'deleted',status:'revoked',retentionClass:'FRAUD_PREVENTION',revokedAt});
+  const env={PURCHASE_REVOKE_RETENTION_DAYS:'365'};
+  assert.deepEqual(await life.cleanupPurchaseRecords(db,{now:revokedAt+365*day-1,env}),[]);
+  assert.deepEqual(await life.cleanupPurchaseRecords(db,{now:revokedAt+365*day,env}),[key]);
+  assert.deepEqual(await life.cleanupPurchaseRecords(db,{now:revokedAt+365*day+1,env}),[key]);
+  assert.ok(await db.get(key)); // dry-run is the default
+});
+test('365日後も有効な永続権利と取得済みPass Skinを保護する',async()=>{
+  const [life]=await load(),db=new Store(),now=t+400*86400000;
+  await db.put('storekit:skill',{state:'deleted',status:'active',retentionClass:'ACTIVE_ENTITLEMENT',revokedAt:t});
+  await db.put('storekit:pack',{state:'bound',status:'active',retentionClass:'ACTIVE_ENTITLEMENT'});
+  await db.put('pass-original:skin',{state:'deleted',status:'expired',retentionClass:'PERMANENT_RESTORE',
+    passSkinRewards:[{skinId:'cat_pass_2026_11_starlight'}]});
+  await db.put('pass-google-token:uncertain',{state:'deleted',status:'revoked',
+    retentionClass:'FRAUD_PREVENTION',revokedAt:t,
+    passSkinRewards:[{skinId:'cat_pass_2026_11_starlight'}]});
+  assert.deepEqual(await life.cleanupPurchaseRecords(db,{now,
+    env:{PURCHASE_REVOKE_RETENTION_DAYS:'365'}}),[]);
+});
+test('未設定・不正な保持日数では失効記録を自動削除しない',async()=>{
+  const [life]=await load(),record={status:'revoked',retentionClass:'FRAUD_PREVENTION',revokedAt:t};
+  for(const value of [undefined,'0','-1','NaN','Infinity','365days','0x16d','',true,0,-1]){
+    const env=value===undefined?{}:{PURCHASE_REVOKE_RETENTION_DAYS:value};
+    assert.equal(life.revokeRetentionDays(env),null,String(value));
+    assert.equal(life.retentionDecision(record,{now:t+400*86400000,env}).deletable,false,String(value));
+  }
+  assert.equal(life.retentionDecision({...record,revokedAt:0},{now:t+400*86400000,
+    env:{PURCHASE_REVOKE_RETENTION_DAYS:'365'}}).deletable,false);
+  assert.equal(life.retentionDecision({...record,revokedAt:undefined},{now:t+400*86400000,
+    env:{PURCHASE_REVOKE_RETENTION_DAYS:'365'}}).deletable,false);
+});
 test('revoked deleted marker cannot restore a refunded Apple purchase',async()=>{
   const apple=await import('../server/storekit-verification.mjs'),db=new Store();
   const marker='storekit:100';

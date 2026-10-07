@@ -10,10 +10,10 @@
 - 公開Web URL：[公開URL]
 - 施行日：[施行日]
 - 外部削除依頼の本人確認方法：TODO
-- 対象年齢・Families設定：TODO
+- 子ども専用・子ども向けとして設計していない。Google Play Families Program向けとして意図的に設計しておらず、child-directed appとして申告しない。Play Consoleの具体的な対象年齢層選択とApple Age Rating質問票の最終回答：TODO
 - AdMobのパーソナライズ広告・IDFAメッセージ設定、iOS ATTの最終方針、Store申告：TODO（実装監査結果は下記）
-- Cloudflareの実際の通信ログ保持期間：TODO
-- 失効・不正防止情報の具体的保持期間と法令上の要件：TODO
+- 現在のWorkers FreeプランのWorkers Logs保持期間：3日。Durable Objectsのゲームデータや別系統の通信・セキュリティログの保持期間とは区別する。
+- Storeで失効・返金・取消が確定した購入の記録：確定時点から原則365日。有効な永続購入権利と取得済み永続Pass月間Skinは復元に必要な期間。未完了の返金処理、Store dispute、法的請求、不正調査、法令上の義務は必要な範囲・期間に限る例外。
 
 ## 実装から確認できる範囲
 
@@ -29,6 +29,8 @@
 - パーソナライズ／非パーソナライズ／限定広告をアプリが明示的に指定する処理はない。実際の広告モードはUMP同意結果、AdMob Console設定、SDK側の挙動に依存するため、公開前に実機とConsoleで確認する。
 - 独立したFirebase Analytics、Google Analytics、Crashlytics、Sentryは現行依存関係から確認されない。AdMob由来の測定とは区別する。
 - アプリ内の認証済みDELETEはオンラインプロフィール本体を削除し、購入復元・失効・不正防止の最小記録は別に保持し得る。過去Room／Matchやインフラログの即時全消去を保証しない。
+- `PURCHASE_REVOKE_RETENTION_DAYS`は未設定時に失効記録の自動cleanupを行わない。設定値365で失効記録の候補判定を行えるが、現行Workerのscheduled処理は購入記録cleanupを呼ばず、削除は自動実行されない。Production環境変数も今回変更しない。365日方針に沿った実際の削除手順・保留例外の運用は本番反映前に別途確認する。
+- App StoreのAge Ratingは質問票へ実装事実どおり回答する。現状は自由チャット・SNS投稿・ユーザー自由文の投稿なし、オンラインPvP・リワード広告・アプリ内購入あり。最終区分はAppleの判定に従い、年齢の下限値を今は固定しない。
 
 ## App Store App Privacy 回答案（要最終検証）
 
@@ -60,7 +62,7 @@ Googleの「Shared」はサービス提供者としての処理やSDK送信の�
 
 - アプリ内：`設定 → データとプライバシー → オンラインデータを削除`。外部：`data-deletion.html`のサポート依頼。匿名プロフィールを第三者のplayerId申告だけで削除しない。
 - 削除するのは通常のオンライン進行・プロフィール。端末のCPUローカル進行は対象外。アプリのアンインストールだけではサーバーデータは消えない。
-- 購入復元、返金・失効、重複利用・不正防止、取得済みPass月間Skin復元に必要な最小記録は保持し得る。永続権利は復元可能な期間、失効記録は目的達成または法令上必要な期間を検討する。固定年数は未確定。
+- 購入復元、返金・失効、重複利用・不正防止、取得済みPass月間Skin復元に必要な最小記録は保持し得る。有効な買い切りSkill・Pack等の永続権利と取得済み永続Pass月間Skinは復元に必要な期間保持する。Storeで失効・返金・取消が確定した購入の記録は確定時点から原則365日とし、未完了の返金処理、Store dispute、法的請求、不正調査、法令上の義務がある場合のみ必要な範囲・期間に限って延長する。
 - 削除後の新匿名プロフィールではユーザー操作によるStore再検証で、買い切りSkill／Pack、有効Pass、対象の取得済み月間Skinを復元できる場合がある。Rank、RP、Coin、Stamina、Daily、Mission、Gift、試合進行は復元しない。
 - プロフィール削除はStoreの購読解約・返金を行わない。過去Room／Match記録およびインフラログは別の保持対象で、即時全消去とは説明しない。
 
@@ -71,3 +73,6 @@ Googleの「Shared」はサービス提供者としての処理やSDK送信の�
 - [Google Play：Account deletion requirements](https://support.google.com/googleplay/android-developer/answer/13327111)
 - [Google Mobile Ads SDK：Play data disclosure](https://developers.google.com/admob/android/privacy/play-data-disclosure)
 - [Cloudflare Privacy Policy](https://www.cloudflare.com/policies/privacy/)
+- [Cloudflare Workers Logs：Freeプランの保持期間](https://developers.cloudflare.com/workers/observability/logs/workers-logs/)
+- [Google Play：対象年齢とコンテンツ](https://support.google.com/googleplay/android-developer/answer/9867159)
+- [Apple：Age Rating質問票](https://developer.apple.com/help/app-store-connect/manage-app-information/set-an-app-age-rating)
