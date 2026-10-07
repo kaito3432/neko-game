@@ -5,23 +5,10 @@ const DAY=86400000;
 
 // Called only after Bearer authentication, inside OnlinePlayers' serialized DO.
 export async function deleteOnlineProfile({storage,profileKey,profile,now=Date.now(),
-  checkActiveRoom,googlePassProductId=null}={}){
+  checkActiveRoom,googlePassProductId=null,onCommitted}={}){
   if(!storage||!profileKey||!profile?.playerId)throw new Error('invalid_delete_context');
   const playerId=profile.playerId,indexKey=`profile-key:${playerId}`;
-  const queueState=await storage.get(`queue:${playerId}`);
-  if(queueState?.status==='waiting')throw new Error('active_match');
-  if(queueState?.matchId){
-    const match=await storage.get(`match:${queueState.matchId}`);
-    if(match&&!TERMINAL.has(match.status))throw new Error('active_match');
-  }
-  const active=await storage.get(`active:${playerId}`);
-  if(active?.roomCode){
-    if(typeof checkActiveRoom!=='function')throw new Error('active_room_check_unavailable');
-    if(await checkActiveRoom(active.roomCode,playerId))throw new Error('active_match');
-  }
-  const pending=await storage.get('queue')||[];
-  if(pending.some(entry=>entry?.profile?.playerId===playerId&&entry.expiresAt>now))
-    throw new Error('active_match');
+  await checkProfileDeletionActivity(storage,playerId,{now,checkActiveRoom});
   // Snapshot and validate before deleting. The transaction rolls all writes back
   // if any retained purchase binding cannot be safely created.
   const apply=async tx=>{
@@ -51,20 +38,42 @@ export async function deleteOnlineProfile({storage,profileKey,profile,now=Date.n
       for(const [key] of await tx.list({prefix}))if(key.endsWith(`:${playerId}`))cleanup.push(key);
     for(const key of new Set(cleanup))await tx.delete(key);
     if(records.length)await markDeletedPurchaseBindings(tx,current,records);
-    await tx.put('queue',pending.filter(entry=>entry?.profile?.playerId!==playerId));
+    await tx.put('queue',(await tx.get('queue')||[]).filter(entry=>entry?.profile?.playerId!==playerId));
     // Only a credential hash and timestamp remain for short retry idempotency.
     await tx.put(`profile-deleted:${profileKey.slice('profile:'.length)}`,
       {deletedAt:now,expiresAt:now+DAY});
-    return {deleted:true,retainedPurchases:records.length};
+    const result={deleted:true,retainedPurchases:records.length};
+    if(onCommitted)await onCommitted(tx,result);
+    return result;
   };
   return storage.transaction?storage.transaction(apply):apply(storage);
 }
 
+export async function checkProfileDeletionActivity(storage,playerId,{now=Date.now(),checkActiveRoom}={}){
+  const queueState=await storage.get(`queue:${playerId}`);
+  if(queueState?.status==='waiting')throw new Error('active_match');
+  if(queueState?.matchId){
+    const match=await storage.get(`match:${queueState.matchId}`);
+    if(match&&!TERMINAL.has(match.status))throw new Error('active_match');
+  }
+  const active=await storage.get(`active:${playerId}`);
+  if(active?.roomCode){
+    if(typeof checkActiveRoom!=='function')throw new Error('active_room_check_unavailable');
+    if(await checkActiveRoom(active.roomCode,playerId))throw new Error('active_match');
+  }
+  const pending=await storage.get('queue')||[];
+  if(pending.some(entry=>entry?.profile?.playerId===playerId&&entry.expiresAt>now))
+    throw new Error('active_match');
+  return {activeMatch:false,matchmaking:false};
+}
+
 export async function cleanupProfileDeletionReceipts(storage,now=Date.now()){
   let count=0;
-  for(const prefix of ['profile-deleted:','profile-delete-rate:'])
+  for(const prefix of ['profile-deleted:','profile-delete-rate:',
+    'admin-delete-preview:','admin-delete-rate:','admin-delete-auth-rate:'])
     for(const [key,value] of await storage.list({prefix})){
-      const expiresAt=prefix==='profile-deleted:'?value?.expiresAt:value?.until;
+      const expiresAt=['profile-deleted:','admin-delete-preview:'].includes(prefix)
+        ?value?.expiresAt:value?.until;
       if(Number.isSafeInteger(expiresAt)&&expiresAt<=now){await storage.delete(key);count++;}
     }
   return count;

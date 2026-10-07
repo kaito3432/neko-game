@@ -37,7 +37,8 @@
 
 - [ ] `server/wrangler.jsonc` のWorker名・binding・compatibility dateを再監査し、既存Durable Object namespaceを維持。
 - [ ] `PRODUCTION_SECRETS_CHECKLIST`（`STORE_SUBMISSION_CHECKLIST.md` 内）を値を出さずに確認。実値は本番設定へ安全に投入。
-- [ ] `PROFILE_DELETION_RUNBOOK.md` の権限付き手動削除運用と `PURCHASE_RETENTION_RUNBOOK.md` の365日方針を確定。現状では自動cleanupを有効化しない。
+- [x] Support admin deletion path のpreview/execute、認証、確認token、既存削除transaction再利用、監査とfixtureテストを実装。Productionでは無効。
+- [ ] `PROFILE_DELETION_RUNBOOK.md` の権限付き手動削除運用を確定し、Production secret/有効化、deploy、専用QA profileでの限定live QA、運用開始判定を実施。現在Production secret未設定・enabled=false・未deploy・live QA未実施。`PURCHASE_RETENTION_RUNBOOK.md` の365日方針を確認。現状では監査の自動cleanupを有効化しない。
 
 ## Android Release manifest監査結果
 

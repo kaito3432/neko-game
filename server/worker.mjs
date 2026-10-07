@@ -20,6 +20,7 @@ import {processAppleNotification,processGoogleNotification,scanGoogleVoidedPurch
   cleanupNotificationDedupe} from './store-notifications.mjs';
 import {reconcileVerifiedPurchase,shouldReverify} from './purchase-lifecycle.mjs';
 import {cleanupProfileDeletionReceipts} from './profile-deletion.mjs';
+import {adminProfileDeletionRequest} from './admin-profile-deletion.mjs';
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -128,6 +129,10 @@ export class OnlinePlayers extends DurableObject {
         }
         if(path==='/internal/profile-delete-cleanup'&&request.method==='POST')
           return Response.json({cleaned:await cleanupProfileDeletionReceipts(this.ctx.storage)});
+        if(/^\/internal\/admin-profile-deletion\/(preview|execute)$/.test(path))
+          return adminProfileDeletionRequest(this.ctx.storage,request,{env:this.env,
+            checkActiveRoom:this.profileOptions().checkActiveRoom,
+            googlePassProductId:this.profileOptions().googleProductId});
         if(path==='/internal/admob-ssv'){
           if(!this.env.ADMOB_REWARDED_AD_UNIT_ID||!this.env.ADMOB_SKILL_MODE_REWARD_ITEM)throw new Error('admob_ssv_not_configured');
           const {url}=await request.json();
@@ -1597,6 +1602,22 @@ async handleClose(ws) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    const adminRoute=url.pathname.match(/^\/api\/admin\/profile-deletion\/(preview|execute)$/);
+    if(adminRoute){
+      if(request.method!=='POST')return Response.json({error:'not_found'},{status:404});
+      if(env.PROFILE_ADMIN_DELETE_ENABLED!=='true')
+        return Response.json({error:'not_found'},{status:404});
+      if(Number(request.headers.get('content-length'))>4096)
+        return Response.json({error:'invalid_request'},{status:413});
+      const body=await request.text();
+      if(body.length>4096)return Response.json({error:'invalid_request'},{status:413});
+      const stub=env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
+      return stub.fetch(new Request(`https://players/internal/admin-profile-deletion/${adminRoute[1]}`,{
+        method:'POST',headers:request.headers,body}));
+    }
+    if(url.pathname.startsWith('/api/admin/'))
+      return Response.json({error:'not_found'},{status:404});
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
