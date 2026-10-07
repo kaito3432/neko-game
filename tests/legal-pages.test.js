@@ -85,11 +85,15 @@ test('公開URLはPagesのproject pathを使い、Nativeは同梱ページを開
   assert.equal(web.publicBaseUrl,base);
   assert.ok(read('APP_PRIVACY_DISCLOSURE.md').includes(base+'data-deletion.html'));
 });
-test('公開前チェックは残る未確定情報を検出する',()=>{
+test('法務ページの施行日を統一し、公開前チェックは残る未確定情報を検出する',()=>{
   assert.equal(checkText('sample','運営者：[運営者名]').length,1);
   assert.deepEqual(checkText('sample','公開準備完了'),[]);
   assert.ok(!checkLegalRelease(root).some(issue=>issue.includes('公開URL未設定')));
-  assert.ok(checkLegalRelease(root).some(issue=>issue.includes('[施行日]')));
+  for(const file of [...pages,'APP_PRIVACY_DISCLOSURE.md']){
+    assert.ok(read(file).includes('2026年10月7日'),file);
+    assert.ok(!read(file).includes('[施行日]'),file);
+  }
+  assert.ok(!checkLegalRelease(root).some(issue=>issue.includes('[施行日]')));
   assert.ok(checkLegalRelease(root).some(issue=>issue.includes('APP_PRIVACY_DISCLOSURE.md')));
 });
 test('Service Workerの事前キャッシュに欠落ページを含めない',()=>{

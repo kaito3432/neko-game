@@ -9,7 +9,7 @@
 - 問い合わせ：nyanchase@gmail.com
 - 公開Web URL：https://kaito3432.github.io/neko-game/
 - Store申告用URL候補：Privacy Policy https://kaito3432.github.io/neko-game/privacy.html ／ Support https://kaito3432.github.io/neko-game/support.html ／ Data deletion https://kaito3432.github.io/neko-game/data-deletion.html ／ Terms https://kaito3432.github.io/neko-game/terms.html
-- 施行日：[施行日]
+- 施行日：2026年10月7日
 - 外部削除依頼の本人確認：アプリにアクセスできる場合はBearer認証済みのアプリ内削除を推奨。利用できない場合は `data-deletion.html` からサポートメールへ依頼し、OS・おおよその利用時期・分かればplayerId・覚えているランクや装備等、複数の情報をサーバー上のプロフィールと照合する。playerIdのみでは削除しない。秘密のcredentialやStore token全文は要求しない。合理的に確認できない場合は誤削除防止のため削除できないことがある。
 - 子ども専用・子ども向けとして設計していない。Google Play Families Program向けとして意図的に設計しておらず、child-directed appとして申告しない。Play Consoleの具体的な対象年齢層選択とApple Age Rating質問票の最終回答：TODO
 - AdMobのパーソナライズ広告・IDFAメッセージ設定、iOS ATTの最終方針、Store申告：TODO（実装監査結果は下記）
