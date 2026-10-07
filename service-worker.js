@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v53-ad-consent-20261006";
+const CACHE_NAME = "nyan-chase-v54-deletion-guide-20261007";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",

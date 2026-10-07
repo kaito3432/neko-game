@@ -34,6 +34,25 @@ test('Terms・Support・削除専用ページが購入復元と契約取消の�
     '購入識別情報','購読を解約せず','購入を復元','アンインストール'])
     assert.ok(deletion.includes(word),word);
 });
+test('外部削除案内はアプリ内削除を優先し、複数情報で本人確認する',()=>{
+  const deletion=read('data-deletion.html');
+  const support=read('support.html');
+  const disclosure=read('APP_PRIVACY_DISCLOSURE.md');
+  for(const word of ['アプリを利用できる場合（推奨）','Bearer credentialで本人認証','メールでの本人確認は必要ありません',
+    'mailto:nyanchase@gmail.com','にゃんチェイス オンラインデータ削除依頼','おおよその利用時期',
+    'playerIdが分かる場合','ランク','Skin・Frame','複数の情報','playerIdだけでは削除しません',
+    '合理的に確認できない場合は削除できないことがあります','Google Play purchase token全文',
+    'Apple signed transaction・JWS全文','セキュリティコード','購入transaction IDやreceiptも最初の依頼では必要ありません'])
+    assert.ok(deletion.includes(word),`data-deletion.html: ${word}`);
+  assert.ok(support.includes('アプリを利用できる場合は'));
+  assert.ok(support.includes('href="./data-deletion.html"'));
+  assert.ok(disclosure.includes('playerIdのみでは削除しない'));
+  assert.ok(disclosure.includes('複数の情報をサーバー上のプロフィールと照合'));
+  assert.ok(!disclosure.includes('外部削除依頼の本人確認方法：TODO'));
+  assert.ok(read('privacy.html').includes('必要最小限の情報'));
+  assert.ok(read('privacy.html').includes('合理的に本人確認'));
+  assert.equal(checkLegalRelease(root).filter(issue=>issue.includes('外部削除依頼の本人確認方法')).length,0);
+});
 test('設定画面の3リンクと認証済み削除導線は一元URL mapを使う',()=>{
   const html=read('index.html'),script=read('legal-pages.js');
   for(const page of ['privacy','terms','support'])
