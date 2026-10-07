@@ -13,7 +13,7 @@
 <title>にゃんチェイス</title>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
-<link rel="stylesheet" href="./style.css?v=3.1.legal-pages">
+<link rel="stylesheet" href="./style.css?v=3.2.ad-consent">
 </head>
 <body>
 <div class="app">
@@ -1818,6 +1818,8 @@
         <button class="btn settings-legal-link" type="button" data-legal-page="terms">利用規約</button>
         <button class="btn settings-legal-link" type="button" data-legal-page="support">サポート・お問い合わせ</button>
       </div>
+      <button class="btn settings-legal-link" id="adPrivacyOptionsButton" type="button" hidden>広告プライバシー設定</button>
+      <p id="adPrivacyOptionsStatus" role="status" aria-live="polite"></p>
       <button class="btn settings-delete-button" id="onlineDataDeleteOpen" type="button">オンラインデータを削除</button>
     </section>
     <div class="settings-actions">
@@ -1954,8 +1956,9 @@
 <script src="./monetization.js?v=2.0.phase2"></script>
 <script src="./monetization-ui.js?v=2.1.online-effective"></script>
 <script src="./ad-config.js?v=1.0.phase5"></script>
-<script src="./rewarded-ad-provider.js?v=1.0.phase5"></script>
-<script src="./rewarded-ad-ui.js?v=1.0.phase5"></script>
+<script src="./ad-consent.js?v=1"></script>
+<script src="./rewarded-ad-provider.js?v=1.1.consent"></script>
+<script src="./rewarded-ad-ui.js?v=1.1.consent"></script>
 <script src="./storekit-provider.js?v=1.0.phase6"></script>
 <script src="./google-play-provider.js?v=1.0.phase8"></script>
 <script src="./purchase-provider.js?v=1.0.phase8"></script>

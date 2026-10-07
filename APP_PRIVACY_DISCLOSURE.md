@@ -4,14 +4,14 @@
 
 ## 公開前に確定する情報
 
-- 運営者：[運営者名]
-- 所在地：[所在国]
-- 問い合わせ：[お問い合わせメール]
+- 運営者：にゃんチェイス運営
+- 所在地：日本
+- 問い合わせ：nyanchase@gmail.com
 - 公開Web URL：[公開URL]
 - 施行日：[施行日]
 - 外部削除依頼の本人確認方法：TODO
 - 対象年齢・Families設定：TODO
-- AdMobのパーソナライズ広告、iOS ATT／IDFA、Android広告ID、同意フロー：TODO
+- AdMobのパーソナライズ広告・IDFAメッセージ設定、iOS ATTの最終方針、Store申告：TODO（実装監査結果は下記）
 - Cloudflareの実際の通信ログ保持期間：TODO
 - 失効・不正防止情報の具体的保持期間と法令上の要件：TODO
 
@@ -22,6 +22,11 @@
 - Cloudflare Workers／Durable Objectsがプロフィール、対戦、ランク、スタミナ、コイン、Pass、購入検証等を扱う。対戦相手へは試合に必要なプロフィール・外観・ランク等を共有する。
 - Apple／Google Playが決済を扱う。運営者はクレジットカード番号を直接受け取らない。商品・取引識別情報、購読期間、返金・失効状態等をStore検証・復元・不正防止のため扱う。
 - Google AdMob SDKを使用する。SDKのIPアドレス、広告・端末識別子、操作・診断データの処理は公開時のSDK版と設定で再確認する。
+- 現行コードの広告形式はSkill Modeとランク戦スタミナ回復のリワード広告。`@capacitor-community/admob` 8.1.0 を使用し、iOS podspecはGoogle Mobile Ads SDK 13.6.0、GoogleUserMessagingPlatform `~>3.1`、Android Gradle設定はGoogle Mobile Ads `25.4.+`、UMP `4.0.0` を指定する。2026-10-06のAndroid Debug依存解決ではGoogle Mobile Ads `25.4.0`、UMP `4.0.0`。
+- アプリはUMPの `requestConsentInfo()` を行い、必要なら `showConsentForm()` を表示する。`canRequestAds` が真のときだけリワード広告の準備・表示に進む。同意画面が開けない、または状態を取得できない場合は広告を表示しない。プライバシーオプションが必要と返された場合、設定画面に再表示の導線を出す。
+- 現行アプリコードはATTダイアログを明示的に要求せず、IDFAを直接読み取らない。iOSの `NSUserTrackingUsageDescription` も未設定。AdMob Console側のメッセージやSDKの実際のデータ処理と合わせて公開前にTracking申告を判断する。ATT未許可時にIDFAが広告リクエストへ含まれないことはGoogleのSDK仕様による。
+- Android DebugとReleaseのmerged manifestには `com.google.android.gms.permission.AD_ID` と `android.permission.ACCESS_ADSERVICES_AD_ID` が依存SDK経由で含まれる。Play Data safetyへ反映する。アプリ側で広告IDを直接読む処理は確認されない。
+- パーソナライズ／非パーソナライズ／限定広告をアプリが明示的に指定する処理はない。実際の広告モードはUMP同意結果、AdMob Console設定、SDK側の挙動に依存するため、公開前に実機とConsoleで確認する。
 - 独立したFirebase Analytics、Google Analytics、Crashlytics、Sentryは現行依存関係から確認されない。AdMob由来の測定とは区別する。
 - アプリ内の認証済みDELETEはオンラインプロフィール本体を削除し、購入復元・失効・不正防止の最小記録は別に保持し得る。過去Room／Matchやインフラログの即時全消去を保証しない。
 

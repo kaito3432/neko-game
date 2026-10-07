@@ -20,13 +20,21 @@
     let initialized=false,busy=false,state=plugin?STATES.INITIALIZING:STATES.UNAVAILABLE,activeRewardType=null;
     const platform=config.platform||root.Capacitor?.getPlatform?.()||'web';
     const testing=config.testing!==false,adId=testing?(platform==='android'?ANDROID_TEST_REWARDED_ID:IOS_TEST_REWARDED_ID):config.rewardedAdUnitId;
+    const consentManager=config.consentManager||root.NyanAdConsent?.manager;
     const emit=(next,detail={})=>{state=next;onState({state,rewardType:activeRewardType,...detail});};
     const removeAll=async handles=>Promise.all(handles.map(handle=>handle?.remove?.()).filter(Boolean));
     async function initialize(){
       if(initialized)return {available:Boolean(plugin&&adId)};
       if(!plugin||!adId){emit(STATES.UNAVAILABLE,{reason:plugin?'missingAdUnitId':'unsupportedPlatform'});return {available:false};}
       emit(STATES.INITIALIZING);
-      try{await plugin.initialize({initializeForTesting:testing});initialized=true;emit(STATES.AVAILABLE);return {available:true};}
+      try{
+        if(consentManager){
+          const consent=await consentManager.ensure(plugin);
+          if(!consent.canRequestAds){emit(STATES.UNAVAILABLE,{reason:'consentUnavailable',consent});return {available:false,reason:'consentUnavailable'};}
+        }
+        await plugin.initialize({initializeForTesting:testing});
+        initialized=true;emit(STATES.AVAILABLE);return {available:true};
+      }
       catch(error){emit(STATES.UNAVAILABLE,{reason:'initializeFailed',error});return {available:false,error};}
     }
     async function showRewardedAd(rewardType=REWARD_TYPE){
@@ -34,6 +42,7 @@
       busy=true;activeRewardType=rewardType;let handles=[],rewarded=false,dismissed=false;
       try{
         if(!(await initialize()).available)return {shown:false,rewarded:false,reason:'unavailable'};
+        if(consentManager&&!consentManager.canRequestAds())return {shown:false,rewarded:false,reason:'consentUnavailable'};
         if(!api?.createAttempt||!api?.completeAttempt)return {shown:false,rewarded:false,reason:'serverUnavailable'};
         const attempt=await api.createAttempt(rewardType);
         emit(STATES.LOADING);

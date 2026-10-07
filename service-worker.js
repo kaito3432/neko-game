@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v52-legal-pages-20261006";
+const CACHE_NAME = "nyan-chase-v53-ad-consent-20261006";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",
@@ -6,6 +6,7 @@ const PRECACHE = [
   "./monetization.js",
   "./monetization-ui.js",
   "./ad-config.js",
+  "./ad-consent.js",
   "./rewarded-ad-provider.js",
   "./rewarded-ad-ui.js",
   "./storekit-provider.js",

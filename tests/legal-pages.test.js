@@ -21,7 +21,7 @@ test('4つの独立した法務・サポートページが存在し、内部リ�
 test('Privacyは収集・購入・AdMob・Cloudflare・削除・保持・連絡先を説明',()=>{
   const text=read('privacy.html');
   for(const word of ['匿名プロフィール','Bearer credential','localStorage','AdMob','Cloudflare',
-    'App Store','Google Play','クレジットカード番号','オンラインデータを削除','保持','[お問い合わせメール]'])
+    'App Store','Google Play','クレジットカード番号','オンラインデータを削除','保持','mailto:nyanchase@gmail.com','User Messaging Platform'])
     assert.ok(text.includes(word),word);
 });
 test('Terms・Support・削除専用ページが購入復元と契約取消の境界を説明',()=>{
@@ -30,7 +30,7 @@ test('Terms・Support・削除専用ページが購入復元と契約取消の�
   for(const word of ['購入を復元','にゃんチェイスパス','広告','オンラインデータを削除','Bearer credential'])
     assert.ok(read('support.html').includes(word),word);
   const deletion=read('data-deletion.html');
-  for(const word of ['設定','データとプライバシー','オンラインデータを削除','[お問い合わせメール]',
+  for(const word of ['設定','データとプライバシー','オンラインデータを削除','mailto:nyanchase@gmail.com',
     '購入識別情報','購読を解約せず','購入を復元','アンインストール'])
     assert.ok(deletion.includes(word),word);
 });

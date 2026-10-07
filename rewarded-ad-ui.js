@@ -15,6 +15,11 @@
   }
   root.addEventListener('nyan-rewarded-ad-state',event=>{const value=event.detail||{};if(value.rewardType&&value.rewardType!==root.NyanRewardedAds.REWARD_TYPE)return;status.textContent=labels[value.state]||'';render();});
   root.addEventListener('nyan-online-profile',()=>render());root.addEventListener('nyan-rewarded-ad-progress',event=>{if(event.detail?.rewardType&&event.detail.rewardType!==root.NyanRewardedAds.REWARD_TYPE)return;render('サーバーで視聴を確認しました');});
+  root.addEventListener('nyan-ad-consent-state',event=>{
+    if(event.detail?.canRequestAds&&root.NyanRewardedAds.provider.getState()===root.NyanRewardedAds.STATES.UNAVAILABLE)
+      root.NyanRewardedAds.provider.initialize().finally(()=>render());
+    else render();
+  });
   button.addEventListener('click',async()=>{
     button.disabled=true;const result=await root.NyanRewardedAds.provider.showRewardedAd();
     if(result.testMode)render('テスト広告完了（権利加算は本番SSVのみ）');
