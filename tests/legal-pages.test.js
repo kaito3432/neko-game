@@ -2,6 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const vm=require('node:vm');
 const {checkText,checkLegalRelease}=require('../scripts/check-legal-release.cjs');
 const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
@@ -58,14 +59,37 @@ test('設定画面の3リンクと認証済み削除導線は一元URL mapを使
   for(const page of ['privacy','terms','support'])
     assert.match(html,new RegExp(`data-legal-page="${page}"`));
   assert.match(html,/id="onlineDataDeleteOpen"/);
-  assert.match(html,/src="\.\/legal-pages\.js\?v=5"/);
+  assert.match(html,/src="\.\/legal-pages\.js\?v=6"/);
   for(const page of pages)assert.ok(script.includes(page));
-  assert.match(script,/PUBLIC_BASE_URL=null/);
+  assert.match(script,/PUBLIC_BASE_URL='https:\/\/kaito3432\.github\.io\/neko-game\/'/);
 });
-test('公開前チェックは未確定情報と未設定URLを検出する',()=>{
+test('公開URLはPagesのproject pathを使い、Nativeは同梱ページを開く',()=>{
+  const base='https://kaito3432.github.io/neko-game/';
+  function load(href,native){
+    const context={URL,location:{href,protocol:new URL(href).protocol},
+      Capacitor:{isNativePlatform:()=>native},document:{getElementById:()=>null}};
+    context.globalThis=context;
+    vm.runInNewContext(read('legal-pages.js'),context);
+    return context.NyanLegalPages;
+  }
+  const web=load('https://kaito3432.github.io/neko-game/index.html',false);
+  const android=load('http://localhost/index.html',true);
+  const ios=load('capacitor://localhost/index.html',true);
+  for(const [key,file] of Object.entries({privacy:'privacy.html',terms:'terms.html',support:'support.html',deletion:'data-deletion.html'})){
+    assert.equal(web.pageUrl(key),base+file);
+    assert.equal(android.pageUrl(key),'http://localhost/'+file);
+    assert.equal(ios.pageUrl(key),'capacitor://localhost/'+file);
+    assert.ok(read(file).includes(base));
+    assert.ok(!read(file).includes('[公開URL]'));
+  }
+  assert.equal(web.publicBaseUrl,base);
+  assert.ok(read('APP_PRIVACY_DISCLOSURE.md').includes(base+'data-deletion.html'));
+});
+test('公開前チェックは残る未確定情報を検出する',()=>{
   assert.equal(checkText('sample','運営者：[運営者名]').length,1);
   assert.deepEqual(checkText('sample','公開準備完了'),[]);
-  assert.ok(checkLegalRelease(root).some(issue=>issue.includes('公開URL未設定')));
+  assert.ok(!checkLegalRelease(root).some(issue=>issue.includes('公開URL未設定')));
+  assert.ok(checkLegalRelease(root).some(issue=>issue.includes('[施行日]')));
   assert.ok(checkLegalRelease(root).some(issue=>issue.includes('APP_PRIVACY_DISCLOSURE.md')));
 });
 test('Service Workerの事前キャッシュに欠落ページを含めない',()=>{

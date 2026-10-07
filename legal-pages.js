@@ -1,12 +1,13 @@
-/* One local URL map for the app. Public URLs are set only after release review. */
+/* Public URLs for Web, bundled legal pages for native apps. */
 (function(root){
   'use strict';
-  const PUBLIC_BASE_URL=null;
+  const PUBLIC_BASE_URL='https://kaito3432.github.io/neko-game/';
   const PATHS=Object.freeze({privacy:'privacy.html',terms:'terms.html',support:'support.html',deletion:'data-deletion.html'});
   function pageUrl(page){
     const path=PATHS[page];
     if(!path)throw new Error('unknown_legal_page');
-    return new URL(path,PUBLIC_BASE_URL||root.location.href).href;
+    const native=Boolean(root.Capacitor?.isNativePlatform?.())||root.location.protocol==='capacitor:';
+    return new URL(path,native?root.location.href:PUBLIC_BASE_URL).href;
   }
   const overlay=root.document.getElementById('legalPageOverlay');
   const frame=root.document.getElementById('legalPageFrame');
