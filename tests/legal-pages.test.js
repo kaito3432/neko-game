@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
-const {checkText,checkLegalRelease}=require('../scripts/check-legal-release.cjs');
+const {checkText,checkLegalRelease,checkStoreSubmissionReadiness}=require('../scripts/check-legal-release.cjs');
 const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 const pages=['privacy.html','terms.html','support.html','data-deletion.html'];
@@ -85,7 +85,7 @@ test('公開URLはPagesのproject pathを使い、Nativeは同梱ページを開
   assert.equal(web.publicBaseUrl,base);
   assert.ok(read('APP_PRIVACY_DISCLOSURE.md').includes(base+'data-deletion.html'));
 });
-test('法務ページの施行日を統一し、公開前チェックは残る未確定情報を検出する',()=>{
+test('法務ページの施行日を統一し、法務文書とStore申告待ちを分ける',()=>{
   assert.equal(checkText('sample','運営者：[運営者名]').length,1);
   assert.deepEqual(checkText('sample','公開準備完了'),[]);
   assert.ok(!checkLegalRelease(root).some(issue=>issue.includes('公開URL未設定')));
@@ -94,7 +94,12 @@ test('法務ページの施行日を統一し、公開前チェックは残る�
     assert.ok(!read(file).includes('[施行日]'),file);
   }
   assert.ok(!checkLegalRelease(root).some(issue=>issue.includes('[施行日]')));
-  assert.ok(checkLegalRelease(root).some(issue=>issue.includes('APP_PRIVACY_DISCLOSURE.md')));
+  assert.deepEqual(checkLegalRelease(root),[]);
+  assert.equal(checkStoreSubmissionReadiness(root).length,8);
+  const disclosure=read('APP_PRIVACY_DISCLOSURE.md');
+  for(const word of ['Google Play Data safety','Apple Age Rating','AD_ID','ACCESS_ADSERVICES_AD_ID','Tracking=No','Store Console確認待ち','GMA Android 25.4.0','UMP 4.0.0'])
+    assert.ok(disclosure.includes(word),word);
+  assert.ok(!disclosure.includes('：TODO'));
 });
 test('Service Workerの事前キャッシュに欠落ページを含めない',()=>{
   const source=read('service-worker.js');
