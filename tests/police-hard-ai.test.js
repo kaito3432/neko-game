@@ -21,6 +21,6 @@ test('非公開の猫現在位置を入力しても判断は変化しない',()=
 });
 test('専用AIはhard選択時だけ呼ばれ、通常・弱CPU分岐を維持する',()=>{
   const source=fs.readFileSync(path.join(__dirname,'..','game.js'),'utf8');
-  assert.match(source,/if\(cpuDifficulty==="hard" && window\.NyanPoliceHardAI\)/);
+  assert.match(source,/if\(cpuDifficulty==="hard" && hardAI\)/);
   assert.match(source,/if\(cpuDifficulty!=="hard" && policeDifficulty!=="easy"/);
 });

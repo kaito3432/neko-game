@@ -2,16 +2,21 @@
    UIやアニメーションに依存しないルール処理だけを置く。
 */
 window.NyanEngine = (() => {
-  const BOX_ROWS = 5;
-  const BOX_COLS = 5;
-  const NODE_ROWS = 6;
-  const NODE_COLS = 6;
-  const BOX_COUNT = 25;
-  const NODE_COUNT = 36;
-  // Board geometry and turn limit are independent. Change only MAX_TURNS to
-  // switch the adopted board between nine and ten turns.
-  const MAX_TURNS = 9;
-  const BLOCKED_BOXES = Object.freeze([0, 24]); // printed boxes 1 and 25
+  const BOARD_RULES = Object.freeze({
+    standard_5x5:Object.freeze({id:"standard_5x5",rows:5,cols:5,maxTurns:9,blockedBoxes:Object.freeze([1,25]),policeCount:3}),
+    challenge_5x6:Object.freeze({id:"challenge_5x6",rows:6,cols:5,maxTurns:14,blockedBoxes:Object.freeze([]),policeCount:3})
+  });
+  function createForRule(id="standard_5x5"){
+  const RULE=BOARD_RULES[id];
+  if(!RULE)throw new Error("Unknown board rule");
+  const BOX_ROWS = RULE.rows;
+  const BOX_COLS = RULE.cols;
+  const NODE_ROWS = BOX_ROWS+1;
+  const NODE_COLS = BOX_COLS+1;
+  const BOX_COUNT = BOX_ROWS*BOX_COLS;
+  const NODE_COUNT = NODE_ROWS*NODE_COLS;
+  const MAX_TURNS = RULE.maxTurns;
+  const BLOCKED_BOXES = Object.freeze(RULE.blockedBoxes.map(box=>box-1));
   const blockedBoxSet = new Set(BLOCKED_BOXES);
   const ACTIVE_BOXES = Object.freeze(Array.from({length:BOX_COUNT},(_,i)=>i)
     .filter(i=>!blockedBoxSet.has(i)));
@@ -79,7 +84,7 @@ doubleSearchConfirmed:false,
 
   function isActiveDogNode(i){
     const r=nodeRow(i), c=nodeCol(i);
-    return r>=1 && r<=4 && c>=1 && c<=4;
+    return r>=1 && r<NODE_ROWS-1 && c>=1 && c<NODE_COLS-1;
   }
 
   function getBoxNeighbors(i){
@@ -215,6 +220,7 @@ doubleSearchConfirmed:false,
   }
 
   return {
+    RULE,
     BOX_ROWS, BOX_COLS, NODE_ROWS, NODE_COLS,
     BOX_COUNT, NODE_COUNT, MAX_TURNS, BLOCKED_BOXES, ACTIVE_BOXES, isValidBox, DOGS,
     createState, boxRow, boxCol, nodeRow, nodeCol,
@@ -223,4 +229,6 @@ doubleSearchConfirmed:false,
     getBoxesAroundNode, allDogsDone,
     manhattanNodeDistance, boxesAroundDogs
   };
+  }
+  return Object.assign(createForRule(),{BOARD_RULES,createForRule});
 })();

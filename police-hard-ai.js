@@ -10,6 +10,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(E){
   'use strict';
   if(!E)throw new Error('NyanEngine must load before NyanPoliceHardAI');
+  function createForEngine(E){
   const BOX_COLS=E.BOX_COLS,NODE_COLS=E.NODE_COLS,MAX_TURNS=E.MAX_TURNS;
   const ACTIVE_BOXES=E.ACTIVE_BOXES;
   const boxRow=i=>Math.floor(i/BOX_COLS),boxCol=i=>i%BOX_COLS;
@@ -18,7 +19,7 @@
   const nodeDistance=(a,b)=>Math.abs(nodeRow(a)-nodeRow(b))+Math.abs(nodeCol(a)-nodeCol(b));
   const boxNeighbors=i=>E.getBoxNeighbors(i);
   const boxesAroundNode=i=>E.getBoxesAroundNode(i);
-  function nodeMoves(node,dogs,di){const r=nodeRow(node),c=nodeCol(node),out=[];[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{const n=nr*6+nc;if(nr>=1&&nr<=4&&nc>=1&&nc<=4&&!dogs.some((p,j)=>j!==di&&p===n))out.push(n);});return out;}
+  function nodeMoves(node,dogs,di){const r=nodeRow(node),c=nodeCol(node),out=[];[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{const n=nr*NODE_COLS+nc;if(nr>=1&&nr<E.NODE_ROWS-1&&nc>=1&&nc<E.NODE_COLS-1&&!dogs.some((p,j)=>j!==di&&p===n))out.push(n);});return out;}
   const entries=value=>value instanceof Map?[...value.entries()]:Array.isArray(value)?value:[];
   const values=value=>value instanceof Set?value:new Set(Array.isArray(value)?value:[]);
   function inferCandidates(input){
@@ -79,4 +80,6 @@
     return best;
   }
   return Object.freeze({inferCandidates,probabilityMap,chooseAction,chooseDogAction});
+  }
+  return Object.freeze({...createForEngine(E),createForEngine});
 });

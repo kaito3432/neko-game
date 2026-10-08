@@ -3,7 +3,27 @@
    修正: 探索開始直後に actionLocked=true にして二重行動を防止。
 */
 (() => {
-  const E=NyanEngine;
+  let E=NyanEngine;
+  let hardAI=window.NyanPoliceHardAI;
+  let selectedBoardRule="standard_5x5";
+  const boxTop=r=>E.BOX_ROWS===5?5+r*19:4+r*16;
+  const nodeTop=r=>E.BOX_ROWS===5?2.5+r*19:2+r*16;
+  const boxHeight=()=>E.BOX_ROWS===5?"14%":"12%";
+  const routeY=r=>(r+.5)*100/E.BOX_ROWS;
+  function selectBoardRule(id){
+    if(!NyanEngine.BOARD_RULES[id])return;
+    selectedBoardRule=id;
+    E=id==="standard_5x5"?NyanEngine:NyanEngine.createForRule(id);
+    hardAI=window.NyanPoliceHardAI?.createForEngine?.(E)||window.NyanPoliceHardAI;
+    document.querySelectorAll('[data-max-turns]').forEach(el=>{el.textContent=String(E.MAX_TURNS);});
+    const challenge=id==="challenge_5x6";
+    board.dataset.boardRule=id;
+    resultRouteBoard.dataset.boardRule=id;
+    $("cpuStandardBoardBtn")?.setAttribute("aria-pressed",String(!challenge));
+    $("cpuChallengeBoardBtn")?.setAttribute("aria-pressed",String(challenge));
+    $("localStandardBoardBtn")?.setAttribute("aria-pressed",String(!challenge));
+    $("localChallengeBoardBtn")?.setAttribute("aria-pressed",String(challenge));
+  }
   const A=NyanAnimation;
   const Audio=NyanAudio;
   const Skins=NyanSkinPresentation;
@@ -774,6 +794,7 @@ onlineRuleOverlay?.classList.remove("show");
   });
 
   function initGame(showMode=false){
+    if(showMode && selectedBoardRule!=="standard_5x5")selectBoardRule("standard_5x5");
     const returningFromBattle=showMode && battleBgmActive;
     battleBgmActive=false;
     game=E.createState();
@@ -1239,7 +1260,7 @@ function startOnlineGame(){
 // 対人戦：ルール選択
 // =====================================
 function openLocalRulePicker(){
-
+  selectBoardRule("standard_5x5");
   modeOverlay.classList.remove("show");
   refreshSkillEntitlementUI();
   localRuleOverlay.classList.add("show");
@@ -1300,7 +1321,7 @@ function startLocalAbilityMode(){
 
 // 戻る
 function closeLocalRulePicker(){
-
+  selectBoardRule("standard_5x5");
 
   localRuleOverlay.classList.remove("show");
   modeOverlay.classList.add("show");
@@ -1490,6 +1511,7 @@ requestAnimationFrame(()=>{
 }
 
   function startCpuPoliceMode(){
+    selectBoardRule("standard_5x5");
     modeOverlay.classList.remove("show");
     cpuSideOverlay.classList.add("show");
   }
@@ -1501,6 +1523,7 @@ requestAnimationFrame(()=>{
   }
 
   function closeCpuSidePicker(){
+    selectBoardRule("standard_5x5");
     cpuSideOverlay.classList.remove("show");
     modeOverlay.classList.add("show");
     Audio.setBgmMode("home");
@@ -1549,7 +1572,6 @@ requestAnimationFrame(()=>{
   function render(){
     renderBoard();
 
-    // A complete board has 25 boxes + 36 intersections.
     // Rebuild once if Safari restored a stale/incomplete DOM snapshot.
     if(board.querySelectorAll(".box").length!==E.BOX_COUNT ||
        board.querySelectorAll(".node").length!==E.NODE_COUNT){
@@ -1594,9 +1616,9 @@ requestAnimationFrame(()=>{
     mark.dataset.trackIndex=String(i);
 
     mark.style.left=`${5 + c*19}%`;
-    mark.style.top=`${5 + r*19}%`;
+    mark.style.top=`${boxTop(r)}%`;
     mark.style.width="14%";
-    mark.style.height="14%";
+    mark.style.height=boxHeight();
 
     const turnBadge=shouldShowTrackTurn(turn)
       ? `<b class="track-turn">${turn}</b>`
@@ -1655,9 +1677,9 @@ if(turn===1){
       // iPhone Safari compatibility:
       // avoid CSS calc() multiplication/division and place cells with simple percentages.
       b.style.left=`${5 + c*19}%`;
-      b.style.top=`${5 + r*19}%`;
+      b.style.top=`${boxTop(r)}%`;
       b.style.width="14%";
-      b.style.height="14%";
+      b.style.height=boxHeight();
 
       if(!active){
         b.classList.add("blocked-box");
@@ -1772,7 +1794,7 @@ if(
       n.type="button";
       n.className="node";
       n.style.left=`${2.5 + c*19}%`;
-      n.style.top=`${2.5 + r*19}%`;
+      n.style.top=`${nodeTop(r)}%`;
 
       if(!E.isActiveDogNode(i)){n.classList.add("inactive");n.disabled=true;}
       if(game.phase==="catSetup"){n.disabled=true;}
@@ -4418,7 +4440,7 @@ if(!tracks.length){
     const c=E.boxCol(b);
 
     // 序盤は中央付近を少し優先
-    s+=5-Math.abs(r-2)-Math.abs(c-2);
+    s+=5-Math.abs(r-(E.BOX_ROWS-1)/2)-Math.abs(c-(E.BOX_COLS-1)/2);
 
     // 最近空振りした箱は避けるが、
     // 時間が経てば再び探索候補へ戻す
@@ -4684,7 +4706,7 @@ if(fresh===0){
     // Slight central preference early.
     if(game.turn<=4){
       const r=E.nodeRow(node),c=E.nodeCol(node);
-      score+=3-Math.abs(r-2.5)*.45-Math.abs(c-2.5)*.45;
+      score+=3-Math.abs(r-E.BOX_ROWS/2)*.45-Math.abs(c-E.BOX_COLS/2)*.45;
     }
 
     // Endgame: prioritize blockade positions.
@@ -4786,8 +4808,8 @@ function hardProbabilityMap(){
 
       const center=
         2.5-
-        Math.abs(r-2)*.18-
-        Math.abs(c-2)*.18;
+        Math.abs(r-(E.BOX_ROWS-1)/2)*.18-
+        Math.abs(c-(E.BOX_COLS-1)/2)*.18;
 
       p*=1+Math.max(0,center);
 
@@ -4942,8 +4964,8 @@ function hardBestProbabilitySearch(di){
   }
 
   function chooseCpuAction(di){
-    if(cpuDifficulty==="hard" && window.NyanPoliceHardAI){
-      return window.NyanPoliceHardAI.chooseAction(hardPolicePublicState(),di);
+    if(cpuDifficulty==="hard" && hardAI){
+      return hardAI.chooseAction(hardPolicePublicState(),di);
     }
      const policeDifficulty=cpuPoliceDifficulty();
     const profile=cpuProfile();
@@ -5055,8 +5077,8 @@ function cpuSetupDogs(){
       const c=E.nodeCol(n);
 
       const centerDist=
-        Math.abs(r-2.5) +
-        Math.abs(c-2.5);
+        Math.abs(r-E.BOX_ROWS/2) +
+        Math.abs(c-E.BOX_COLS/2);
 
       score += Math.max(0,4-centerDist) * 0.55;
 
@@ -5131,8 +5153,8 @@ for(let d=0;d<3;d++){
 let di=-1;
 
 if(availableDogs.length){
-  if(cpuDifficulty==="hard" && window.NyanPoliceHardAI){
-    const planned=window.NyanPoliceHardAI.chooseDogAction(hardPolicePublicState(),availableDogs);
+  if(cpuDifficulty==="hard" && hardAI){
+    const planned=hardAI.chooseDogAction(hardPolicePublicState(),availableDogs);
     if(planned)di=planned.dogIndex;
   }
   /*
@@ -5284,7 +5306,7 @@ if(remainingDogs<=searchesNeeded){
     privacyIcon.textContent="📖";
     privacyTitle.textContent="遊び方";
     privacyText.textContent=
-      `ネコは一度通った箱には戻れません。箱1・25には入れません。柴犬は1匹ずつ、移動か探索のどちらかを行います。${E.MAX_TURNS}ターン逃げ切ればネコの勝ち、現在地を探索されるか逃げ道がなくなると柴犬警察の勝ちです。`;
+      `ネコは一度通った箱には戻れません。${E.BLOCKED_BOXES.length?`箱${E.BLOCKED_BOXES.map(box=>box+1).join('・')}には入れません。`:''}柴犬は1匹ずつ、移動か探索のどちらかを行います。${E.MAX_TURNS}ターン逃げ切ればネコの勝ち、現在地を探索されるか逃げ道がなくなると柴犬警察の勝ちです。`;
     privacyOverlay.classList.add("show");
   }
 
@@ -5513,11 +5535,10 @@ if(remainingDogs<=searchesNeeded){
 
   function boxCenterPercent(boxIndex){
     const r=E.boxRow(boxIndex),c=E.boxCol(boxIndex);
-    // Board layout is a 5x5 box grid with intersections between boxes.
-    // These percentages match the box centers visually.
+    // These percentages match the active rule's box centers visually.
     return {
       x:10 + c*20,
-      y:12 + r*20
+      y:E.BOX_ROWS===5?12+r*20:routeY(r)
     };
   }
 
@@ -5552,7 +5573,7 @@ function renderResultCpuCatRoute(){
     cell.className="result-route-cell";
 
     cell.style.left=`${10+c*20}%`;
-    cell.style.top=`${10+r*20}%`;
+    cell.style.top=`${routeY(r)}%`;
 
     cell.textContent=b+1;
 
@@ -5592,10 +5613,10 @@ function renderResultCpuCatRoute(){
     );
 
     line.setAttribute("x1",10+fromC*20);
-    line.setAttribute("y1",10+fromR*20);
+    line.setAttribute("y1",routeY(fromR));
 
     line.setAttribute("x2",10+toC*20);
-    line.setAttribute("y2",10+toR*20);
+    line.setAttribute("y2",routeY(toR));
 
     line.classList.add("result-route-line");
 
@@ -5639,7 +5660,7 @@ function renderResultCpuCatRoute(){
     }
 
     badge.style.left=`${10+c*20}%`;
-    badge.style.top=`${10+r*20}%`;
+    badge.style.top=`${routeY(r)}%`;
 
     badge.textContent=
       idx===0
@@ -5677,7 +5698,7 @@ function renderResultCpuCatRoute(){
 
 // 忍び足を使ったダンボールの中央に表示
 const x=10+fromC*20;
-const y=10+fromR*20;
+const y=routeY(fromR);
 
     const mark=document.createElement("div");
 
@@ -5709,7 +5730,7 @@ mark.innerHTML=`
     mark.className="result-route-fake-mark";
 
     mark.style.left=`${10+c*20}%`;
-    mark.style.top=`${10+r*20}%`;
+    mark.style.top=`${routeY(r)}%`;
 
 mark.innerHTML=`
   <img ${imageAttributes(pawAsset)} alt="フェイク肉球">
@@ -6021,6 +6042,7 @@ if(againBtn){
   }
 
 bindPress(onlineModeBtn,()=>{
+  selectBoardRule("standard_5x5");
   window.NyanOnline.reset();
   resetOnlineState();
   onlineBackBtn.textContent='← 戻る';
@@ -9082,6 +9104,10 @@ bindPress(howToCloseBtn,()=>{
 });
   bindPress(playCatSideBtn,()=>chooseCpuSide("cat"));
   bindPress(playPoliceSideBtn,()=>chooseCpuSide("police"));
+  bindPress($("cpuStandardBoardBtn"),()=>selectBoardRule("standard_5x5"));
+  bindPress($("cpuChallengeBoardBtn"),()=>selectBoardRule("challenge_5x6"));
+  bindPress($("localStandardBoardBtn"),()=>selectBoardRule("standard_5x5"));
+  bindPress($("localChallengeBoardBtn"),()=>selectBoardRule("challenge_5x6"));
   bindPress(cpuSideBackBtn,closeCpuSidePicker);
   bindPress(cpuEasyBtn,()=>beginCpuPoliceGame("easy"));
   bindPress(cpuNormalBtn,()=>beginCpuPoliceGame("normal"));

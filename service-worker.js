@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v59-board-theme-previews-20261008";
+const CACHE_NAME = "nyan-chase-v60-challenge-5x6-20261008";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",

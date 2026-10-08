@@ -492,7 +492,7 @@ test("既存リザルト導線とゲーム定数はソース上でも維持さ�
   ["resultRoute","resultRouteBoard","againBtn","resultHomeBtn"].forEach(id=>{
     assert.match(html,new RegExp(`id=[\"']${id}[\"']`));
   });
-  assert.match(engine,/BOX_COUNT\s*=\s*25/);
-  assert.match(engine,/NODE_COUNT\s*=\s*36/);
-  assert.match(engine,/MAX_TURNS\s*=\s*(?:9|10)/);
+  assert.match(engine,/standard_5x5:[\s\S]*?rows:5,cols:5,maxTurns:9,blockedBoxes:Object\.freeze\(\[1,25\]\)/);
+  assert.match(engine,/NODE_COUNT\s*=\s*NODE_ROWS\*NODE_COLS/);
+  assert.match(engine,/MAX_TURNS\s*=\s*RULE\.maxTurns/);
 });

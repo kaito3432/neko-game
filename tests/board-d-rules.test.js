@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..');
 const engineSource=fs.readFileSync(path.join(root,'engine.js'),'utf8');
 function loadEngine(maxTurns){
   const source=maxTurns===undefined?engineSource:engineSource.replace(
-    /const MAX_TURNS = \d+;/,`const MAX_TURNS = ${maxTurns};`);
+    /maxTurns:9/,`maxTurns:${maxTurns}`);
   const context={window:{}};
   vm.runInNewContext(source,context);
   return context.window.NyanEngine;

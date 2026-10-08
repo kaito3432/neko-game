@@ -13,7 +13,7 @@
 <title>にゃんチェイス</title>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
-<link rel="stylesheet" href="./style.css?v=3.4.board-theme-previews">
+<link rel="stylesheet" href="./style.css?v=3.5.challenge-5x6">
 </head>
 <body>
 <div class="app">
@@ -826,6 +826,12 @@
       どのルールで遊ぶ？
     </p>
 
+    <fieldset class="cpu-board-rule-picker" aria-label="対人戦の盤面">
+      <legend>盤面を選択</legend>
+      <button id="localStandardBoardBtn" type="button" aria-pressed="true">通常 5×5・9ターン</button>
+      <button id="localChallengeBoardBtn" type="button" aria-pressed="false">チャレンジ 5×6・14ターン</button>
+    </fieldset>
+
     <div class="local-rule-grid">
 
       <!-- 通常戦 -->
@@ -1030,6 +1036,11 @@
     <div class="modal-icon">🤖</div>
     <h2>どっちで遊ぶ？</h2>
     <p>CPU対戦の役割を選んでね</p>
+    <fieldset class="cpu-board-rule-picker" aria-label="CPU対戦の盤面">
+      <legend>盤面を選択</legend>
+      <button id="cpuStandardBoardBtn" type="button" aria-pressed="true">通常 5×5・9ターン</button>
+      <button id="cpuChallengeBoardBtn" type="button" aria-pressed="false">チャレンジ 5×6・14ターン</button>
+    </fieldset>
 
     <div class="cpu-side-grid">
       <button class="cpu-side-btn cat-side vu3-side-btn" id="playCatSideBtn" type="button">
@@ -1966,8 +1977,8 @@
 <script src="./purchase-provider.js?v=1.0.phase8"></script>
 <script src="./store-ui-model.js?v=1.0.phase7"></script>
 <script src="./storekit-ui.js?v=2.5.opponent-skill-cta"></script>
-<script src="./engine.js?v=2.1.board-d"></script>
-<script src="./police-hard-ai.js?v=1.1.board-d"></script>
+<script src="./engine.js?v=2.2.challenge-5x6"></script>
+<script src="./police-hard-ai.js?v=1.2.challenge-5x6"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./result-presentation.js?v=1"></script>
@@ -1985,7 +1996,7 @@
 <script src="./pass-google-play-provider.js?v=1.0.pass-phase7"></script>
 <script src="./pass-ui.js?v=1.3.skill-guidance"></script>
 <script src="./match-skill-info.js?v=2.3.personal-skill-cta"></script>
-<script src="./game.js?v=3.0.board-theme-objects"></script>
+<script src="./game.js?v=3.1.challenge-5x6"></script>
 <script src="./online-delete-ui.js?v=1"></script>
 <script src="./legal-pages.js?v=6"></script>
 

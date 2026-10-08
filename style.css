@@ -1328,6 +1328,15 @@ body.phase-cat-setup .dogstack{
 .cpu-side-btn span{display:block;margin-top:5px;font-size:10px;font-weight:800;color:var(--brown2)}
 .cpu-side-btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--shadow)}
 
+/* Challenge board is local/CPU-only; online keeps the standard 5×5 rule. */
+.cpu-board-rule-picker{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0;padding:8px;border:1px solid #D8C8B9;border-radius:12px}
+.cpu-board-rule-picker legend{font-size:11px;font-weight:900;padding:0 4px}
+.cpu-board-rule-picker button{min-height:43px;padding:5px;border:2px solid #BBA797;border-radius:10px;background:#fff;font-size:11px;font-weight:900}
+.cpu-board-rule-picker button[aria-pressed="true"]{border-color:#B87BBC;background:#F5E8FB}
+.board[data-board-rule="challenge_5x6"]{aspect-ratio:5/6;width:100%;height:auto;max-height:100%;flex:0 1 auto;margin:auto;background-size:100% 100%}
+.result-route-board[data-board-rule="challenge_5x6"]{aspect-ratio:5/6}
+.result-route-board[data-board-rule="challenge_5x6"] .result-route-cell{height:12%;width:15%}
+
 body.cpu-cat-thinking .guide{
   background:#FFF0F6!important;
 }
