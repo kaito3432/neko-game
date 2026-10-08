@@ -1,5 +1,8 @@
 /* Defaults to isolated Wrangler. Production requires explicit operator opt-in. */
 const assert=require('node:assert/strict');
+global.window=global;
+require('../engine.js');
+const maxTurns=global.NyanEngine.MAX_TURNS;
 const API=process.env.NYAN_PRODUCTION_SMOKE==='yes'?'https://nyan-chase-online.honda19990602.workers.dev':(process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798');
 const sockets=[];
 async function checkDaily(actor,receipt){
@@ -75,7 +78,7 @@ async function connect(session){
     await checkDaily(a,ra);await checkDaily(b,rb);
     assert.equal((await a.call('/api/matchmaking/join')).status,'waiting');
     await a.call('/api/matchmaking/cancel');
-    // Complete all 11 turns using the existing normal rules, not a client win claim.
+    // Complete all configured turns using normal rules, not a client win claim.
     await a.call('/api/matchmaking/join');const nextB=await b.call('/api/matchmaking/join');const nextA=await a.call('/api/matchmaking/status');
     const na=await connect(nextA),nb=await connect(nextB);
     await na.wait(m=>m.type==='role');await nb.wait(m=>m.type==='role');
@@ -86,15 +89,15 @@ async function connect(session){
     const nc=nextA.role==='cat'?na:nb,np=nextA.role==='police'?na:nb;
     np.send({type:'dogSetup',dogs:[7,8,9]});await nc.wait(m=>m.payload?.type==='dogSetup');
     nc.send({type:'catSetup',catPos:20});await nc.wait(m=>m.payload?.type==='catSetupAccepted');
-    nc.send({type:'catEscaped',turn:11});
+    nc.send({type:'catEscaped',turn:maxTurns});
     assert.equal((await a.call('/api/matchmaking/status')).status,'playing','early victory rejected');
-    const route=[20,21,22,23,24,19,18,17,16,15,10];
-    for(let turn=1;turn<=11;turn++){
-      for(let dogIndex=0;dogIndex<3;dogIndex++)np.send({type:'search',dogIndex,box:dogIndex});
+    const route=[20,21,22,23,18,17,16,15,10,5];
+    for(let turn=1;turn<=maxTurns;turn++){
+      for(let dogIndex=0;dogIndex<3;dogIndex++)np.send({type:'search',dogIndex,box:dogIndex+1});
       np.send({type:'dogTurnEnd',turn});await nc.wait(m=>m.payload?.type==='dogTurnEnd'&&m.payload.turn===turn);
-      if(turn<11){nc.send({type:'catMove',catPos:route[turn],turn:turn+1});await np.wait(m=>m.payload?.type==='catMoveDone'&&m.payload.turn===turn+1);}
+      if(turn<maxTurns){nc.send({type:'catMove',catPos:route[turn],turn:turn+1});await np.wait(m=>m.payload?.type==='catMoveDone'&&m.payload.turn===turn+1);}
     }
-    nc.send({type:'catEscaped',turn:11});await nc.wait(m=>m.type==='matchFinished');
+    nc.send({type:'catEscaped',turn:maxTurns});await nc.wait(m=>m.type==='matchFinished');
     assert.equal((await a.call('/api/matchmaking/result',{matchId:nextA.matchId})).won,nextA.role==='cat');
     await checkDaily(a,await a.call('/api/matchmaking/result',{matchId:nextA.matchId}));
     await checkDaily(b,await b.call('/api/matchmaking/result',{matchId:nextA.matchId}));
@@ -120,6 +123,6 @@ async function connect(session){
     assert.equal(dAfter.rankedStamina.stamina,dBefore.rankedStamina.stamina,'room match does not consume stamina');
     assert.equal(cAfter.serverNyanCoins,cBefore.serverNyanCoins);
     assert.equal(dAfter.serverNyanCoins,dBefore.serverNyanCoins);
-    console.log('PASS: authenticated profiles, ranked idempotency, matching, roles, snapshots, live WebSocket capture and 11-turn escape, forged early win rejected, finished receipts, repeat queue, room rank exclusion');
+    console.log(`PASS: authenticated profiles, ranked idempotency, matching, roles, snapshots, live WebSocket capture and ${maxTurns}-turn escape, forged early win rejected, finished receipts, repeat queue, room rank exclusion`);
   }finally{for(const ws of sockets)ws.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

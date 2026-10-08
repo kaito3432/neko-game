@@ -494,5 +494,5 @@ test("既存リザルト導線とゲーム定数はソース上でも維持さ�
   });
   assert.match(engine,/BOX_COUNT\s*=\s*25/);
   assert.match(engine,/NODE_COUNT\s*=\s*36/);
-  assert.match(engine,/MAX_TURNS\s*=\s*11/);
+  assert.match(engine,/MAX_TURNS\s*=\s*(?:9|10)/);
 });

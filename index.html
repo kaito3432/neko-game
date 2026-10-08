@@ -13,20 +13,20 @@
 <title>にゃんチェイス</title>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
-<link rel="stylesheet" href="./style.css?v=3.2.ad-consent">
+<link rel="stylesheet" href="./style.css?v=3.4.board-theme-previews">
 </head>
 <body>
 <div class="app">
   <header class="hero art-hero">
     <button class="gear-btn" id="settingsBtn" type="button" aria-label="設定">⚙️</button>
     <img class="game-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
-    <p>いたずらネコ vs 柴犬警察！11ターン逃げ切れ！</p>
+    <p>いたずらネコ vs 柴犬警察！<span data-max-turns>—</span>ターン逃げ切れ！</p>
   </header>
 
   <section class="game-topbar">
     <div class="top-pill turn-pill">
       <span class="top-label">TURN</span>
-      <strong id="turnDisplay">0 / 11</strong>
+      <strong id="turnDisplay">0 / —</strong>
     </div>
     <div class="top-pill phase-pill">
       <span class="top-label">フェーズ</span>
@@ -245,8 +245,9 @@
         <span class="collection-detail-state" data-detail-state></span>
       </header>
       <div class="collection-detail-scroll">
-        <div class="collection-detail-main-image">
+      <div class="collection-detail-main-image">
           <img data-detail-collection-image src="" alt="">
+          <div class="collection-board-preview-holder" data-detail-board-preview hidden></div>
           <span class="collection-material-pending" data-detail-material hidden>素材未設定</span>
         </div>
         <div class="collection-detail-usage" data-detail-usage aria-label="このスキンでできること">
@@ -338,7 +339,7 @@
           <strong>ネコ</strong>
           <p>
             柴犬警察から逃げながら、<br>
-            <b>11ターン逃げ切れば勝ち！</b>
+            <b><span data-max-turns>—</span>ターン逃げ切れば勝ち！</b>
           </p>
         </div>
 
@@ -408,7 +409,7 @@
   </div>
 
   <div class="howto-win-box cat-win">
-    🐾 <strong>11ターン逃げ切ればネコの勝ち！</strong>
+    🐾 <strong><span data-max-turns>—</span>ターン逃げ切ればネコの勝ち！</strong>
   </div>
 
 </div>
@@ -1948,9 +1949,10 @@
 <script src="./cpu-unlock-sync.js?v=1.0"></script>
 <script src="./player-data.js?v=1.1.collection-coins"></script>
 <script src="./daily-missions.js?v=1.0.daily1"></script>
-<script src="./collection-catalog.js?v=2.1.pass-hero"></script>
-<script src="./collection.js?v=1.5.ownership-groups"></script>
-<script src="./skin-presentation.js?v=1.4.starlight-effects"></script>
+<script src="./collection-catalog.js?v=2.2.board-theme-objects"></script>
+<script src="./debug/board-theme-qa.js?v=1.board-theme-local"></script>
+<script src="./collection.js?v=1.7.board-theme-previews"></script>
+<script src="./skin-presentation.js?v=1.5.board-theme-objects"></script>
 <script src="./skill-catalog.js?v=1.0.phase2"></script>
 <script src="./monetization-products.js?v=2.0.phase2"></script>
 <script src="./monetization.js?v=2.0.phase2"></script>
@@ -1964,8 +1966,8 @@
 <script src="./purchase-provider.js?v=1.0.phase8"></script>
 <script src="./store-ui-model.js?v=1.0.phase7"></script>
 <script src="./storekit-ui.js?v=2.5.opponent-skill-cta"></script>
-<script src="./engine.js?v=2.0.phase5"></script>
-<script src="./police-hard-ai.js?v=1.0"></script>
+<script src="./engine.js?v=2.1.board-d"></script>
+<script src="./police-hard-ai.js?v=1.1.board-d"></script>
 <script src="./audio.js?v=2.0.phase5"></script>
 <script src="./animation.js?v=2.0.phase5"></script>
 <script src="./result-presentation.js?v=1"></script>
@@ -1983,7 +1985,7 @@
 <script src="./pass-google-play-provider.js?v=1.0.pass-phase7"></script>
 <script src="./pass-ui.js?v=1.3.skill-guidance"></script>
 <script src="./match-skill-info.js?v=2.3.personal-skill-cta"></script>
-<script src="./game.js?v=2.8.starlight-effects"></script>
+<script src="./game.js?v=3.0.board-theme-objects"></script>
 <script src="./online-delete-ui.js?v=1"></script>
 <script src="./legal-pages.js?v=6"></script>
 

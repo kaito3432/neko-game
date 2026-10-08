@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v55-public-legal-20261007";
+const CACHE_NAME = "nyan-chase-v59-board-theme-previews-20261008";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",
@@ -46,6 +46,10 @@ const PRECACHE = [
   "./assets/audio/se_search.wav",
   "./assets/audio/se_turn_change.wav",
   "./assets/images/bg_day.png",
+  "./assets/images/board-blocked/day-planter.svg",
+  "./assets/images/board-blocked/day-sign.svg",
+  "./assets/images/board-blocked/moon-stone-lantern.svg",
+  "./assets/images/board-blocked/moon-andon.svg",
   "./assets/images/box.png",
   "./assets/images/cat.png",
   "./assets/images/cutin_cat_win.jpg",
@@ -115,6 +119,7 @@ const PRECACHE = [
   "./assets/images/rank/profile-frames/rank_master_frame.png",
   "./audio.js",
   "./collection-catalog.js",
+  "./debug/board-theme-qa.js",
   "./collection.js",
   "./engine.js",
   "./police-hard-ai.js",
@@ -167,6 +172,19 @@ self.addEventListener("fetch", event => {
         })
         .catch(() => caches.match(cacheKey))
     );
+    return;
+  }
+
+  // Core rule files must refresh with each release, including a MAX_TURNS-only
+  // change; retain the cached copy solely for offline fallback.
+  if (["engine.js", "game.js", "police-hard-ai.js"].includes(url.pathname.split("/").pop())) {
+    event.respondWith(fetch(req).then(res => {
+      if (res?.ok) {
+        const copy=res.clone();
+        caches.open(CACHE_NAME).then(cache=>cache.put(req,copy));
+      }
+      return res;
+    }).catch(()=>caches.match(req,{ignoreSearch:true})));
     return;
   }
 

@@ -1,4 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
+import './engine-environment.mjs';
+import '../engine.js';
 import { profileRequest, appearanceSnapshot, publicPlayerProfiles } from './online-profile.mjs';
 import {canUseOnlineSkillMode,captureMatchSkillEntitlements,resolveEffectiveSkillEntitlements,resolvePersonalEffectiveSkillEntitlements} from './skill-entitlements.mjs';
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
@@ -21,6 +23,7 @@ import {processAppleNotification,processGoogleNotification,scanGoogleVoidedPurch
 import {reconcileVerifiedPurchase,shouldReverify} from './purchase-lifecycle.mjs';
 import {cleanupProfileDeletionReceipts} from './profile-deletion.mjs';
 import {adminProfileDeletionRequest} from './admin-profile-deletion.mjs';
+const E=globalThis.NyanEngine;
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -799,7 +802,7 @@ async broadcastPresence() {
     if (
       !Number.isInteger(catPos) ||
       catPos < 0 ||
-      catPos >= 25
+      !E.isValidBox(catPos)
     ) {
       return;
     }
@@ -888,10 +891,10 @@ const fakePawBox =
     if (
       !Number.isInteger(catPos) ||
       catPos < 0 ||
-      catPos >= 25 ||
+      !E.isValidBox(catPos) ||
       !Number.isInteger(turn) ||
       turn < 1 ||
-      turn > 11
+      turn > E.MAX_TURNS
     ) {
       return;
     }
@@ -914,7 +917,7 @@ if (
   sneakUsed &&
   Number.isInteger(noTrackBox) &&
   noTrackBox >= 0 &&
-  noTrackBox < 25 &&
+  E.isValidBox(noTrackBox) &&
   !room.secretCat.noTrackBoxes.includes(noTrackBox)
 ) {
   room.secretCat.noTrackBoxes.push(noTrackBox);
@@ -931,7 +934,7 @@ if (
   fakePawUsed &&
   Number.isInteger(fakePawBox) &&
   fakePawBox >= 0 &&
-  fakePawBox < 25
+  E.isValidBox(fakePawBox)
 ) {
   room.secretCat.fakeTracks.push({
     box: fakePawBox,
@@ -1070,7 +1073,7 @@ if (payload.type === "doubleSearch") {
     !targets.every(box =>
       Number.isInteger(box) &&
       box >= 0 &&
-      box < 25
+      E.isValidBox(box)
     )
   ) {
     return;
@@ -1179,7 +1182,7 @@ if (payload.type === "doubleSearch") {
           .filter(step =>
             Number.isInteger(step.box) &&
             step.box >= 0 &&
-            step.box < 25 &&
+            E.isValidBox(step.box) &&
             Number.isInteger(step.turn)
           )
           .sort((a,b)=>a.turn-b.turn)
@@ -1251,7 +1254,7 @@ payload: {
   if (
     !Number.isInteger(box) ||
     box < 0 ||
-    box >= 25 ||
+    !E.isValidBox(box) ||
     !Number.isInteger(dogIndex) ||
     dogIndex < 0 ||
     dogIndex >= 3
@@ -1367,7 +1370,7 @@ payload: {
         .filter(step =>
           Number.isInteger(step.box) &&
           step.box >= 0 &&
-          step.box < 25 &&
+          E.isValidBox(step.box) &&
           Number.isInteger(step.turn)
         )
         .sort((a,b)=>a.turn-b.turn)
@@ -1446,7 +1449,7 @@ return;
         .filter(step =>
           Number.isInteger(step.box) &&
           step.box >= 0 &&
-          step.box < 25 &&
+          E.isValidBox(step.box) &&
           Number.isInteger(step.turn)
         )
         .sort((a,b)=>a.turn-b.turn)
@@ -1490,7 +1493,7 @@ payload: {
 }
    if (payload.type === "catEscaped") {
   if (senderRole !== "cat") return;
-  if (room.matchType === 'randomMatch' && room.secretCat?.turn < 11) return;
+  if (room.matchType === 'randomMatch' && room.secretCat?.turn < E.MAX_TURNS) return;
   await this.markMatch(room, 'finished', 'cat');
 
   const route = Array.isArray(room.secretCat?.history)
@@ -1502,7 +1505,7 @@ payload: {
         .filter(step =>
           Number.isInteger(step.box) &&
           step.box >= 0 &&
-          step.box < 25 &&
+          E.isValidBox(step.box) &&
           Number.isInteger(step.turn)
         )
         .sort((a,b)=>a.turn-b.turn)

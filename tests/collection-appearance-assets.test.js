@@ -55,7 +55,7 @@ test("ダンボール・肉球・盤面テーマは装備IDからカタログ画
   const catalog=cosmeticCatalog(),data=appearance();
   assert.deepEqual(Skins.resolveCardboard(data,{catalog}),{src:"box-game.png",fallback:Skins.DEFAULTS.cardboard,itemId:"test_box"});
   assert.deepEqual(Skins.resolvePaw(data,{catalog}),{src:"paw-game.png",fallback:Skins.DEFAULTS.paw,itemId:"test_paw"});
-  assert.deepEqual(Skins.resolveBoardTheme(data,{catalog}),{src:"board-game.png",fallback:Skins.DEFAULTS.board,itemId:"test_board"});
+  assert.deepEqual(Skins.resolveBoardTheme(data,{catalog}),{src:"board-game.png",fallback:Skins.DEFAULTS.board,itemId:"test_board",blockedObjects:{}});
 });
 
 test("未所持・不正ID・素材欠落は既存デフォルト画像へfallback",()=>{

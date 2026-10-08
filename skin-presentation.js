@@ -248,7 +248,10 @@
   }
 
   function resolveBoardTheme(data,options={}){
-    return resolveLocalCosmetic(data,"boardTheme","boardImage",DEFAULTS.board,options);
+    const resolved=resolveLocalCosmetic(data,"boardTheme","boardImage",DEFAULTS.board,options);
+    const catalog=options.catalog||defaultCatalog;
+    const presentation=catalog?.boardThemePresentation?.(resolved.itemId);
+    return {...resolved,blockedObjects:presentation?.blockedObjects||{}};
   }
 
   function renderHomeBoardTheme(data,{document=root?.document,catalog=defaultCatalog}={}){
@@ -825,7 +828,8 @@
     const playerData=root?.NyanPlayerData;
     if(!document || !playerData) return;
     const refresh=()=>{
-      const data=playerData.getSnapshot?.();
+      const raw=playerData.getSnapshot?.();
+      const data=root.NyanBoardThemeQa?.presentationState?.(raw)||raw;
       renderHomeFavorite(data);
       renderHomeBoardTheme(data,{document});
     };

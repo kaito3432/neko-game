@@ -32,6 +32,85 @@
     return isCharacterSkin(categoryId) || categoryId==="profileFrame";
   }
 
+  function boardThemePreviewModel(item,catalog=defaultCatalog){
+    const theme=catalog.boardThemePresentation(item?.id);
+    return {background:theme.background,cells:Array.from({length:25},(_,index)=>({
+      number:index+1,blocked:index===0||index===24,
+      object:index===0||index===24?theme.blockedObjects[index+1]:null
+    }))};
+  }
+
+  function createBoardThemePreview(document,item,catalog=defaultCatalog){
+    const model=boardThemePreviewModel(item,catalog);
+    const preview=document.createElement("div");
+    preview.className="collection-board-preview";
+    preview.dataset.boardThemeId=item.id;
+    preview.setAttribute("aria-hidden","true");
+    preview.style.setProperty("--nyan-board-theme-image",`url("${model.background}")`);
+    model.cells.forEach(cell=>{
+      const tile=document.createElement("span");
+      tile.className=cell.blocked?"preview-box is-blocked":"preview-box";
+      tile.dataset.previewBox=String(cell.number);
+      const row=Math.floor((cell.number-1)/5),col=(cell.number-1)%5;
+      tile.style.left=`${5+col*19}%`;
+      tile.style.top=`${5+row*19}%`;
+      if(cell.blocked){
+        const image=document.createElement("img");
+        image.src=cell.object;
+        image.alt="";
+        image.draggable=false;
+        tile.appendChild(image);
+      }
+      preview.appendChild(tile);
+    });
+    for(let row=0;row<4;row++)for(let col=0;col<4;col++){
+      const node=document.createElement("span");
+      node.className="preview-node";
+      node.style.left=`${21+col*19}%`;
+      node.style.top=`${21+row*19}%`;
+      preview.appendChild(node);
+    }
+    return preview;
+  }
+
+  function createBoardThemePreviews(document,item,catalog=defaultCatalog){
+    const model=boardThemePreviewModel(item,catalog);
+    const previews=document.createElement("div");
+    previews.className="collection-theme-previews";
+    previews.dataset.boardThemeId=item.id;
+    previews.setAttribute("aria-hidden","true");
+    const home=document.createElement("div");
+    home.className="collection-theme-preview-section";
+    const homeLabel=document.createElement("span");
+    homeLabel.className="collection-theme-preview-label";
+    homeLabel.textContent="ホーム";
+    const homeView=document.createElement("div");
+    homeView.className="collection-home-preview";
+    homeView.style.setProperty("--nyan-home-theme-image",`url("${model.background}")`);
+    const logo=document.createElement("img");
+    logo.src="./assets/images/home_logo.png";
+    logo.alt="";
+    logo.draggable=false;
+    const hero=document.createElement("img");
+    hero.className="collection-home-preview-hero";
+    hero.src="./assets/images/home_hero.png";
+    hero.alt="";
+    hero.draggable=false;
+    const modes=document.createElement("div");
+    modes.className="collection-home-preview-modes";
+    modes.textContent="対人戦　 CPU対戦　 オンライン対戦";
+    homeView.append(logo,hero,modes);
+    home.append(homeLabel,homeView);
+    const play=document.createElement("div");
+    play.className="collection-theme-preview-section";
+    const playLabel=document.createElement("span");
+    playLabel.className="collection-theme-preview-label";
+    playLabel.textContent="プレイ画面";
+    play.append(playLabel,createBoardThemePreview(document,item,catalog));
+    previews.append(home,play);
+    return previews;
+  }
+
   function preserveOwnership(before,after,catalog=defaultCatalog){
     if(!before || !after || !catalog)return after;
     const ownership={};
@@ -53,7 +132,8 @@
     const hydrated={...source,
       ownedProfileFrames:[...new Set(['rank_bronze',...(source.ownedProfileFrames||[])])],
       equippedProfileFrameId:root?.NyanOnlineProfileUI?.frameId(source.equippedProfileFrameId)||'rank_bronze'};
-    return selectors?.collectionState?.(hydrated)||hydrated;
+    return root?.NyanBoardThemeQa?.presentationState?.(selectors?.collectionState?.(hydrated)||hydrated)
+      || selectors?.collectionState?.(hydrated)||hydrated;
   }
 
   function getEquipLabel(categoryId,state){
@@ -476,7 +556,8 @@
       detailBadge.className="collection-preview-badge";
       detailBadge.setAttribute("aria-hidden","true");
       detailBadge.textContent="🔍 詳細を見る";
-      preview.append(image,detailBadge);
+      if(item.category==="boardTheme")preview.append(createBoardThemePreviews(document,item,catalog),detailBadge);
+      else preview.append(image,detailBadge);
 
       if(state==="unowned" && item.acquisitionType==="coins"){
         const priceBadge=document.createElement("span");
@@ -536,6 +617,7 @@
       }
       const state=getItemState(data,item,catalog);
       const collectionImage=detail.querySelector("[data-detail-collection-image]");
+      const boardPreview=detail.querySelector("[data-detail-board-preview]");
       const materialPending=detail.querySelector("[data-detail-material]");
       const profileImage=detail.querySelector("[data-detail-profile-image]");
       const profilePreview=detail.querySelector("[data-detail-profile-preview]");
@@ -573,6 +655,7 @@
       detail.dataset.category=item.category;
       detail.dataset.itemId=item.id;
       if(collectionImage){
+        collectionImage.hidden=item.category==="boardTheme";
         const silhouetteSource=usesLockedImage(item,state);
         collectionImage.onerror=()=>{
           collectionImage.onerror=null;
@@ -585,6 +668,11 @@
         collectionImage.alt=item.name;
         collectionImage.dataset.itemId=item.id;
         collectionImage.classList.toggle("uses-silhouette-source",silhouetteSource);
+      }
+      if(boardPreview){
+        boardPreview.hidden=item.category!=="boardTheme";
+        boardPreview.replaceChildren();
+        if(item.category==="boardTheme")boardPreview.appendChild(createBoardThemePreviews(document,item,catalog));
       }
       if(profileImage && showProfilePreview){
         profileImage.onerror=()=>{
@@ -761,6 +849,7 @@
     const view=createDomView(document,catalog,{
       async onEquip(categoryId,itemId){
         if(catalog.getCategory(categoryId)?.equipmentScope==="onlineProfile"){
+          if(root.NyanBoardThemeQa?.active){root.NyanBoardThemeQa.equipFrame(itemId);return controller?.load();}
           await root.NyanRankedUI?.equipFrame?.(itemId);
           return controller?.load();
         }
@@ -771,7 +860,7 @@
       onFavorite(categoryId,itemId){controller?.setFavorite(categoryId,itemId);},
       onProfile(categoryId,itemId){controller?.setProfile(categoryId,itemId);}
     });
-    controller=createController({playerData,catalog,view});
+    controller=createController({playerData:root.NyanBoardThemeQa?.collectionPlayerData||playerData,catalog,view});
     root.addEventListener("nyan-online-profile",event=>{
       if(!overlay.classList.contains("show"))return;
       view.setPassSummary(event.detail?.passSummary);
@@ -824,6 +913,9 @@
     SECTION_CATEGORIES,
     isCharacterSkin,
     supportsProfilePreview,
+    boardThemePreviewModel,
+    createBoardThemePreview,
+    createBoardThemePreviews,
     preserveOwnership,
     presentedCollectionData,
     getEquipLabel,

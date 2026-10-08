@@ -1,23 +1,30 @@
 (function(root,factory){
-  const api=factory();
+  if(!root.NyanEngine && typeof module==='object' && module.exports){
+    const previousWindow=root.window;
+    root.window=root;
+    try{require('./engine.js');}finally{if(previousWindow===undefined)delete root.window;else root.window=previousWindow;}
+  }
+  const api=factory(root.NyanEngine);
   if(typeof module==='object'&&module.exports)module.exports=api;
   else root.NyanPoliceHardAI=api;
-})(typeof globalThis!=='undefined'?globalThis:this,function(){
+})(typeof globalThis!=='undefined'?globalThis:this,function(E){
   'use strict';
-  const BOX_ROWS=5,BOX_COLS=5,BOX_COUNT=25,NODE_COLS=6,MAX_TURNS=11;
+  if(!E)throw new Error('NyanEngine must load before NyanPoliceHardAI');
+  const BOX_COLS=E.BOX_COLS,NODE_COLS=E.NODE_COLS,MAX_TURNS=E.MAX_TURNS;
+  const ACTIVE_BOXES=E.ACTIVE_BOXES;
   const boxRow=i=>Math.floor(i/BOX_COLS),boxCol=i=>i%BOX_COLS;
   const nodeRow=i=>Math.floor(i/NODE_COLS),nodeCol=i=>i%NODE_COLS;
   const boxDistance=(a,b)=>Math.abs(boxRow(a)-boxRow(b))+Math.abs(boxCol(a)-boxCol(b));
   const nodeDistance=(a,b)=>Math.abs(nodeRow(a)-nodeRow(b))+Math.abs(nodeCol(a)-nodeCol(b));
-  function boxNeighbors(i){const r=boxRow(i),c=boxCol(i),out=[];if(r>0)out.push(i-5);if(r<4)out.push(i+5);if(c>0)out.push(i-1);if(c<4)out.push(i+1);return out;}
-  function boxesAroundNode(i){const r=nodeRow(i),c=nodeCol(i),out=[];[[r-1,c-1],[r-1,c],[r,c-1],[r,c]].forEach(([br,bc])=>{if(br>=0&&br<5&&bc>=0&&bc<5)out.push(br*5+bc);});return out;}
+  const boxNeighbors=i=>E.getBoxNeighbors(i);
+  const boxesAroundNode=i=>E.getBoxesAroundNode(i);
   function nodeMoves(node,dogs,di){const r=nodeRow(node),c=nodeCol(node),out=[];[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{const n=nr*6+nc;if(nr>=1&&nr<=4&&nc>=1&&nc<=4&&!dogs.some((p,j)=>j!==di&&p===n))out.push(n);});return out;}
   const entries=value=>value instanceof Map?[...value.entries()]:Array.isArray(value)?value:[];
   const values=value=>value instanceof Set?value:new Set(Array.isArray(value)?value:[]);
   function inferCandidates(input){
     const turn=Math.max(1,Number(input.turn)||1);
     const tracks=entries(input.revealedTracks).filter(([,t])=>Number.isInteger(t)&&t<=turn).sort((a,b)=>a[1]-b[1]);
-    if(!tracks.length)return new Set(Array.from({length:BOX_COUNT},(_,i)=>i));
+    if(!tracks.length)return new Set(ACTIVE_BOXES);
     const byTurn=new Map(tracks.map(([box,t])=>[t,box]));
     const emptyByTurn=new Map(entries(input.emptyByTurn).map(([t,boxes])=>[Number(t),values(boxes)]));
     const [start,startTurn]=tracks[0];
@@ -35,12 +42,12 @@
     // Fake or contradictory tracks must not make the police omniscient. Fall
     // back to boxes reachable from the newest public track by elapsed turns.
     const [latest,trackTurn]=tracks[tracks.length-1],distance=Math.max(0,turn-trackTurn);
-    return new Set(Array.from({length:BOX_COUNT},(_,i)=>i).filter(i=>boxDistance(latest,i)<=distance));
+    return new Set(ACTIVE_BOXES.filter(i=>boxDistance(latest,i)<=distance));
   }
   function probabilityMap(input){
     const turn=Math.max(1,Number(input.turn)||1),tracks=entries(input.revealedTracks),possible=inferCandidates(input),searched=values(input.searchedBoxes);
     const weights=new Map();
-    for(let box=0;box<BOX_COUNT;box++){
+    for(const box of ACTIVE_BOXES){
       let weight=possible.has(box)?9:.08;
       for(const [track,trackTurn] of tracks){const age=Math.max(0,turn-trackTurn),distance=boxDistance(track,box);if(distance<=age)weight+=Math.max(.2,7-age)*Math.max(.3,1-distance/(age+1));}
       if(searched.has(box))weight*=.01;

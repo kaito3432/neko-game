@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="街角の道しるべ">
+ <ellipse cx="60" cy="105" rx="37" ry="8" fill="#7e7c58" opacity=".27"/>
+ <path d="M53 51h14v54H53z" fill="#a66a3d" stroke="#70442b" stroke-width="3"/>
+ <path d="M19 28h71l13 19-13 18H19z" fill="#d99a56" stroke="#7b4b2e" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M24 32h63l10 15-10 14H24z" fill="#f4c276"/>
+ <circle cx="59" cy="47" r="12" fill="#fff9dc"/>
+ <circle cx="55" cy="43" r="3" fill="#f3bb63"/><circle cx="64" cy="43" r="3" fill="#f3bb63"/>
+ <circle cx="59" cy="52" r="5" fill="#f3bb63"/>
+ <path d="M53 104h14" stroke="#70442b" stroke-width="5" stroke-linecap="round"/>
+</svg>

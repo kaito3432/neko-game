@@ -8,7 +8,14 @@ window.NyanEngine = (() => {
   const NODE_COLS = 6;
   const BOX_COUNT = 25;
   const NODE_COUNT = 36;
-  const MAX_TURNS = 11;
+  // Board geometry and turn limit are independent. Change only MAX_TURNS to
+  // switch the adopted board between nine and ten turns.
+  const MAX_TURNS = 9;
+  const BLOCKED_BOXES = Object.freeze([0, 24]); // printed boxes 1 and 25
+  const blockedBoxSet = new Set(BLOCKED_BOXES);
+  const ACTIVE_BOXES = Object.freeze(Array.from({length:BOX_COUNT},(_,i)=>i)
+    .filter(i=>!blockedBoxSet.has(i)));
+  const isValidBox = i => Number.isInteger(i) && i>=0 && i<BOX_COUNT && !blockedBoxSet.has(i);
 
   const DOGS = [
     {name:"あか柴", label:"🟥", token:"dog-red"},
@@ -76,21 +83,22 @@ doubleSearchConfirmed:false,
   }
 
   function getBoxNeighbors(i){
+    if(!isValidBox(i)) return [];
     const r=boxRow(i), c=boxCol(i), a=[];
     if(r>0) a.push(i-BOX_COLS);
     if(r<BOX_ROWS-1) a.push(i+BOX_COLS);
     if(c>0) a.push(i-1);
     if(c<BOX_COLS-1) a.push(i+1);
-    return a;
+    return a.filter(isValidBox);
   }
 
   function getCatLegalMoves(state){
-    if(state.catPos===null) return [];
+    if(!isValidBox(state.catPos)) return [];
     return getBoxNeighbors(state.catPos).filter(i => !state.catHistory.has(i));
   }
 
   // A red move is one that cannot possibly complete the remaining route
-  // through turn 11 without revisiting a box.  This is stronger than the old
+  // through MAX_TURNS without revisiting a box. This is stronger than the old
   // "next turn has no exit" check and catches traps several turns in advance.
   function canCatFinishFrom(state,target){
     if(!getCatLegalMoves(state).includes(target)) return false;
@@ -185,7 +193,7 @@ doubleSearchConfirmed:false,
         out.push(br*BOX_COLS+bc);
       }
     });
-    return out;
+    return out.filter(isValidBox);
   }
 
   function allDogsDone(state){
@@ -208,7 +216,7 @@ doubleSearchConfirmed:false,
 
   return {
     BOX_ROWS, BOX_COLS, NODE_ROWS, NODE_COLS,
-    BOX_COUNT, NODE_COUNT, MAX_TURNS, DOGS,
+    BOX_COUNT, NODE_COUNT, MAX_TURNS, BLOCKED_BOXES, ACTIVE_BOXES, isValidBox, DOGS,
     createState, boxRow, boxCol, nodeRow, nodeCol,
     isActiveDogNode, getBoxNeighbors, getCatLegalMoves,
     canCatFinishFrom, isCatDeadEnd, getNodeNeighbors, getDogLegalMoves,getDogDashMoves,

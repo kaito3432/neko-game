@@ -45,7 +45,7 @@ export function acceptRandomAction(room, role, payload) {
     state.dogs=[...dogs];state.phase='catSetup';return true;
   }
   if(type==='catSetup') {
-    if(role!=='cat' || state.phase!=='catSetup' || !Number.isInteger(payload.catPos) || payload.catPos<0 || payload.catPos>=E.BOX_COUNT) return false;
+    if(role!=='cat' || state.phase!=='catSetup' || !E.isValidBox(payload.catPos)) return false;
     state.catPos=payload.catPos;state.catHistory.set(payload.catPos,1);state.turn=1;state.phase='dogs';return true;
   }
   if(type==='dogMove' || type==='search') {

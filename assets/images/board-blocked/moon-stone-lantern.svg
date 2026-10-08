@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="月夜の石灯籠">
+ <ellipse cx="60" cy="105" rx="35" ry="8" fill="#14233f" opacity=".35"/>
+ <path d="M35 96h50l8 8H27z" fill="#66718a" stroke="#313d60" stroke-width="4"/>
+ <path d="M48 63h24l6 34H42z" fill="#8891a6" stroke="#39455f" stroke-width="4"/>
+ <path d="M31 55h58l-9 12H40z" fill="#5a6785" stroke="#2d3b60" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M41 32h38v24H41z" fill="#38486c" stroke="#253451" stroke-width="4"/>
+ <path d="M48 37h24v15H48z" fill="#ffe6a0" stroke="#d9a45f" stroke-width="3"/>
+ <path d="M27 32 60 16l33 16z" fill="#697995" stroke="#2b3b62" stroke-width="4" stroke-linejoin="round"/>
+ <path d="M56 13h8" stroke="#d8b87f" stroke-width="5" stroke-linecap="round"/>
+</svg>

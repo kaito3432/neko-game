@@ -7,9 +7,15 @@
   const A=NyanAnimation;
   const Audio=NyanAudio;
   const Skins=NyanSkinPresentation;
+  const turnCue=turn=>{
+    const remaining=E.MAX_TURNS-turn+1;
+    return remaining===3?" あと3ターン！":remaining===2?" あと2ターン！":remaining===1?" LAST TURN！":"";
+  };
+  document.querySelectorAll('[data-max-turns]').forEach(el=>{el.textContent=String(E.MAX_TURNS);});
 
   function playerAppearance(){
-    return window.NyanPlayerData?.getSnapshot?.() || null;
+    const data=window.NyanPlayerData?.getSnapshot?.() || null;
+    return Skins.isOnlineMode(playMode)?data:(window.NyanBoardThemeQa?.presentationState?.(data)||data);
   }
 
   function localPawAsset(){
@@ -26,6 +32,7 @@
     const safeSrc=String(theme.src||theme.fallback).replace(/["\\]/g,"\\$&");
     element.style.setProperty("--nyan-board-theme-image",`url("${safeSrc}")`);
     element.dataset.boardThemeId=theme.itemId;
+    return theme;
   }
 
   function applySkinFallbacks(scope){
@@ -136,7 +143,7 @@ let resultFakeTracks=[];
       .filter(box=>
         Number.isInteger(box) &&
         box>=0 &&
-        box<E.BOX_COUNT
+        E.isValidBox(box)
       );
   }
 
@@ -149,7 +156,7 @@ let resultFakeTracks=[];
       .filter(step=>
         Number.isInteger(step.box) &&
         step.box>=0 &&
-        step.box<E.BOX_COUNT &&
+        E.isValidBox(step.box) &&
         Number.isInteger(step.turn)
       );
   }
@@ -157,6 +164,13 @@ let resultFakeTracks=[];
 
   const $=id=>document.getElementById(id);
   const board=$("board");
+  window.addEventListener("nyan-player-appearance-changed",()=>{
+    const theme=applyBoardTheme(board?.closest(".board-shell"));
+    board?.querySelectorAll(".blocked-box[data-blocked-box]").forEach(cell=>{
+      const image=cell.querySelector(".blocked-object");
+      if(image)image.src=theme?.blockedObjects?.[cell.dataset.blockedBox]||"";
+    });
+  });
   const matchSkillInfo=window.NyanMatchSkillInfo?.mount({
     document,container:$("matchSkillHud"),catalog:window.NyanSkillCatalog,
     getDescriptions:()=>window.NyanHowToSkillDescriptions
@@ -1627,14 +1641,15 @@ if(turn===1){
 
   function renderBoard(){
     const cardboardAsset=Skins.resolveCardboard(playerAppearance());
-    applyBoardTheme(board.closest(".board-shell"));
+    const boardTheme=applyBoardTheme(board.closest(".board-shell"));
     board.querySelectorAll(
   ":scope > .box, :scope > .node"
 ).forEach(el=>el.remove());
 
     for(let i=0;i<E.BOX_COUNT;i++){
-      const r=E.boxRow(i),c=E.boxCol(i),b=document.createElement("button");
-      b.type="button";
+      const active=E.isValidBox(i);
+      const r=E.boxRow(i),c=E.boxCol(i),b=document.createElement(active?"button":"div");
+      if(active)b.type="button";
       b.className="box";
       b.dataset.boxIndex=String(i);
       // iPhone Safari compatibility:
@@ -1643,6 +1658,20 @@ if(turn===1){
       b.style.top=`${5 + r*19}%`;
       b.style.width="14%";
       b.style.height="14%";
+
+      if(!active){
+        b.classList.add("blocked-box");
+        b.dataset.blockedBox=String(i+1);
+        b.setAttribute("aria-hidden","true");
+        const object=document.createElement("img");
+        object.className="blocked-object";
+        object.src=boardTheme?.blockedObjects?.[i+1]||"";
+        object.alt="";
+        object.draggable=false;
+        b.appendChild(object);
+        board.appendChild(b);
+        continue;
+      }
 
       if(game.phase==="catSetup"){
         b.classList.add("setup-cat-choice");
@@ -1826,7 +1855,7 @@ function privateHistoryHTML(i){
   function shouldShowTrackTurn(turn){
     // ターン数字は「プレイヤー＝警察 / CPUネコ戦」の難易度ヒントだけ。
     if(playMode!=="cpuCat") return false;
-    if(cpuDifficulty==="easy") return turn===3||turn===6||turn===9;
+    if(cpuDifficulty==="easy") return turn===3||turn===6||turn===E.MAX_TURNS;
     if(cpuDifficulty==="normal") return turn===6;
     return false; // hard / つよい
   }
@@ -1874,7 +1903,7 @@ function publicTrackHTML(i){
 
 
   async function handleBoxPress(i){
-    if(game.gameOver||game.actionLocked)return;
+    if(game.gameOver||game.actionLocked||!E.isValidBox(i))return;
     A.tapPopBox(board,i);
 
     if(game.phase==="catSetup"){
@@ -1987,7 +2016,7 @@ if(
 
       if(!E.getCatLegalMoves(game).includes(i)){
         Audio.play("invalid");
-        setMessage("グレー＝移動不可。緑＝11ターン目まで逃げ切れる道あり、赤⚠️＝残りターンを逆算すると詰みです。");
+        setMessage(`グレー＝移動不可。緑＝${E.MAX_TURNS}ターン目まで逃げ切れる道あり、赤⚠️＝残りターンを逆算すると詰みです。`);
         return;
       }
 
@@ -2104,8 +2133,8 @@ game.cpuSearchesThisTurn=0;
 game.actionLocked=false;
          
 
-        // 1〜10ターン目は、次の逃げ道が無ければ警察勝利。
-        // 11ターン目は次の12ターン目が存在しないため、
+        // 最終ターンより前は、次の逃げ道が無ければ警察勝利。
+        // 最終ターンは次のターンが存在しないため、
         // 行き止まりでもそのまま警察の最終捜索へ進む。
 if(game.turn<E.MAX_TURNS && (dead||E.getCatLegalMoves(game).length===0)){
   game.actionLocked=false;
@@ -3546,7 +3575,7 @@ return;
 }
 
     if(game.turn>=E.MAX_TURNS){
-      endGame("cat","11ターンすべて逃げ切りました！");
+      endGame("cat",`${E.MAX_TURNS}ターンすべて逃げ切りました！`);
       return;
     }
 
@@ -3562,9 +3591,7 @@ return;
     game.selectedDog=null;
     game.dogAction=[false,false,false];
 
-    let extra=game.turn===9?" あと3ターン！"
-      :game.turn===10?" あと2ターン！"
-      :game.turn===11?" LAST TURN！":"";
+    let extra=turnCue(game.turn);
 
     showPrivacy("🐱",`ターン${game.turn}・ネコの番`,
       `柴犬警察から画面を受け取ってください。ネコさんだけ足跡と現在地を確認します。${extra}`);
@@ -3574,15 +3601,15 @@ return;
 
   function renderStatus(){
     const currentTurn=Math.max(0,Math.min(E.MAX_TURNS,game.turn));
-    const remaining=game.turn===0 ? 11 : Math.max(0,E.MAX_TURNS-game.turn+1);
+    const remaining=game.turn===0 ? E.MAX_TURNS : Math.max(0,E.MAX_TURNS-game.turn+1);
     turnDisplay.textContent=`${currentTurn} / ${E.MAX_TURNS}`;
 
     document.body.classList.remove("turn-mid","turn-late","turn-last");
-    if(currentTurn>=8 && currentTurn<=9) document.body.classList.add("turn-mid");
-    if(currentTurn===10) document.body.classList.add("turn-late");
-    if(currentTurn===11) document.body.classList.add("turn-last");
+    if(currentTurn>0 && remaining===3) document.body.classList.add("turn-mid");
+    if(currentTurn>0 && remaining===2) document.body.classList.add("turn-late");
+    if(currentTurn>0 && remaining===1) document.body.classList.add("turn-last");
 
-    if(currentTurn===11 && !game.gameOver && !lastTurnStingerPlayed){
+    if(currentTurn===E.MAX_TURNS && !game.gameOver && !lastTurnStingerPlayed){
       lastTurnStingerPlayed=true;
       if(lastTurnBanner) lastTurnBanner.classList.remove("show");
       if(lastTurnBanner) void lastTurnBanner.offsetWidth;
@@ -4206,7 +4233,7 @@ function openSettings(){
   }
 
      // CPUネコ用：
-  // このマスへ進んだあと、11ターンまで逃げ切れるルートが残っているか確認
+  // このマスへ進んだあと、MAX_TURNSまで逃げ切れるルートが残っているか確認
   function canCpuCatFinishRoute(target){
 
     const remaining=Math.max(
@@ -4294,10 +4321,10 @@ function inferPossibleCatBoxes(){
     .filter(([,turn])=>Number.isInteger(turn))
     .sort((a,b)=>a[1]-b[1]);
 
-  // 痕跡がまだ無ければ全25箱が候補
+  // 痕跡がまだ無ければ全有効箱が候補
   if(!tracks.length){
     return new Set(
-      Array.from({length:E.BOX_COUNT},(_,i)=>i)
+      E.ACTIVE_BOXES
     );
   }
 
@@ -4384,7 +4411,7 @@ if(emptyBoxesThisTurn.has(next)) continue;
     const scores=new Map();
 
 if(!tracks.length){
-  for(let b=0;b<E.BOX_COUNT;b++){
+  for(const b of E.ACTIVE_BOXES){
     let s=0;
 
     const r=E.boxRow(b);
@@ -4414,7 +4441,7 @@ if(!tracks.length){
   return scores;
 }
 
-    for(let b=0;b<E.BOX_COUNT;b++){
+    for(const b of E.ACTIVE_BOXES){
       let s=0;
        if(possibleCatBoxes.has(b)){
   s+=8;
@@ -4679,7 +4706,7 @@ function hardProbabilityMap(){
   const probs=new Map();
   const tracks=knownTrackBoxes();
 
-  for(let b=0;b<E.BOX_COUNT;b++){
+  for(const b of E.ACTIVE_BOXES){
     let p=1;
 
     if(game.cpuSearchedBoxes.has(b)) p*=0.08;
@@ -5226,7 +5253,7 @@ if(remainingDogs<=searchesNeeded){
 
     cpuTimer=setTimeout(()=>{
       if(game.turn>=E.MAX_TURNS){
-        endGame("cat","11ターンすべて逃げ切りました！");
+        endGame("cat",`${E.MAX_TURNS}ターンすべて逃げ切りました！`);
         return;
       }
 
@@ -5243,9 +5270,7 @@ if(remainingDogs<=searchesNeeded){
       game.dogAction=[false,false,false];
       game.cpuSearchesThisTurn=0;
 
-      let extra=game.turn===9?" あと3ターン！"
-        :game.turn===10?" あと2ターン！"
-        :game.turn===11?" LAST TURN！":"";
+      let extra=turnCue(game.turn);
 
       showPrivacy("🐱",`ターン${game.turn}・ネコの番`,
         `CPU柴犬警察の捜査が終わりました。ネコの位置を確認して次の箱へ移動してください。${extra}`);
@@ -5259,7 +5284,7 @@ if(remainingDogs<=searchesNeeded){
     privacyIcon.textContent="📖";
     privacyTitle.textContent="遊び方";
     privacyText.textContent=
-      "ネコは一度通った箱には戻れません。柴犬は1匹ずつ、移動か探索のどちらかを行います。11ターン逃げ切ればネコの勝ち、現在地を探索されるか逃げ道がなくなると柴犬警察の勝ちです。";
+      `ネコは一度通った箱には戻れません。箱1・25には入れません。柴犬は1匹ずつ、移動か探索のどちらかを行います。${E.MAX_TURNS}ターン逃げ切ればネコの勝ち、現在地を探索されるか逃げ道がなくなると柴犬警察の勝ちです。`;
     privacyOverlay.classList.add("show");
   }
 
@@ -5362,9 +5387,9 @@ if(remainingDogs<=searchesNeeded){
     return score;
   }
   function cpuChooseStartBox(){
-    let best=0,bestScore=-Infinity;
+    let best=E.ACTIVE_BOXES[0],bestScore=-Infinity;
 
-    for(let b=0;b<E.BOX_COUNT;b++){
+    for(const b of E.ACTIVE_BOXES){
       const dogDist=cpuCatDistanceFromDogs(b);
       const freedom=E.getBoxNeighbors(b).length;
       const pressure=projectedDogPressure(b);
@@ -5436,7 +5461,7 @@ if(remainingDogs<=searchesNeeded){
     if(playMode!=="cpuCat"||game.gameOver)return;
 
     if(game.turn>=E.MAX_TURNS){
-      endGame("cat","11ターンすべて逃げ切りました！");
+      endGame("cat",`${E.MAX_TURNS}ターンすべて逃げ切りました！`);
       return;
     }
 
@@ -5515,9 +5540,9 @@ function renderResultCpuCatRoute(){
   }
 
   // =====================================
-  // 25個の箱を表示
+  // 有効箱のみを表示（封鎖箱は軌跡に出さない）
   // =====================================
-  for(let b=0;b<E.BOX_COUNT;b++){
+  for(const b of E.ACTIVE_BOXES){
 
     const r=E.boxRow(b);
     const c=E.boxCol(b);
@@ -6599,7 +6624,7 @@ if(
       .filter(step=>
         Number.isInteger(step.box) &&
         step.box>=0 &&
-        step.box<E.BOX_COUNT &&
+        E.isValidBox(step.box) &&
         Number.isInteger(step.turn)
       )
       .sort((a,b)=>a.turn-b.turn);
@@ -6713,7 +6738,7 @@ if(
     dogIndex<3 &&
     Number.isInteger(box) &&
     box>=0 &&
-    box<E.BOX_COUNT
+    E.isValidBox(box)
   ){
     setMessage(
       `🐕 ${E.DOGS[dogIndex].name} が箱${box+1}をクンクン調査中…`
@@ -6752,7 +6777,7 @@ if(game.turn>=E.MAX_TURNS){
 
   endGame(
     "cat",
-    "11ターンすべて逃げ切りました！"
+    `${E.MAX_TURNS}ターンすべて逃げ切りました！`
   );
 
   return;
@@ -6771,10 +6796,7 @@ if(game.turn>=E.MAX_TURNS){
   game.selectedDog=null;
   game.dogAction=[false,false,false];
 
-  let extra=
-    game.turn===9 ? " あと3ターン！" :
-    game.turn===10 ? " あと2ターン！" :
-    game.turn===11 ? " LAST TURN！" : "";
+  let extra=turnCue(game.turn);
 
   showPrivacy(
     "🐱",
@@ -6807,7 +6829,7 @@ if(game.turn>=E.MAX_TURNS){
     dogIndex>=3 ||
     !Number.isInteger(box) ||
     box<0 ||
-    box>=E.BOX_COUNT
+    !E.isValidBox(box)
   ){
     return;
   }
@@ -6823,7 +6845,7 @@ if(game.turn>=E.MAX_TURNS){
     .filter(step=>
       Number.isInteger(step.box) &&
       step.box>=0 &&
-      step.box<E.BOX_COUNT &&
+      E.isValidBox(step.box) &&
       Number.isInteger(step.turn)
     )
     .sort((a,b)=>a.turn-b.turn);
@@ -7014,7 +7036,7 @@ if(result==="capture"){
       .filter(step=>
         Number.isInteger(step.box) &&
         step.box>=0 &&
-        step.box<E.BOX_COUNT &&
+        E.isValidBox(step.box) &&
         Number.isInteger(step.turn)
       )
       .sort((a,b)=>a.turn-b.turn);
@@ -7360,7 +7382,7 @@ if(
   if(
     Number.isInteger(box) &&
     box>=0 &&
-    box<E.BOX_COUNT &&
+    E.isValidBox(box) &&
     Number.isInteger(trackTurn)
   ){
     // 今回初めて公開された痕跡か
@@ -7413,7 +7435,7 @@ if(isNewTrack){
       .filter(step=>
         Number.isInteger(step.box) &&
         step.box>=0 &&
-        step.box<E.BOX_COUNT &&
+        E.isValidBox(step.box) &&
         Number.isInteger(step.turn)
       )
       .sort((a,b)=>a.turn-b.turn);
@@ -7424,7 +7446,7 @@ if(isNewTrack){
 
   endGame(
     "cat",
-    "11ターンすべて逃げ切られました！"
+    `${E.MAX_TURNS}ターンすべて逃げ切られました！`
   );
 
   return;
@@ -7696,7 +7718,7 @@ if(
       .filter(step=>
         Number.isInteger(step.box) &&
         step.box>=0 &&
-        step.box<E.BOX_COUNT &&
+        E.isValidBox(step.box) &&
         Number.isInteger(step.turn)
       )
       .sort((a,b)=>a.turn-b.turn);
@@ -7810,7 +7832,7 @@ if(
     dogIndex<3 &&
     Number.isInteger(box) &&
     box>=0 &&
-    box<E.BOX_COUNT
+    E.isValidBox(box)
   ){
     setMessage(
       `🐕 ${E.DOGS[dogIndex].name} が箱${box+1}をクンクン調査中…`
@@ -7849,7 +7871,7 @@ if(game.turn>=E.MAX_TURNS){
 
   endGame(
     "cat",
-    "11ターンすべて逃げ切りました！"
+    `${E.MAX_TURNS}ターンすべて逃げ切りました！`
   );
 
   return;
@@ -7867,10 +7889,7 @@ if(game.turn>=E.MAX_TURNS){
   game.selectedDog=null;
   game.dogAction=[false,false,false];
 
-  let extra=
-    game.turn===9 ? " あと3ターン！" :
-    game.turn===10 ? " あと2ターン！" :
-    game.turn===11 ? " LAST TURN！" : "";
+  let extra=turnCue(game.turn);
 
   showPrivacy(
     "🐱",
@@ -7901,7 +7920,7 @@ if(game.turn>=E.MAX_TURNS){
     dogIndex>=3 ||
     !Number.isInteger(box) ||
     box<0 ||
-    box>=E.BOX_COUNT
+    !E.isValidBox(box)
   ){
     return;
   }
@@ -7917,7 +7936,7 @@ if(game.turn>=E.MAX_TURNS){
     .filter(step=>
       Number.isInteger(step.box) &&
       step.box>=0 &&
-      step.box<E.BOX_COUNT &&
+      E.isValidBox(step.box) &&
       Number.isInteger(step.turn)
     )
     .sort((a,b)=>a.turn-b.turn);
@@ -8109,7 +8128,7 @@ if(result==="capture"){
       .filter(step=>
         Number.isInteger(step.box) &&
         step.box>=0 &&
-        step.box<E.BOX_COUNT &&
+        E.isValidBox(step.box) &&
         Number.isInteger(step.turn)
       )
       .sort((a,b)=>a.turn-b.turn);
@@ -8454,7 +8473,7 @@ if(
   if(
     Number.isInteger(box) &&
     box>=0 &&
-    box<E.BOX_COUNT &&
+    E.isValidBox(box) &&
     Number.isInteger(trackTurn)
   ){
     // 今回初めて公開された痕跡か
@@ -8507,7 +8526,7 @@ if(isNewTrack){
       .filter(step=>
         Number.isInteger(step.box) &&
         step.box>=0 &&
-        step.box<E.BOX_COUNT &&
+        E.isValidBox(step.box) &&
         Number.isInteger(step.turn)
       )
       .sort((a,b)=>a.turn-b.turn);
@@ -8518,7 +8537,7 @@ if(isNewTrack){
 
   endGame(
     "cat",
-    "11ターンすべて逃げ切られました！"
+    `${E.MAX_TURNS}ターンすべて逃げ切られました！`
   );
 
   return;

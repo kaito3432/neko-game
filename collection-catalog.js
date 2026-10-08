@@ -210,7 +210,9 @@
     }),
     Object.freeze({id:"default",category:"cardboard",name:"デフォルト",preview:"./assets/images/box.png",cardboardImage:"./assets/images/box.png",acquisitionType:"default",rarity:"Common"}),
     Object.freeze({id:"default",category:"paw",name:"デフォルト",preview:"./assets/images/paw.png",pawImage:"./assets/images/paw.png",acquisitionType:"default",rarity:"Common"}),
-    Object.freeze({id:"default",category:"boardTheme",name:"デフォルト",preview:"./assets/images/bg_day.png",boardImage:"./assets/images/bg_day.png",acquisitionType:"default",rarity:"Common"}),
+    Object.freeze({id:"default",category:"boardTheme",name:"デフォルト",preview:"./assets/images/bg_day.png",boardImage:"./assets/images/bg_day.png",
+      blockedObjects:Object.freeze({1:"./assets/images/board-blocked/day-planter.svg",25:"./assets/images/board-blocked/day-sign.svg"}),
+      acquisitionType:"default",rarity:"Common"}),
     // Production art passed display QA and is available for local coin-purchase verification.
     Object.freeze({
       id:"cat_coin_01",category:"catSkin",name:"忍者にゃん",
@@ -246,6 +248,7 @@
       id:"board_coin_01",category:"boardTheme",name:"月夜の城下町",
       preview:`${JAPANESE_COSMETIC_ROOT}/board_moonlit_castle_town.png`,
       boardImage:`${JAPANESE_COSMETIC_ROOT}/board_moonlit_castle_town.png`,
+      blockedObjects:Object.freeze({1:"./assets/images/board-blocked/moon-stone-lantern.svg",25:"./assets/images/board-blocked/moon-andon.svg"}),
       acquisitionType:"coins",currency:"nyanCoins",priceCoins:60,rarity:"Common",
       materialStatus:"ready",assetStatus:"ready"
     }),
@@ -297,6 +300,16 @@
     return getItem(categoryId,itemId)!==null;
   }
 
+  function boardThemePresentation(itemId){
+    const fallback=getItem("boardTheme","default");
+    const item=getItem("boardTheme",itemId)||fallback;
+    return Object.freeze({itemId:item.id,background:item.boardImage||fallback.boardImage,
+      blockedObjects:Object.freeze({
+        1:item.blockedObjects?.[1]||fallback.blockedObjects[1],
+        25:item.blockedObjects?.[25]||fallback.blockedObjects[25]
+      })});
+  }
+
   function acquisitionLabel(item){
     if(item?.acquisitionType==="coins")return "にゃんコイン";
     if(item?.acquisitionType==="passMonthlyReward")return "Pass加入で獲得";
@@ -316,6 +329,7 @@
     getItemsByCategory,
     getItem,
     isKnownItem,
+    boardThemePresentation,
     acquisitionLabel,
     isOpponentVisible,
     isLocalOnly
