@@ -2746,6 +2746,32 @@ body.turn-last .turn-pill{
    iPhone SE系・横長比率のスマホなど
 ================================================== */
 
+/* Let the home artwork and mode cards use the available portrait height. */
+@media (orientation:portrait) and (min-height:900px){
+  .visual-update3 .vu3-home{
+    align-content:space-around!important;
+    row-gap:clamp(10px,1.5dvh,24px)!important;
+  }
+  .visual-update3 .vu3-modes{margin-bottom:0!important}
+}
+@media (orientation:portrait) and (min-width:700px) and (min-height:900px){
+  .visual-update3 .vu3-home{
+    width:min(calc(100vw - 28px),calc((100dvh - 220px) * .68),840px)!important;
+    height:100dvh!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+  }
+  .visual-update3 .vu3-logo{
+    width:min(62%,360px)!important;
+    max-height:94px!important;
+  }
+}
+@media (orientation:portrait) and (max-width:699px) and (min-height:900px){
+  .visual-update3 .vu3-mode{aspect-ratio:2.75 / 1!important}
+  .visual-update3 .home-collection-daily{height:50px!important}
+  .visual-update3 .vu3-mini{min-height:52px!important}
+}
+
 @media (max-height:740px){
 
   .vu3-home{
