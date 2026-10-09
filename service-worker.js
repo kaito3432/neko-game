@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v72-wide-node-fit-20261009";
+const CACHE_NAME = "nyan-chase-v73-battle-style-13t-20261009";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",

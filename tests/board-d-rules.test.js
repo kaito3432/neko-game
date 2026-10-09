@@ -67,18 +67,18 @@ test('強警察と通常CPUの探索候補に封鎖箱を含めない',()=>{
   assert.match(game,/if\(game\.gameOver\|\|game\.actionLocked\|\|!E\.isValidBox\(i\)\)return/);
 });
 
-test('オンライン検証は封鎖箱を拒否し、9Tで逃走を確定する',async()=>{
+test('オンライン検証は5×6全30箱を使い、13Tで逃走を確定する',async()=>{
   const {acceptRandomAction:accept}=await import('../server/random-game-validation.mjs');
-  const E=globalThis.NyanEngine;
+  const {ONLINE_ENGINE:E}=await import('../server/online-board-rule.mjs');
   const room={};
-  assert.equal(E.MAX_TURNS,9);
+  assert.deepEqual([E.BOX_COUNT,E.NODE_COUNT,E.MAX_TURNS,E.BLOCKED_BOXES.length],[30,42,13,0]);
   assert.equal(accept(room,'police',{type:'dogSetup',dogs:[7,8,9]}),true);
-  assert.equal(accept(room,'cat',{type:'catSetup',catPos:0}),false);
-  assert.equal(accept(room,'cat',{type:'catSetup',catPos:24}),false);
-  assert.equal(accept(room,'cat',{type:'catSetup',catPos:20}),true);
-  assert.equal(accept(room,'police',{type:'search',dogIndex:0,box:0}),false);
+  assert.equal(accept(room,'cat',{type:'catSetup',catPos:30}),false);
+  assert.equal(accept(room,'cat',{type:'catSetup',catPos:-1}),false);
+  assert.equal(accept(room,'cat',{type:'catSetup',catPos:0}),true);
+  assert.equal(accept(room,'police',{type:'search',dogIndex:0,box:30}),false);
   assert.equal(accept(room,'cat',{type:'catEscaped'}),false);
-  const route=[20,21,22,23,18,17,16,15,10];
+  const route=[0,1,2,3,4,9,8,7,6,5,10,11,12];
   for(let turn=1;turn<=E.MAX_TURNS;turn++){
     const state=room.validationState;
     for(let dogIndex=0;dogIndex<3;dogIndex++){
@@ -88,7 +88,7 @@ test('オンライン検証は封鎖箱を拒否し、9Tで逃走を確定する
     }
     assert.equal(accept(room,'police',{type:'dogTurnEnd'}),true);
     if(turn<E.MAX_TURNS){
-      assert.equal(accept(room,'cat',{type:'catMove',turn:turn+1,catPos:turn===1?0:24}),false);
+      assert.equal(accept(room,'cat',{type:'catMove',turn:turn+1,catPos:30}),false);
       assert.equal(accept(room,'cat',{type:'catMove',turn:turn+1,catPos:route[turn]}),true);
     }
   }

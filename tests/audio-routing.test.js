@@ -11,7 +11,7 @@ test('home/pre-match renders keep the home track and only an active match select
   assert.match(initGame,/battleBgmActive=false/);
   assert.match(initGame,/if\(returningFromBattle\)\{Audio\.setBgmMode\("home"\);Audio\.startBgm\(\);\}/);
   assert.match(source,/if\(battleBgmActive && !game\.gameOver\)Audio\.setBgmMode\("normal"\)/);
-  assert.match(source,/if\(battleBgmActive && game\.turn>0 && remaining<=3 && !game\.gameOver\)\{\s*Audio\.setBgmMode\("tension"\)/);
+  assert.match(source,/if\(battleBgmActive && game\.turn>0 && currentTurn>=E\.MAX_TURNS-2 && !game\.gameOver\)\{\s*Audio\.setBgmMode\("tension"\)/);
   assert.match(source,/function startLocalMode\(\)\{[\s\S]*?initGame\(false\);[\s\S]*?policeAbilityOverlay\.classList\.add\("show"\);[\s\S]*?render\(\);/);
   assert.doesNotMatch(source.slice(source.indexOf('function startLocalMode(){'),source.indexOf('function selectPoliceAbility(')),/beginBattleBgm|setBgmMode\("normal"\)/);
   for(const start of ['function startOnlineGame(){','function startLocalNormalMode(){','function beginCpuPoliceGame(difficulty){']){

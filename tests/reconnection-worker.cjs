@@ -20,7 +20,9 @@ async function pair(random=false){
  const a=await actor(),b=await actor();let as,bs;
  if(random){await a.call('/api/matchmaking/join',{});bs=await b.call('/api/matchmaking/join',{});as=await a.call('/api/matchmaking/status',{});}
  else{as=await a.call('/api/rooms',{});bs={...await b.call(`/api/rooms/${as.roomCode}/join`,{}),roomCode:as.roomCode};}
- const ac=await socket(as),bc=await socket(bs);const ar=await ac.wait(m=>m.type==='role');await bc.wait(m=>m.type==='role');
+ const ac=await socket(as),bc=await socket(bs);
+ if(!random){await ac.wait(m=>m.type==='roleSelectionRequired');ac.ws.send(JSON.stringify({type:'roleSelect',preference:'random'}));}
+ const ar=await ac.wait(m=>m.type==='role');await bc.wait(m=>m.type==='role');
  ac.send({type:'ruleSelect',rule:'normal'});await bc.wait(m=>m.payload?.type==='ruleSelect');ac.send({type:'ready'});bc.send({type:'ready'});await ac.wait(m=>m.payload?.type==='ready');
  return {a,b,as,bs,ac,bc,ar};
 }
@@ -28,7 +30,7 @@ async function pair(random=false){
  for(const delay of [4500,10000]){
   const p=await pair();p.ac.ws.close();await p.bc.wait(m=>m.type==='connectionState'&&m.status==='reconnecting');
   await pause(delay);const restored=await p.a.call(`/api/rooms/${p.as.roomCode}/resume`,{});assert.equal(restored.matchId,p.ar.matchId);
-  const fresh=await socket(restored);const recovery=await fresh.wait(m=>m.type==='recovery');assert.equal(recovery.matchId,p.ar.matchId);assert.equal(recovery.status,'playing');assert.equal(recovery.hasStarted,true);
+  const fresh=await socket(restored);const recovery=await fresh.wait(m=>m.type==='recovery');assert.equal(recovery.matchId,p.ar.matchId);assert.equal(recovery.status,'playing');assert.equal(recovery.hasStarted,true);assert.equal(recovery.boardRuleId,'challenge_5x6');
   assert.deepEqual(recovery.appearanceSnapshot,p.ar.appearanceSnapshot);
   fresh.ws.close();p.bc.ws.close();
  }

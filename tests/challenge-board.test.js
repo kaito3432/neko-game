@@ -10,18 +10,20 @@ vm.runInNewContext(fs.readFileSync(path.join(root,'engine.js'),'utf8'),context);
 const standard=context.window.NyanEngine;
 const challenge=standard.createForRule('challenge_5x6');
 
-test('通常5×5は1・25封鎖と9Tのまま、Challengeは5×6・14T',()=>{
+test('サクッと対戦は5×5・9T、じっくり対戦は5×6・13T',()=>{
   assert.equal(standard.RULE.id,'standard_5x5');
   assert.deepEqual([standard.BOX_ROWS,standard.BOX_COLS,standard.BOX_COUNT,standard.NODE_COUNT,standard.MAX_TURNS],[5,5,25,36,9]);
   assert.deepEqual([...standard.BLOCKED_BOXES],[0,24]);
-  assert.deepEqual([challenge.BOX_ROWS,challenge.BOX_COLS,challenge.BOX_COUNT,challenge.NODE_COUNT,challenge.MAX_TURNS],[6,5,30,42,14]);
+  assert.deepEqual([challenge.BOX_ROWS,challenge.BOX_COLS,challenge.BOX_COUNT,challenge.NODE_COUNT,challenge.MAX_TURNS],[6,5,30,42,13]);
   assert.equal(challenge.RULE.policeCount,3);
   assert.equal(challenge.ACTIVE_BOXES.length,30);
   assert.equal(challenge.BLOCKED_BOXES.length,0);
   assert.equal(challenge.createState().dogs.length,3);
+  assert.equal(standard.MAX_TURNS-2,7);
+  assert.equal(challenge.MAX_TURNS-2,11);
 });
 
-test('5×6の端と交差点、猫の移動・再訪禁止・14T到達可能性',()=>{
+test('5×6の端と交差点、猫の移動・再訪禁止・13T到達可能性',()=>{
   assert.deepEqual([...challenge.getBoxNeighbors(0)],[5,1]);
   assert.deepEqual([...challenge.getBoxNeighbors(29)],[24,28]);
   assert.deepEqual([...challenge.getBoxesAroundNode(41)],[29]);

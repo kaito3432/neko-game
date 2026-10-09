@@ -1,6 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import './engine-environment.mjs';
-import '../engine.js';
+import {ONLINE_BOARD_RULE_ID,ONLINE_ENGINE} from './online-board-rule.mjs';
 import { profileRequest, appearanceSnapshot, publicPlayerProfiles } from './online-profile.mjs';
 import {canUseOnlineSkillMode,captureMatchSkillEntitlements,resolveEffectiveSkillEntitlements,resolvePersonalEffectiveSkillEntitlements} from './skill-entitlements.mjs';
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
@@ -23,7 +22,7 @@ import {processAppleNotification,processGoogleNotification,scanGoogleVoidedPurch
 import {reconcileVerifiedPurchase,shouldReverify} from './purchase-lifecycle.mjs';
 import {cleanupProfileDeletionReceipts} from './profile-deletion.mjs';
 import {adminProfileDeletionRequest} from './admin-profile-deletion.mjs';
-const E=globalThis.NyanEngine;
+const E=ONLINE_ENGINE;
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 const withWinnerPlayerId=(room,result)=>{
@@ -290,7 +289,7 @@ export class GameRoom extends DurableObject {
       const profiles = {host: match.host, guest: match.guest};
       await this.ctx.storage.put('room', {
         roomCode:match.matchId,createdAt: match.createdAt, hostToken: match.hostToken, guestToken: match.guestToken,
-        roles: match.roles, profiles, matchId: match.matchId, matchType: 'randomMatch', status: 'matched', hasStarted:false, requiresRuleSelection:true,
+        roles: match.roles, profiles, matchId: match.matchId, matchType: 'randomMatch', boardRuleId:ONLINE_BOARD_RULE_ID, status: 'matched', hasStarted:false, requiresRuleSelection:true,
         skillEntitlementSnapshot:captureMatchSkillEntitlements({matchType:'randomMatch',profiles}),
         appearanceSnapshot: appearanceSnapshot(profiles[match.roles.host === 'cat' ? 'host' : 'guest'], profiles[match.roles.host === 'police' ? 'host' : 'guest']),
         secretCat: {pos: null, history: [], turn: 0, noTrackBoxes: [], fakeTracks: []}, publicFoundTracks: []
@@ -318,7 +317,7 @@ await this.ctx.storage.put("room", {
   roles: null,
   roleState:'waiting',selectedRolePreference:null,
   profiles: {host: registration.profile || null, guest: null},
-  matchType: 'roomMatch',
+  matchType: 'roomMatch',boardRuleId:ONLINE_BOARD_RULE_ID,
   roomCode:registration.roomCode,matchId,status:'waiting',hasStarted:false,
 
 secretCat: {
@@ -634,6 +633,7 @@ async broadcastPresence() {
           participants: {host:room.profiles?.host?.playerId||null,guest:room.profiles?.guest?.playerId||null},
           appearanceSnapshot: room.appearanceSnapshot,
           matchType: room.matchType || 'roomMatch',
+          boardRuleId:room.boardRuleId||ONLINE_BOARD_RULE_ID,
           matchId: room.matchId || null,
           opponentRole:
             role === "cat" ? "police" : "cat",
@@ -739,7 +739,7 @@ async broadcastPresence() {
     const dogs=payload.dogs;
     if(senderRole!=='police'||!hasStarted(room)||room.publicPhase!=='dogSetup'||!Array.isArray(dogs)||dogs.length!==3)return;
     const chosen=dogs.filter(n=>n!==null);
-    if(new Set(chosen).size!==chosen.length||!chosen.every(n=>Number.isInteger(n)&&n>=7&&n<=28&&n%6>=1&&n%6<=4))return;
+    if(new Set(chosen).size!==chosen.length||!chosen.every(n=>Number.isInteger(n)&&E.isActiveDogNode(n)))return;
     room.partialDogs=dogs;await this.ctx.storage.put('room',room);return;
   }
   const control=sessionEvent(room,sender,payload);
@@ -985,7 +985,7 @@ if (
   if (
     !Number.isInteger(node) ||
     node < 0 ||
-    node >= 36
+    node >= E.NODE_COUNT
   ) {
     return;
   }
@@ -1014,27 +1014,7 @@ for (const socket of this.ctx.getWebSockets()) {
   } catch (_) {}
 }
 
-  // 6×6交差点 → 周囲の5×5箱を算出
-  const r = Math.floor(node / 6);
-  const c = node % 6;
-
-  const boxes = [];
-
-  if (r > 0 && c > 0) {
-    boxes.push((r - 1) * 5 + (c - 1));
-  }
-
-  if (r > 0 && c < 5) {
-    boxes.push((r - 1) * 5 + c);
-  }
-
-  if (r < 5 && c > 0) {
-    boxes.push(r * 5 + (c - 1));
-  }
-
-  if (r < 5 && c < 5) {
-    boxes.push(r * 5 + c);
-  }
+  const boxes = E.getBoxesAroundNode(node);
 
   const catInside =
     boxes.includes(secretCat.pos);

@@ -4,7 +4,7 @@
 window.NyanEngine = (() => {
   const BOARD_RULES = Object.freeze({
     standard_5x5:Object.freeze({id:"standard_5x5",rows:5,cols:5,maxTurns:9,blockedBoxes:Object.freeze([1,25]),policeCount:3}),
-    challenge_5x6:Object.freeze({id:"challenge_5x6",rows:6,cols:5,maxTurns:14,blockedBoxes:Object.freeze([]),policeCount:3})
+    challenge_5x6:Object.freeze({id:"challenge_5x6",rows:6,cols:5,maxTurns:13,blockedBoxes:Object.freeze([]),policeCount:3})
   });
   function createForRule(id="standard_5x5"){
   const RULE=BOARD_RULES[id];

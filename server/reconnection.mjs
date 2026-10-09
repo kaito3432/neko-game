@@ -3,6 +3,7 @@ import {hasStarted} from './match-lifecycle.mjs';
 import {publicPlayerProfiles} from './online-profile.mjs';
 import {canUseOnlineSkillMode,resolveEffectiveSkillEntitlements} from './skill-entitlements.mjs';
 import {actorState,syncTurnClock} from './turn-clock.mjs';
+import {ONLINE_BOARD_RULE_ID} from './online-board-rule.mjs';
 export const GRACE_MS=15000;
 export const terminal=room=>['finished','invalid','cancelled'].includes(room.status);
 export function serverInvalid(room,now){
@@ -51,7 +52,7 @@ export function publicRecovery(room,seat){
     state.fakeTracks=(room.secretCat?.fakeTracks||[]).map(h=>[h.box,h.turn]);
   }
   if(role==='police'&&state.phase==='dogSetup'&&room.partialDogs)state.dogs=room.partialDogs;
-  return {matchId:room.matchId,matchType:room.matchType,player:seat,role,
+  return {matchId:room.matchId,matchType:room.matchType,boardRuleId:room.boardRuleId||ONLINE_BOARD_RULE_ID,player:seat,role,
     roleState:room.roles?'selected':'waiting',selectedRolePreference:room.selectedRolePreference||null,
     roleSelectionReady:Boolean(room.guestToken&&!Object.keys(room.disconnects||{}).length),
     playerId:room.profiles?.[seat]?.playerId,appearanceSnapshot:room.appearanceSnapshot,

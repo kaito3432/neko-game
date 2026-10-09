@@ -2,7 +2,8 @@
 const assert=require('node:assert/strict');
 global.window=global;
 require('../engine.js');
-const maxTurns=global.NyanEngine.MAX_TURNS;
+const onlineEngine=global.NyanEngine.createForRule('challenge_5x6');
+const maxTurns=onlineEngine.MAX_TURNS;
 const API=process.env.NYAN_PRODUCTION_SMOKE==='yes'?'https://nyan-chase-online.honda19990602.workers.dev':(process.env.NYAN_LOCAL_API||'http://127.0.0.1:8798');
 const sockets=[];
 async function checkDaily(actor,receipt){
@@ -47,6 +48,7 @@ async function connect(session){
     assert.equal(as.matchId,bs.matchId);assert.notEqual(as.role,bs.role);
     const ac=await connect(as),bc=await connect(bs);
     const ar=await ac.wait(m=>m.type==='role'),br=await bc.wait(m=>m.type==='role');
+    assert.equal(ar.boardRuleId,'challenge_5x6');assert.equal(br.boardRuleId,'challenge_5x6');
     const host=as.player==='host'?ac:bc,guest=host===ac?bc:ac;
     guest.send({type:'ruleSelect',rule:'ability'});
     host.send({type:'ruleSelect',rule:'normal'});await guest.wait(m=>m.payload?.type==='ruleSelect'&&m.payload.rule==='normal');
@@ -57,8 +59,21 @@ async function connect(session){
     assert.equal(ar.appearanceSnapshot.policePlayer.dogSkinId,'dog_detective');
     await a.call('/api/online/appearance',{equippedAppearance:{catSkinId:'default',dogSkinId:'default'}});
     const cat=as.role==='cat'?ac:bc,police=as.role==='police'?ac:bc;
+    const policeActor=as.role==='police'?a:b,catActor=as.role==='cat'?a:b;
+    police.send({type:'dogSetup',dogs:[7,8,42]});
+    await new Promise(r=>setTimeout(r,80));
+    assert.equal((await policeActor.call(`/api/rooms/${as.roomCode}/resume`)).state.phase,'dogSetup','node 42 rejected');
     police.send({type:'dogSetup',dogs:[14,15,21]});await cat.wait(m=>m.payload?.type==='dogSetup');
+    cat.send({type:'catSetup',catPos:30});
+    await new Promise(r=>setTimeout(r,80));
+    assert.equal((await catActor.call(`/api/rooms/${as.roomCode}/resume`)).state.phase,'catSetup','box 30 rejected');
     cat.send({type:'catSetup',catPos:12});await cat.wait(m=>m.payload?.type==='catSetupAccepted');
+    police.send({type:'dogMove',dogIndex:0,node:42});
+    police.send({type:'search',dogIndex:0,box:30});
+    cat.send({type:'catMove',catPos:13,turn:14});
+    await new Promise(r=>setTimeout(r,80));
+    assert.equal((await policeActor.call(`/api/rooms/${as.roomCode}/resume`)).state.dogAction[0],false,'out-of-range node and box rejected');
+    assert.equal((await catActor.call(`/api/rooms/${as.roomCode}/resume`)).state.turn,1,'turn 14 rejected');
     assert.equal((await a.call('/api/matchmaking/status')).status,'playing');
     police.send({type:'search',box:12,dogIndex:0});
     await cat.wait(m=>m.type==='matchFinished');await police.wait(m=>m.type==='matchFinished');
@@ -87,13 +102,13 @@ async function connect(session){
     na.send({type:'ready'});nb.send({type:'ready'});await na.wait(m=>m.payload?.type==='ready');await nb.wait(m=>m.payload?.type==='ready');
     assert.equal((await a.profile()).rankedStamina.stamina,3);assert.equal((await b.profile()).rankedStamina.stamina,3);
     const nc=nextA.role==='cat'?na:nb,np=nextA.role==='police'?na:nb;
-    np.send({type:'dogSetup',dogs:[7,8,9]});await nc.wait(m=>m.payload?.type==='dogSetup');
-    nc.send({type:'catSetup',catPos:20});await nc.wait(m=>m.payload?.type==='catSetupAccepted');
+    np.send({type:'dogSetup',dogs:[31,32,33]});await nc.wait(m=>m.payload?.type==='dogSetup');
+    nc.send({type:'catSetup',catPos:0});await nc.wait(m=>m.payload?.type==='catSetupAccepted');
     nc.send({type:'catEscaped',turn:maxTurns});
     assert.equal((await a.call('/api/matchmaking/status')).status,'playing','early victory rejected');
-    const route=[20,21,22,23,18,17,16,15,10,5];
+    const route=[0,1,2,3,4,9,8,7,6,5,10,11,12];
     for(let turn=1;turn<=maxTurns;turn++){
-      for(let dogIndex=0;dogIndex<3;dogIndex++)np.send({type:'search',dogIndex,box:dogIndex+1});
+      for(let dogIndex=0;dogIndex<3;dogIndex++)np.send({type:'search',dogIndex,box:25+dogIndex});
       np.send({type:'dogTurnEnd',turn});await nc.wait(m=>m.payload?.type==='dogTurnEnd'&&m.payload.turn===turn);
       if(turn<maxTurns){nc.send({type:'catMove',catPos:route[turn],turn:turn+1});await np.wait(m=>m.payload?.type==='catMoveDone'&&m.payload.turn===turn+1);}
     }
@@ -105,7 +120,10 @@ async function connect(session){
     const cBefore=await c.profile(),dBefore=await d.profile();
     const room=await c.call('/api/rooms');const joined=await d.call(`/api/rooms/${room.roomCode}/join`);
     const cc=await connect(room),dc=await connect({...joined,roomCode:room.roomCode});
+    await cc.wait(m=>m.type==='roleSelectionRequired');
+    cc.ws.send(JSON.stringify({type:'roleSelect',preference:'cat'}));
     const cr=await cc.wait(m=>m.type==='role'),dr=await dc.wait(m=>m.type==='role');
+    assert.equal(cr.boardRuleId,'challenge_5x6');assert.equal(dr.boardRuleId,'challenge_5x6');
     assert.equal(cr.matchType,'roomMatch');assert.deepEqual(cr.appearanceSnapshot,dr.appearanceSnapshot);
     assert.equal(cr.appearanceSnapshot.catPlayer.catSkinId,cr.role==='cat'?'cat_kaitou':'default');
     assert.equal(cr.appearanceSnapshot.policePlayer.dogSkinId,dr.role==='police'?'dog_detective':'default');

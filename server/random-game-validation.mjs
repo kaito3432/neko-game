@@ -1,7 +1,6 @@
-import './engine-environment.mjs';
-import '../engine.js';
+import {ONLINE_ENGINE} from './online-board-rule.mjs';
 import {runtimeSkillId,skillDefinition,validateSkillUseForMatch} from './skill-entitlements.mjs';
-const E=globalThis.NyanEngine;
+const E=ONLINE_ENGINE;
 
 function approvedAbilities(room){
   if(!room.approvedSkills)return room.abilities||{}; // persisted pre-Phase-3 match compatibility

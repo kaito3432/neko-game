@@ -6,6 +6,7 @@
   let E=NyanEngine;
   let hardAI=window.NyanPoliceHardAI;
   let selectedBoardRule="standard_5x5";
+  const ONLINE_BOARD_RULE_ID="challenge_5x6";
   const boxTop=r=>E.BOX_ROWS===5?5+r*19:4+r*16;
   const nodeTop=r=>E.BOX_ROWS===5?2.5+r*19:2+r*16;
   const boxHeight=()=>E.BOX_ROWS===5?"14%":"12%";
@@ -657,6 +658,7 @@ const backToTitleBtn=$("backToTitleBtn");
       }
       return;
     }
+    selectBoardRule(ONLINE_BOARD_RULE_ID);
     onlineGameStarted=true;playMode=d.role==='cat'?'onlineCat':'onlinePolice';
     game=E.createState();
     const s=d.state;
@@ -1159,6 +1161,7 @@ function startOnlineAbilityRule(){
 function startOnlineGame(){
 
   if(!onlineAssignedRole) return;
+  selectBoardRule(ONLINE_BOARD_RULE_ID);
 
   // オンラインの役割をゲームモードへ反映
   playMode=
@@ -3641,7 +3644,7 @@ return;
     }
 
     // Only an active match changes tracks; home and pregame renders keep home BGM.
-    if(battleBgmActive && game.turn>0 && remaining<=3 && !game.gameOver){
+    if(battleBgmActive && game.turn>0 && currentTurn>=E.MAX_TURNS-2 && !game.gameOver){
       Audio.setBgmMode("tension");
       document.body.classList.add("final-three");
     }else{
@@ -6042,7 +6045,7 @@ if(againBtn){
   }
 
 bindPress(onlineModeBtn,()=>{
-  selectBoardRule("standard_5x5");
+  selectBoardRule(ONLINE_BOARD_RULE_ID);
   window.NyanOnline.reset();
   resetOnlineState();
   onlineBackBtn.textContent='← 戻る';

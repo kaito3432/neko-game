@@ -1,5 +1,4 @@
-import './engine-environment.mjs';
-import '../engine.js';
+import {ONLINE_ENGINE} from './online-board-rule.mjs';
 
 // Legacy rooms did not persist hasStarted. Infer only an already started game.
 export function hasStarted(room){
@@ -13,7 +12,7 @@ export function startIfReady(room,connected,now=Date.now()){
       !['normal','ability'].includes(room.rule)||!['host','guest'].every(p=>connected.includes(p))||
       Object.keys(room.disconnects||{}).length)return false;
   if(room.rule==='ability'&&(!room.abilities?.cat||!room.abilities?.police))return false;
-  room.validationState=globalThis.NyanEngine.createState();
+  room.validationState=ONLINE_ENGINE.createState();
   room.hasStarted=true;room.matchStartedAt=now;room.status='playing';
   room.publicPhase='dogSetup';room.selectedDog=null;
   return true;
