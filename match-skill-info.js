@@ -126,6 +126,19 @@
       }};
     });
 
+    const phase=container.parentElement;
+    function sizeButtons(){
+      if(!phase?.getBoundingClientRect||!container.style?.setProperty)return;
+      const rect=phase.getBoundingClientRect();
+      if(rect.width<=0||rect.height<=0)return;
+      const size=Math.max(20,Math.min(80,rect.height-10,(Math.min(rect.width*.48,176)-8)/2));
+      container.style.setProperty('--match-skill-size',`${size}px`);
+    }
+    if(typeof globalThis.ResizeObserver==='function'&&phase){
+      const observer=new globalThis.ResizeObserver(sizeButtons);
+      observer.observe(phase);
+    }
+
     function render({playMode,game,active=true}){
       const selected=active?selectedSlots(playMode,game):[];
       const descriptions=getDescriptions?.()||{};
@@ -136,6 +149,7 @@
       slots.forEach((slot,index)=>slot.set(values[index]?.skill||null,values[index]?.label||''));
       container.hidden=!values.some(value=>value.skill);
       container.parentElement?.classList.toggle('has-match-skills',!container.hidden);
+      sizeButtons();
       if(!layer.hidden&&!values.some(value=>value.skill?.id===openedId))close();
     }
     return {render,close,layer,slots};

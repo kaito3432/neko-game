@@ -9585,3 +9585,165 @@ body.sneak-mode .board-shell{
 }
 
 .ranked-skill-access{margin-top:5px;font-size:12px;color:#654b40}
+
+/* Only the gameplay board scales: one shared cell size in both axes. */
+.app > .board-shell{
+  width:100%;height:auto;max-height:100%;min-height:0;
+  aspect-ratio:1 / 1.06;align-self:center;justify-self:stretch;
+  display:flex;flex-direction:column;
+}
+.app > .board-shell:has(#board[data-board-rule="challenge_5x6"]){aspect-ratio:5 / 6.25}
+.app > .board-shell .board-area{
+  flex:1 1 auto;min-width:0;min-height:0;
+  display:grid;place-items:center;overflow:hidden;container-type:size;
+}
+.app > .board-shell .board-area > #board{
+  width:min(100cqw,100cqh);height:auto;max-width:100%;max-height:none;
+  aspect-ratio:1 / 1;flex:none;align-self:auto;margin:0;
+}
+.app > .board-shell .board-area > #board[data-board-rule="challenge_5x6"]{
+  width:min(100cqw,83.333333cqh);aspect-ratio:5 / 6;
+}
+.app > .board-shell #board[data-board-rule="challenge_5x6"] .box{
+  height:11.666667%!important; /* 14% of 5 columns equals 11 2/3% of 6 rows. */
+}
+
+/* The spare portrait height belongs to the controls, never to board cells. */
+@media (orientation:portrait) and (min-height:741px){
+  .app > .game-topbar .top-pill{
+    min-height:clamp(42px,9dvh,76px);
+    padding-block:clamp(5px,1dvh,10px);
+  }
+  .app > .game-topbar .top-label{font-size:clamp(8px,1.15dvh,11px)}
+  .app > .game-topbar .top-pill strong{font-size:clamp(14px,2dvh,19px)}
+  .app > .guide{
+    min-height:clamp(34px,8dvh,72px)!important;
+    padding-block:clamp(5px,1.1dvh,11px)!important;
+  }
+  .app > .guide .main{font-size:clamp(10px,1.55dvh,15px)!important}
+  .app > .dog-row .dog-card{
+    height:clamp(58px,16dvh,132px)!important;
+    padding:clamp(4px,.7dvh,8px)!important;
+  }
+  .app > .dog-row .dog-card .character-img{
+    width:clamp(46px,6.8dvh,62px)!important;
+    height:clamp(46px,6.8dvh,62px)!important;
+  }
+  .app > .dog-row .dog-name{font-size:clamp(11px,1.6dvh,15px)!important}
+  .app > .dog-row .dog-status{font-size:clamp(8px,1.2dvh,11px)!important}
+}
+
+/* Square boards leave more portrait space than the six-row challenge board. */
+@media (orientation:portrait) and (min-height:800px){
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .game-topbar .top-pill{
+    min-height:clamp(76px,10dvh,90px);
+  }
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .guide{
+    min-height:clamp(68px,9.5dvh,84px)!important;
+  }
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .dog-row .dog-card{
+    height:clamp(132px,18dvh,160px)!important;
+  }
+}
+
+@media (orientation:portrait) and (max-width:699px) and (min-height:920px){
+  .app > .game-topbar .top-pill{min-height:clamp(76px,10dvh,106px)}
+  .app > .guide{min-height:clamp(72px,10dvh,98px)!important}
+  .app > .dog-row .dog-card{height:clamp(132px,17dvh,160px)!important}
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .game-topbar .top-pill{
+    min-height:clamp(90px,12.4dvh,120px);
+  }
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .guide{
+    min-height:clamp(84px,11.4dvh,110px)!important;
+  }
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .dog-row .dog-card{
+    height:clamp(160px,20.7dvh,200px)!important;
+  }
+}
+
+@media (orientation:portrait) and (min-width:700px){
+  .app{width:min(100%,900px)}
+  .app > .game-topbar .top-pill strong{font-size:clamp(18px,2dvh,24px)}
+  .app > .guide .main{font-size:clamp(15px,1.5dvh,19px)!important}
+  .app > .dog-row .dog-name{font-size:clamp(15px,1.5dvh,18px)!important}
+  .app > .dog-row .dog-card .character-img{width:clamp(62px,7dvh,82px)!important;height:clamp(62px,7dvh,82px)!important}
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .game-topbar .top-pill{
+    min-height:clamp(90px,9dvh,120px);
+  }
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .guide{
+    min-height:clamp(84px,8dvh,116px)!important;
+  }
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .dog-row .dog-card{
+    height:clamp(160px,14dvh,200px)!important;
+  }
+}
+
+@media (max-height:740px){
+  .app > .game-topbar .top-pill{min-height:42px}
+  .app > .guide{min-height:34px!important}
+  .app > .dog-row .dog-card{height:clamp(48px,8.5dvh,62px)!important}
+}
+
+/* Match skill references scale with the phase pill, but never escape it. */
+.phase-pill.has-match-skills #phaseDisplay{padding-right:min(50%,184px)}
+.match-skill-hud{
+  top:4px;bottom:4px;right:5px;
+  width:min(48%,176px);max-width:48%;
+  gap:clamp(3px,.45dvh,7px);
+  justify-content:flex-end;
+}
+.match-skill-button{
+  box-sizing:border-box;
+  flex:none;
+  width:var(--match-skill-size,36px);
+  height:var(--match-skill-size,36px);
+  grid-template-rows:auto minmax(0,1fr);
+  border-radius:clamp(9px,1dvh,14px);
+}
+.match-skill-side{font-size:clamp(8px,.95dvh,13px);line-height:1.1}
+.match-skill-button img{
+  display:block;
+  width:100%;height:100%;min-width:0;min-height:0;
+  object-fit:contain;
+}
+.match-skill-affordance{width:clamp(12px,1.4dvh,19px);height:clamp(12px,1.4dvh,19px);font-size:clamp(9px,1dvh,13px)}
+.match-skill-info-panel{width:min(100%,clamp(350px,60dvw,600px));padding:clamp(18px,2dvh,28px)}
+.match-skill-info-heading img{width:clamp(48px,5.5dvh,80px);height:clamp(48px,5.5dvh,80px)}
+.match-skill-info-heading strong{font-size:clamp(18px,1.8dvh,26px)}
+.match-skill-info-heading small,.match-skill-info-scope{font-size:clamp(11px,1.15dvh,16px)}
+.match-skill-info-summary{font-size:clamp(14px,1.4dvh,20px)}
+.match-skill-info-detail{font-size:clamp(13px,1.3dvh,18px)}
+.match-skill-info-visual{min-height:clamp(125px,16dvh,230px);padding:clamp(8px,1.2dvh,16px)}
+@media (min-width:700px) and (min-height:900px){
+  .match-skill-info-visual .skill-demo-title,
+  .match-skill-info-visual .skill-demo-caption,
+  .match-skill-info-visual .howl-result{font-size:clamp(14px,1.2dvh,18px)}
+  .match-skill-info-visual .howl-grid{grid-template-columns:repeat(3,clamp(52px,4.7dvh,68px));grid-template-rows:repeat(3,clamp(52px,4.7dvh,68px))}
+  .match-skill-info-visual .howl-box,.match-skill-info-visual .howl-dog{width:clamp(52px,4.7dvh,68px);height:clamp(52px,4.7dvh,68px)}
+  .match-skill-info-visual .fake-demo-normal,.match-skill-info-visual .fake-route{font-size:clamp(26px,2.6dvh,36px)}
+}
+@media (max-height:700px), (min-width:700px){
+  .match-skill-button{grid-template-rows:minmax(0,1fr);padding:1px}
+  .match-skill-button .match-skill-side{display:none}
+  .match-skill-button img{width:100%;height:100%}
+}
+
+/* Keep police artwork legible on large portrait boards without enlarging move targets. */
+@media (orientation:portrait) and (min-width:700px){
+  .board > .node .dogtoken,
+  .board > .node .dogtoken.skin-piece-custom{
+    box-sizing:border-box;
+    flex:none;
+    width:clamp(36px,6vw,64px);
+    min-width:0;
+    height:clamp(36px,6vw,64px);
+    padding:0;
+  }
+  .board > .node:not(.inactive){
+    width:min(54px,6.3%);
+    height:auto;
+    aspect-ratio:1;
+  }
+  .board > .node.move{animation:nodePulseWide .9s infinite}
+}
+@keyframes nodePulseWide{50%{transform:translate(-50%,-50%) scale(1.04)}}
