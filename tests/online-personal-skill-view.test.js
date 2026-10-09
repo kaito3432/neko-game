@@ -42,6 +42,6 @@ test('profile response and online skill UI use server-derived view without calli
   assert.match(shop,/オンラインで利用可能/);
   assert.match(shop,/root\.NyanMonetization\.isSkillOwned\(skill\.id\)\?'所持済み'/);
   assert.match(ranked,/getAuthenticatedSkillView\?\.\(\)/);
-  assert.match(ranked,/skillView\?\.playerId===profile\.playerId&&skillView\.apiBase===root\.NyanOnline\.API_BASE/);
+  assert.match(ranked,/skillView\?\.playerId&&skillView\.playerId===profile\.playerId&&skillView\.apiBase===root\.NyanOnline\.API_BASE/);
   assert.match(ranked,/Skill Mode：オンライン利用可能/);
 });

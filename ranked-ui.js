@@ -53,7 +53,7 @@
     panel.querySelector('[data-rank-record]').textContent=`今シーズン ${profile.ranked.seasonWins}勝 ${profile.ranked.seasonLosses}敗`;
     panel.querySelector('[data-rank-coins]').textContent=`オンライン報酬 ${profile.serverNyanCoins||0} にゃんコイン`;
     const skillView=root.NyanOnlineIdentity.getAuthenticatedSkillView?.();
-    const access=skillView?.playerId===profile.playerId&&skillView.apiBase===root.NyanOnline.API_BASE
+    const access=skillView?.playerId&&skillView.playerId===profile.playerId&&skillView.apiBase===root.NyanOnline.API_BASE
       ?skillView.effectiveSkillEntitlements:null;
     const skillStatus=panel.querySelector('[data-rank-skill-access]');
     skillStatus.textContent=access?.skillModeUnlocked===true

@@ -2,6 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const vm=require('node:vm');
 
 const root=path.resolve(__dirname,'..');
 const rewards=require('../rank-rewards.js');
@@ -69,4 +70,27 @@ test('自分のランク情報と説明はオンライン遊び方選択中だ�
 test('オンライン入口はoverlay生成後にranked profileを接続する',()=>{
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert.ok(html.indexOf('random-match.js')<html.indexOf('ranked-ui.js'));
+});
+
+test('初回Online表示は認証済みSkill viewがまだなくても暫定ランクを描画する',()=>{
+  const source=fs.readFileSync(path.join(root,'ranked-ui.js'),'utf8');
+  const fields=new Map();
+  const element=()=>({isConnected:false,hidden:false,classList:{add(){},remove(){}},
+    append(){},after(child){child.isConnected=true;},replaceChildren(){},setImage(){},
+    querySelector(selector){if(!fields.has(selector))fields.set(selector,element());return fields.get(selector);}});
+  const document={createElement:element,body:{append(){}},querySelector(selector){
+    return selector==='#matchmakingStatus'||selector==='#resultText'?element():null;
+  }};
+  let skillView=null;
+  const context={document,CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},
+    NyanRankRewards:{ranks:[{id:'bronze',name:'ブロンズ',min:0,icon:''},{id:'silver',name:'シルバー',min:100,icon:''}]},
+    NyanOnlineProfileUI:{frames:{rank_bronze:'肉球ブロンズフレーム'},frameId:()=> 'rank_bronze',setImage(){},setFrame(){}},
+    NyanOnlineIdentity:{getAuthenticatedSkillView:()=>skillView},NyanOnline:{API_BASE:'https://example.test'},
+    NyanPlayerData:{getSnapshot:()=>({})},addEventListener(){},dispatchEvent(){}};
+  vm.runInNewContext(source,context);
+  assert.doesNotThrow(()=>context.NyanRankedUI.setSelectionVisible(true));
+  assert.equal(fields.get('[data-rank-skill-access]').textContent,'Skill Mode：サーバー確認中');
+  skillView={playerId:'op_test',apiBase:'https://example.test',effectiveSkillEntitlements:{skillModeUnlocked:true,availableSkillIds:['CAT_STEALTH']}};
+  context.NyanRankedUI.updateProfile({playerId:'op_test',ranked:{rank:'bronze',rp:0,seasonWins:0,seasonLosses:0}});
+  assert.match(fields.get('[data-rank-skill-access]').textContent,/オンライン利用可能（1スキル）/);
 });
