@@ -81,7 +81,7 @@ async function connect(session){
     const rb=await b.call('/api/matchmaking/result',{matchId:as.matchId});
     assert.notEqual(ra.won,rb.won);assert.equal(ra.side,as.role);
     for(const receipt of [ra,rb]){
-      assert.equal(receipt.ranked.coinDelta,receipt.won?5:0);
+      assert.equal(receipt.ranked.coinDelta,0);
       assert.equal(receipt.ranked.afterRP,receipt.won?10:0);
       assert.equal(receipt.rankedProfile.ranked.lifetimeWins,receipt.won?1:0);
       assert.equal(receipt.rankedProfile.ranked.lifetimeLosses,receipt.won?0:1);

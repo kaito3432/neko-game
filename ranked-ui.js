@@ -157,7 +157,7 @@
     result.hidden=false;
     result.replaceChildren();
     const primary=document.createElement('strong');
-    primary.textContent=`${receipt.rpDelta>0?'+':''}${receipt.rpDelta} RP${receipt.coinDelta?` ／ +${receipt.coinDelta} にゃんコイン`:''}`;
+    primary.textContent=`${receipt.rpDelta>0?'+':''}${receipt.rpDelta} RP`;
     const detail=document.createElement('span');
     detail.textContent=`${before===after?after:`${before} → ${after}`}　${receipt.beforeRP} → ${receipt.afterRP} RP`;
     result.append(primary,detail);

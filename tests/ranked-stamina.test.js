@@ -8,14 +8,27 @@ const base=(stamina,lastRecoveryAt=0,extra={})=>({playerId:'P',serverNyanCoins:3
 
 test('60分で1、120分で2回復し最大5で停止',async()=>{
   const {normalizeRankedStamina}=await mod,hour=3600000;
+  assert.equal(normalizeRankedStamina(base(2,1000).rankedStamina,1000+hour-1).stamina,2);
   assert.equal(normalizeRankedStamina(base(2,1000).rankedStamina,1000+hour).stamina,3);
   assert.equal(normalizeRankedStamina(base(2,1000).rankedStamina,1000+2*hour).stamina,4);
   assert.equal(normalizeRankedStamina(base(4,1000).rankedStamina,1000+8*hour).stamina,5);
+  const once=normalizeRankedStamina(base(2,1000).rankedStamina,1000+hour);
+  assert.equal(normalizeRankedStamina(once,1000+hour).stamina,3);
 });
 
 test('保存時刻から再起動・復帰後の自然回復を再計算する',async()=>{
   const {withRankedStamina}=await mod,p=withRankedStamina(base(1,1000),1000+3*3600000);
   assert.equal(p.rankedStamina.stamina,4);assert.equal(p.rankedStamina.lastRecoveryAt,1000+3*3600000);
+});
+
+test('日付をまたいでもサーバー時刻で回復し、未来の保存時刻は前進させない',async()=>{
+  const {withRankedStamina}=await mod,start=Date.parse('2026-09-21T23:30:00Z');
+  const next=withRankedStamina(base(1,start),start+2*3600000);
+  assert.equal(next.rankedStamina.stamina,3);
+  assert.equal(withRankedStamina(next,start+2*3600000).rankedStamina.stamina,3);
+  const future=withRankedStamina(base(1,start+10*3600000),start);
+  assert.equal(future.rankedStamina.stamina,1);
+  assert.equal(future.rankedStamina.lastRecoveryAt,start);
 });
 
 test('正式開始の消費は1、0ならSTAMINA_EMPTY',async()=>{
@@ -34,12 +47,18 @@ test('スタミナ0はランダム参加不可、待機・キャンセルでは�
   assert.equal(cancelled.status,'cancelled');assert.equal(profile.rankedStamina.stamina,1);
 });
 
-test('コイン15枚で1回復し、14枚・満タンは拒否、自然回復基準は維持',async()=>{
-  const {recoverStaminaWithCoins}=await mod;
-  const recovered=recoverStaminaWithCoins(base(2,1000),2000);
-  assert.equal(recovered.serverNyanCoins,15);assert.equal(recovered.rankedStamina.stamina,3);assert.equal(recovered.rankedStamina.lastRecoveryAt,1000);
-  assert.throws(()=>recoverStaminaWithCoins({...base(2,1000),serverNyanCoins:14},2000),/insufficient_coins/);
-  assert.throws(()=>recoverStaminaWithCoins(base(5,1000),2000),/STAMINA_FULL/);
+test('コイン回復経路はUI・API・サーバー関数から除去',async()=>{
+  const {recoverStaminaWithCoins,publicRankedStamina}=await mod;
+  assert.equal(recoverStaminaWithCoins,undefined);
+  assert.equal(Object.hasOwn(publicRankedStamina(base(2,1000),2000),'coinCost'),false);
+  const root=path.join(__dirname,'..');
+  for(const file of ['ranked-stamina-ui.js','server/online-profile.mjs','server/worker.mjs'])
+    assert.doesNotMatch(fs.readFileSync(path.join(root,file),'utf8'),/stamina-coin|data-stamina-coin/);
+  const {profileRequest}=await import('../server/online-profile.mjs'),storage=new Store();
+  const token='ab'.repeat(32),headers={Authorization:`Bearer ${token}`};
+  await profileRequest(storage,new Request('https://test/register',{method:'POST',headers,body:'{}'}));
+  const denied=await profileRequest(storage,new Request('https://test/stamina-coin',{method:'POST',headers,body:JSON.stringify({requestId:'disabled_coins'})}));
+  assert.equal(denied.status,404);
 });
 
 test('検証済み広告だけ1回復し同一IDは二重回復しない',async()=>{
@@ -74,6 +93,6 @@ test('ランダム正式開始だけサーバーmarkerで冪等消費し部屋�
 
 test('クライアントUIは初期選択画面限定・不足時モーダル・別広告用途を使う',()=>{
   const root=path.join(__dirname,'..'),ui=fs.readFileSync(path.join(root,'ranked-stamina-ui.js'),'utf8'),match=fs.readFileSync(path.join(root,'random-match.js'),'utf8');
-  assert.match(ui,/STAMINA_REWARD_TYPE/);assert.match(ui,/15 で1回復/);assert.match(ui,/本日の広告回復/);
+  assert.match(ui,/STAMINA_REWARD_TYPE/);assert.match(ui,/1時間ごとに1回復/);assert.match(ui,/本日の広告回復/);
   assert.match(match,/setSelectionVisible\?\.\(visible\)/);assert.match(match,/スタミナが足りません/);
 });

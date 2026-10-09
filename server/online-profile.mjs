@@ -28,7 +28,7 @@ import {applyVerifiedStoreTransaction} from './storekit-verification.mjs';
 import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
 import {restoreExpiredApplePassSkins,restoreExpiredGooglePassSkins} from './purchase-restore.mjs';
 import {deleteOnlineProfile} from './profile-deletion.mjs';
-import {STAMINA_REWARD_TYPE,applyVerifiedStaminaAd,withRankedStamina,recoverStaminaWithCoins,publicRankedStamina} from './ranked-stamina.mjs';
+import {STAMINA_REWARD_TYPE,applyVerifiedStaminaAd,withRankedStamina,publicRankedStamina} from './ranked-stamina.mjs';
 import {DAILY_REWARD_TYPE,applyVerifiedDailyAd} from './daily-ad-reward.mjs';
 const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 
@@ -311,20 +311,6 @@ export async function profileRequest(storage, request, options={}) {
       const status=code==='reward_verification_unavailable'?503:code==='reward_not_verified'?403:400;
       return reply({error:code},status);
     }
-  }
-  if(path==='/stamina-coin'&&request.method==='POST'){
-    try{
-      const {requestId}=await request.json();if(typeof requestId!=='string'||!/^[A-Za-z0-9:_-]{8,200}$/.test(requestId))throw new Error('invalid_request_id');
-      const marker=`stamina-coin:${profile.playerId}:${requestId}`;
-      const apply=async tx=>{
-        const existing=await tx.get(marker);if(existing)return {profile:await tx.get(key)||profile,duplicate:true};
-        const next=recoverStaminaWithCoins(await tx.get(key)||profile,now);
-        await tx.put({[key]:next,[marker]:{processedAt:now}});return {profile:next,duplicate:false};
-      };
-      const result=typeof storage.transaction==='function'?await storage.transaction(apply):await apply(storage);
-      return reply({...result,rankedStamina:publicRankedStamina(result.profile,now)});
-    }
-    catch(error){const code=error?.message||'stamina_recovery_failed';return reply({error:code},code==='insufficient_coins'?409:400);}
   }
   if(path==='/rewarded-ad-attempt'&&request.method==='POST'){
     try{return reply(await createRewardedAdAttempt(storage,profile,(await request.json()).rewardType,now));}

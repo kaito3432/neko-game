@@ -1,7 +1,6 @@
 export const RANKED_STAMINA_CONFIG=Object.freeze({
   MAX_STAMINA:5,
   STAMINA_RECOVERY_MINUTES:60,
-  STAMINA_COIN_COST:15,
   STAMINA_AD_DAILY_LIMIT:5,
   RANKED_MATCH_STAMINA_COST:1
 });
@@ -13,8 +12,8 @@ export const serverDateKey=now=>new Date(now).toISOString().slice(0,10);
 export function normalizeRankedStamina(value,now=Date.now()){
   const source=value&&typeof value==='object'?value:{};
   const hasSaved=Number.isFinite(Number(source.lastRecoveryAt));
-  // Gift Box grants may exceed the natural-recovery cap. Only recovery, coin and
-  // ad purchases are capped at MAX_STAMINA; normalization must preserve bonuses.
+  // Gift Box grants may exceed the natural-recovery cap. Natural recovery and
+  // rewarded ads are capped at MAX_STAMINA; normalization preserves bonuses.
   let stamina=Number.isFinite(Number(source.stamina))?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(Number(source.stamina)))):RANKED_STAMINA_CONFIG.MAX_STAMINA;
   let lastRecoveryAt=hasSaved?Number(source.lastRecoveryAt):now;
   if(lastRecoveryAt>now)lastRecoveryAt=now;
@@ -38,7 +37,7 @@ export function withRankedStamina(profile,now=Date.now()){
 export function publicRankedStamina(profile,now=Date.now()){
   const value=normalizeRankedStamina(profile?.rankedStamina,now);
   return {...value,max:RANKED_STAMINA_CONFIG.MAX_STAMINA,recoveryMinutes:RANKED_STAMINA_CONFIG.STAMINA_RECOVERY_MINUTES,
-    coinCost:RANKED_STAMINA_CONFIG.STAMINA_COIN_COST,adDailyLimit:RANKED_STAMINA_CONFIG.STAMINA_AD_DAILY_LIMIT,
+    adDailyLimit:RANKED_STAMINA_CONFIG.STAMINA_AD_DAILY_LIMIT,
     nextRecoveryAt:value.stamina<RANKED_STAMINA_CONFIG.MAX_STAMINA?value.lastRecoveryAt+recoveryMs:null};
 }
 
@@ -48,27 +47,6 @@ export function consumeRankedStamina(profile,now=Date.now()){
   const wasFull=state.stamina===RANKED_STAMINA_CONFIG.MAX_STAMINA;
   return {...current,rankedStamina:{...state,stamina:state.stamina-RANKED_STAMINA_CONFIG.RANKED_MATCH_STAMINA_COST,
     lastRecoveryAt:wasFull?now:state.lastRecoveryAt}};
-}
-
-export function canSpendCoins(profile,amount=RANKED_STAMINA_CONFIG.STAMINA_COIN_COST){
-  return Number.isSafeInteger(amount)&&amount>0&&(Number(profile?.serverNyanCoins)||0)>=amount;
-}
-export function spendCoins(profile,{amount=RANKED_STAMINA_CONFIG.STAMINA_COIN_COST}={}){
-  if(!canSpendCoins(profile,amount))throw new Error('insufficient_coins');
-  return {...profile,serverNyanCoins:(Number(profile.serverNyanCoins)||0)-amount};
-}
-export function addCoins(profile,amount){
-  if(!Number.isSafeInteger(amount)||amount<=0)throw new Error('invalid_coin_amount');
-  return {...profile,serverNyanCoins:(Number(profile?.serverNyanCoins)||0)+amount};
-}
-
-export function recoverStaminaWithCoins(profile,now=Date.now()){
-  let current=withRankedStamina(profile,now);
-  if(current.rankedStamina.stamina>=RANKED_STAMINA_CONFIG.MAX_STAMINA)throw new Error('STAMINA_FULL');
-  current=spendCoins(current);
-  const stamina=current.rankedStamina.stamina+1;
-  return {...current,rankedStamina:{...current.rankedStamina,stamina,
-    lastRecoveryAt:stamina===RANKED_STAMINA_CONFIG.MAX_STAMINA?now:current.rankedStamina.lastRecoveryAt}};
 }
 
 export async function applyVerifiedStaminaAd({storage,profileKey,profile,verificationId,verification,verify,now=Date.now()}={}){

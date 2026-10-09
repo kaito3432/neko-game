@@ -1634,7 +1634,7 @@ export default {
       const response=await players().fetch(new Request('https://players/internal/admob-ssv',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:request.url})}));
       return new Response(response.body,{status:response.status,headers:JSON_HEADERS});
     }
-    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|gifts|gift-claim|pass-storekit-transaction|pass-storekit-restore|pass-google-play-purchase|pass-google-play-restore|pass-subscription-refresh|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|stamina-coin|storekit-transaction|storekit-restore|google-play-purchase|google-play-restore)$/);
+    const profileRoute = url.pathname.match(/^\/api\/online\/(register|profile|appearance|gifts|gift-claim|pass-storekit-transaction|pass-storekit-restore|pass-google-play-purchase|pass-google-play-restore|pass-subscription-refresh|cpu-unlock|active|profile-frame|season-reward|rewarded-ad-attempt|rewarded-ad-completion|storekit-transaction|storekit-restore|google-play-purchase|google-play-restore)$/);
     if (profileRoute) {
       const body=['GET','HEAD'].includes(request.method)?undefined:await request.text();
       const response = await players().fetch(new Request(`https://players/${profileRoute[1]}`, {method:request.method,headers:request.headers,body}));

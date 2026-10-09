@@ -72,12 +72,11 @@ export function normalizeRanked(profile,now=Date.now(),periods={},knownSkins={})
 export function applyRankedResult(profile,{matchId,won,completedAt},periods={},knownSkins={}){
   const p=normalizeRanked(profile,completedAt,periods,knownSkins),beforeRP=p.ranked.rp,beforeRank=rankForRp(beforeRP);
   p.ranked.rp=Math.max(0,beforeRP+(won?10:-6));p.ranked[won?'seasonWins':'seasonLosses']++;p.ranked[won?'lifetimeWins':'lifetimeLosses']++;
-  if(won)p.serverNyanCoins+=5;
   const afterRank=rankForRp(p.ranked.rp),unlocked=[];
   for(const rank of RANKS)if(rank.min<=afterRank.min&&!p.ownedProfileFrames.includes(rank.frameId)){p.ownedProfileFrames.push(rank.frameId);unlocked.push(rank.frameId);}
   p.ranked.rank=afterRank.id;
   return {profile:p,receipt:{battleId:matchId,seasonId:p.ranked.seasonId,won,beforeRP,afterRP:p.ranked.rp,rpDelta:p.ranked.rp-beforeRP,
-    beforeRank:beforeRank.id,afterRank:afterRank.id,coinDelta:won?5:0,unlockedProfileFrames:unlocked}};
+    beforeRank:beforeRank.id,afterRank:afterRank.id,coinDelta:0,unlockedProfileFrames:unlocked}};
 }
 export function claimSeasonReward(profile,id,now=Date.now(),periods={},knownSkins={}){
   const p=normalizeRanked(profile,now,periods,knownSkins),reward=p.seasonHistory.find(h=>h.seasonId===id);

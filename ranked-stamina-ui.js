@@ -1,6 +1,6 @@
 (function(root){
   'use strict';
-  const CONFIG=Object.freeze({MAX_STAMINA:5,STAMINA_RECOVERY_MINUTES:60,STAMINA_COIN_COST:15,STAMINA_AD_DAILY_LIMIT:5});
+  const CONFIG=Object.freeze({MAX_STAMINA:5,STAMINA_RECOVERY_MINUTES:60,STAMINA_AD_DAILY_LIMIT:5});
   let profile=null,selectionVisible=false,timer=null,busy=false,refreshing=false;
   const panel=document.createElement('section');
   panel.className='ranked-stamina-card';panel.hidden=true;
@@ -8,8 +8,8 @@
   const modal=document.createElement('section');
   modal.className='ranked-stamina-modal';modal.hidden=true;modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');
   modal.innerHTML=`<div class="ranked-stamina-shell"><h2>スタミナ回復</h2><strong data-stamina-modal-value>⚡ 5 / 5</strong>
-    <p data-stamina-modal-timer>スタミナ満タン</p><p data-stamina-ad-count>本日の広告回復 0 / 5</p><p data-stamina-message role="status"></p>
-    <button type="button" data-stamina-coin>🪙15 で1回復</button><button type="button" data-stamina-ad>広告を見て1回復</button>
+    <p>1時間ごとに1回復します</p><p data-stamina-modal-timer>スタミナ満タン</p><p data-stamina-ad-count>本日の広告回復 0 / 5</p><p data-stamina-message role="status"></p>
+    <button type="button" data-stamina-ad>広告を見て1回復</button>
     <button type="button" data-stamina-close>閉じる</button></div>`;
   document.body.append(panel,modal);
   function ensurePanelMounted(){document.querySelector('#matchmakingStatus')?.after(panel);}
@@ -25,19 +25,12 @@
     modal.querySelector('[data-stamina-modal-timer]').textContent=copy;
     modal.querySelector('[data-stamina-ad-count]').textContent=`本日の広告回復 ${value.adRecoveryCount||0} / ${CONFIG.STAMINA_AD_DAILY_LIMIT}`;
     if(message!==undefined)modal.querySelector('[data-stamina-message]').textContent=message;
-    modal.querySelector('[data-stamina-coin]').disabled=busy||full||(Number(profile?.serverNyanCoins)||0)<CONFIG.STAMINA_COIN_COST;
     modal.querySelector('[data-stamina-ad]').disabled=busy||full||(value.adRecoveryCount||0)>=CONFIG.STAMINA_AD_DAILY_LIMIT||root.NyanRewardedAds.provider.isBusy();
   }
   function update(next){if(next)profile={...profile,...next};render();}
   function open(message=''){modal.hidden=false;render(message);modal.querySelector('[data-stamina-close]').focus();}
   function close(){modal.hidden=true;panel.querySelector('[data-stamina-open]').focus();}
   panel.querySelector('[data-stamina-open]').onclick=()=>open();modal.querySelector('[data-stamina-close]').onclick=close;
-  modal.querySelector('[data-stamina-coin]').onclick=async()=>{
-    if(busy)return;busy=true;render('回復しています…');
-    try{const result=await root.NyanOnlineIdentity.request(root.NyanOnline.API_BASE,'stamina-coin',{requestId:`stamina_coin_${root.crypto.randomUUID()}`});update(result.profile);render(result.duplicate?'確認済みの回復です':'スタミナを1回復しました');}
-    catch(error){render(error.message==='insufficient_coins'?'にゃんコインが足りません':'回復できませんでした');}
-    finally{busy=false;render();}
-  };
   modal.querySelector('[data-stamina-ad]').onclick=async()=>{
     if(busy)return;busy=true;render('広告を準備しています…');
     const result=await root.NyanRewardedAds.provider.showRewardedAd(root.NyanRewardedAds.STAMINA_REWARD_TYPE);

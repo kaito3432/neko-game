@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v74-daily-rewards-20261009";
+const CACHE_NAME = "nyan-chase-v75-economy-20261009";
 const PRECACHE = [
   "./skill-catalog.js",
   "./api-environment.js",

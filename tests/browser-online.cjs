@@ -64,7 +64,8 @@ const server=http.createServer(async(req,res)=>{
       await a.locator('[data-stamina-open]').click();
       const staminaBox=await a.locator('.ranked-stamina-shell').boundingBox();
       assert.ok(staminaBox.x>=0&&staminaBox.y>=0&&staminaBox.x+staminaBox.width<=width&&staminaBox.y+staminaBox.height<=height);
-      assert.equal(await a.locator('[data-stamina-coin]').isVisible(),true);assert.equal(await a.locator('[data-stamina-ad]').isVisible(),true);
+      assert.equal(await a.locator('[data-stamina-coin]').count(),0);assert.equal(await a.locator('[data-stamina-ad]').isVisible(),true);
+      assert.match(await a.locator('.ranked-stamina-shell').textContent(),/1時間ごとに1回復/);
       await a.locator('[data-stamina-close]').click();
       await a.screenshot({path:path.join(output,`chooser-${width}x${height}.png`)});await a.locator('#matchmakingCancel').click();
     }
@@ -82,7 +83,7 @@ const server=http.createServer(async(req,res)=>{
     assert.equal(await a.locator('[data-season-claim]').isDisabled(),true);
     await a.locator('[data-season-close]').click();
     await a.evaluate(profile=>NyanRankedUI.updateProfile(profile),initialRankProfile);
-    await a.evaluate(()=>dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:{ranked:{beforeRP:245,afterRP:255,rpDelta:10,beforeRank:'silver',afterRank:'gold',coinDelta:5,unlockedProfileFrames:['rank_gold']}}})));
+    await a.evaluate(()=>dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:{ranked:{beforeRP:245,afterRP:255,rpDelta:10,beforeRank:'silver',afterRank:'gold',coinDelta:0,unlockedProfileFrames:['rank_gold']}}})));
     assert.match(await a.locator('.ranked-result-notice').textContent(),/シルバー → ゴールド.*ランクアップ！.*プロフィールフレームを獲得/s);
     await a.evaluate(()=>dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:{ranked:{beforeRP:451,afterRP:445,rpDelta:-6,beforeRank:'platinum',afterRank:'gold',coinDelta:0,unlockedProfileFrames:[]}}})));
     assert.match(await a.locator('.ranked-result-notice').textContent(),/プラチナ → ゴールド.*ランクダウン/s);
@@ -136,7 +137,7 @@ const server=http.createServer(async(req,res)=>{
         const role=await page.evaluate(()=>NyanOnline.getSession().role),ranked=await page.evaluate(()=>NyanRankedUI.getProfile());
         assert.equal(ranked.ranked.seasonWins,role==='cat'?1:0);
         assert.equal(ranked.ranked.seasonLosses,role==='police'?1:0);
-        assert.equal(ranked.serverNyanCoins,role==='cat'?5:0);
+        assert.equal(ranked.serverNyanCoins,0);
         assert.ok(await page.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
         await page.evaluate(()=>__qaSockets.at(-1).dispatchEvent(new MessageEvent('message',{data:JSON.stringify({type:'connectionState',matchId:NyanOnline.getSession().matchId,status:'reconnecting',disconnects:{host:{deadline:Date.now()+15000}},serverTime:Date.now()})})));
         assert.ok(await page.locator('.online-reconnect-overlay').evaluate(e=>e.hidden));
@@ -179,7 +180,7 @@ const server=http.createServer(async(req,res)=>{
       await require('./browser-actor-disconnect.cjs')({cat,police,dismiss});
       await police.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
       const winnerRanked=await police.evaluate(()=>NyanRankedUI.getProfile());
-      assert.equal(winnerRanked.ranked.seasonWins,1);assert.equal(winnerRanked.serverNyanCoins,5);
+      assert.equal(winnerRanked.ranked.seasonWins,1);assert.equal(winnerRanked.serverNyanCoins,0);
       const loserReceipt=await cat.evaluate(()=>NyanOnline.verifyResult({battleId:NyanOnline.getSession().matchId}));
       assert.equal(loserReceipt.won,false);assert.equal(loserReceipt.ranked.coinDelta,0);
       assert.deepEqual(errors,[]);console.log('PASS Chrome actor disconnect: setup, cat action, repeated waiting disconnect, selection/actions unchanged, handoff pause, own timer pause, recovery privacy, forfeit');return;
@@ -256,7 +257,8 @@ const server=http.createServer(async(req,res)=>{
       const ranked=await page.evaluate(()=>NyanRankedUI.getProfile());
       assert.equal(ranked.ranked.seasonWins,page===police?1:0);
       assert.equal(ranked.ranked.seasonLosses,page===cat?1:0);
-      assert.equal(ranked.serverNyanCoins,page===police?5:0);
+      assert.equal(ranked.serverNyanCoins,0);
+      assert.doesNotMatch(await page.locator('.ranked-result-notice').textContent(),/\+\d+\s*にゃんコイン/);
       assert.match(await page.locator('.ranked-result-notice').textContent(),/RP/);
       await page.waitForTimeout(2200);await page.screenshot({path:path.join(output,`random-result-${i}.png`)});
       await page.setViewportSize({width:375,height:667});
@@ -264,7 +266,7 @@ const server=http.createServer(async(req,res)=>{
       assert.ok(await page.locator('#resultHomeBtn').evaluate(el=>{const box=el.getBoundingClientRect();return box.top>=0&&box.bottom<=innerHeight;}));
       await page.screenshot({path:path.join(output,`normal-result-${page===police?'win':'lose'}-375x667.png`)});
       const change=page===police
-        ?{beforeRP:99,afterRP:109,rpDelta:10,beforeRank:'bronze',afterRank:'silver',coinDelta:5,unlockedProfileFrames:['rank_silver']}
+        ?{beforeRP:99,afterRP:109,rpDelta:10,beforeRank:'bronze',afterRank:'silver',coinDelta:0,unlockedProfileFrames:['rank_silver']}
         :{beforeRP:104,afterRP:98,rpDelta:-6,beforeRank:'silver',afterRank:'bronze',coinDelta:0,unlockedProfileFrames:[]};
       await page.evaluate(ranked=>dispatchEvent(new CustomEvent('nyan-ranked-result',{detail:{ranked}})),change);
       await page.locator('.ranked-result-notice em').first().waitFor();

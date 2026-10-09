@@ -8,9 +8,9 @@ test('RP増減、最低値、昇格・降格はRPから再計算',async()=>{cons
  a=applyRankedResult(await base(351),{matchId:'m4',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.deepEqual([a.profile.ranked.rp,a.profile.ranked.rank],[345,'gold']);
  a=applyRankedResult(await base(2),{matchId:'m5',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(a.profile.ranked.rp,0);
 });
-test('勝利は5コインと戦績、敗北はコインなし、フレームは永久所持',async()=>{const {applyRankedResult}=await mod;
- const win=applyRankedResult(await base(95),{matchId:'w',won:true,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(win.profile.serverNyanCoins,5);assert.equal(win.profile.ranked.seasonWins,1);assert.ok(win.profile.ownedProfileFrames.includes('rank_silver'));
- const lose=applyRankedResult(win.profile,{matchId:'l',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(lose.profile.serverNyanCoins,5);assert.equal(lose.profile.ranked.seasonLosses,1);assert.ok(lose.profile.ownedProfileFrames.includes('rank_silver'));
+test('勝敗の通常コインはゼロで戦績・RP・昇格フレームは維持',async()=>{const {applyRankedResult}=await mod;
+ const win=applyRankedResult(await base(95),{matchId:'w',won:true,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(win.profile.serverNyanCoins,0);assert.equal(win.receipt.coinDelta,0);assert.equal(win.profile.ranked.seasonWins,1);assert.ok(win.profile.ownedProfileFrames.includes('rank_silver'));
+ const lose=applyRankedResult(win.profile,{matchId:'l',won:false,completedAt:Date.parse('2026-09-15T00:00:00+09:00')});assert.equal(lose.profile.serverNyanCoins,0);assert.equal(lose.receipt.coinDelta,0);assert.equal(lose.profile.ranked.seasonLosses,1);assert.ok(lose.profile.ownedProfileFrames.includes('rank_silver'));
 });
 test('勝敗確定月へ加算し、マスター資格確定後200RPへ再配置',async()=>{const {applyRankedResult}=await mod,p=await base(864,'2026-09');
  const a=applyRankedResult(p,{matchId:'oct',won:true,completedAt:Date.parse('2026-10-01T00:02:00+09:00')});const sep=a.profile.seasonHistory.find(h=>h.seasonId==='2026-09');
