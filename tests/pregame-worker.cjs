@@ -22,7 +22,8 @@ async function connect(s){
   else{as=await a.call('/api/rooms',{});bs={...await b.call(`/api/rooms/${as.roomCode}/join`,{}),roomCode:as.roomCode};}
   const aw=await connect(as),bw=leave==='connecting'?null:await connect(bs);
   try{
-   if(bw){await aw.wait(m=>m.type==='role');await bw.wait(m=>m.type==='role');(leave==='host'?aw:bw).ws.close();}
+   // Role is assigned only after rule selection. Before play, both peers receive matched connection state.
+   if(bw){await aw.wait(m=>m.type==='connectionState'&&m.status==='matched');await bw.wait(m=>m.type==='connectionState'&&m.status==='matched');(leave==='host'?aw:bw).ws.close();}
    else aw.ws.close();
    const waitActor=leave==='host'?b:a;
    let result;

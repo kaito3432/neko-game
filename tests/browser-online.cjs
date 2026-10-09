@@ -239,12 +239,18 @@ const server=http.createServer(async(req,res)=>{
     await police.waitForFunction(()=>!__onlineQA.state().actionLocked);
     for(const page of pages)await page.waitForFunction(()=>__seenEffects.some(src=>src.endsWith(NyanSkinPresentation.effectSource(null,'dogSkin','found',{playMode:'onlineCat'}).replace(/^\.\//,''))));
     for(const page of pages)assert.equal(await page.evaluate(()=>__seenEffects.some(src=>src.endsWith(NyanSkinPresentation.effectSource(null,'catSkin','move',{playMode:'onlineCat'}).replace(/^\.\//,'')))),page===cat);
+    const confettiBefore=await Promise.all(pages.map(page=>page.evaluate(()=>{
+      window.__qaConfettiCalls=0;
+      const confetti=NyanAnimation.confetti;
+      NyanAnimation.confetti=function(...args){window.__qaConfettiCalls++;return confetti(...args);};
+      return window.__qaConfettiCalls;
+    })));
     await police.evaluate(()=>{__onlineQA.node(22);__onlineQA.box(13);});
     await Promise.all(pages.map(page=>page.waitForFunction(()=>__onlineQA.state().gameOver&&NyanPlayerData.getSnapshot().battleReceipts.some(id=>id.startsWith('rm_')))));
     for(const [i,page] of pages.entries()){
       assert.equal(await page.evaluate(()=>NyanPlayerData.getSnapshot().nyanCoins),0);
       await page.locator('#resultOverlay.show').waitFor({timeout:15000});
-      assert.equal(await page.locator('#confettiLayer .confetti-piece').count()>0,page===police);
+      assert.equal(await page.evaluate(()=>window.__qaConfettiCalls)>confettiBefore[i],page===police);
       assert.equal(await page.locator('#resultOverlay .modal').evaluate(el=>el.classList.contains('celebrate')),page===police);
       await page.locator('.ranked-result-notice:not([hidden])').waitFor({timeout:15000});
       const ranked=await page.evaluate(()=>NyanRankedUI.getProfile());
@@ -270,8 +276,24 @@ const server=http.createServer(async(req,res)=>{
       await page.locator('#resultHomeBtn').scrollIntoViewIfNeeded();
       assert.ok(await page.locator('#resultHomeBtn').evaluate(el=>{const box=el.getBoundingClientRect();return box.top>=0&&box.bottom<=innerHeight;}));
       await page.screenshot({path:path.join(output,`rank-change-result-${page===police?'up':'down'}-375x667.png`)});
-      await page.setViewportSize({width:390,height:844});
-      assert.ok(await resultScroll.evaluate(el=>el.scrollHeight<=el.clientHeight));
+      // The route board and rank change can make the result taller than a phone viewport.
+      // The overlay is intentionally scrollable; verify the action remains reachable instead of assuming it fits.
+      for(const rule of ['challenge_5x6','standard_5x5']){
+        await page.locator('#resultRouteBoard').evaluate((el,id)=>{el.dataset.boardRule=id;},rule);
+        for(const [width,height] of [[320,568],[390,844],[393,852],[402,874],[412,915],[430,932]]){
+          await page.setViewportSize({width,height});
+          await resultScroll.evaluate(el=>{el.scrollTop=0;});
+          const layout=await resultScroll.evaluate(el=>{
+            const modal=el.querySelector('.modal').getBoundingClientRect();
+            return {scrollable:el.scrollHeight>el.clientHeight,modalTop:modal.top,left:modal.left,right:modal.right};
+          });
+          assert.ok(layout.modalTop>=0&&layout.left>=0&&layout.right<=width,`${rule} ${width}x${height}: modal clipped`);
+          if(width===390&&rule==='challenge_5x6')assert.equal(layout.scrollable,true,'ranked 5x6 result needs scrolling at 390x844');
+          await resultScroll.evaluate(el=>{el.scrollTop=el.scrollHeight;});
+          assert.ok(await page.locator('#resultHomeBtn').evaluate(el=>{const box=el.getBoundingClientRect();return box.top>=0&&box.bottom<=innerHeight;}),`${rule} ${width}x${height}: home action hidden`);
+        }
+      }
+      await page.locator('#resultRouteBoard').evaluate(el=>{el.dataset.boardRule='challenge_5x6';});
     }
     const receipts=await Promise.all(pages.map(p=>p.evaluate(()=>NyanPlayerData.getSnapshot().battleReceipts.length)));
     for(const page of pages){
@@ -279,7 +301,7 @@ const server=http.createServer(async(req,res)=>{
       await page.locator('#onlineModeBtn').click();await page.locator('#roomMatchStart').click();
       assert.equal(await page.locator('.online-opponent-profile:not([hidden])').count(),0);
       assert.equal(await page.locator('.online-opponent-profile[data-player-id]').count(),0);
-      assert.equal(await page.locator('.online-opponent-profile img[src]').count(),0);
+      assert.equal(await page.locator('.online-opponent-profile .ranked-avatar-clip > img[src]').count(),0);
       assert.equal(await page.locator('.online-opponent-profile .online-profile-frame:not([data-frame-id="rank_bronze"])').count(),0);
       await page.reload();await page.evaluate(()=>NyanPlayerData.updateEquipment('catSkin','cat_kaitou'));
       await page.locator('#onlineModeBtn').click();await page.locator('#roomMatchStart').click();
@@ -288,8 +310,13 @@ const server=http.createServer(async(req,res)=>{
     await a.waitForFunction(()=>NyanOnline.getSession().roomCode);
     const code=await a.evaluate(()=>NyanOnline.getSession().roomCode);
     await b.locator('#onlineRoomCodeInput').fill(code);await b.locator('#joinOnlineRoomBtn').click();
-    await Promise.all(pages.map(p=>p.waitForFunction(()=>NyanOnline.getSession().role)));
-    await a.locator('#onlineStartGameBtn').click();await a.locator('#onlineNormalRuleBtn').click();
+    await a.locator('#roomRolePicker').waitFor({state:'visible'});
+    await a.locator('#confirmRoomRoleBtn').click();
+    await Promise.all(pages.map(p=>p.waitForFunction(expected=>NyanOnline.getSession().roomCode===expected&&
+      NyanOnline.getSession().role&&document.getElementById('onlineStartGameBtn').hidden===false,code)));
+    await a.locator('#onlineStartGameBtn').click();
+    await a.locator('#onlineNormalRuleBtn').waitFor({state:'visible'});
+    await a.locator('#onlineNormalRuleBtn').click();
     await Promise.all(pages.map(p=>p.waitForFunction(()=>__onlineQA.mode().startsWith('online'))));
     const roomRoles=await Promise.all(pages.map(p=>p.evaluate(()=>NyanOnline.getSession().role)));
     const roomCat=roomRoles[0]==='cat'?a:b,roomPolice=roomRoles[0]==='police'?a:b;

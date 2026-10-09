@@ -435,6 +435,7 @@ socket.addEventListener("message", event => {
   function disconnect() {
     sessionGeneration++;
     clearTimeout(retryTimer);clearInterval(heartbeat);closed=true;reconnectUntil=0;paused=false;resuming=false;ticket='';
+    profileEvent(null);
     if (!socket) return;
 
     try {
