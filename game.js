@@ -5897,7 +5897,7 @@ if(resultRouteNote){
     if(!resultOverlay)return;
 
     resultOverlay.classList.add("show");
-    // A future interstitial resumes here. Mission saving already started at endGame.
+    // Mission saving already started at endGame; results never trigger forced ads.
     window.NyanDailyMissions?.presentResult(window.NyanOnline?.getSession().matchId || dailyBattle?.battleId);
     resultOverlay.classList.toggle("resultOverlayCelebration",celebrateResult);
     resultOverlay.querySelector('.modal')?.classList.toggle('celebrate',celebrateResult);

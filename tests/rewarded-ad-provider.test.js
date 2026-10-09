@@ -32,6 +32,13 @@ test('途中キャンセル・callbackなしは加算しない',async()=>{
   assert.equal((await missing.provider.showRewardedAd()).reason,'rewardCallbackMissing');
   assert.equal(cancelled.getCompletions()+missing.getCompletions(),0);
 });
+test('show結果だけにrewardらしい値があってもcallbackが無ければ付与しない',async()=>{
+  let completions=0;
+  const plugin={initialize:async()=>{},addListener:async()=>({remove(){}}),prepareRewardVideoAd:async()=>{},showRewardVideoAd:async()=>({amount:1})};
+  const api={createAttempt:async()=>({playerId:'p',attemptId:'ra_no_callback'}),completeAttempt:async()=>{completions++;return {};}};
+  const result=await Ads.createProvider({plugin,api,config:{testing:false,rewardedAdUnitId:'x'}}).showRewardedAd(Ads.DAILY_REWARD_TYPE);
+  assert.equal(result.rewarded,false);assert.equal(result.reason,'rewardCallbackMissing');assert.equal(completions,0);
+});
 
 test('サーバー403と503は権利付与失敗として扱う',async()=>{
   for(const status of [403,503]){const error=new Error('server');error.status=status;const f=fixture({completeError:error});

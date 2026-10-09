@@ -13,7 +13,7 @@
 <title>にゃんチェイス</title>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
-<link rel="stylesheet" href="./style.css?v=3.16.wide-node-fit">
+<link rel="stylesheet" href="./style.css?v=3.17.daily-rewards">
 </head>
 <body>
 <div class="app">
@@ -213,8 +213,9 @@
   <div class="daily-shell">
     <header><button id="dailyCloseBtn" type="button" aria-label="デイリーを閉じる">←</button><h2 id="dailyHeading">デイリーミッション</h2><span>🪙 <strong id="dailyCoins">0</strong></span></header>
     <p id="dailyDate"></p>
-    <p class="daily-help">CPU対戦を最後まで遊ぼう！<br>ローカル対人戦・オンライン部屋対戦は対象外です。</p>
+    <p class="daily-help">CPU対戦・オンラインのランダムマッチが対象です。<br>ルーム対戦・ローカル対戦は対象外です。</p>
     <div id="dailyMissionList"></div>
+    <div id="dailyBonusList"></div>
     <p id="dailyStatus" role="status" aria-live="polite"></p>
   </div>
 </section>
@@ -1881,7 +1882,7 @@
   <div class="shop-shell">
     <header class="shop-header"><button id="shopCloseBtn" type="button" aria-label="ショップを閉じる">←</button><h2 id="shopHeading">ショップ</h2></header>
     <button id="passOpenBtn" class="shop-pass-entry" type="button">🐾 にゃんチェイスパスを見る</button>
-    <nav class="shop-categories" aria-label="商品カテゴリ"><button type="button" class="active" data-shop-category="skills">スキル</button><button type="button" data-shop-category="ads">広告</button></nav>
+    <nav class="shop-categories" aria-label="商品カテゴリ"><button type="button" class="active" data-shop-category="skills">スキル</button></nav>
     <div class="shop-content">
       <section class="storekit-panel" id="storeKitPanel">
         <div id="shopSkillBrowser" class="shop-skill-browser"><p class="shop-skill-usage-summary" data-skill-usage-summary>部屋対戦では、どちらかが持っているスキルを2人で使用できます。ランクマッチでは、自分が利用できるスキルのみ使用できます。</p><nav class="howto-skill-tabs" aria-label="スキルの役割"><button type="button" class="howto-skill-tab active" data-shop-role="cat">🐱 ネコ</button><button type="button" class="howto-skill-tab" data-shop-role="police">🐕 警察</button></nav><div id="shopSkillList" class="shop-skill-list"></div><div class="shop-pack-section"><h3 tabindex="-1">スキルパック</h3><div id="shopPackProducts" class="storekit-products"></div></div></div>
@@ -1955,11 +1956,11 @@
 
 <div class="motion-status" id="motionStatus"></div>
 <div class="confetti-layer" id="confettiLayer"></div>
-<script src="./progression-model.js?v=1.1.collection-coins"></script>
+<script src="./progression-model.js?v=1.2.daily-bonus"></script>
 <script src="./api-environment.js?v=1.0.sandbox-ready"></script>
 <script src="./cpu-unlock-sync.js?v=1.0"></script>
 <script src="./player-data.js?v=1.1.collection-coins"></script>
-<script src="./daily-missions.js?v=1.0.daily1"></script>
+<script src="./daily-missions.js?v=1.1.daily-bonus"></script>
 <script src="./collection-catalog.js?v=2.2.board-theme-objects"></script>
 <script src="./debug/board-theme-qa.js?v=1.board-theme-local"></script>
 <script src="./collection.js?v=1.7.board-theme-previews"></script>
@@ -1970,13 +1971,13 @@
 <script src="./monetization-ui.js?v=2.1.online-effective"></script>
 <script src="./ad-config.js?v=1.0.phase5"></script>
 <script src="./ad-consent.js?v=1"></script>
-<script src="./rewarded-ad-provider.js?v=1.1.consent"></script>
+<script src="./rewarded-ad-provider.js?v=1.2.daily-reward"></script>
 <script src="./rewarded-ad-ui.js?v=1.1.consent"></script>
 <script src="./storekit-provider.js?v=1.0.phase6"></script>
 <script src="./google-play-provider.js?v=1.0.phase8"></script>
 <script src="./purchase-provider.js?v=1.0.phase8"></script>
 <script src="./store-ui-model.js?v=1.0.phase7"></script>
-<script src="./storekit-ui.js?v=2.5.opponent-skill-cta"></script>
+<script src="./storekit-ui.js?v=2.6.no-ad-removal"></script>
 <script src="./engine.js?v=2.3.challenge-13t"></script>
 <script src="./police-hard-ai.js?v=1.2.challenge-5x6"></script>
 <script src="./audio.js?v=2.0.phase5"></script>

@@ -6,6 +6,7 @@
   'use strict';
   const REWARD_TYPE='SKILL_MODE_UNLOCK_PROGRESS';
   const STAMINA_REWARD_TYPE='RANKED_STAMINA_RECOVERY';
+  const DAILY_REWARD_TYPE='DAILY_COIN_REWARD';
   const IOS_TEST_REWARDED_ID='ca-app-pub-3940256099942544/1712485313';
   const ANDROID_TEST_REWARDED_ID='ca-app-pub-3940256099942544/5224354917';
   const STATES=Object.freeze({INITIALIZING:'initializing',LOADING:'loading',AVAILABLE:'available',UNAVAILABLE:'unavailable',VIEWING:'viewing',VERIFYING:'verifying',COMPLETED:'completed'});
@@ -51,8 +52,7 @@
         await listen('onRewardedVideoAdDismissed',()=>{dismissed=true;});
         await plugin.prepareRewardVideoAd({adId,isTesting:testing,ssv:{userId:attempt.playerId,customData:attempt.attemptId}});
         emit(STATES.AVAILABLE);emit(STATES.VIEWING);
-        const showResult=await plugin.showRewardVideoAd();
-        rewarded=rewarded||Boolean(showResult&&Object.keys(showResult).length);
+        await plugin.showRewardVideoAd();
         if(!rewarded)return {shown:true,rewarded:false,reason:dismissed?'cancelled':'rewardCallbackMissing'};
         if(testing){emit(STATES.COMPLETED,{testMode:true,verified:false});return {shown:true,rewarded:true,verified:false,testMode:true,reason:'testSsvUnavailable'};}
         emit(STATES.VERIFYING);
@@ -81,6 +81,10 @@
       async completeAttempt(payload){
         const value=await root.NyanOnlineIdentity.request(root.NyanOnline.API_BASE,'rewarded-ad-completion',payload);
         root.NyanMonetization?.syncServerSkillModeEntitlement?.(value.profile?.skillEntitlements||{});
+        if(payload.rewardType===DAILY_REWARD_TYPE&&value.profile){
+          root.NyanRankedUI?.updateProfile?.(value.profile);
+          root.dispatchEvent?.(new root.CustomEvent('nyan-online-profile',{detail:{profile:value.profile}}));
+        }
         root.dispatchEvent?.(new root.CustomEvent('nyan-rewarded-ad-progress',{detail:{...value,rewardType:payload.rewardType}}));return value;
       }
     };
@@ -89,5 +93,5 @@
   const config={testing:root.NYAN_AD_CONFIG?.testing!==false,platform:nativePlatform,rewardedAdUnitId:root.NYAN_AD_CONFIG?.rewardedAdUnitIds?.[nativePlatform]||''};
   const provider=createProvider({config,api:browserApi(),
     onState:detail=>root.dispatchEvent?.(new root.CustomEvent('nyan-rewarded-ad-state',{detail}))});
-  return Object.freeze({REWARD_TYPE,STAMINA_REWARD_TYPE,IOS_TEST_REWARDED_ID,ANDROID_TEST_REWARDED_ID,STATES,createProvider,nativePlugin,provider});
+  return Object.freeze({REWARD_TYPE,STAMINA_REWARD_TYPE,DAILY_REWARD_TYPE,IOS_TEST_REWARDED_ID,ANDROID_TEST_REWARDED_ID,STATES,createProvider,nativePlugin,provider});
 });

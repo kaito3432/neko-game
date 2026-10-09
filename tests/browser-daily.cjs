@@ -48,10 +48,10 @@ const server=http.createServer(async(req,res)=>{
       assert.deepEqual(size,{w:width,h:height});
       await page.screenshot({path:path.join(output,`home-${width}.png`)});
       await page.locator("#dailyOpenBtn").click();
-      assert.equal(await page.locator(".daily-mission").count(),3);
+      assert.equal(await page.locator(".daily-mission").count(),5);
       await page.screenshot({path:path.join(output,`daily-${width}.png`)});
       await page.locator("#dailyCloseBtn").click();
-      checks.push(`${width}x${height}: home geometry unchanged, no page scroll, daily 3 missions`);
+      checks.push(`${width}x${height}: home geometry unchanged, no page scroll, daily 3 missions + 2 rewards`);
     }
     await page.setViewportSize({width:320,height:568});
     const requested=[];page.on("request",r=>requested.push(r.url()));

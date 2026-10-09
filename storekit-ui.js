@@ -21,6 +21,8 @@
     document.querySelectorAll('[data-skill-usage-ranked-scope]').forEach(node=>{node.textContent=usagePolicy.ranked.scope;});
   }
   async function buy(productId){
+    if([root.NyanMonetizationProducts.PRODUCT_IDS.REMOVE_ADS,
+      root.NyanMonetizationProducts.PRODUCT_IDS.REMOVE_ADS_PLUS_SKILL_PACK_01].includes(productId))return;
     activeProductId=productId;render();const result=await root.NyanPurchases.provider.purchaseProduct(productId);activeProductId=null;
     if(result.purchased)status.textContent='購入を確認しました';else if(result.pending)status.textContent='購入承認待ちです';
     else if(result.reason==='cancelled')status.textContent='購入をキャンセルしました';else status.textContent='購入を完了できませんでした';
@@ -42,7 +44,7 @@
   function render(){
     const views=root.NyanStoreUIModel.build(root.NyanMonetization,products,activeProductId);
     list.hidden=category!=='ads';
-    list.replaceChildren(...views.filter(view=>view.adsRemoved||view.bundle).map(card));
+    list.replaceChildren();
     packs?.replaceChildren(...views.filter(view=>Boolean(view.packId)).map(card));
     restore.disabled=Boolean(activeProductId)||!platformAvailable;
     if(browser)browser.hidden=category!=='skills';

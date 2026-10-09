@@ -124,10 +124,7 @@
     }
 
     async function showInterstitialAd(){
-      if(!canShowAds()) return {shown:false,reason:"adsRemoved"};
-      if(storeProvider?.showInterstitialAd) return storeProvider.showInterstitialAd();
-      logger?.info?.("[Monetization mock] interstitial ad shown");
-      return {shown:true,mocked:true};
+      return {shown:false,reason:"notOffered"};
     }
 
     async function showRewardedAd({reward=null,onReward=null}={}){

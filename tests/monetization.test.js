@@ -57,12 +57,13 @@ test('rewardedAd成功時に報酬を1回付与し日時を保存する',async()
   assert.equal(api.getState().lastRewardedAdAt,9876);
 });
 
-test('広告削除時はインタースティシャルAPIを抑止する',async()=>{
+test('インタースティシャルは所有権に関係なく提供しない',async()=>{
   let providerCalls=0;
   const api=manager({provider:{showInterstitialAd:async()=>{providerCalls++;return {shown:true};}}});
+  assert.deepEqual(await api.showInterstitialAd(),{shown:false,reason:'notOffered'});
   await api.purchaseProduct(Products.PRODUCT_IDS.REMOVE_ADS);
   const result=await api.showInterstitialAd();
-  assert.deepEqual(result,{shown:false,reason:'adsRemoved'});
+  assert.deepEqual(result,{shown:false,reason:'notOffered'});
   assert.equal(providerCalls,0);
 });
 

@@ -59,6 +59,34 @@ test("報酬10/20/20は手動受取、同時連打も合計50だけ",async()=>{
   assert.equal(store.getSnapshot().nyanCoins,50);
   assert.ok(store.getSnapshot().dailyMissionProgress.missions.every(m=>m.claimed));
 });
+test("全クリアは2/3で拒否、3/3で30を一度だけ受取",async()=>{
+  const {store}=await setup();
+  for(let n=0;n<3;n++)await store.recordDailyMissionBattle(battle(n,{side:"cat"}));
+  await assert.rejects(store.claimDailyReward("2026-09-06","allClear"),/missions_not_completed/);
+  for(let n=3;n<6;n++)await store.recordDailyMissionBattle(battle(n,{side:"police"}));
+  await Promise.all([store.claimDailyReward("2026-09-06","allClear"),store.claimDailyReward("2026-09-06","allClear")]);
+  assert.equal(store.getSnapshot().nyanCoins,30);
+  assert.equal(store.getSnapshot().dailyMissionProgress.allClearRewardClaimed,true);
+  await store.refreshDailyMissions();
+  assert.equal(store.getSnapshot().nyanCoins,30);
+});
+test("個別10/20/20と全クリア30の合計は80",async()=>{
+  const {store}=await setup();
+  for(let n=0;n<6;n++)await store.recordDailyMissionBattle(battle(n,{side:n<3?"cat":"police"}));
+  for(const rule of Model.MISSIONS)await store.claimDailyReward("2026-09-06",rule.id);
+  await store.claimDailyReward("2026-09-06","allClear");
+  assert.equal(store.getSnapshot().nyanCoins,80);
+});
+test("全クリア報酬は翌日リセットし前日分の再受取は不可",async()=>{
+  let clock=TODAY;const {store}=await setup({now:()=>clock});
+  for(let n=0;n<6;n++)await store.recordDailyMissionBattle(battle(n,{side:n<3?"cat":"police"}));
+  await store.claimDailyReward("2026-09-06","allClear");
+  clock+=86400000;
+  const next=await store.refreshDailyMissions();
+  assert.equal(next.dailyMissionProgress.allClearRewardClaimed,false);
+  await assert.rejects(store.claimDailyReward("2026-09-06","allClear"),/daily_date_changed/);
+  assert.equal(store.getSnapshot().nyanCoins,30);
+});
 test("未達成と日付の違う受取を拒否",async()=>{
   const {store}=await setup();
   await assert.rejects(store.claimDailyReward("2026-09-06","winAsCat"),/mission_not_completed/);

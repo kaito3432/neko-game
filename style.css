@@ -8197,6 +8197,7 @@ body.sneak-mode .board-shell{
 #dailyDate,.daily-help{font-size:11px;line-height:1.5;margin:8px 0;color:#786354}
 #dailyMissionList{display:grid;gap:9px}
 .daily-mission{border:2px solid #dfbea0;background:#fffdf6;border-radius:16px;padding:10px 12px}
+#dailyBonusList{display:grid;gap:8px;margin-top:10px}
 .daily-mission h3{font-size:15px;margin:0 0 4px}
 .daily-mission p{font-size:12px;margin:0 0 5px}
 .daily-mission progress{display:block;width:100%;height:7px;accent-color:#de8894;margin-bottom:8px}

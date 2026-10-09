@@ -21,7 +21,7 @@ test('設定から収益化UIを外し、ホームの専用ショップへ置く
   assert.doesNotMatch(settings,/skillModeUnlockPanel|storeKitPanel/);
   assert.match(html,/id="shopOpenBtn"[^>]*>🛍️ ショップ/);
   assert.match(html,/data-shop-category="skills"/);
-  assert.match(html,/data-shop-category="ads"/);
+  assert.doesNotMatch(html,/data-shop-category="ads"/);
   assert.match(html,/data-shop-role="cat"/);
   assert.match(html,/data-shop-role="police"/);
   assert.doesNotMatch(html,/スキルストア/);

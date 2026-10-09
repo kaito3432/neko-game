@@ -75,6 +75,12 @@
   function claim(data,{date,missionId},now=Date.now()){
     const next=rollover(data,now);
     if(date!==jstDate(now) || next.dailyMissionProgress.date!==date) throw new Error("daily_date_changed");
+    if(missionId==="allClear"){
+      if(!next.dailyMissionProgress.missions.every(m=>m.completed)) throw new Error("missions_not_completed");
+      if(next.dailyMissionProgress.allClearRewardClaimed) return next;
+      if(!Number.isSafeInteger(next.nyanCoins+30)) throw new Error("coin_overflow");
+      return {...next,nyanCoins:next.nyanCoins+30,dailyMissionProgress:{...next.dailyMissionProgress,updatedAt:now,allClearRewardClaimed:true}};
+    }
     const rule=MISSIONS.find(m=>m.id===missionId);
     const mission=next.dailyMissionProgress.missions.find(m=>m.id===missionId);
     if(!rule || !mission?.completed) throw new Error("mission_not_completed");

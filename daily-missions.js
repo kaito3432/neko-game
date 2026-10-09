@@ -63,6 +63,7 @@
     let dayTimer=null;
     let opener=entry;
     const status=document.getElementById("dailyStatus");
+    const bonuses=document.getElementById("dailyBonusList");
     const tracker=createTracker(data,{onChange:()=>{
       render();
       root.dispatchEvent(new root.CustomEvent("nyan-player-progress-changed"));
@@ -114,6 +115,40 @@
         };
         card.append(heading,progress,bar,reward);list.append(card);
       });
+      if(bonuses){
+        bonuses.replaceChildren();
+        const allDone=daily.missions.every(m=>m.completed);
+        const allCard=document.createElement("article");allCard.className="daily-mission";
+        const allHeading=document.createElement("h3");allHeading.textContent="3つすべて達成で30にゃんコイン";
+        const allButton=document.createElement("button");allButton.type="button";
+        allButton.textContent=daily.allClearRewardClaimed?"受取済み":allDone?"30 にゃんコインを受け取る":"3/3達成で受取可能";
+        allButton.disabled=busy||!allDone||daily.allClearRewardClaimed;
+        allButton.onclick=async()=>{
+          if(busy)return;busy=true;status.textContent="保存中…";render();
+          try{const saved=await data.claimDailyReward(daily.date,"allClear");
+            status.textContent=saved.dailyMissionProgress.allClearRewardClaimed?"全クリア報酬を受け取りました":"受取を確認できませんでした";
+            root.dispatchEvent(new root.CustomEvent("nyan-player-progress-changed"));
+          }catch(_){status.textContent="保存できませんでした。もう一度お試しください";}
+          finally{busy=false;render();}
+        };
+        allCard.append(allHeading,allButton);bonuses.append(allCard);
+        const adCard=document.createElement("article");adCard.className="daily-mission";
+        const adHeading=document.createElement("h3");adHeading.textContent="広告を見て50にゃんコイン（1日1回）";
+        const adButton=document.createElement("button");adButton.type="button";
+        const claimed=root.NyanRankedUI?.getProfile?.()?.dailyAdRewardDate===daily.date;
+        adButton.textContent=claimed?"本日受取済み":"広告を見て50にゃんコイン";
+        adButton.disabled=busy||claimed||!root.NyanRewardedAds?.provider;
+        adButton.onclick=async()=>{
+          if(busy)return;busy=true;status.textContent="広告を準備しています…";render();
+          try{const result=await root.NyanRewardedAds.provider.showRewardedAd(root.NyanRewardedAds.DAILY_REWARD_TYPE);
+            status.textContent=result.verified&&result.applied?"50にゃんコインを受け取りました":
+              result.testMode?"テスト広告では報酬を付与しません":
+              result.error?.message==="daily_ad_already_claimed"?"本日は受取済みです":"広告を完了できませんでした。再試行できます";
+          }catch(_){status.textContent="広告を完了できませんでした。再試行できます";}
+          finally{busy=false;render();}
+        };
+        adCard.append(adHeading,adButton);bonuses.append(adCard);
+      }
       renderResult();
     }
     async function refresh(){

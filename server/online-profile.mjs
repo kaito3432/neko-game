@@ -29,6 +29,7 @@ import {applyVerifiedGooglePlayPurchase} from './google-play-verification.mjs';
 import {restoreExpiredApplePassSkins,restoreExpiredGooglePassSkins} from './purchase-restore.mjs';
 import {deleteOnlineProfile} from './profile-deletion.mjs';
 import {STAMINA_REWARD_TYPE,applyVerifiedStaminaAd,withRankedStamina,recoverStaminaWithCoins,publicRankedStamina} from './ranked-stamina.mjs';
+import {DAILY_REWARD_TYPE,applyVerifiedDailyAd} from './daily-ad-reward.mjs';
 const KNOWN_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
 
 export function initialProfile(input, playerId, now = Date.now()) {
@@ -295,7 +296,10 @@ export async function profileRequest(storage, request, options={}) {
   if(path==='/rewarded-ad-completion'&&request.method==='POST'){
     try{
       const input=await request.json();
-      const result=input.rewardType===STAMINA_REWARD_TYPE
+      const result=input.rewardType===DAILY_REWARD_TYPE
+        ?await applyVerifiedDailyAd({storage,profileKey:key,profile,verificationId:input.verificationId,
+          verification:input.verification,verify:options.verifyRewardedAd,now})
+        :input.rewardType===STAMINA_REWARD_TYPE
         ?await applyVerifiedStaminaAd({storage,profileKey:key,profile,verificationId:input.verificationId,
           verification:input.verification,verify:options.verifyRewardedAd,now})
         :await applyVerifiedRewardedAdCompletion({storage,profileKey:key,profile,
