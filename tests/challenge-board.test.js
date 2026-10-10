@@ -61,5 +61,5 @@ test('5×6はCPU選択だけ、結果・軌跡は選択ルールの行数を参�
   assert.match(game,/bindPress\(\$\("localChallengeBoardBtn"\),\(\)=>selectBoardRule\("challenge_5x6"\)\)/);
   assert.match(game,/if\(showMode && selectedBoardRule!=="standard_5x5"\)selectBoardRule\("standard_5x5"\)/);
   assert.match(game,/const routeY=r=>\(r\+\.5\)\*100\/E\.BOX_ROWS/);
-  assert.match(game,/n\.style\.top=`\$\{nodeTop\(r\)\}%`/);
+  assert.match(game,/n\.style\.top=`\$\{E\.BOX_ROWS===5\?r\*20:r\*\(100\/6\)\}%`/);
 });

@@ -7,10 +7,9 @@
   let hardAI=window.NyanPoliceHardAI;
   let selectedBoardRule="standard_5x5";
   const ONLINE_BOARD_RULE_ID="challenge_5x6";
-  const boxLeft=c=>4.5+c*19;
-  const boxTop=r=>E.BOX_ROWS===5?4.5+r*19:3.5+r*16;
-  const nodeTop=r=>E.BOX_ROWS===5?2.5+r*19:2+r*16;
-  const boxHeight=()=>E.BOX_ROWS===5?"15%":"12.5%";
+  const boxLeft=c=>2.25+c*20;
+  const boxTop=r=>E.BOX_ROWS===5?2.25+r*20:1.875+r*(100/6);
+  const boxHeight=()=>E.BOX_ROWS===5?"15.5%":"12.916667%";
   const routeY=r=>(r+.5)*100/E.BOX_ROWS;
   function selectBoardRule(id){
     if(!NyanEngine.BOARD_RULES[id])return;
@@ -1587,7 +1586,23 @@ requestAnimationFrame(()=>{
     matchSkillInfo?.render({playMode,game,active:battleBgmActive});
     renderDogCards();
     renderControls();
+    fitBoardToViewport();
   }
+
+  // Keep every visible control on one phone screen. Preserve the full board
+  // width unless the current skill UI really exceeds the available height.
+  function fitBoardToViewport(){
+    if(!window.matchMedia?.("(orientation: portrait) and (max-width: 699px)").matches)return;
+    const app=document.querySelector?.(".app");
+    const shell=board.closest?.(".board-shell");
+    if(!app||!shell)return;
+    shell.style.width="";
+    const excess=Math.ceil(app.scrollHeight-app.clientHeight);
+    if(excess<=0)return;
+    const ratio=E.BOX_COLS/E.BOX_ROWS;
+    shell.style.width=`${Math.max(0,Math.floor(shell.getBoundingClientRect().width-excess*ratio-2))}px`;
+  }
+  window.addEventListener?.("resize",()=>window.requestAnimationFrame?.(fitBoardToViewport));
    function renderTrackLayer(){
   const pawAsset=localPawAsset();
   let layer=board.querySelector(".track-layer");
@@ -1621,7 +1636,7 @@ requestAnimationFrame(()=>{
 
     mark.style.left=`${boxLeft(c)}%`;
     mark.style.top=`${boxTop(r)}%`;
-    mark.style.width="15%";
+    mark.style.width="15.5%";
     mark.style.height=boxHeight();
 
     const turnBadge=shouldShowTrackTurn(turn)
@@ -1682,7 +1697,7 @@ if(turn===1){
       // avoid CSS calc() multiplication/division and place cells with simple percentages.
       b.style.left=`${boxLeft(c)}%`;
       b.style.top=`${boxTop(r)}%`;
-      b.style.width="15%";
+      b.style.width="15.5%";
       b.style.height=boxHeight();
 
       if(!active){
@@ -1772,7 +1787,8 @@ if(
        </span>`
     : ""
 }
-        ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}`;
+        ${game.phase==="cat"&&game.catVisible&&E.isCatDeadEnd(game,i)?'<span class="danger-mark">⚠️</span>':""}
+        <span class="box-hit" aria-hidden="true"></span>`;
 
       if(game.phase==="catSetup"){
         b.addEventListener("pointerdown",e=>{
@@ -1799,8 +1815,8 @@ if(
       const r=E.nodeRow(i),c=E.nodeCol(i),n=document.createElement("button");
       n.type="button";
       n.className="node";
-      n.style.left=`${2.5 + c*19}%`;
-      n.style.top=`${nodeTop(r)}%`;
+      n.style.left=`${c*20}%`;
+      n.style.top=`${E.BOX_ROWS===5?r*20:r*(100/6)}%`;
 
       if(game.phase==="catSetup"){n.disabled=true;}
       if(game.phase==="dogSetup"&&E.isActiveDogNode(i))n.classList.add("setup");

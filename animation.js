@@ -72,7 +72,7 @@ window.NyanAnimation = (() => {
     // Phase4.2: the stray `Nyan` identifier caused a ReferenceError here,
     // leaving game.actionLocked=true and making search look frozen.
     NyanAudio.play("search");
-    const n=centerOfNode(board,nodeIndex);
+    const n=centerOfNode(board,nodeIndex)||centerOfBox(board,bi);
     if(!n){ if(done)done(); return; }
 
     const e=document.createElement("div");
@@ -86,17 +86,36 @@ window.NyanAnimation = (() => {
     if(motionStatus){
       motionStatus.textContent="クンクン……";
       motionStatus.classList.add("show");
-      setTimeout(()=>motionStatus.classList.remove("show"),750);
     }
 
     NyanAudio.haptic(18);
     setTimeout(()=>animateBoxOpen(board,bi),320);
 
-    setTimeout(()=>{
+    let completed=false;
+    const complete=()=>{
+      if(completed)return;
+      completed=true;
       burstAtBox(board,bi,"✨");
       e.remove();
+      motionStatus?.classList.remove("show");
       if(done)done();
-    },820);
+    };
+    // Animate the actual emoji, not a pseudo-element's animation. The result
+    // callback runs only after the visible search has completed.
+    if(typeof e.animate==="function"){
+      e.style.animation="none";
+      const wiggle=e.animate([
+        {transform:"translate(-50%,-50%) rotate(0deg)"},
+        {transform:"translate(-50%,-50%) rotate(-7deg)",offset:.25},
+        {transform:"translate(-50%,-50%) rotate(7deg)",offset:.75},
+        {transform:"translate(-50%,-50%) rotate(0deg)"}
+      ],{duration:1100,easing:"ease-in-out"});
+      wiggle.finished.then(complete,complete);
+    }else{
+      e.addEventListener("animationend",event=>{
+        if(event.target===e && event.animationName==="sniffWiggle")complete();
+      });
+    }
   }
 
   function shakeBoxSoon(board,i){

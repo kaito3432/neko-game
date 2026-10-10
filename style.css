@@ -131,7 +131,7 @@ body.turn-mid .turn{background:#FFE49B}body.turn-late .turn{background:#FFD7A5;b
 }
 
 .dog-sniff{
-  position:fixed;z-index:3400;pointer-events:none;
+  position:fixed;z-index:4700;pointer-events:none;
   transform:translate(-50%,-50%);font-size:38px;
   animation:sniffWiggle .55s ease-in-out 2
 }
@@ -3208,11 +3208,22 @@ body.fake-paw-mode #fakePawBtn{
   }
 }
 .node.dash-target{
+  background:#35b891;
+  border-color:#126b55;
+  color:#fff;
   box-shadow:
-    0 0 0 5px rgba(255,150,20,.95),
-    0 0 25px rgba(255,130,20,.95);
+    0 0 0 5px rgba(35,156,119,.95),
+    0 0 25px rgba(35,156,119,.85);
 
   animation:dashTargetPulse .65s ease-in-out infinite;
+}
+.node.dash-target::after{
+  content:"✓";
+  position:absolute;inset:0;
+  display:grid;place-items:center;
+  color:#fff;font-size:clamp(16px,4vw,24px);font-weight:900;
+  text-shadow:0 1px 2px #126b55;
+  pointer-events:none;
 }
 
 @keyframes dashTargetPulse{
@@ -9649,14 +9660,36 @@ body.sneak-mode .board-shell{
   width:min(100cqw,83.333333cqh);aspect-ratio:5 / 6;
 }
 .app > .board-shell #board[data-board-rule="challenge_5x6"] .box{
-  height:12.5%!important; /* 15% of 5 columns on a 5:6 board. */
+  height:12.916667%!important; /* Square 15.5%-wide cells on a 5:6 board. */
 }
 
-/* Keep active intersection buttons above the road, but under nearby boxes. */
+/* Boxes keep their full artwork, while the corner-free hit shape leaves nodes clear. */
+.app > .board-shell .board > .box:not(.blocked-box){pointer-events:none}
+.app > .board-shell .board > .box .box-hit{
+  position:absolute;inset:0;z-index:35;pointer-events:auto;
+  clip-path:polygon(22% 0,78% 0,100% 22%,100% 78%,78% 100%,22% 100%,0 78%,0 22%);
+}
 .app > .board-shell .board > .node{
-  width:clamp(30px,9vw,44px);
-  height:clamp(30px,9vw,44px);
-  z-index:3;
+  width:clamp(32px,9.5vw,44px);
+  height:clamp(32px,9.5vw,44px);
+  aspect-ratio:1;
+  clip-path:circle(50%);
+}
+.app > .board-shell .board > .node:is(.move,.dash-move,.dash-target){
+  animation:boardNodeGlow .8s ease-in-out infinite;
+}
+@keyframes boardNodeGlow{50%{box-shadow:0 0 0 5px rgba(255,205,70,.45)}}
+.app > .board-shell .board > .box:is(.searchable,.double-search-selected){
+  transform:none;animation:boardBoxGlow .8s ease-in-out infinite;
+}
+@keyframes boardBoxGlow{50%{box-shadow:0 0 0 4px rgba(70,164,216,.35)}}
+.app > .board-shell .board > .node .dogstack{width:100%;height:100%}
+.app > .board-shell .board > .node .dogtoken{
+  box-sizing:border-box;flex:0 0 auto;width:100%;min-width:0;
+  height:auto;aspect-ratio:1;padding:0;
+}
+.app > .board-shell .board > .node .dogtoken img{
+  display:block;width:100%;height:100%;aspect-ratio:1;object-fit:contain!important;
 }
 
 /* The spare portrait height belongs to the controls, never to board cells. */
@@ -9735,6 +9768,12 @@ body.sneak-mode .board-shell{
   .app > .dog-row .dog-card{height:clamp(48px,8.5dvh,62px)!important}
 }
 
+/* Return safe-area portrait height from oversized cards to the actual grid. */
+@media (orientation:portrait) and (max-width:699px) and (min-height:800px){
+  .app > .guide{min-height:clamp(48px,6dvh,56px)!important}
+  .app > .dog-row .dog-card{height:clamp(86px,10dvh,96px)!important}
+}
+
 /* Match skill references scale with the phase pill, but never escape it. */
 .phase-pill.has-match-skills #phaseDisplay{padding-right:min(50%,184px)}
 .match-skill-hud{
@@ -9777,6 +9816,48 @@ body.sneak-mode .board-shell{
   .match-skill-button{grid-template-rows:minmax(0,1fr);padding:1px}
   .match-skill-button .match-skill-side{display:none}
   .match-skill-button img{width:100%;height:100%}
+}
+
+/* Keep the board at full width unless the visible Skill controls need room. */
+.app > .tracks-summary{display:none!important}
+@media (orientation:portrait) and (max-width:699px){
+  .app{
+    height:100dvh;min-height:0;max-height:100dvh;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .app > .art-hero,
+  .app > .game-topbar,
+  .app > .guide,
+  .app > .ability-banner,
+  .app > .tracks-summary,
+  .app > .route-reveal-panel,
+  .app > .dog-row,
+  .app > .phase-controls{flex:0 0 auto;min-height:0}
+  .app > .board-shell{
+    flex:0 0 auto;height:auto;max-height:none;min-height:0;
+  }
+  .app > .guide,
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .guide{
+    min-height:0!important;height:auto!important;
+    padding:5px 8px!important;
+  }
+  .app > .guide .main{
+    font-size:clamp(11px,3vw,13px)!important;
+    line-height:1.25!important;
+  }
+  body.fake-paw-mode .app > .guide{transform:none}
+  .app > .dog-row .dog-card,
+  .app:not(:has(#board[data-board-rule="challenge_5x6"])) > .dog-row .dog-card{
+    height:clamp(54px,7dvh,64px)!important;
+    padding:2px!important;
+  }
+  .app > .dog-row .dog-card .character-img{
+    width:clamp(38px,5dvh,46px)!important;
+    height:clamp(38px,5dvh,46px)!important;
+  }
+  .app > .dog-row .dog-name{font-size:clamp(10px,2.7vw,13px)!important}
+  .app > .dog-row .dog-status{font-size:9px!important;line-height:1.1}
 }
 
 /* Keep police artwork legible on large portrait boards without enlarging move targets. */
