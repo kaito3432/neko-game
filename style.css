@@ -274,9 +274,9 @@ body.turn-mid .turn{background:#FFE49B}body.turn-late .turn{background:#FFD7A5;b
 }
 .box-art{
   position:absolute;
-  inset:5px;
-  width:calc(100% - 10px);
-  height:calc(100% - 10px);
+  inset:2px;
+  width:calc(100% - 4px);
+  height:calc(100% - 4px);
   object-fit:cover;
   border-radius:8px;
   opacity:.92;
@@ -9617,10 +9617,11 @@ body.sneak-mode .board-shell{
 /* Only the gameplay board scales: one shared cell size in both axes. */
 .app > .board-shell{
   width:100%;height:auto;max-height:100%;min-height:0;
-  aspect-ratio:1 / 1.06;align-self:center;justify-self:stretch;
+  aspect-ratio:1 / 1;align-self:center;justify-self:stretch;
   display:flex;flex-direction:column;
+  padding:2px;
 }
-.app > .board-shell:has(#board[data-board-rule="challenge_5x6"]){aspect-ratio:5 / 6.25}
+.app > .board-shell:has(#board[data-board-rule="challenge_5x6"]){aspect-ratio:5 / 6}
 .app > .board-shell .board-area{
   flex:1 1 auto;min-width:0;min-height:0;
   display:grid;place-items:center;overflow:hidden;container-type:size;
@@ -9633,7 +9634,14 @@ body.sneak-mode .board-shell{
   width:min(100cqw,83.333333cqh);aspect-ratio:5 / 6;
 }
 .app > .board-shell #board[data-board-rule="challenge_5x6"] .box{
-  height:11.666667%!important; /* 14% of 5 columns equals 11 2/3% of 6 rows. */
+  height:12.5%!important; /* 15% of 5 columns on a 5:6 board. */
+}
+
+/* Keep active intersection buttons above the road, but under nearby boxes. */
+.app > .board-shell .board > .node{
+  width:clamp(30px,9vw,44px);
+  height:clamp(30px,9vw,44px);
+  z-index:3;
 }
 
 /* The spare portrait height belongs to the controls, never to board cells. */
@@ -9768,7 +9776,7 @@ body.sneak-mode .board-shell{
     padding:0;
   }
   .board > .node:not(.inactive){
-    width:min(54px,6.3%);
+    width:min(44px,7.4%);
     height:auto;
     aspect-ratio:1;
   }

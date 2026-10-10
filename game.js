@@ -7,9 +7,10 @@
   let hardAI=window.NyanPoliceHardAI;
   let selectedBoardRule="standard_5x5";
   const ONLINE_BOARD_RULE_ID="challenge_5x6";
-  const boxTop=r=>E.BOX_ROWS===5?5+r*19:4+r*16;
+  const boxLeft=c=>4.5+c*19;
+  const boxTop=r=>E.BOX_ROWS===5?4.5+r*19:3.5+r*16;
   const nodeTop=r=>E.BOX_ROWS===5?2.5+r*19:2+r*16;
-  const boxHeight=()=>E.BOX_ROWS===5?"14%":"12%";
+  const boxHeight=()=>E.BOX_ROWS===5?"15%":"12.5%";
   const routeY=r=>(r+.5)*100/E.BOX_ROWS;
   function selectBoardRule(id){
     if(!NyanEngine.BOARD_RULES[id])return;
@@ -1618,9 +1619,9 @@ requestAnimationFrame(()=>{
     mark.className="persistent-track";
     mark.dataset.trackIndex=String(i);
 
-    mark.style.left=`${5 + c*19}%`;
+    mark.style.left=`${boxLeft(c)}%`;
     mark.style.top=`${boxTop(r)}%`;
-    mark.style.width="14%";
+    mark.style.width="15%";
     mark.style.height=boxHeight();
 
     const turnBadge=shouldShowTrackTurn(turn)
@@ -1679,9 +1680,9 @@ if(turn===1){
       b.dataset.boxIndex=String(i);
       // iPhone Safari compatibility:
       // avoid CSS calc() multiplication/division and place cells with simple percentages.
-      b.style.left=`${5 + c*19}%`;
+      b.style.left=`${boxLeft(c)}%`;
       b.style.top=`${boxTop(r)}%`;
-      b.style.width="14%";
+      b.style.width="15%";
       b.style.height=boxHeight();
 
       if(!active){
@@ -1793,13 +1794,14 @@ if(
     }
 
     for(let i=0;i<E.NODE_COUNT;i++){
+      // Inactive perimeter markers are legacy decoration, not move targets.
+      if(!E.isActiveDogNode(i))continue;
       const r=E.nodeRow(i),c=E.nodeCol(i),n=document.createElement("button");
       n.type="button";
       n.className="node";
       n.style.left=`${2.5 + c*19}%`;
       n.style.top=`${nodeTop(r)}%`;
 
-      if(!E.isActiveDogNode(i)){n.classList.add("inactive");n.disabled=true;}
       if(game.phase==="catSetup"){n.disabled=true;}
       if(game.phase==="dogSetup"&&E.isActiveDogNode(i))n.classList.add("setup");
       if(game.selectedDog!==null&&game.dogs[game.selectedDog]===i)n.classList.add("selected");
