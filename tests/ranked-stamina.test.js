@@ -94,5 +94,6 @@ test('ランダム正式開始だけサーバーmarkerで冪等消費し部屋�
 test('クライアントUIは初期選択画面限定・不足時モーダル・別広告用途を使う',()=>{
   const root=path.join(__dirname,'..'),ui=fs.readFileSync(path.join(root,'ranked-stamina-ui.js'),'utf8'),match=fs.readFileSync(path.join(root,'random-match.js'),'utf8');
   assert.match(ui,/STAMINA_REWARD_TYPE/);assert.match(ui,/1時間ごとに1回復/);assert.match(ui,/本日の広告回復/);
-  assert.match(match,/setSelectionVisible\?\.\(visible\)/);assert.match(match,/スタミナが足りません/);
+  assert.match(match,/NyanRankedStaminaUI\?\.setSelectionVisible\?\.\(visible&&released\('stamina'\)\)/);
+  assert.match(match,/スタミナが足りません/);
 });

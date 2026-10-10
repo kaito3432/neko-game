@@ -200,7 +200,8 @@
       const appearance=root?.NyanOnline?.resolveAppearance?.(categoryId);
       if(appearance?.status==='pending')return null;
       const id=appearance?.id;
-      return catalog.getItem(categoryId,id || 'default') || catalog.getItem(categoryId,'default');
+      const item=catalog.getItem(categoryId,id || 'default');
+      return visibleSkin(item)?item:catalog.getItem(categoryId,'default');
     }
     const requested=allowCustom
       ? data?.equippedAppearance?.[category.equippedField]
@@ -210,7 +211,14 @@
       ? data[category.ownedField]
       : ["default"];
     if(!owned.includes(itemId)) return catalog.getItem(categoryId,"default");
-    return catalog.getItem(categoryId,itemId) || catalog.getItem(categoryId,"default");
+    const item=catalog.getItem(categoryId,itemId);
+    return visibleSkin(item)?item:catalog.getItem(categoryId,"default");
+  }
+
+  function visibleSkin(item){
+    if(root?.NyanReleaseFeatures?.enabled('pass')===false&&item?.acquisitionType==='passMonthlyReward')return false;
+    if(root?.NyanReleaseFeatures?.enabled('ranked')===false&&item?.acquisitionType==='masterRankReward')return false;
+    return true;
   }
 
   function resolveCatPiece(data,{catalog=defaultCatalog,playMode="local"}={}){
@@ -329,6 +337,7 @@
     const item=owned.includes(favorite.itemId)
       ? catalog.getItem(favorite.category,favorite.itemId)
       : null;
+    if(!visibleSkin(item))return null;
     const layered=homeLayeredSkinForItem(item);
     const animation=homeAnimationForItem(item);
     if((!layered && !animation) || item.id==="default") return null;

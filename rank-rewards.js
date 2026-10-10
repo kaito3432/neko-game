@@ -50,6 +50,7 @@
     return modal;
   }
   function open(trigger){
+    if(root.NyanReleaseFeatures?.enabled('ranked')===false)return;
     const element=ensureModal();lastFocus=trigger||document.activeElement;
     element.hidden=false;document.body.classList.add('rank-rewards-open');
     element.querySelector('[data-rank-rewards-close]')?.focus();

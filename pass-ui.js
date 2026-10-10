@@ -137,7 +137,7 @@
     }catch(_){q('[data-pass-message]').textContent='Pass情報を取得できませんでした。';
       q('[data-pass-loading]').hidden=true;q('[data-pass-refresh]').hidden=false;summary=null;render();}
   }
-  entry.addEventListener('click',()=>{modal.hidden=false;q('[data-pass-close]').focus();refresh();});
+  entry.addEventListener('click',()=>{if(root.NyanReleaseFeatures?.enabled('pass')===false)return;modal.hidden=false;q('[data-pass-close]').focus();refresh();});
   q('[data-pass-close]').addEventListener('click',()=>{modal.hidden=true;entry.focus();});
   q('[data-pass-gift-open]').addEventListener('click',()=>document.getElementById('giftBoxOpenBtn')?.click());
   q('[data-pass-refresh]').addEventListener('click',refresh);

@@ -12,11 +12,14 @@
   const platformAvailable=Boolean(root.NyanPurchases.nativePlugin());
   const skills=root.NyanSkillCatalog.SKILLS;
   const usagePolicy=root.NyanSkillCatalog.USAGE_POLICY;
+  const released=name=>root.NyanReleaseFeatures?.enabled(name)!==false;
   if(usagePolicy){
-    document.querySelectorAll('[data-skill-usage-summary]').forEach(node=>{node.textContent=usagePolicy.summary;});
+    document.querySelectorAll('[data-skill-usage-summary]').forEach(node=>{node.textContent=released('ranked')
+      ?usagePolicy.summary:'部屋対戦では、どちらかが持っているスキルを2人で使用できます。';});
     document.querySelectorAll('[data-skill-usage-room-description]').forEach(node=>{node.textContent=usagePolicy.room.description;});
     document.querySelectorAll('[data-skill-usage-ranked-description]').forEach(node=>{node.textContent=usagePolicy.ranked.description;});
-    document.querySelectorAll('[data-skill-usage-entitlement]').forEach(node=>{node.textContent=usagePolicy.entitlementDescription;});
+    document.querySelectorAll('[data-skill-usage-entitlement]').forEach(node=>{node.textContent=released('pass')
+      ?usagePolicy.entitlementDescription:'スキル利用権には、買い切りで購入したスキルが含まれます。';});
     document.querySelectorAll('[data-skill-usage-room-scope]').forEach(node=>{node.textContent=usagePolicy.room.scope;});
     document.querySelectorAll('[data-skill-usage-ranked-scope]').forEach(node=>{node.textContent=usagePolicy.ranked.scope;});
   }

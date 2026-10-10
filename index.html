@@ -11,6 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
 <title>にゃんチェイス</title>
+<script src="./release-features.js?v=1.initial-hide"></script>
 <script>try{if(/^[a-f0-9]{64}$/.test(localStorage.getItem('nyanChaseOnlineCredentialV1')||''))document.documentElement.classList.add('online-boot');}catch(_){}</script>
 <style>.online-boot body::after{content:'対戦に復帰しています…';position:fixed;inset:0;z-index:40000;display:grid;place-items:center;background:#fff8e9;color:#654b40;font-weight:bold}</style>
 <link rel="stylesheet" href="./style.css?v=3.17.daily-rewards">
@@ -212,7 +213,7 @@
   <div class="daily-shell">
     <header><button id="dailyCloseBtn" type="button" aria-label="デイリーを閉じる">←</button><h2 id="dailyHeading">デイリーミッション</h2><span>🪙 <strong id="dailyCoins">0</strong></span></header>
     <p id="dailyDate"></p>
-    <p class="daily-help">CPU対戦・オンラインのランダムマッチが対象です。<br>ルーム対戦・ローカル対戦は対象外です。</p>
+    <p class="daily-help"><span data-feature-cpu-daily>CPU対戦が対象です。</span><span data-feature-random-daily>CPU対戦・オンラインのランダムマッチが対象です。</span><br>ルーム対戦・ローカル対戦は対象外です。</p>
     <div id="dailyMissionList"></div>
     <div id="dailyBonusList"></div>
     <p id="dailyStatus" role="status" aria-live="polite"></p>
@@ -495,8 +496,8 @@
 
   <section class="skill-usage-rules howto-skill-usage-rules" aria-label="対戦モード別のスキル利用範囲">
     <div><strong>対人戦／オンライン部屋対戦</strong><p data-skill-usage-room-description>参加者のどちらかが利用できるスキルは、その対戦中は両者が使用できます。</p></div>
-    <div><strong>オンライン ランクマッチ</strong><p data-skill-usage-ranked-description>各プレイヤー本人が利用権を持っているスキルのみ使用できます。</p></div>
-    <p class="skill-usage-entitlement" data-skill-usage-entitlement>スキル利用権には、買い切りで購入したスキルと、有効期間中のにゃんチェイスパス対象スキルが含まれます。</p>
+    <div data-feature-ranked><strong>オンライン ランクマッチ</strong><p data-skill-usage-ranked-description>各プレイヤー本人が利用権を持っているスキルのみ使用できます。</p></div>
+    <p class="skill-usage-entitlement" data-skill-usage-entitlement>スキル利用権には、買い切りで購入したスキルが含まれます。</p>
   </section>
 
   <!-- ネコ / 警察 切り替え -->
@@ -1852,9 +1853,9 @@
 <div class="overlay" id="onlineDataDeleteOverlay" hidden>
   <div class="modal online-delete-modal" role="dialog" aria-modal="true" aria-labelledby="onlineDataDeleteTitle">
     <h2 id="onlineDataDeleteTitle">オンラインプロフィールを削除しますか？</h2>
-    <p>ランク・RP・戦績、コイン、スタミナ、Daily・Mission、通常のプロフィールと所持情報など、オンラインの進行が削除されます。ゲームのローカル進行は残ります。</p>
-    <p>Apple / Google Playの購入やPass契約そのものは、この操作では解約・返金されません。Passを停止する場合はストアで解約してください。</p>
-    <p>新しいオンラインプロフィールでは、Storeで再確認できる購入済み商品と復元対象の課金特典を「購入を復元」から戻せます。ランクなどのゲーム進行は戻りません。</p>
+    <p><span data-feature-ranked>ランク・RP・戦績、</span>コイン<span data-feature-stamina>、スタミナ</span>、Daily・Mission、通常のプロフィールと所持情報など、オンラインの進行が削除されます。ゲームのローカル進行は残ります。</p>
+    <p>Apple / Google Playの購入は、この操作では解約・返金されません。<span data-feature-pass>Pass契約を停止する場合はストアで解約してください。</span></p>
+    <p>新しいオンラインプロフィールでは、Storeで再確認できる購入済み商品と復元対象の課金特典を「購入を復元」から戻せます。<span data-feature-ranked>ランクなどのゲーム進行は戻りません。</span><span data-feature-release-delete>ゲームの進行は戻りません。</span></p>
     <p id="onlineDataDeleteWarning" class="online-delete-warning" hidden>この操作は取り消せません</p>
     <p id="onlineDataDeleteStatus" role="status" aria-live="polite"></p>
     <div class="online-delete-actions">
@@ -1884,7 +1885,7 @@
     <nav class="shop-categories" aria-label="商品カテゴリ"><button type="button" class="active" data-shop-category="skills">スキル</button></nav>
     <div class="shop-content">
       <section class="storekit-panel" id="storeKitPanel">
-        <div id="shopSkillBrowser" class="shop-skill-browser"><p class="shop-skill-usage-summary" data-skill-usage-summary>部屋対戦では、どちらかが持っているスキルを2人で使用できます。ランクマッチでは、自分が利用できるスキルのみ使用できます。</p><nav class="howto-skill-tabs" aria-label="スキルの役割"><button type="button" class="howto-skill-tab active" data-shop-role="cat">🐱 ネコ</button><button type="button" class="howto-skill-tab" data-shop-role="police">🐕 警察</button></nav><div id="shopSkillList" class="shop-skill-list"></div><div class="shop-pack-section"><h3 tabindex="-1">スキルパック</h3><div id="shopPackProducts" class="storekit-products"></div></div></div>
+        <div id="shopSkillBrowser" class="shop-skill-browser"><p class="shop-skill-usage-summary" data-skill-usage-summary>部屋対戦では、どちらかが持っているスキルを2人で使用できます。</p><nav class="howto-skill-tabs" aria-label="スキルの役割"><button type="button" class="howto-skill-tab active" data-shop-role="cat">🐱 ネコ</button><button type="button" class="howto-skill-tab" data-shop-role="police">🐕 警察</button></nav><div id="shopSkillList" class="shop-skill-list"></div><div class="shop-pack-section"><h3 tabindex="-1">スキルパック</h3><div id="shopPackProducts" class="storekit-products"></div></div></div>
         <div id="storeKitProducts" class="storekit-products"></div>
       </section>
       <section class="monetization-dev" id="monetizationDevPanel" hidden aria-label="開発用広告・課金確認">
@@ -1923,7 +1924,7 @@
         <div class="howto-ability-detail" id="shopPreviewDetail"></div>
         <section class="skill-usage-rules shop-skill-usage-rules" aria-label="利用範囲">
           <strong>利用範囲</strong>
-          <dl><div><dt>部屋対戦</dt><dd data-skill-usage-room-scope>共有</dd></div><div><dt>ランクマッチ</dt><dd data-skill-usage-ranked-scope>本人のみ</dd></div></dl>
+          <dl><div><dt>部屋対戦</dt><dd data-skill-usage-room-scope>共有</dd></div><div data-feature-ranked><dt>ランクマッチ</dt><dd data-skill-usage-ranked-scope>本人のみ</dd></div></dl>
         </section>
       </div>
       <div class="shop-preview-actions">

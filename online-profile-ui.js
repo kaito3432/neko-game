@@ -9,7 +9,10 @@
   const fallback=()=>catalog.getItem('catSkin','default')?.profileImage||'./assets/images/cpu_select_cat.png';
   function imageSource(selection){
     if(!['catSkin','dogSkin'].includes(selection?.category))return fallback();
-    return catalog.getItem(selection.category,selection.itemId)?.profileImage||fallback();
+    const item=catalog.getItem(selection.category,selection.itemId);
+    if(root.NyanReleaseFeatures?.enabled('pass')===false&&item?.acquisitionType==='passMonthlyReward')return fallback();
+    if(root.NyanReleaseFeatures?.enabled('ranked')===false&&item?.acquisitionType==='masterRankReward')return fallback();
+    return item?.profileImage||fallback();
   }
   function setImage(image,selection){
     image.onerror=()=>{image.onerror=null;image.src=fallback();};
@@ -37,6 +40,7 @@
     if(!element?.querySelector||!root.document)return valid;
     ensureAvatarClip(element);
     let overlay=element.querySelector('.ranked-frame-image,.ranked-frame-overlay');
+    if(root.NyanReleaseFeatures?.enabled('ranked')===false){overlay?.remove();element.classList.remove('has-frame-image');return valid;}
     const source=frameSource(valid);
     element.classList.remove('has-frame-image');
     if(!source){overlay?.remove();return valid;}
@@ -86,7 +90,8 @@
     setImage(card.querySelector('.ranked-avatar-clip>img'),profile.profileCharacter);
     const rank=card.querySelector('.online-profile-rank');
     const rankId=profile.ranked?.rank;
-    rank.hidden=!rankId;rank.textContent=rankId?String(rankId).toUpperCase():'';
+    rank.hidden=!rankId||root.NyanReleaseFeatures?.enabled('ranked')===false;
+    rank.textContent=rankId?String(rankId).toUpperCase():'';
     card.querySelector('.online-profile-name').textContent=profile.displayName||profile.name||
       card.querySelector('.online-profile-label').textContent;
   }

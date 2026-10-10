@@ -9879,3 +9879,28 @@ body.sneak-mode .board-shell{
   .board > .node.move{animation:nodePulseWide .9s infinite}
 }
 @keyframes nodePulseWide{50%{transform:translate(-50%,-50%) scale(1.04)}}
+/* Initial release: presentation-only gates; feature logic and assets remain bundled. */
+.feature-randommatch-off #randomMatchStart,
+.feature-randommatch-off [data-feature-random-daily],
+.feature-ranked-off .rank-guide,
+.feature-ranked-off .ranked-profile-card,
+.feature-ranked-off .ranked-result-notice,
+.feature-ranked-off .rank-rewards-modal,
+.feature-ranked-off .season-reward-overlay,
+.feature-ranked-off .online-profile-rank,
+.feature-ranked-off .ranked-frame-overlay,
+.feature-ranked-off .ranked-frame-preview::before,
+.feature-ranked-off .ranked-frame-preview::after,
+.feature-ranked-off [data-collection-section="rank"],
+.feature-ranked-off [data-feature-ranked],
+.feature-pass-off [data-feature-pass],
+.feature-stamina-off [data-feature-stamina],
+.feature-pass-off #passOpenBtn,
+.feature-pass-off #giftBoxOpenBtn,
+.feature-pass-off .pass-overlay,
+.feature-pass-off .gift-box-modal,
+.feature-stamina-off .ranked-stamina-card,
+.feature-stamina-off .ranked-stamina-modal{display:none!important}
+.feature-ranked-off .online-profile-frame{border:2px solid #cbb9a9!important;border-radius:50%!important;background:#fff!important;box-shadow:none!important}
+html:not(.feature-randommatch-off) [data-feature-cpu-daily],
+html:not(.feature-ranked-off) [data-feature-release-delete]{display:none!important}

@@ -28,11 +28,12 @@
   const rooms = overlay.querySelector('#roomMatchStart');
   const cancel = overlay.querySelector('#matchmakingCancel');
   const rankGuide = overlay.querySelector('.rank-guide');
+  const released=name=>root.NyanReleaseFeatures?.enabled(name)!==false;
   function setSelectionVisible(visible) {
     overlay.classList.toggle('is-selection', visible);
-    rankGuide.hidden = !visible;
-    root.NyanRankedUI?.setSelectionVisible?.(visible);
-    root.NyanRankedStaminaUI?.setSelectionVisible?.(visible);
+    rankGuide.hidden = !visible||!released('ranked');
+    root.NyanRankedUI?.setSelectionVisible?.(visible&&released('ranked'));
+    root.NyanRankedStaminaUI?.setSelectionVisible?.(visible&&released('stamina'));
   }
   function waiting() {
     setSelectionVisible(false);
@@ -70,12 +71,13 @@
     } finally { busy = false; }
   }
   start.onclick = async () => {
+    if(!released('randomMatch'))return;
     if (busy || entered || transitioning) return;
     busy = true; start.disabled = true; cancel.disabled = true;
     try {
       const identity=await root.NyanOnline.prepareIdentity();
       root.NyanRankedStaminaUI?.update?.(identity.profile);
-      if(root.NyanRankedStaminaUI&&!root.NyanRankedStaminaUI.canStart()){
+      if(released('stamina')&&root.NyanRankedStaminaUI&&!root.NyanRankedStaminaUI.canStart()){
         root.NyanRankedStaminaUI.open('スタミナが足りません');start.disabled=false;cancel.disabled=false;return;
       }
       entered = true; waiting();
@@ -118,11 +120,11 @@
     cancel.hidden=false;
     roomEntry = onRoom; launch = onMatch;
     if (entered) { setSelectionVisible(false);overlay.hidden = false; return; }
-    start.hidden = rooms.hidden = false;
+    start.hidden = !released('randomMatch');rooms.hidden = false;
     start.disabled = cancel.disabled = false;
-    cancel.textContent = '戻る'; status.textContent = '遊び方を選んでね';
+    cancel.textContent = '戻る'; status.textContent = released('randomMatch')?'遊び方を選んでね':'友達と部屋コードで対戦できます';
     setSelectionVisible(true);
-    overlay.hidden = false; start.focus();
+    overlay.hidden = false;(start.hidden?rooms:start).focus();
     root.dispatchEvent(new CustomEvent('nyan-online-selection-opened'));
     root.NyanRankedUI?.refresh();
   }

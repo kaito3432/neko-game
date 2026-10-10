@@ -182,6 +182,9 @@
   }
 
   function isCollectionVisible(item,data=null,passSummary=null,catalog=defaultCatalog){
+    if(root?.NyanReleaseFeatures?.enabled('ranked')===false &&
+      (item?.category==='profileFrame'||['rankReward','masterRankReward'].includes(item?.acquisitionType)))return false;
+    if(root?.NyanReleaseFeatures?.enabled('pass')===false && item?.acquisitionType==='passMonthlyReward')return false;
     if(item?.materialStatus==="pending" || item?.assetStatus==="placeholder")return false;
     if(item?.acquisitionType!=="passMonthlyReward")return true;
     if(data&&getItemState(data,item,catalog)!=="unowned")return true;
@@ -903,7 +906,10 @@
     });
 
     document.querySelectorAll("[data-collection-section]").forEach(tab=>{
-      tab.addEventListener("click",()=>controller.setSection(tab.dataset.collectionSection));
+      tab.addEventListener("click",()=>{
+        if(tab.dataset.collectionSection==='rank'&&root?.NyanReleaseFeatures?.enabled('ranked')===false)return;
+        controller.setSection(tab.dataset.collectionSection);
+      });
     });
 
     return controller;

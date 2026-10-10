@@ -1,5 +1,6 @@
-const CACHE_NAME = "nyan-chase-v80-board-skill-layout-20261010";
+const CACHE_NAME = "nyan-chase-v81-initial-feature-hide-20261010";
 const PRECACHE = [
+  "./release-features.js",
   "./skill-catalog.js",
   "./api-environment.js",
   "./monetization-products.js",

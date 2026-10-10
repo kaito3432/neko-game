@@ -82,6 +82,7 @@
   }
 
   function showSeason(){
+    if(root.NyanReleaseFeatures?.enabled('ranked')===false)return;
     if(!selectionVisible)return;
     const reward=profile?.seasonHistory?.find(item=>
       ['claimable','pendingConfiguration'].includes(item.rewardStatus)&&!dismissedSeasons.has(item.seasonId));
@@ -137,7 +138,7 @@
     };
   }
   function setSelectionVisible(visible){
-    selectionVisible=visible===true;
+    selectionVisible=visible===true&&root.NyanReleaseFeatures?.enabled('ranked')!==false;
     attachPanel();
     if(selectionVisible&&!profile?.ranked)update(fallbackProfile());
     panel.hidden=!selectionVisible||!profile?.ranked;
@@ -150,6 +151,7 @@
   root.addEventListener('nyan-online-selection-opened',()=>{attachPanel();setSelectionVisible(true);});
   root.addEventListener('nyan-online-matched',()=>{result.hidden=true;result.replaceChildren();});
   root.addEventListener('nyan-ranked-result',event=>{
+    if(root.NyanReleaseFeatures?.enabled('ranked')===false)return;
     const receipt=event.detail?.ranked;
     if(!receipt)return;
     if(event.detail.rankedProfile)update(event.detail.rankedProfile);

@@ -53,6 +53,7 @@
     }finally{busy=false;render();}
   }
   openButton.addEventListener('click',async()=>{
+    if(root.NyanReleaseFeatures?.enabled('pass')===false)return;
     modal.hidden=false;message.textContent='読み込み中…';modal.querySelector('.gift-box-close').focus();
     try{await fetchGifts();message.textContent='';}catch(_){message.textContent='ギフトを読み込めませんでした。';}
   });

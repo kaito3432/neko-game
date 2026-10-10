@@ -28,7 +28,7 @@
     modal.querySelector('[data-stamina-ad]').disabled=busy||full||(value.adRecoveryCount||0)>=CONFIG.STAMINA_AD_DAILY_LIMIT||root.NyanRewardedAds.provider.isBusy();
   }
   function update(next){if(next)profile={...profile,...next};render();}
-  function open(message=''){modal.hidden=false;render(message);modal.querySelector('[data-stamina-close]').focus();}
+  function open(message=''){if(root.NyanReleaseFeatures?.enabled('stamina')===false)return;modal.hidden=false;render(message);modal.querySelector('[data-stamina-close]').focus();}
   function close(){modal.hidden=true;panel.querySelector('[data-stamina-open]').focus();}
   panel.querySelector('[data-stamina-open]').onclick=()=>open();modal.querySelector('[data-stamina-close]').onclick=close;
   modal.querySelector('[data-stamina-ad]').onclick=async()=>{
@@ -45,5 +45,5 @@
       refreshing=true;root.NyanOnline?.prepareIdentity?.().then(value=>update(value.profile)).catch(()=>{}).finally(()=>{refreshing=false;});
     }
   },1000);
-  root.NyanRankedStaminaUI={CONFIG,update,setSelectionVisible(value){selectionVisible=value===true;render();},canStart(){return Number(state().stamina)>0;},open,close,getProfile:()=>profile};
+  root.NyanRankedStaminaUI={CONFIG,update,setSelectionVisible(value){selectionVisible=value===true&&root.NyanReleaseFeatures?.enabled('stamina')!==false;render();},canStart(){return Number(state().stamina)>0;},open,close,getProfile:()=>profile};
 })(globalThis);
