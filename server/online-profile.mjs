@@ -3,7 +3,7 @@
 // Never reuse this migration endpoint as an ongoing ownership synchronization API.
 export const SKINS = Object.freeze({
   ownedCatSkins: Object.freeze(['default', 'cat_kaitou', 'cat_coin_01', 'cat_master_s01_king', 'cat_pass_2026_11_starlight']),
-  ownedDogSkins: Object.freeze(['default', 'dog_detective', 'dog_coin_01'])
+  ownedDogSkins: Object.freeze(['default', 'dog_detective', 'dog_coin_01', 'dog_pass_2026_12_moonlit'])
 });
 const CLIENT_REGISTER_SKINS=Object.freeze({
   ownedCatSkins:Object.freeze(['default','cat_kaitou','cat_coin_01']),

@@ -4,7 +4,8 @@ import {isPassActive} from './pass-subscription.mjs';
 // Add only finished, server-allowlisted items here when their formal assets exist.
 // Test fixtures supply their own catalog; no placeholder is published by Phase 3.
 export const PASS_MONTHLY_SKINS=Object.freeze({
-  cat_pass_2026_11_starlight:Object.freeze({category:'catSkin',passMonthlyReward:true})
+  cat_pass_2026_11_starlight:Object.freeze({category:'catSkin',passMonthlyReward:true}),
+  dog_pass_2026_12_moonlit:Object.freeze({category:'dogSkin',passMonthlyReward:true})
 });
 const MONTH=/^\d{4}-(0[1-9]|1[0-2])$/;
 

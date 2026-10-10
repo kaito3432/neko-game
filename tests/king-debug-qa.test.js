@@ -22,7 +22,8 @@ test('KING Debugは全スキンと2000コインだけを仮付与しHome選択�
     .filter(item=>item.materialStatus!=='pending'&&item.assetStatus!=='placeholder'&&Boolean(item.frameImage)).map(item=>item.id));
   assert.equal(qa.getSnapshot().favoriteCharacter.itemId,'cat_master_s01_king');
   assert.deepEqual({...context.NyanKingQaSelectors.diagnostics()},{qaEnabled:true,qaCoinBalance:2000,renderedCoinBalance:2000,
-    ownedCatSkinCount:Catalog.getItemsByCategory('catSkin').filter(ready).length,ownedDogSkinCount:3,ownedFrameCount:6,kingOwned:true});
+    ownedCatSkinCount:Catalog.getItemsByCategory('catSkin').filter(ready).length,
+    ownedDogSkinCount:Catalog.getItemsByCategory('dogSkin').filter(ready).length,ownedFrameCount:6,kingOwned:true});
   const sanitized=context.__KING_SKIN_PLAY_QA__.serverSafe(qa.getSnapshot());
   assert.equal(sanitized.nyanCoins,0);assert.deepEqual(Array.from(sanitized.ownedCatSkins),['default']);
   for(let i=0;i<5;i++){
@@ -42,7 +43,8 @@ test('KING Debugは全スキンと2000コインだけを仮付与しHome選択�
   assert.equal(Player.getSnapshot().nyanCoins,0);assert.deepEqual(Player.getSnapshot().ownedCardboards,undefined);
   const diagnostic=context.NyanKingQaSelectors.diagnostics();
   assert.deepEqual({...diagnostic},{qaEnabled:true,qaCoinBalance:1970,renderedCoinBalance:1970,
-    ownedCatSkinCount:Catalog.getItemsByCategory('catSkin').filter(ready).length,ownedDogSkinCount:3,ownedFrameCount:6,kingOwned:true});
+    ownedCatSkinCount:Catalog.getItemsByCategory('catSkin').filter(ready).length,
+    ownedDogSkinCount:Catalog.getItemsByCategory('dogSkin').filter(ready).length,ownedFrameCount:6,kingOwned:true});
   assert.equal(context.NyanKingQaSelectors.coinBalance({nyanCoins:999}),1970);
   const payload=context.__KING_SKIN_PLAY_QA__.serverPayload({
     equippedAppearance:{catSkinId:'cat_master_s01_king',dogSkinId:'dog_coin_01'},

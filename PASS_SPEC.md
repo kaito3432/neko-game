@@ -28,6 +28,8 @@
 - 付与・所有・月別受取履歴をサーバーtransactionで保存し、再送や同時実行でも同じ月は1回だけ。過去月への遡及付与はしない。同月の再加入でも二重付与しない。
 - 取得済みSkinはPass満了後も永久所有・装備可能。未取得の過去月分と将来月分をCollectionに通常表示しない。
 - 第1弾「星灯りの旅ねこ」は `cat_pass_2026_11_starlight`、対象月は `2026-11`。Collection、Profile、盤面駒、Result勝利・敗北、移動・発見Effect、Home character・decorの正式9素材を使用する。Effect倍率は移動 `2`、発見 `1.75`。
+- 第2弾「月灯りの旅しば」は `dog_pass_2026_12_moonlit`、対象月は `2026-12`。Collection、Profile、赤・黒・白の丸枠盤面駒、Result勝利・敗北、移動・発見Effect、Home character・decorの正式11素材を使用する。Collection画像はPass紹介にも共用し、通常ショップには出さない。実際の月次付与には別途サーバーの `PASS_SKIN_PERIODS` に `2026-12 → dog_pass_2026_12_moonlit` を設定する必要がある。
+- Pass Skinの画像制作では、Collectionは展示台座付き、HomeとResultはそれぞれCollectionとも互いとも異なるポーズにする。犬側のResultは勝利画像に「しば勝利」、敗北画像に「しば敗北」を入れ、両方に「逃げたルートを見てみよう」を入れる。スキン固有の短いセリフは別に添える。
 
 ## 5. Collection表示
 

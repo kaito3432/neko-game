@@ -97,6 +97,7 @@
   const NINJA_ROOT="./assets/images/skins/ninja01";
   const MASTER_S01_KING_ROOT="./assets/images/skins/master_s01/king";
   const PASS_STARLIGHT_ROOT="./assets/images/skins/pass_2026_11/starlight";
+  const PASS_MOONLIT_ROOT="./assets/images/skins/pass_2026_12/moonlit";
   const JAPANESE_COSMETIC_ROOT="./assets/images/cosmetics/japanese01";
   const RANK_FRAME_ROOT="./assets/images/rank/profile-frames";
   const CAT_NINJA_PLANNED_ASSETS=Object.freeze({
@@ -157,6 +158,22 @@
     homeDecorImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_home_decor.png`,
     homeCharacterImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_home_character.png`,
     homeImage:`${PASS_STARLIGHT_ROOT}/cat_pass_starlight_home_character.png`
+  });
+  const DOG_PASS_MOONLIT_ASSETS=Object.freeze({
+    collectionImage:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_collection.png`,
+    profileImage:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_profile.png`,
+    pieceImage:Object.freeze({
+      red:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_red_piece.png`,
+      black:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_black_piece.png`,
+      white:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_white_piece.png`
+    }),
+    resultWinImage:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_result_win.png`,
+    resultLoseImage:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_result_lose.png`,
+    moveEffect:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_effect_move.png`,
+    foundFootprintEffect:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_effect_found.png`,
+    homeDecorImage:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_home_decor.png`,
+    homeCharacterImage:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_home_character.png`,
+    homeImage:`${PASS_MOONLIT_ROOT}/dog_pass_moonlit_home_character.png`
   });
   const ITEMS=Object.freeze([
     Object.freeze({
@@ -268,6 +285,14 @@
       passPreviewDescription:"星明かりを道しるべに旅する、Pass限定の特別なネコ。",
       limited:true,passExclusive:true,rarity:"Epic",materialStatus:"ready",assetStatus:"ready",
       ...CAT_PASS_STARLIGHT_ASSETS,preview:CAT_PASS_STARLIGHT_ASSETS.collectionImage
+    }),
+    Object.freeze({
+      id:"dog_pass_2026_12_moonlit",category:"dogSkin",name:"月灯りの旅しば",
+      acquisitionType:"passMonthlyReward",passMonthlyReward:true,releaseMonth:"2026-12",
+      passPreviewDescription:"月明かりの下を巡回する、Pass限定の特別な旅しばたち。",
+      limited:true,passExclusive:true,rarity:"Epic",materialStatus:"ready",assetStatus:"ready",
+      ...DOG_PASS_MOONLIT_ASSETS,cardImage:DOG_PASS_MOONLIT_ASSETS.pieceImage,
+      preview:DOG_PASS_MOONLIT_ASSETS.collectionImage
     }),
     Object.freeze({id:"dog_master_reward_pending",category:"dogSkin",name:"マスター限定柴犬スキン（3匹セット）",acquisitionType:"masterRankReward",rarity:"Legendary",materialStatus:"pending"}),
     ...["bronze","silver","gold","platinum","diamond","master"].map((rank,index)=>Object.freeze({
