@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v81-initial-feature-hide-20261010";
+const CACHE_NAME = "nyan-chase-v82-room-review-20261011";
 const PRECACHE = [
   "./release-features.js",
   "./skill-catalog.js",
@@ -25,6 +25,7 @@ const PRECACHE = [
   "./support.html",
   "./data-deletion.html",
   "./online-appearance.js",
+  "./in-app-review.js",
   "./random-match.js",
   "./rank-rewards.js",
   "./ranked-ui.js",

@@ -1,6 +1,7 @@
 import Foundation
 import StoreKit
 import Capacitor
+import UIKit
 
 @objc(NyanStoreKitPlugin)
 public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -111,6 +112,42 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 }
 
+@objc(NyanReviewPlugin)
+public final class NyanReviewPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "NyanReviewPlugin"
+    public let jsName = "NyanReview"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "getEnvironment", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestReview", returnType: CAPPluginReturnPromise)
+    ]
+
+    @objc func getEnvironment(_ call: CAPPluginCall) {
+        #if DEBUG
+        call.resolve(["debug": true])
+        #else
+        call.resolve(["debug": false])
+        #endif
+    }
+
+    @objc func requestReview(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let scene = self.bridge?.viewController?.view.window?.windowScene else {
+                call.reject("REVIEW_SCENE_UNAVAILABLE")
+                return
+            }
+            if #available(iOS 16.0, *) {
+                AppStore.requestReview(in: scene)
+            } else {
+                SKStoreReviewController.requestReview(in: scene)
+            }
+            call.resolve()
+        }
+    }
+}
+
 final class NyanBridgeViewController: CAPBridgeViewController {
-    override func capacitorDidLoad() { bridge?.registerPluginInstance(NyanStoreKitPlugin()) }
+    override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(NyanStoreKitPlugin())
+        bridge?.registerPluginInstance(NyanReviewPlugin())
+    }
 }
