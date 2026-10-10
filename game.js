@@ -9184,6 +9184,8 @@ bindPress(privacyBtn,()=>{
 // 結果画面 → ホームに戻る
 // =====================================
 bindPress(resultHomeBtn,()=>{
+  const reviewAfterHome=!resultOpponentShopOpening &&
+    (playMode==='onlineCat'||playMode==='onlinePolice');
 
   // 結果画面を閉じる
   resultOverlay.classList.remove("show");
@@ -9202,6 +9204,7 @@ bindPress(resultHomeBtn,()=>{
 
   // ゲーム状態を初期化してホームへ
   initGame(true);
+  if(reviewAfterHome)requestAnimationFrame(()=>window.NyanRoomReview?.resultClosed());
 });
 bindPress(resultOpponentSkillShop,()=>{
   if(resultOpponentShopOpening||!resultOpponentSkillId||!resultOverlay.classList.contains('show'))return;
@@ -9355,6 +9358,7 @@ async function resumeOnLaunch(){
         const active=await window.NyanOnline.activeMatch({signal:controller.signal});
         if(active?.handled)return;
         if(active){
+          window.NyanRoomReview?.recovered(active.matchId);
           resetOnlineState();window.NyanOnline.useReservation(active);
           onlineOverlay.classList.add('show');createOnlineRoomBtn.disabled=false;createOnlineRoomBtn.click();
           return;

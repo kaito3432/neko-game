@@ -44,6 +44,7 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
     // Phase 8: one-time non-consumable products. Keep the version explicit.
     implementation "com.android.billingclient:billing:9.1.0"
+    implementation "com.google.android.play:review:2.0.2"
 }
 
 apply from: 'capacitor.build.gradle'
