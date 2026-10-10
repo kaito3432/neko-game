@@ -107,6 +107,18 @@
         {offset:1,transform:"translate3d(0,0,0) scale(1) rotate(0deg)"}
       ])
     }),
+    "dogSkin:dog_pass_2026_12_moonlit":Object.freeze({
+      treasure:"./assets/images/skins/pass_2026_12/moonlit/dog_pass_moonlit_home_decor.png",
+      character:"./assets/images/skins/pass_2026_12/moonlit/dog_pass_moonlit_home_character.png",
+      supportLayout:Object.freeze({translate:"0 0",scale:"1"}),
+      characterLayout:Object.freeze({translate:"0 0",scale:".84"}),
+      durationMs:HOME_REACTION_DURATION_MS,
+      reaction:freezeTimeline([
+        {offset:0,transform:"translate3d(0,0,0) scale(1)"},
+        {offset:.45,transform:"translate3d(8px,-6px,0) scale(1.02)",easing:"ease-out"},
+        {offset:1,transform:"translate3d(0,0,0) scale(1)"}
+      ])
+    }),
     "dogSkin:dog_coin_01":Object.freeze({
       treasure:"./assets/images/skins/ninja01/dog_samurai_home_decor.png",
       character:"./assets/images/skins/ninja01/dog_samurai_home_character.png",
@@ -657,6 +669,10 @@
     stage?.classList?.toggle(
       "skin-favorite-dog-detective",
       favorite?.item?.category==="dogSkin" && favorite?.item?.id==="dog_detective"
+    );
+    stage?.classList?.toggle(
+      "skin-favorite-dog-moonlit",
+      favorite?.item?.category==="dogSkin" && favorite?.item?.id==="dog_pass_2026_12_moonlit"
     );
     resetHomeLayers(hero,blend);
     if(favorite){
