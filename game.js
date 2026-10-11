@@ -9204,6 +9204,7 @@ bindPress(resultHomeBtn,()=>{
 
   // ゲーム状態を初期化してホームへ
   initGame(true);
+  if(reviewAfterHome && window.NyanRoomReviewQA)console.debug('NyanReview QA', 'home entered');
   if(reviewAfterHome)requestAnimationFrame(()=>window.NyanRoomReview?.resultClosed());
 });
 bindPress(resultOpponentSkillShop,()=>{
