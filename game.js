@@ -343,6 +343,7 @@ let onlineIsHost=false;
 let onlineRoomMatched=false;
 function markOnlineRoomMatched(){
   onlineRoomMatched=true;
+  if(createOnlineRoomBtn)createOnlineRoomBtn.disabled=true;
   if(joinOnlineRoomBtn)joinOnlineRoomBtn.disabled=true;
 }
 
@@ -6445,6 +6446,7 @@ bindPress(
 );
 
    bindPress(createOnlineRoomBtn,async()=>{
+  if(createOnlineRoomBtn.disabled||onlineRoomMatched)return;
   if(!window.NyanOnline){
     onlineStatus.textContent="オンライン機能を読み込めませんでした";
     return;

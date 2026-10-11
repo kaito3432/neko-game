@@ -6531,6 +6531,7 @@ body.sneak-mode .board-shell{
 .howto-skill-usage-rules div strong{display:block;color:#6b4b42}
 .howto-skill-usage-rules p{margin:1px 0 0}
 .howto-skill-usage-rules [data-skill-usage-room-description],.howto-skill-usage-rules [data-skill-usage-entitlement]{text-align:left}
+#createOnlineRoomBtn:disabled,
 #joinOnlineRoomBtn:disabled{background:#dedbd7;color:#827b75;opacity:.65;box-shadow:none;cursor:not-allowed}
 .howto-skill-usage-rules .skill-usage-entitlement{padding-top:5px;border-top:1px solid #eadfd9}
 
