@@ -36,6 +36,7 @@
     let connectionProblem = false;
     let recoveredMatchId = null;
     let requesting = false;
+    const debug = (event, detail) => { if (qa) console.debug('NyanReview QA', event, detail ?? ''); };
     const key = () => qa ? QA_KEY : KEY;
     const read = () => { try { return normalize(JSON.parse(storage.getItem(key()))); } catch (_) { return empty(); } };
     const write = state => storage.setItem(key(), JSON.stringify(normalize(state)));
@@ -52,21 +53,28 @@
         if (after.roomCompletedCount === before.roomCompletedCount) return;
         write(after);
         if (!connectionProblem && recoveredMatchId !== session.matchId) pending = session.matchId;
+        debug('room completion recorded', { count: after.roomCompletedCount, pending: Boolean(pending) });
         recoveredMatchId = null;
       },
       async resultClosed() {
-        if (!pending || requesting) return false;
+        debug('result closed; eligibility checked', { pending: Boolean(pending), requesting });
+        if (!pending || requesting) { debug('eligibility rejected', 'no pending match or request in progress'); return false; }
         pending = null;
-        if (connectionProblem) return false;
+        if (connectionProblem) { debug('eligibility rejected', 'connection problem'); return false; }
         const state = read();
         const stage = nextStage(state, now());
-        if (!stage || !native) return false;
+        if (!stage || !native) { debug('eligibility rejected', !stage ? 'threshold not reached' : 'native unavailable'); return false; }
         requesting = true;
+        let attempted = false;
         try {
-          await native.requestReview();
+          debug('requestReview called', { stage });
+          const request = native.requestReview();
+          attempted = true;
           write({ ...state, reviewRequestStage: stage, lastReviewRequestAt: now() });
+          debug('stage updated', { stage });
+          await request;
           return true;
-        } catch (_) { return false; }
+        } catch (error) { debug('requestReview failed', String(error)); return attempted; }
         finally { requesting = false; }
       },
       enableQA() { qa = true; pending = null; connectionProblem = false; },
@@ -76,23 +84,35 @@
     };
   }
   function install(win) {
-    const plugin = win.Capacitor?.registerPlugin?.('NyanReview');
-    const controller = createController(win.localStorage, plugin);
+    const plugin = () => win.Capacitor?.Plugins?.NyanReview || win.Capacitor?.registerPlugin?.('NyanReview');
+    const controller = createController(win.localStorage, {
+      requestReview() {
+        const native = plugin();
+        if (!native) throw new Error('NyanReview unavailable');
+        return native.requestReview();
+      }
+    });
     win.NyanRoomReview = controller;
     win.addEventListener('nyan-online-matched', () => controller.matched());
     win.addEventListener('nyan-online-connection', event => controller.connection(event.detail?.status));
     win.addEventListener('nyan-online-ended', event => controller.ended(win.NyanOnline?.getSession(), event.detail));
     // No production control surface or production-state mutation. Available in native Debug builds only.
-    plugin?.getEnvironment().then(environment => {
-      if (environment?.debug !== true) return;
-      controller.enableQA();
-      win.NyanRoomReviewQA = {
+    function publishDebugQA() {
+      const native = plugin();
+      if (!native?.getEnvironment || win.NyanRoomReviewQA) return;
+      native.getEnvironment().then(environment => {
+        if (environment?.debug !== true || win.NyanRoomReviewQA) return;
+        controller.enableQA();
+        win.NyanRoomReviewQA = {
         getState: () => controller.getState(),
         setState: state => controller.setQAState(state),
         reset: () => controller.resetQAState(),
         disable: () => { controller.disableQA(); delete win.NyanRoomReviewQA; }
-      };
-    }).catch(() => {});
+        };
+      }).catch(() => {});
+    }
+    publishDebugQA();
+    win.addEventListener('load', publishDebugQA, { once: true });
   }
   return { empty, normalize, nextStage, completed, createController, install };
 });
