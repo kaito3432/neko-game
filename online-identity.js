@@ -26,6 +26,7 @@
       ?{playerId:profile.playerId,apiBase,effectiveSkillEntitlements}:null;
     authenticatedPassSummary=profile?.playerId&&passSummary?passSummary:null;
     await cacheVerifiedPassSkin(profile);
+    if(root.NyanCoinWallet)await root.NyanCoinWallet.accept(profile);
     if(typeof root.dispatchEvent==='function'&&typeof root.CustomEvent==='function')
       root.dispatchEvent(new root.CustomEvent('nyan-online-profile',{detail:{profile,effectiveSkillEntitlements,passSummary}}));
   }
@@ -66,8 +67,10 @@
       // Avoid recursively enqueuing load when a snapshot is already available.
       const local = root.NyanPlayerData.getSnapshot() || await root.NyanPlayerData.load();
       // First-use migration only. Repeated registration never merges local claims.
-      await post('register', {playerId: local.playerId, ownedCatSkins: local.ownedCatSkins,
+      const registered=await post('register', {playerId: local.playerId, ownedCatSkins: local.ownedCatSkins,
         ownedDogSkins: local.ownedDogSkins, equippedAppearance: local.equippedAppearance});
+      if(root.document&&!root.NyanCoinWallet)throw new Error('coin_wallet_unavailable');
+      if(root.NyanCoinWallet)await root.NyanCoinWallet.migrate(post,local,registered.profile);
       await root.NyanCpuUnlockSync.flush(root.NyanPlayerData,body=>post('cpu-unlock',body));
       const {profile,effectiveSkillEntitlements,passSummary} = await post('appearance', {equippedAppearance: local.equippedAppearance,
         profileCharacter: local.profileCharacter || null,
@@ -83,6 +86,7 @@
   }
   async function refreshSkillView(apiBase){
     const result=await request(apiBase,'profile',null,'GET');
+    if(root.NyanCoinWallet&&!result.profile?.coinMigration)return prepare(apiBase);
     await acceptSkillView(apiBase,result);
     return result;
   }
@@ -90,6 +94,7 @@
     const result=await request(apiBase,'profile',null,'DELETE');
     if(result.deleted!==true)throw new Error('profile_delete_unconfirmed');
     root.localStorage.removeItem(KEY);
+    root.NyanCoinWallet?.resetForDeletedProfile?.();
     try{root.localStorage.removeItem('nyanOnlineLastResultV1');}catch(_){}
     authenticatedSkillView=null;
     authenticatedPassSummary=null;

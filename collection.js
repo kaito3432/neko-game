@@ -325,7 +325,11 @@
 
     async function load(){
       try{
-        const loaded=await playerData.load();
+        let loaded=await playerData.load();
+        if(root?.document&&root.NyanCoinWallet){
+          try{await root.NyanCoinWallet.ensure();loaded=playerData.getSnapshot();}
+          catch(_){/* Offline inventory remains available; purchase fails closed. */}
+        }
         const repaired=sanitizeCatalogEquipment(loaded,catalog);
         currentData=repaired.changed
           ? await playerData.save(repaired.data)
@@ -393,6 +397,10 @@
 
     async function purchase(categoryId,itemId){
       if(saving)return {ok:false,reason:"busy",data:currentData};
+      if(root?.document&&root.NyanCoinWallet&&root.navigator?.onLine===false){
+        view.showError?.('通信できる状態で購入してください');
+        return {ok:false,reason:'offline',data:currentData};
+      }
       const validation=validatePurchase(currentData,categoryId,itemId,catalog);
       if(!validation.ok){
         if(validation.reason==="insufficient_coins")view.showError?.("にゃんコインが足りません");
@@ -400,13 +408,15 @@
       }
       saving=true;view.setBusy?.(true);render();
       try{
-        const saved=await playerData.purchaseCollectionItem(categoryId,itemId);
+        const saved=root?.document&&root.NyanCoinWallet
+          ?(await root.NyanCoinWallet.purchase(categoryId,itemId),playerData.getSnapshot())
+          :await playerData.purchaseCollectionItem(categoryId,itemId);
         currentData=sanitizeCatalogEquipment(saved,catalog).data;
         root?.dispatchEvent?.(new root.CustomEvent("nyan-player-progress-changed"));
         render();return {ok:true,data:currentData};
       }catch(error){
         currentData=playerData.getSnapshot?.()||currentData;
-        view.showError?.(error?.message==="insufficient_coins"?"にゃんコインが足りません":"購入を完了できませんでした");
+        view.showError?.(error?.message==="insufficient_coins"?"にゃんコインが足りません":"通信できる状態で購入してください");
         render();return {ok:false,reason:error?.message||"purchase_failed",data:currentData,error};
       }finally{saving=false;view.setBusy?.(false);render();}
     }

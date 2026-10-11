@@ -18,7 +18,7 @@
   <div class="ranked-record" data-rank-record>今シーズン 0勝 0敗</div>
   <label>プロフィールフレーム<select data-rank-frame></select></label>
   <div class="ranked-skill-access" data-rank-skill-access>Skill Mode：確認中</div>
-  <div class="ranked-coins" data-rank-coins>オンライン報酬 0 にゃんコイン</div>`;
+  <div class="ranked-coins" data-rank-coins>にゃんコイン 0</div>`;
   const result=document.createElement('div');
   result.className='ranked-result-notice';
   result.hidden=true;
@@ -51,7 +51,7 @@
     nextCopy.hidden=!nextRank;
     nextCopy.textContent=nextRank?`次の${nextRank[1]}まで あと${nextRank[2]-profile.ranked.rp}RP`:'';
     panel.querySelector('[data-rank-record]').textContent=`今シーズン ${profile.ranked.seasonWins}勝 ${profile.ranked.seasonLosses}敗`;
-    panel.querySelector('[data-rank-coins]').textContent=`オンライン報酬 ${profile.serverNyanCoins||0} にゃんコイン`;
+    panel.querySelector('[data-rank-coins]').textContent=`にゃんコイン ${profile.serverNyanCoins||0}`;
     const skillView=root.NyanOnlineIdentity.getAuthenticatedSkillView?.();
     const access=skillView?.playerId&&skillView.playerId===profile.playerId&&skillView.apiBase===root.NyanOnline.API_BASE
       ?skillView.effectiveSkillEntitlements:null;
@@ -102,7 +102,7 @@
     button.textContent=reward.rewardStatus==='pendingConfiguration'?'報酬準備中':'受け取る';
     button.onclick=async()=>{
       button.disabled=true;
-      try{const response=await api('season-reward',{seasonId:reward.seasonId});season.classList.remove('show');update(response.profile);}
+      try{const response=await api('season-reward',{seasonId:reward.seasonId});season.classList.remove('show');await root.NyanCoinWallet?.accept?.(response.profile);update(response.profile);}
       catch(_){button.disabled=reward.rewardStatus!=='claimable';}
     };
   }
@@ -155,6 +155,7 @@
     const receipt=event.detail?.ranked;
     if(!receipt)return;
     if(event.detail.rankedProfile)update(event.detail.rankedProfile);
+    if(event.detail.rankedProfile)root.NyanOnlineIdentity.refreshSkillView(root.NyanOnline.API_BASE).catch(()=>{});
     const before=rank(receipt.beforeRank)[1],after=rank(receipt.afterRank)[1];
     result.hidden=false;
     result.replaceChildren();
@@ -171,5 +172,5 @@
     }
   });
   root.NyanRankedUI={refresh,equipFrame,updateProfile:update,getProfile:()=>profile,setSelectionVisible,
-    totalCoins:local=>(Number(local)||0)+(Number(profile?.serverNyanCoins)||0)};
+    totalCoins:local=>root.NyanCoinWallet?.currentBalance?.()??(Number(local)||0)};
 })(globalThis);

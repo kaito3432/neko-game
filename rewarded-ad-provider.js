@@ -82,6 +82,7 @@
         const value=await root.NyanOnlineIdentity.request(root.NyanOnline.API_BASE,'rewarded-ad-completion',payload);
         root.NyanMonetization?.syncServerSkillModeEntitlement?.(value.profile?.skillEntitlements||{});
         if(payload.rewardType===DAILY_REWARD_TYPE&&value.profile){
+          await root.NyanCoinWallet?.accept?.(value.profile);
           root.NyanRankedUI?.updateProfile?.(value.profile);
           root.dispatchEvent?.(new root.CustomEvent('nyan-online-profile',{detail:{profile:value.profile}}));
         }

@@ -98,6 +98,7 @@
       version:CURRENT_VERSION,
       playerId,
       nyanCoins:0,
+      coinAuthority:null,
       coinTransactions:[],
       ownedCatSkins:[DEFAULT_ITEM_ID],
       ownedDogSkins:[DEFAULT_ITEM_ID],
@@ -149,6 +150,8 @@
       version:CURRENT_VERSION,
       playerId,
       nyanCoins:safeNonNegativeInteger(source.nyanCoins),
+      coinAuthority:isPlainObject(source.coinAuthority)&&source.coinAuthority.version===1
+        ?{version:1,profileId:String(source.coinAuthority.profileId||'')}:null,
       coinTransactions:Progress.normalizeCoinTransactions(source.coinTransactions),
       ownedCatSkins,
       ownedDogSkins,
@@ -322,6 +325,7 @@
     async function save(value){
       const playerId=currentData?.playerId || ensurePlayerId();
       const candidate=normalizeData(value,playerId);
+      if(currentData?.coinAuthority){candidate.nyanCoins=currentData.nyanCoins;candidate.coinAuthority=currentData.coinAuthority;}
 
       if(remote){
         if(typeof remote.save!=="function"){
@@ -410,6 +414,7 @@
     function coinCommand(operation){
       return serial(async()=>{
         const base=currentData || await load();
+        if(root?.document)throw new Error('coin_worker_provider_required');
         if(remote)throw new Error("coin_server_provider_required");
         return persistProgress(operation(base));
       });
@@ -420,6 +425,7 @@
     function purchaseCollectionItem(categoryId,itemId){
       return serial(async()=>{
         const base=currentData || await load();
+        if(root?.document)throw new Error('coin_worker_purchase_required');
         if(remote)throw new Error("collection_purchase_server_required");
         const catalog=typeof module==="object"&&module.exports?require("./collection-catalog.js"):root?.NyanCollectionCatalog;
         const category=catalog?.getCategory(categoryId),item=catalog?.getItem(categoryId,itemId);
@@ -439,6 +445,23 @@
 
     function getSnapshot(){
       return currentData ? normalizeData(currentData,currentData.playerId) : null;
+    }
+
+    function applyCoinProfile(profile){
+      return serial(async()=>{
+        if(!profile?.coinMigration||!Number.isSafeInteger(profile.serverNyanCoins)||profile.serverNyanCoins<0)
+          throw new Error('invalid_coin_profile');
+        const base=currentData || readLocal(ensurePlayerId());
+        const fields=['ownedCatSkins','ownedDogSkins','ownedBoardThemes','ownedCardboards','ownedPaws'];
+        const coinItems={ownedCatSkins:'cat_coin_01',ownedDogSkins:'dog_coin_01',
+          ownedBoardThemes:'board_coin_01',ownedCardboards:'cardboard_coin_01',ownedPaws:'paw_coin_01'};
+        const next={...base,nyanCoins:profile.serverNyanCoins,
+          coinAuthority:{version:1,profileId:profile.playerId},
+          dailyMissionProgress:root.NyanCoinWallet?.dailyFromProfile?.(profile,base.dailyMissionProgress)||base.dailyMissionProgress};
+        for(const field of fields)next[field]=[...new Set([
+          ...(base[field]||[]).filter(id=>id!==coinItems[field]),...(profile[field]||[])])];
+        return cache(next,'worker-cache');
+      });
     }
 
     function getStatus(){
@@ -482,6 +505,18 @@
       return persistProgress(apply(base));
     }
     async function recordPendingBattle(event){
+      if(root?.document&&root.NyanCoinWallet){
+        const response=await root.NyanCoinWallet.requestRaw('coin-battle',event);
+        const base=currentData || await load();
+        const localProgress=Progress.recordBattle(base,event,now());
+        const next={...localProgress,nyanCoins:response.profile.serverNyanCoins,
+          dailyMissionProgress:root.NyanCoinWallet.dailyFromProfile(response.profile,localProgress.dailyMissionProgress)};
+        const saved=persistProgress(next);
+        writePending(pendingBattles().filter(b=>b.battleId!==event.battleId));
+        if(event.source==='cpu'&&Object.values(saved.cpuUnlockSync).includes('pending'))
+          root.queueMicrotask(()=>Promise.resolve().then(()=>root.NyanOnline?.syncCpuUnlocks?.()).catch(()=>{}));
+        return saved;
+      }
       if(event.source==='randomMatch' && !remote) {
         if(typeof root?.NyanOnline?.verifyResult!=='function') throw new Error('online_result_verifier_unavailable');
         // Always re-fetch the authenticated server receipt, including outbox replay.
@@ -508,22 +543,24 @@
         return persistProgress({...base,cpuUnlockSync:{...base.cpuUnlockSync,[achievement]:'synced'}});
       });
     }
-    function recordDailyMissionBattle(value){
+    async function recordDailyMissionBattle(value){
       let event;
       try{
         event=Progress.validateBattle(value);
-        if(!["cpu","randomMatch"].includes(event.source)) return Promise.resolve(getSnapshot());
+        if(!["cpu","randomMatch"].includes(event.source)) return getSnapshot();
         // Journal immediately at confirmed match completion, before any cut-in/ad/UI awaits.
         const pending=pendingBattles();
         if(!pending.some(b=>b.battleId===event.battleId)) writePending([...pending,event]);
-      }catch(error){return Promise.reject(error);}
+      }catch(error){throw error;}
+      if(root?.document&&root.NyanCoinWallet)await root.NyanCoinWallet.ensure();
       return serial(()=>recordPendingBattle(event));
     }
     function retryPendingBattles(){
-      return serial(async()=>{
+      const prepared=root?.document&&root.NyanCoinWallet?root.NyanCoinWallet.ensure():Promise.resolve();
+      return prepared.then(()=>serial(async()=>{
         for(const event of pendingBattles()) await recordPendingBattle(event);
         return getSnapshot();
-      });
+      }));
     }
     function refreshDailyMissions(){
       return serial(async()=>{
@@ -535,6 +572,8 @@
       });
     }
     function claimDailyReward(date,missionId){
+      if(root?.document&&root.NyanCoinWallet)return root.NyanCoinWallet.request('coin-daily-claim',{date,missionId})
+        .then(()=>getSnapshot());
       return serial(()=>progressCommand("claimDailyReward",{
         date,missionId,requestId:`daily:${date}:${missionId}`
       },base=>Progress.claim(base,{date,missionId},now())));
@@ -546,7 +585,7 @@
       updateProfileCharacter:(...args)=>serial(()=>updateProfileCharacter(...args)),
       canSpendCoins,spendCoins,addCoins,purchaseCollectionItem,
       recordDailyMissionBattle,retryPendingBattles,refreshDailyMissions,claimDailyReward,acknowledgeCpuUnlock,
-      setRemoteProvider,getSnapshot,getStatus
+      setRemoteProvider,getSnapshot,getStatus,applyCoinProfile
     };
   }
 
@@ -584,6 +623,7 @@
     setRemoteProvider:defaultStore.setRemoteProvider,
     getSnapshot:defaultStore.getSnapshot,
     getStatus:defaultStore.getStatus,
+    applyCoinProfile:defaultStore.applyCoinProfile,
     recordDailyMissionBattle:defaultStore.recordDailyMissionBattle,
     retryPendingBattles:defaultStore.retryPendingBattles,
     refreshDailyMissions:defaultStore.refreshDailyMissions,

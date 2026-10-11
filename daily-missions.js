@@ -181,6 +181,7 @@
     root.addEventListener("focus",refresh);
     root.addEventListener("online",refresh);
     root.addEventListener("nyan-ranked-profile-changed",render);
+    root.addEventListener("nyan-player-progress-changed",render);
     document.addEventListener("visibilitychange",()=>{if(!document.hidden) refresh();});
     Promise.resolve(data.ready).then(refresh).catch(()=>{});
     return {...tracker,presentResult(id){resultId=id;renderResult();},hideResult(){resultId=null;if(notice) notice.hidden=true;}};

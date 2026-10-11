@@ -14,6 +14,7 @@ const CLIENT_COIN_SKINS=Object.freeze({
   ownedDogSkins:Object.freeze(['dog_coin_01'])
 });
 import {applyCpuUnlockClaim} from './cpu-unlock-claims.mjs';
+import {migrateLegacyCoins,purchaseCoinItem,recordCoinBattle,claimCoinDaily,coinInventory,currentCoinDaily} from './coin-ledger.mjs';
 import {normalizeRanked,claimSeasonReward,masterPeriods,validateProfileFrame,rankForRp} from './ranked-progression.mjs';
 import {applyVerifiedRewardedAdCompletion,normalizeServerSkillEntitlements} from './skill-entitlements.mjs';
 import {normalizePassSubscription} from './pass-subscription.mjs';
@@ -52,7 +53,8 @@ export function initialProfile(input, playerId, now = Date.now()) {
 
 function normalizeOnlineProfile(profile,now,periods){
   const normalized=normalizeRanked(profile,now,periods,KNOWN_REWARD_SKINS);
-  return withRankedStamina({...normalized,skillEntitlements:normalizeServerSkillEntitlements(normalized.skillEntitlements),
+  return withRankedStamina({...normalized,coinDaily:normalized.coinMigration?currentCoinDaily(normalized,now):normalized.coinDaily,
+    skillEntitlements:normalizeServerSkillEntitlements(normalized.skillEntitlements),
     passSubscription:normalizePassSubscription(normalized.passSubscription),
     passSkinRewardsClaimed:normalizePassSkinRewardsClaimed(normalized.passSkinRewardsClaimed),
     passLoginProgress:normalizePassLoginProgress(normalized.passLoginProgress),
@@ -198,6 +200,36 @@ export async function profileRequest(storage, request, options={}) {
       ...(gift.granted?{passLoginGift:gift.reward}:{}),
       ...(reward?.granted?{passSkinReward:{granted:true,skinId:reward.skinId,monthKey:reward.monthKey}}:{})});
   }
+  if(path==='/coin-migration'&&request.method==='POST'){
+    try{const result=await migrateLegacyCoins({storage,profileKey:key,input:await request.json(),now});
+      return reply({profile:result.profile,inventory:coinInventory(result.profile),duplicate:result.duplicate});}
+    catch(error){const code=error?.message||'migration_failed';return reply({error:code},code==='atomic_storage_unavailable'?503:409);}
+  }
+  if(path==='/coin-purchase'&&request.method==='POST'){
+    try{const result=await purchaseCoinItem({storage,profileKey:key,input:await request.json(),now});
+      return reply({profile:result.profile,inventory:coinInventory(result.profile),duplicate:result.duplicate,price:result.price});}
+    catch(error){const code=error?.message||'purchase_failed';return reply({error:code},code==='atomic_storage_unavailable'?503:409);}
+  }
+  if(path==='/coin-battle'&&request.method==='POST'){
+    try{
+      let input=await request.json();
+      if(input?.source==='randomMatch'){
+        const match=await storage.get(`match:${input.battleId}`);
+        const seat=match?.host?.playerId===profile.playerId?'host':match?.guest?.playerId===profile.playerId?'guest':null;
+        if(match?.status!=='finished'||!seat||!['cat','police'].includes(match.roles?.[seat])||
+          !['cat','police'].includes(match.result?.winner))throw new Error('random_result_not_verified');
+        input={battleId:match.matchId,source:'randomMatch',side:match.roles[seat],
+          won:match.result.winner===match.roles[seat],completed:true,completedAt:match.result.completedAt};
+      }
+      const result=await recordCoinBattle({storage,profileKey:key,input,now});
+      return reply({profile:result.profile,inventory:coinInventory(result.profile),duplicate:result.duplicate});
+    }catch(error){const code=error?.message||'battle_failed';return reply({error:code},code==='atomic_storage_unavailable'?503:409);}
+  }
+  if(path==='/coin-daily-claim'&&request.method==='POST'){
+    try{const result=await claimCoinDaily({storage,profileKey:key,input:await request.json(),now});
+      return reply({profile:result.profile,inventory:coinInventory(result.profile),duplicate:result.duplicate,amount:result.amount||0});}
+    catch(error){const code=error?.message||'claim_failed';return reply({error:code},code==='atomic_storage_unavailable'?503:409);}
+  }
   if(path==='/gifts'&&request.method==='GET')return reply({giftBox:publicGiftBox(profile,now),passSummary:summarize(profile),
     passLoginProgress:profile.passLoginProgress});
   if(path==='/gift-claim'&&request.method==='POST'){
@@ -285,7 +317,7 @@ export async function profileRequest(storage, request, options={}) {
     // Coin cosmetics currently use the local progression ledger. Only the fixed,
     // catalog-backed coin skin IDs cross this authenticated migration boundary;
     // arbitrary IDs and achievement/rank rewards are never imported here.
-    profile = mergeClientCoinSkinOwnership(profile,input.collectionOwnership);
+    if(!profile.coinMigration)profile = mergeClientCoinSkinOwnership(profile,input.collectionOwnership);
     profile.equippedAppearance = validateAppearance(profile, input.equippedAppearance);
     // Old clients that omit the field must not erase an existing profile selection.
     if (Object.hasOwn(input, 'profileCharacter'))

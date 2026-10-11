@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v82-room-review-20261011";
+const CACHE_NAME = "nyan-chase-v83-room-review-coin-ledger-20261011";
 const PRECACHE = [
   "./release-features.js",
   "./skill-catalog.js",
@@ -17,6 +17,7 @@ const PRECACHE = [
   "./storekit-ui.js",
   "./cpu-unlock-sync.js",
   "./online-identity.js",
+  "./coin-wallet.js",
   "./online-delete-ui.js",
   "./legal-pages.js",
   "./legal.css",
