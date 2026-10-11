@@ -11,11 +11,11 @@ module.exports=async({cat,police,dismiss})=>{
  const free=async p=>{await p.locator('.online-peer-reconnect-notice:not([hidden])').waitFor();assert.equal(await p.evaluate(()=>NyanOnline.isPaused()),false);assert.equal(await p.locator('.online-reconnect-overlay').evaluate(e=>e.hidden),true);};
  await police.waitForFunction(()=>__clockEvents.length);
  const snapshot=await cat.evaluate(()=>NyanOnline.getAppearanceSnapshot());
- // Waiting cat cannot block police placement; the next cat phase waits instead.
+ // Waiting cat cannot block police placement; the next phase clock still runs.
  await disconnect(cat);await free(police);
  await police.evaluate(()=>{__onlineQA.node(14);__onlineQA.node(15);__onlineQA.node(21);});
  await police.waitForFunction(()=>NyanOnline.isPaused());
- assert.equal((await frame(police)).turnClock.pausedRemainingMs,60000);
+ assert.equal((await frame(police)).turnClock.pausedRemainingMs,undefined);
  await resume(cat);await cat.waitForFunction(()=>__onlineQA.state().phase==='catSetup');await dismiss(cat);
  // Waiting police cannot block the cat's hidden placement.
  await disconnect(police);await free(cat);await cat.evaluate(()=>__onlineQA.box(12));
@@ -37,12 +37,13 @@ module.exports=async({cat,police,dismiss})=>{
  await disconnect(cat);await free(police);await police.evaluate(()=>__onlineQA.node(20));
  await resume(cat);await cat.waitForFunction(()=>__onlineQA.state().dogs[0]===20);
  assert.equal(await cat.evaluate(()=>__onlineQA.state().dogAction[0]),true);
- // Active player's remaining time is frozen, not consumed during a 10s outage.
- await disconnect(police);await cat.waitForFunction(()=>__clockEvents.at(-1)?.turnClock.pausedRemainingMs!==undefined);
- const remaining=(await frame(cat)).turnClock.pausedRemainingMs;
- await cat.waitForTimeout(10000);assert.equal((await frame(cat)).turnClock.pausedRemainingMs,remaining);
- await resume(police);await cat.waitForFunction(()=>__clockEvents.at(-1)?.turnClock.pausedRemainingMs===undefined);
- const after=await frame(cat);assert.ok(Math.abs(Object.values(after.turnClock.deadlines)[0]-after.serverTime-remaining)<1500);
+ // Active player's deadline is unchanged across a 10s outage.
+ await disconnect(police);await cat.waitForFunction(()=>__clockEvents.at(-1)?.actorDisconnected===true);
+ const before=await frame(cat),outageDeadline=Object.values(before.turnClock.deadlines)[0];
+ await cat.waitForTimeout(10000);
+ await resume(police);await cat.waitForFunction(()=>__clockEvents.at(-1)?.actorDisconnected===false);
+ const after=await frame(cat);assert.equal(Object.values(after.turnClock.deadlines)[0],outageDeadline);
+ assert.ok(after.serverTime-before.serverTime>=9000);
  assert.equal(await police.evaluate(()=>__onlineQA.state().dogs[0]),20);
  assert.equal(await police.evaluate(()=>__onlineQA.state().dogAction[0]),true);
  assert.equal(await police.evaluate(()=>__onlineQA.state().catPos),null);

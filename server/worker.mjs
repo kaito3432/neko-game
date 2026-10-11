@@ -5,8 +5,8 @@ import {canUseOnlineSkillMode,captureMatchSkillEntitlements,resolveEffectiveSkil
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
 import { acceptRandomAction,validateAbilityUse } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
-import {disconnected,reconnected,deadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
-import {syncTurnClock,turnTimeout,actorState} from './turn-clock.mjs';
+import {disconnected,reconnected,lifecycleDeadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
+import {syncTurnClock,actorState} from './turn-clock.mjs';
 import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile} from './ranked-progression.mjs';
 import {acceptVerifiedAdMobSsv,verifyStoredRewardedAd} from './rewarded-ad-verification.mjs';
@@ -538,7 +538,7 @@ secretCat: {
   }
 
   async checkDeadline(room){
-    const result=deadlineResult(room,Date.now())||turnTimeout(room,Date.now());if(!result)return;
+    const result=lifecycleDeadlineResult(room,Date.now());if(!result)return;
     await this.completeLifecycle(room,result);
   }
   async completeLifecycle(room,result){

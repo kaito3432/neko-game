@@ -2,7 +2,7 @@
 import {hasStarted} from './match-lifecycle.mjs';
 import {publicPlayerProfiles} from './online-profile.mjs';
 import {canUseOnlineSkillMode,resolveEffectiveSkillEntitlements} from './skill-entitlements.mjs';
-import {actorState,syncTurnClock} from './turn-clock.mjs';
+import {actorState,syncTurnClock,turnTimeout} from './turn-clock.mjs';
 import {ONLINE_BOARD_RULE_ID} from './online-board-rule.mjs';
 export const GRACE_MS=15000;
 export const terminal=room=>['finished','invalid','cancelled'].includes(room.status);
@@ -37,6 +37,16 @@ export function reconnected(room,seat,now){
   syncTurnClock(room,now);
   room.status=Object.keys(room.disconnects||{}).length?'reconnecting':hasStarted(room)?'playing':'matched';
   return true;
+}
+// If an alarm is delayed, settle the first elapsed deadline rather than changing
+// the outcome merely because both deadlines have passed by the time it runs.
+export function lifecycleDeadlineResult(room,now){
+  const disconnect=deadlineResult(room,now),turn=turnTimeout(room,now);
+  if(!disconnect)return turn;
+  if(!turn)return disconnect;
+  const disconnectAt=Math.max(...Object.values(room.disconnects||{}).map(d=>d.deadline));
+  const turnAt=Math.min(...Object.values(room.turnClock?.deadlines||{}));
+  return turnAt<disconnectAt?turn:disconnect;
 }
 export function publicRecovery(room,seat){
   const role=room.roles?.[seat]||null,s=room.validationState||{};

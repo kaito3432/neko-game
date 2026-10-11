@@ -1,6 +1,7 @@
-const CACHE_NAME = "nyan-chase-v83-room-review-coin-ledger-20261011";
+const CACHE_NAME = "nyan-chase-v84-targeted-online-recovery-20261011";
 const PRECACHE = [
   "./release-features.js",
+  "./online-recovery-state.js",
   "./skill-catalog.js",
   "./api-environment.js",
   "./monetization-products.js",

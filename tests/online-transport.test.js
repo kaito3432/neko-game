@@ -5,19 +5,35 @@ async function transport({active=null,storage=new Map(),personal=null}={}){
  const events=[];
  class Socket{static OPEN=1;constructor(){this.readyState=1;this.events={};Socket.last=this;}addEventListener(k,fn){this.events[k]=fn;}close(){}send(){}emit(data){this.events.message({data:JSON.stringify(data)});}}
  const ctx={WebSocket:Socket,URL,AbortController,console,JSON,CustomEvent:class{constructor(type,init){this.type=type;this.detail=init?.detail;}},setTimeout,clearTimeout,setInterval,clearInterval,queueMicrotask:()=>{},
-  localStorage:{setItem:(key,value)=>storage.set(key,value),getItem:key=>storage.get(key)||null},dispatchEvent:e=>events.push(e),
+  localStorage:{setItem:(key,value)=>storage.set(key,value),getItem:key=>storage.get(key)||null,removeItem:key=>storage.delete(key)},dispatchEvent:e=>events.push(e),
   NyanDailyMissions:{recordOnline(){}},
   NyanOnlineAppearance:Visual,NyanOnlineIdentity:{prepare:async()=>({profile:own(),headers:{}}),
     savedHeaders:()=>({Authorization:'Bearer test'}),getAuthenticatedSkillView:()=>personal&&({
       playerId:'A',apiBase:'https://nyan-chase-online.honda19990602.workers.dev',effectiveSkillEntitlements:personal})},
   fetch:async url=>({ok:!url.endsWith('/profile'),status:url.endsWith('/profile')?401:200,
     json:async()=>active&&url.endsWith('/api/online/active')?{roomCode:active.roomCode}:active&&url.endsWith('/resume')?active:{status:'cancelled'}})};
- ctx.window=ctx;vm.runInNewContext(fs.readFileSync(require.resolve('../online.js'),'utf8'),ctx);
+ ctx.window=ctx;vm.runInNewContext(fs.readFileSync(require.resolve('../online-recovery-state.js'),'utf8'),ctx);vm.runInNewContext(fs.readFileSync(require.resolve('../online.js'),'utf8'),ctx);
  await ctx.NyanOnline.prepareIdentity();
  return {api:ctx.NyanOnline,Socket,events,storage};
 }
 const role=(matchId='m1',dog='dog_detective')=>({type:'role',matchId,matchType:'randomMatch',player:'host',role:'police',playerId:'A',participants:{host:'A',guest:'B'},profile:own(dog),
  appearanceSnapshot:{catPlayer:{playerId:'B',catSkinId:'cat_kaitou'},policePlayer:{playerId:'A',dogSkinId:dog}}});
+test('通常終了した未確認Room結果も復元し、確認後は復帰対象から外す',async()=>{
+ const active={...role(),roomCode:'123456',token:'ticket',matchType:'roomMatch',status:'finished',
+ result:{winner:'cat',finishReason:'caught',status:'finished'}};
+ const t=await transport({active});assert.equal((await t.api.activeMatch()).handled,true);
+ assert.equal(t.events.find(e=>e.type==='nyan-online-ended').detail.recoveredResult,true);
+ assert.ok(t.storage.has('nyanOnlineRecoveryV1'));
+ t.api.acknowledgeResult('m1');assert.equal(t.storage.has('nyanOnlineRecoveryV1'),false);
+ assert.equal(await t.api.activeMatch(),null);
+});
+test('存在しない、キャンセル済み、無効Roomは結果画面を出さず復帰候補を消す',async()=>{
+ for(const active of [null,{roomCode:'123456',status:'cancelled'},{roomCode:'123456',status:'invalid'}]){
+ const storage=new Map([['nyanOnlineRecoveryV1','old']]),t=await transport({active,storage});
+ assert.equal(await t.api.activeMatch(),null);assert.equal(storage.has('nyanOnlineRecoveryV1'),false);
+ assert.equal(t.events.some(e=>e.type==='nyan-online-ended'),false);
+ }
+});
 async function enter(t,id){t.api.useReservation({matchId:id,roomCode:id,token:'ticket',player:'host'});await t.api.createRoom();t.api.connect();}
 test('サーバー操作担当判定で待機側切断はロックせず、操作担当不在で停止',async()=>{
  const t=await transport();await enter(t,'m1');t.Socket.last.emit(role());

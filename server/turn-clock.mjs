@@ -14,17 +14,14 @@ export function syncTurnClock(room,now=Date.now()){
   if(!hasStarted(room)){delete room.turnClock;return;}
   const s=room.validationState;
   const phase=`${s?.phase||room.publicPhase||'dogSetup'}:${s?.turn||0}`;
-  const {currentActorSeat:seat,actorDisconnected}=actorState(room);
+  const {currentActorSeat:seat}=actorState(room);
   if(room.turnClock?.phase!==phase)room.turnClock={phase,deadlines:{[seat]:now+TURN_MS}};
   const clock=room.turnClock;
-  if(actorDisconnected){
-    if(clock.pausedRemainingMs===undefined)clock.pausedRemainingMs=Math.max(0,clock.deadlines[seat]-now);
-  }else if(clock.pausedRemainingMs!==undefined){
-    clock.deadlines[seat]=now+clock.pausedRemainingMs;delete clock.pausedRemainingMs;
-  }
+  // The absolute deadline survives disconnect/reconnect, including old paused records.
+  delete clock.pausedRemainingMs;
 }
 export function turnTimeout(room,now=Date.now()){
-  if(ended(room)||!hasStarted(room)||actorState(room).actorDisconnected)return null;
+  if(ended(room)||!hasStarted(room))return null;
   const due=Object.entries(room.turnClock?.deadlines||{}).filter(([seat,t])=>now>=t&&!(room.turnClock.phase==='ready'&&room.ready?.[seat]));
   if(!due.length)return null;
   // Simultaneous lobby timeouts are ambiguous: do not pick an arbitrary winner.

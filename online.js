@@ -25,6 +25,8 @@ window.NyanOnline = (() => {
   let leavePromise=null;
   let sessionGeneration=0;
   const finishedMatches=new Set();
+  const recoveryState=window.NyanOnlineRecoveryState;
+  function rememberRecovery(){recoveryState?.save({roomCode,matchId,matchType});}
   const connectionEvent=detail=>{if(closed&&detail.status!=='ended')return;window.dispatchEvent(new CustomEvent('nyan-online-connection',{detail}));};
   const profileEventDetail=detail=>{
     if(!detail)return null;
@@ -73,19 +75,26 @@ window.NyanOnline = (() => {
     credentialHeaders=credentialHeaders||window.NyanOnlineIdentity.savedHeaders();
     if(!credentialHeaders)return null;
     const active=await readJson(await fetch(api('/api/online/active'),{headers:credentialHeaders,signal}));
-    if(!active.roomCode)return null;
-    const value=await resumeRequest(active.roomCode,signal);
+    if(!active.roomCode){recoveryState?.clear();return null;}
+    let value;
+    try{value=await resumeRequest(active.roomCode,signal);}catch(error){
+      if([401,404,410].includes(error.status)){recoveryState?.clear();return null;}
+      throw error;
+    }
+    if(['invalid','cancelled'].includes(value.status)){recoveryState?.clear();return null;}
     if(['finished','invalid','cancelled'].includes(value.status)){
-      if(value.status==='finished'&&!['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason))return null;
-      try{if(localStorage.getItem('nyanOnlineLastResultV1')===value.matchId)return null;}catch(_){}
+      try{if(localStorage.getItem('nyanOnlineLastResultV1')===value.matchId){recoveryState?.clear();return null;}}catch(_){}
       roomCode=value.roomCode;token=value.token;player=value.player;
       role=value.role;matchId=value.matchId;matchType=value.matchType;sessionProfile=value.profile;
+      rememberRecovery();
       visualState=window.NyanOnlineAppearance.accept({...value,type:'role'},
         {myPlayerId:sessionProfile?.playerId,profile:sessionProfile,player,roomCode});
       appearanceSnapshot=visualState?.snapshot||null;
       profileEvent(visualState?value:null);
       window.dispatchEvent(new CustomEvent('nyan-online-appearance-changed'));
-      if(['disconnectForfeit','turnTimeout'].includes(value.result?.finishReason)||['invalid','cancelled'].includes(value.status))finishNotification({...value.result,status:value.status,matchId:value.matchId});
+      window.NyanRoomReview?.recovered(value.matchId);
+      finishNotification({...value.result,status:value.status,matchId:value.matchId,recoveredResult:true});
+      if(value.status!=='finished')recoveryState?.clear();
       return {...value,handled:true};
     }
     return value;
@@ -140,6 +149,7 @@ window.NyanOnline = (() => {
   function useReservation(value) {
     if (!value?.matchId || !value?.token) throw new Error('invalid_match');
     reserved = value;
+    recoveryState?.save(value);
     window.dispatchEvent(new CustomEvent('nyan-online-matched'));
   }
 
@@ -191,6 +201,7 @@ window.NyanOnline = (() => {
       roomCode = value.roomCode; token = value.token; player = value.player;
       matchType = value.matchType||'randomMatch'; matchId = value.matchId;
       ticket=value.ticket||'';resuming=Boolean(ticket);
+      rememberRecovery();
       return value;
     }
     const identityData = await identity();
@@ -208,6 +219,8 @@ window.NyanOnline = (() => {
     token = data.token;
     player = data.player || "host";
     matchId=data.matchId||null;
+
+    rememberRecovery();
 
     return {
       roomCode,
@@ -244,6 +257,7 @@ window.NyanOnline = (() => {
     token = data.token;
     player = data.player || "guest";
     matchId=data.matchId||null;
+    rememberRecovery();
     window.dispatchEvent(new CustomEvent('nyan-online-matched'));
 
     return {
@@ -337,6 +351,7 @@ socket.addEventListener("message", event => {
   if(data.type==='recovery'){
     if(closed||finishedMatches.has(data.matchId))return;
     sessionProfile=data.profile;role=data.role;matchId=data.matchId;matchType=data.matchType;
+    rememberRecovery();
     visualState=window.NyanOnlineAppearance.accept({...data,type:'role'},{myPlayerId:sessionProfile.playerId,profile:sessionProfile,player,roomCode});
     appearanceSnapshot=visualState?.snapshot||null;
     profileEvent(visualState?data:null);
@@ -354,6 +369,7 @@ socket.addEventListener("message", event => {
     window.dispatchEvent(new CustomEvent('nyan-online-matched'));
     matchType = data.matchType || 'roomMatch';
     matchId = data.matchId || null;
+    rememberRecovery();
   }
   if (data.type === 'matchFinished' && matchType === 'randomMatch' && data.matchId === matchId) {
     // Server result is durable before UI/ad presentation. Retryable local journal uses this ID.
@@ -448,9 +464,11 @@ socket.addEventListener("message", event => {
   function acknowledgeResult(){
     if(!matchId||!finishedMatches.has(matchId))return;
     try{localStorage.setItem('nyanOnlineLastResultV1',matchId);}catch(_){}
+    recoveryState?.clear();
   }
 
   function reset() {
+    recoveryState?.clear();
     profileEvent(null);
     if(matchType==='randomMatch'&&matchId&&!closed)leavePromise=matchmaking('cancel').catch(()=>{});
     disconnect();

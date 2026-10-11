@@ -7,9 +7,9 @@
 - turn-clock.mjsのactorStateが検証済みstate.phase → cat/police → seat → profile.playerIdを解決。dogSetup/dogsは警察、catSetup/catは猫。host/guest固定ではない。
 - connectionState/recoveryにcurrentActorPlayerId/currentActorSeat/currentPhase/actorDisconnectedを送る。切断記録はplayerId/at/deadline。クライアント申告の操作担当・期限を信用しない。
 - 待機側切断時は接続中の合法操作を継続。本人が切断中か操作担当不在ならgameメッセージを拒否する。ルール検証と秘密情報のallowlistは維持。
-- 操作担当不在のときだけturnClock.pausedRemainingMsを保存。復帰時はserverNow+残時間で期限を再構築。同一phase中の待機側切断/復帰は期限を変更しない。
-- 次phaseが不在者担当ならそのphaseの60秒を停止した状態で保存し、復帰後から使用する。disconnectsのdeadlineは変更せず元の15秒を使う。
-- disconnectForfeitをturnTimeoutより先に判定。待機側のみ不在なら操作担当のturnTimeoutは有効。preGame中止・双方不在の無効終了は既存仕様のまま。
+- Room / Rank（randomMatch）共通で、操作担当の接続状態に関係なくターンの絶対deadlineを維持する。復帰時も期限は延長せず、deadlineとサーバー時刻の差で残秒を表示する。
+- 次phaseが不在者担当でも開始時点から60秒を進める。disconnectsのdeadlineは元の15秒を使い、同じ切断の重複通知では延長しない。復帰成功後の新しい切断は既存どおり新しい15秒猶予だが、同一ターンの期限は動かない。
+- ターン期限と切断猶予のうち先に到来した終了条件を適用する。同時なら切断判定を維持。preGame中止は既存仕様のまま。
 
 ## クライアント
 
