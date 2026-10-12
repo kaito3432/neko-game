@@ -9907,3 +9907,28 @@ body.sneak-mode .board-shell{
 .feature-ranked-off .online-profile-frame{border:2px solid #cbb9a9!important;border-radius:50%!important;background:#fff!important;box-shadow:none!important}
 html:not(.feature-randommatch-off) [data-feature-cpu-daily],
 html:not(.feature-ranked-off) [data-feature-release-delete]{display:none!important}
+/* Tall tablet Home: size follows height, not device name or a visual transform. */
+@media (min-width:768px) and (min-height:1024px) and (max-aspect-ratio:4/5){
+  .visual-update3 .vu3-home{
+    --large-home-width:clamp(500px,calc(50dvh - 12px),720px);
+    width:min(calc(100vw - 28px),var(--large-home-width))!important;
+  }
+  .visual-update3 #modeOverlay .vu3-logo{
+    width:60%!important;
+    max-height:clamp(76px,calc(7.6dvh - 2px),110px)!important;
+  }
+  .visual-update3 .vu3-sub{font-size:clamp(21px,calc(2.1dvh - .5px),30px)!important}
+  .visual-update3 .home-collection-daily{height:clamp(44px,calc(4.4dvh - 1px),63px)!important}
+  .visual-update3 .home-collection-daily>button,
+  .visual-update3 .vu3-mini{font-size:clamp(12px,calc(1.2dvh - .3px),17px)!important}
+  .visual-update3 .vu3-mini{height:clamp(54px,calc(5.4dvh - 1px),77px)!important}
+  .visual-update3 .vu3-svg{width:clamp(27px,2.64dvh,38px)!important;height:clamp(27px,2.64dvh,38px)!important}
+  .visual-update3 #modeOverlay .vu3-home{
+    width:min(calc(100vw - 28px),var(--large-home-width))!important;
+  }
+}
+/* Expand the list area; extra columns keep individual cards near phone sizes. */
+@media (min-width:768px){
+  .collection-shell{width:clamp(500px,80vw,1080px)}
+  .collection-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v84-targeted-online-recovery-20261011";
+const CACHE_NAME = "nyan-chase-v85-responsive-home-collection-20261012";
 const PRECACHE = [
   "./release-features.js",
   "./online-recovery-state.js",
