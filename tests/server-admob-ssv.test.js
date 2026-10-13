@@ -35,3 +35,12 @@ test('改ざん署名・不一致player・不一致広告unitを拒否',async()=
   await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url,{fetchFn:signed.fetchFn,allowedAdUnitId:'other',now}),/invalid_ad_unit/);
   const wrong=await signedUrl({user_id:'P2'});await assert.rejects(()=>acceptVerifiedAdMobSsv(store,wrong.url,{fetchFn:wrong.fetchFn,now}),/reward_player_mismatch/);
 });
+
+test('iOS/Androidの許可広告unitだけSSVを受け入れる',async()=>{
+  const {verifyAdMobSsvUrl}=await modulePromise;
+  for(const ad_unit of ['unit-ios','unit-android']){
+    const signed=await signedUrl({ad_unit});
+    await verifyAdMobSsvUrl(signed.url,{fetchFn:signed.fetchFn,allowedAdUnitIds:['unit-ios','unit-android']});
+    await assert.rejects(()=>verifyAdMobSsvUrl(signed.url,{fetchFn:signed.fetchFn,allowedAdUnitIds:['foreign-unit']}),/invalid_ad_unit/);
+  }
+});

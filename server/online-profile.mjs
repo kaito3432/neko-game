@@ -350,7 +350,7 @@ export async function profileRequest(storage, request, options={}) {
   }
   if(['/storekit-transaction','/storekit-restore'].includes(path)&&request.method==='POST'){
     try{const result=await applyVerifiedStoreTransaction({storage,profileKey:key,profile,signedTransaction:(await request.json()).signedTransaction,
-      verify:signed=>options.verifyStoreTransaction?.(signed,{restore:path==='/storekit-restore'}),
+      verify:signed=>options.verifyStoreTransaction?.(signed,{restore:path==='/storekit-restore',playerId:profile.playerId}),
       restore:path==='/storekit-restore',
       setAccountToken:options.setAppleAppAccountToken});
       return reply({profile:result.profile,transaction:result.receipt,duplicate:result.duplicate});}

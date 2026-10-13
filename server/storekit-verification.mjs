@@ -1,8 +1,10 @@
 import {applyVerifiedSkillEntitlement} from './skill-entitlements.mjs';
+import {verifyAppleJwsSignature} from './store-notification-auth.mjs';
 
 export const STORE_PRODUCT_IDS=Object.freeze([
   'SKILL_CAT_FAKE_PAW','SKILL_POLICE_GROUP_SEARCH','SKILL_POLICE_DASH','SKILL_PACK_01','REMOVE_ADS','REMOVE_ADS_PLUS_SKILL_PACK_01'
 ]);
+const INITIAL_STORE_PRODUCT_IDS=STORE_PRODUCT_IDS.slice(0,4);
 const enc=value=>new TextEncoder().encode(value);
 const b64url=value=>{const bytes=value instanceof Uint8Array?value:new Uint8Array(value);let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);return btoa(binary).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');};
 const decodePart=value=>JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'==='.slice((value.length+3)%4)),c=>c.charCodeAt(0))));
@@ -10,6 +12,8 @@ export function decodeStoreKitJws(jws){const parts=String(jws||'').split('.');if
 const pemBytes=value=>Uint8Array.from(atob(String(value).replace(/-----[^-]+-----/g,'').replace(/\s/g,'')),c=>c.charCodeAt(0));
 
 export async function createAppStoreServerToken(env,now=Date.now()){
+  // Legacy names: these hold the In-App Purchase key for App Store Server API,
+  // NOT the separate App Store Connect management/API Team Key.
   if(!env.APP_STORE_CONNECT_PRIVATE_KEY||!env.APP_STORE_CONNECT_KEY_ID||!env.APP_STORE_CONNECT_ISSUER_ID)throw new Error('app_store_verifier_unavailable');
   const header=b64url(enc(JSON.stringify({alg:'ES256',kid:env.APP_STORE_CONNECT_KEY_ID,typ:'JWT'})));
   const payload=b64url(enc(JSON.stringify({iss:env.APP_STORE_CONNECT_ISSUER_ID,iat:Math.floor(now/1000),exp:Math.floor(now/1000)+300,aud:'appstoreconnect-v1',bid:env.APPLE_BUNDLE_ID||'jp.nyanchase.game'})));
@@ -18,30 +22,46 @@ export async function createAppStoreServerToken(env,now=Date.now()){
   return `${header}.${payload}.${b64url(signature)}`;
 }
 
-export async function verifyStoreKitTransaction(signedTransaction,{env={},fetchFn=fetch,now=Date.now(),restoreProof=false}={}){
-  const claim=decodeStoreKitJws(signedTransaction);
-  if(!STORE_PRODUCT_IDS.includes(claim.productId)||!/^[0-9]+$/.test(String(claim.transactionId||'')))throw new Error('invalid_store_product');
+export function applePurchaseEnvironmentAllowed(env,environment,playerId){
+  if(!env.NYAN_ENVIRONMENT)return true;
+  // This is only an environment routing gate, never proof of a purchase.
+  // Production also services verified TestFlight/App Review Sandbox receipts.
+  if(env.NYAN_ENVIRONMENT==='production')return ['Sandbox','Production'].includes(environment);
+  return env.NYAN_ENVIRONMENT==='sandbox'&&environment==='Sandbox';
+}
+
+export async function verifyStoreKitTransaction(signedTransaction,{env={},fetchFn=fetch,now=Date.now(),restoreProof=false,playerId,verifier}={}){
+  const claim=await verifyAppleJwsSignature(signedTransaction,{env,verifier});
+  if(claim.bundleId!==(env.APPLE_BUNDLE_ID||'jp.nyanchase.game'))throw new Error('apple_transaction_mismatch');
+  if(!(restoreProof?STORE_PRODUCT_IDS:INITIAL_STORE_PRODUCT_IDS).includes(claim.productId)||!/^[0-9]+$/.test(String(claim.transactionId||'')))throw new Error('invalid_store_product');
   const environment=claim.environment==='Production'?'Production':claim.environment==='Sandbox'?'Sandbox':null;
   if(!environment)throw new Error('unsupported_store_environment');
-  if(env.NYAN_ENVIRONMENT&&environment.toLowerCase()!==env.NYAN_ENVIRONMENT)
+  if(!applePurchaseEnvironmentAllowed(env,environment,playerId))
     throw new Error('store_environment_mismatch');
   const base=environment==='Production'?'https://api.storekit.apple.com':'https://api.storekit-sandbox.apple.com';
   const token=await createAppStoreServerToken(env,now),response=await fetchFn(`${base}/inApps/v1/transactions/${claim.transactionId}`,{headers:{Authorization:`Bearer ${token}`}});
   if(!response.ok)throw new Error('apple_transaction_not_verified');
   const signedFromStore=(await response.json()).signedTransactionInfo;
   if(restoreProof&&signedTransaction!==signedFromStore)throw new Error('store_restore_proof_mismatch');
-  const authoritative=decodeStoreKitJws(signedFromStore);
+  const authoritative=await verifyAppleJwsSignature(signedFromStore,{env,verifier});
   const bundleId=env.APPLE_BUNDLE_ID||'jp.nyanchase.game';
-  if(String(authoritative.transactionId)!==String(claim.transactionId)||authoritative.productId!==claim.productId||authoritative.bundleId!==bundleId||authoritative.revocationDate||authoritative.inAppOwnershipType==='FAMILY_SHARED')throw new Error('apple_transaction_mismatch');
+  if(String(authoritative.transactionId)!==String(claim.transactionId)||authoritative.productId!==claim.productId||authoritative.environment!==environment||authoritative.bundleId!==bundleId||authoritative.revocationDate||authoritative.inAppOwnershipType==='FAMILY_SHARED')throw new Error('apple_transaction_mismatch');
+  if(env.NYAN_ENVIRONMENT==='production'&&environment==='Sandbox'){
+    const account=String(playerId||'').replace(/^op_/,'').toLowerCase();
+    if(!/^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}$/.test(account)||
+        String(authoritative.appAccountToken||'').toLowerCase()!==account)
+      throw new Error('store_sandbox_account_required');
+  }
+  if(!restoreProof&&!authoritative.appAccountToken)throw new Error('store_account_token_required');
   return {transactionId:String(authoritative.transactionId),originalTransactionId:String(authoritative.originalTransactionId||authoritative.transactionId),
     productId:authoritative.productId,purchaseDate:Number(authoritative.purchaseDate)||now,environment,appAccountToken:authoritative.appAccountToken||null,signedTransaction};
 }
 
 // Rechecks an already known transaction. No notification field is authoritative.
-export async function verifyApplePurchaseLifecycle(transactionId,environment,{env={},fetchFn=fetch,now=Date.now()}={}){
+export async function verifyApplePurchaseLifecycle(transactionId,environment,{env={},fetchFn=fetch,now=Date.now(),playerId,verifier}={}){
   if(!/^[0-9]+$/.test(String(transactionId))||!['Sandbox','Production'].includes(environment))
     throw new Error('invalid_apple_transaction');
-  if(env.NYAN_ENVIRONMENT&&env.NYAN_ENVIRONMENT!==environment.toLowerCase())
+  if(!applePurchaseEnvironmentAllowed(env,environment,playerId))
     throw new Error('store_environment_mismatch');
   const base=environment==='Production'?'https://api.storekit.apple.com':'https://api.storekit-sandbox.apple.com';
   const token=await createAppStoreServerToken(env,now);
@@ -49,7 +69,7 @@ export async function verifyApplePurchaseLifecycle(transactionId,environment,{en
     {headers:{Authorization:`Bearer ${token}`}});
   if(!response.ok)throw new Error('apple_transaction_status_unavailable');
   const signed=(await response.json()).signedTransactionInfo;
-  const claim=decodeStoreKitJws(signed);
+  const claim=await verifyAppleJwsSignature(signed,{env,verifier});
   if(String(claim.transactionId)!==String(transactionId)||
       !STORE_PRODUCT_IDS.includes(claim.productId)||
       claim.environment!==environment||claim.bundleId!==(env.APPLE_BUNDLE_ID||'jp.nyanchase.game'))
@@ -96,14 +116,22 @@ export async function applyVerifiedStoreTransaction({storage,profileKey,profile,
     catch(error){if(deleted)await storage.put(marker,prior);throw error;}
   }
   const apply=async tx=>{
+    const current=await tx.get(profileKey)||profile;
+    // Older purchases predate purchaseEnvironment. Treat their rights as
+    // Production, not as an empty account eligible for Sandbox onboarding.
+    const scope=current.purchaseEnvironment||
+      (current.skillEntitlements?.purchasedProductIds?.length?'Production':null);
+    if(scope&&scope!==receipt.environment)throw new Error('store_profile_environment_conflict');
     const existing=await tx.get(marker);
+    if(existing?.environment&&existing.environment!==receipt.environment)throw new Error('store_environment_conflict');
     if(existing?.state==='pending'&&existing.pendingPlayerId!==profile.playerId)
       throw new Error('store_restore_conflict');
     if(existing&&existing.state!=='pending'){
       if(existing.playerId!==profile.playerId)throw new Error('store_transaction_already_claimed');
-      const current=await tx.get(profileKey)||profile;return {profile:current,receipt:existing,duplicate:true};
+      return {profile:current,receipt:existing,duplicate:true};
     }
-    const current=await tx.get(profileKey)||profile,next=await applyVerifiedSkillEntitlement(current,{type:'product',productId:receipt.productId},receipt,async()=>true);
+    const granted=await applyVerifiedSkillEntitlement(current,{type:'product',productId:receipt.productId},receipt,async()=>true);
+    const next={...granted,purchaseEnvironment:receipt.environment};
     const stored={playerId:profile.playerId,transactionId:receipt.transactionId,originalTransactionId:receipt.originalTransactionId,productId:receipt.productId,purchaseDate:receipt.purchaseDate,environment:receipt.environment,verification:'verified',verifiedAt:Date.now()};
     await tx.put({[profileKey]:next,[marker]:stored});return {profile:next,receipt:stored,duplicate:false};
   };

@@ -27,7 +27,7 @@ async function importVerifierKey(pem){
   return crypto.subtle.importKey('spki',pemBytes(pem),{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
 }
 
-export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERIFIER_KEYS_URL,allowedAdUnitId='',expectedRewardItem='',now=Date.now()}={}){
+export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERIFIER_KEYS_URL,allowedAdUnitId='',allowedAdUnitIds=[],expectedRewardItem='',now=Date.now()}={}){
   const url=new URL(rawUrl),query=url.search.slice(1),signatureAt=query.lastIndexOf('&signature=');
   if(signatureAt<1)throw new Error('invalid_ssv_payload');
   const signed=query.slice(0,signatureAt),tail=new URLSearchParams(query.slice(signatureAt+1));
@@ -38,6 +38,7 @@ export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERI
   const adUnit=params.get('ad_unit');
   if(!transactionId||!attemptId||!userId||!rewardAmount||!rewardItem)throw new Error('invalid_ssv_payload');
   if(allowedAdUnitId&&adUnit!==allowedAdUnitId)throw new Error('invalid_ad_unit');
+  if(allowedAdUnitIds.length&&!allowedAdUnitIds.includes(adUnit))throw new Error('invalid_ad_unit');
   if(expectedRewardItem&&rewardItem!==expectedRewardItem)throw new Error('invalid_reward_item');
   const timestamp=Number(params.get('timestamp'));
   if(Number.isFinite(timestamp)){

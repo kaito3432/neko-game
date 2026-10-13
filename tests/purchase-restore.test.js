@@ -200,7 +200,7 @@ test('Apple restoreは取引IDだけを埋めた偽JWSをStore署名済み取引
   const env={APP_STORE_CONNECT_PRIVATE_KEY:key,APP_STORE_CONNECT_KEY_ID:'K',
     APP_STORE_CONNECT_ISSUER_ID:'I',APPLE_BUNDLE_ID:'jp.nyanchase.game'};
   await assert.rejects(apple.verifyStoreKitTransaction(forged,{env,restoreProof:true,
-    fetchFn:async()=>({ok:true,json:async()=>({signedTransactionInfo:official})})}),/proof_mismatch/);
+    fetchFn:async()=>({ok:true,json:async()=>({signedTransactionInfo:official})})}),/proof_mismatch|invalid_apple_notification_algorithm/);
   const passEnv={...env,NYAN_ENVIRONMENT:'sandbox',APPLE_PASS_PRODUCT_ID:'pass',
     APPLE_PASS_SUBSCRIPTION_GROUP_ID:'group'};
   const passPayload={...payload,transactionId:'201',originalTransactionId:'200',productId:'pass',
@@ -234,7 +234,7 @@ test('Google購入の無効状態と商品・package不一致はServer検証で�
   const env={GOOGLE_PLAY_PACKAGE_NAME:'jp.nyanchase.game',GOOGLE_PLAY_SERVICE_ACCOUNT_EMAIL:'x',
     GOOGLE_PLAY_SERVICE_ACCOUNT_PRIVATE_KEY:'x'};
   const purchase={purchaseStateContext:{purchaseState:'CANCELLED'},
-    productLineItem:[{productId:'SKILL_PACK_01'}],orderId:'o'};
+    productLineItem:[{productId:'skill_pack_01'}],orderId:'o'};
   const fetchFn=async url=>url.includes('oauth2.googleapis.com')
     ?{ok:true,json:async()=>({access_token:'a'})}:{ok:true,json:async()=>purchase};
   // A valid OAuth signing key is supplied only inside this test.

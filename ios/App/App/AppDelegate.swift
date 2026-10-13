@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import GoogleMobileAds
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,7 +8,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Configure before AdMob initialization; never request ATT authorization.
+        MobileAds.shared.requestConfiguration.setPublisherFirstPartyIDEnabled(false)
+        MobileAds.shared.requestConfiguration.publisherPrivacyPersonalizationState = .disabled
         return true
     }
 

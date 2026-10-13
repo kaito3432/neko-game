@@ -2,6 +2,9 @@
   "use strict";
   if(!root?.document || !root.NyanMonetization || !root.NyanMonetizationProducts || !root.NyanSkillCatalog) return;
   const params=new URLSearchParams(root.location.search);
+  const localWeb=root.location.protocol==='file:' ||
+    (root.location.protocol==='http:'&&['localhost','127.0.0.1'].includes(root.location.hostname));
+  if(!localWeb||root.Capacitor?.isNativePlatform?.())return;
   if(params.get("monetizationDev")!=="1") return;
 
   const panel=document.getElementById("monetizationDevPanel");

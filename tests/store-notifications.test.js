@@ -16,36 +16,27 @@ const claim=(id='100')=>`e30.${b64({transactionId:id,originalTransactionId:id})}
 const now=1_800_000_000_000,id='op_11111111-1111-4111-8111-111111111111';
 const env={NYAN_ENVIRONMENT:'sandbox',APPLE_BUNDLE_ID:'jp.nyanchase.game',
   GOOGLE_PLAY_PACKAGE_NAME:'jp.nyanchase.game'};
+test('Production通知は署名だけでなくappAppleIdを照合する',async()=>{
+ const {verifyAppleSignedPayload}=await import('../server/store-notification-auth.mjs');
+ const f=require('./apple-chain-fixture.cjs').fixture(),settings={...env,NYAN_ENVIRONMENT:'production'};
+ const sign=appAppleId=>f.sign({notificationUUID:'production-app-id',notificationType:'REFUND',signedDate:now,data:{bundleId:'jp.nyanchase.game',environment:'Production',appAppleId}});
+ assert.equal((await verifyAppleSignedPayload(sign(6821995143),{env:settings,now,verifier:f.verifier})).data.appAppleId,6821995143);
+ for(const wrong of [undefined,6821995144])await assert.rejects(()=>verifyAppleSignedPayload(sign(wrong),{env:settings,now,verifier:f.verifier}),/claims/);
+});
 const profile={playerId:id,skillEntitlements:{purchasedProductIds:['SKILL_CAT_FAKE_PAW']}};
 async function setup(marker='storekit:100',productId='SKILL_CAT_FAKE_PAW'){
   const db=new Store();await db.put(`profile-key:${id}`,'profile');await db.put('profile',profile);
   await db.put(marker,{playerId:id,productId,periodIds:[]});return db;
 }
-test('Apple V2 ES256 signature verifies pinned key and forged payload fails',async()=>{
-  const auth=await import('../server/store-notification-auth.mjs');
-  const pair=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
-  const pin=Buffer.from(await crypto.subtle.exportKey('spki',pair.publicKey)).toString('base64url');
-  const payload={notificationUUID:'u1',notificationType:'REFUND',signedDate:now,
-    data:{bundleId:'jp.nyanchase.game',environment:'Sandbox',signedTransactionInfo:claim()}};
-  const head=b64({alg:'ES256'}),body=b64(payload),input=`${head}.${body}`;
-  const sig=Buffer.from(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},pair.privateKey,
-    Buffer.from(input))).toString('base64url');
-  const signed=`${input}.${sig}`,settings={...env,APPLE_NOTIFICATION_PUBLIC_KEY_SPKI:pin};
-  assert.equal((await auth.verifyAppleSignedPayload(signed,{env:settings,now})).notificationUUID,'u1');
-  await assert.rejects(auth.verifyAppleSignedPayload(`${head}.${b64({...payload,notificationType:'DID_RENEW'})}.${sig}`,
-    {env:settings,now}),/signature/);
-  await assert.rejects(auth.verifyAppleSignedPayload(signed,{env,now}),/unavailable/);
-  const rotatingHead=b64({alg:'ES256',kid:'apple-key-new'}),rotatingInput=
-    `${rotatingHead}.${body}`;
-  const rotatingSig=Buffer.from(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},
-    pair.privateKey,Buffer.from(rotatingInput))).toString('base64url');
-  const rotatingEnv={...env,APPLE_NOTIFICATION_PUBLIC_KEYS:JSON.stringify({
-    'apple-key-old':pin,'apple-key-new':pin})};
-  assert.equal((await auth.verifyAppleSignedPayload(`${rotatingInput}.${rotatingSig}`,
-    {env:rotatingEnv,now})).notificationUUID,'u1');
-  await assert.rejects(auth.verifyAppleSignedPayload(`${rotatingInput}.${rotatingSig}`,
-    {env:{...env,APPLE_NOTIFICATION_PUBLIC_KEYS:JSON.stringify({'apple-key-old':pin})},now}),
-    /key_unknown/);
+test('Apple V2 verifies certificate chain and rejects forged payload and untrusted root',async()=>{
+ const auth=await import('../server/store-notification-auth.mjs'),f=require('./apple-chain-fixture.cjs').fixture({environment:'Sandbox'});
+ const payload={notificationUUID:'u1',notificationType:'REFUND',signedDate:now,
+ data:{bundleId:'jp.nyanchase.game',environment:'Sandbox',signedTransactionInfo:f.sign(f.claim)}};
+ const signed=f.sign(payload),options={env,now,verifier:f.verifier};
+ assert.equal((await auth.verifyAppleSignedPayload(signed,options)).notificationUUID,'u1');
+ const parts=signed.split('.');parts[1]=b64({...payload,notificationType:'REVOKE'});
+ await assert.rejects(auth.verifyAppleSignedPayload(parts.join('.'),options),/signature/);
+ await assert.rejects(auth.verifyAppleSignedPayload(signed,{env,now}),/signature/);
 });
 test('Apple refund, duplicate and verified REFUND_REVERSED reconcile one purchase',async()=>{
   const {processAppleNotification}=await import('../server/store-notifications.mjs'),db=await setup();

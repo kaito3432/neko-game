@@ -2,3 +2,15 @@ node_modules/
 www/
 .DS_Store
 artifacts/
+*.p8
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+android/keystore.properties
+.wrangler/

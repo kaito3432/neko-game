@@ -1,13 +1,14 @@
 (function(factory){const api=factory(typeof globalThis!=='undefined'?globalThis:this);if(typeof module==='object'&&module.exports)module.exports=api;else globalThis.NyanStoreKit=api;})(function(root){
   'use strict';
   const IDS=Object.freeze(['SKILL_CAT_FAKE_PAW','SKILL_POLICE_GROUP_SEARCH','SKILL_POLICE_DASH','SKILL_PACK_01','REMOVE_ADS','REMOVE_ADS_PLUS_SKILL_PACK_01']);
+  const Mapping=typeof module==='object'&&module.exports?require('./store-product-ids.js'):root.NyanStoreProductIds;
   function nativePlugin(scope=root){const cap=scope?.Capacitor;if(!cap||cap.getPlatform?.()!=='ios')return null;return cap.Plugins?.NyanStoreKit||cap.registerPlugin?.('NyanStoreKit')||null;}
   function createProvider({plugin=nativePlugin(),api=null,onState=()=>{}}={}){
     let busy=false,products=[];const emit=(state,detail={})=>onState({state,...detail});
-    async function loadProducts(){if(!plugin){emit('error',{reason:'unsupportedPlatform'});return {products:[],reason:'unsupportedPlatform'};}emit('loading');try{const value=await plugin.loadProducts({productIds:IDS});products=(value.products||[]).filter(p=>IDS.includes(p.productId));emit('available',{products});return {products};}catch(error){emit('error',{error});return {products:[],error};}}
+    async function loadProducts(){if(!plugin){emit('error',{reason:'unsupportedPlatform'});return {products:[],reason:'unsupportedPlatform'};}emit('loading');try{const value=await plugin.loadProducts({productIds:Mapping.initial});products=(value.products||[]).filter(p=>Mapping.initial.includes(p.productId));emit('available',{products});if(plugin.unfinishedTransactions){try{const pending=await plugin.unfinishedTransactions();if(pending.transactions?.length)await api.identity();for(const transaction of pending.transactions||[])if(IDS.includes(transaction.productId))await submit(transaction);}catch(error){emit('error',{reason:'unfinishedVerificationFailed',error});}}return {products};}catch(error){emit('error',{error});return {products:[],error};}}
     async function submit(transaction,restore=false){const result=await api.verifyTransaction(transaction.signedTransaction,{restore});await plugin.finishTransaction({transactionId:transaction.transactionId});return result;}
     async function purchaseProduct(productId){
-      if(!IDS.includes(productId))return {purchased:false,reason:'unknownProduct'};if(busy)return {purchased:false,reason:'busy'};if(!plugin||!api)return {purchased:false,reason:'unavailable'};
+      if(!Mapping.initial.includes(productId))return {purchased:false,reason:'unknownProduct'};if(busy)return {purchased:false,reason:'busy'};if(!plugin||!api)return {purchased:false,reason:'unavailable'};
       busy=true;emit('purchasing',{productId});try{const identity=await api.identity(),result=await plugin.purchase({productId,appAccountToken:String(identity.playerId||'').replace(/^op_/,'')});
         if(result.status==='cancelled'){emit('available',{cancelled:true});return {purchased:false,reason:'cancelled'};}if(result.status==='pending'){emit('pending',{productId});return {purchased:false,pending:true};}
         const verified=await submit(result.transaction);emit('purchased',{productId,verified});return {purchased:true,productId,...verified};

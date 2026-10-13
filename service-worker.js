@@ -1,10 +1,11 @@
-const CACHE_NAME = "nyan-chase-v85-responsive-home-collection-20261012";
+const CACHE_NAME = "nyan-chase-v86-review-preparation-20261013";
 const PRECACHE = [
   "./release-features.js",
   "./online-recovery-state.js",
   "./skill-catalog.js",
   "./api-environment.js",
   "./monetization-products.js",
+  "./store-product-ids.js",
   "./monetization.js",
   "./monetization-ui.js",
   "./ad-config.js",

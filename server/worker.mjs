@@ -22,6 +22,7 @@ import {processAppleNotification,processGoogleNotification,scanGoogleVoidedPurch
 import {reconcileVerifiedPurchase,shouldReverify} from './purchase-lifecycle.mjs';
 import {cleanupProfileDeletionReceipts} from './profile-deletion.mjs';
 import {adminProfileDeletionRequest} from './admin-profile-deletion.mjs';
+import {profileDeletionCors} from './profile-deletion-cors.mjs';
 const E=ONLINE_ENGINE;
 
 const RANK_REWARD_SKINS=Object.freeze({cat_kaitou:'catSkin',dog_detective:'dogSkin',cat_master_s01_king:'catSkin'});
@@ -81,8 +82,8 @@ export class OnlinePlayers extends DurableObject {
         const response=await verifier.fetch('https://reward-verifier/verify',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(claim)});
         if(!response.ok)return false;
         return (await response.json()).verified===true;
-      },verifyStoreTransaction:(signedTransaction,{restore=false}={})=>verifyStoreKitTransaction(
-        signedTransaction,{env:this.env,restoreProof:restore}),
+      },verifyStoreTransaction:(signedTransaction,{restore=false,playerId}={})=>verifyStoreKitTransaction(
+        signedTransaction,{env:this.env,restoreProof:restore,playerId}),
       setAppleAppAccountToken:(receipt,playerId)=>setAppleAppAccountToken(receipt,playerId,{env:this.env}),
       verifyGooglePlayPurchase:purchase=>verifyGooglePlayPurchase(purchase,{env:this.env}),
       acknowledgeGooglePlayPurchase:receipt=>acknowledgeGooglePlayPurchase(receipt)};
@@ -136,9 +137,10 @@ export class OnlinePlayers extends DurableObject {
             checkActiveRoom:this.profileOptions().checkActiveRoom,
             googlePassProductId:this.profileOptions().googleProductId});
         if(path==='/internal/admob-ssv'){
-          if(!this.env.ADMOB_REWARDED_AD_UNIT_ID||!this.env.ADMOB_SKILL_MODE_REWARD_ITEM)throw new Error('admob_ssv_not_configured');
+          const allowedAdUnitIds=String(this.env.ADMOB_REWARDED_AD_UNIT_IDS||this.env.ADMOB_REWARDED_AD_UNIT_ID||'').split(',').map(id=>id.trim()).filter(Boolean);
+          if(!allowedAdUnitIds.length||!this.env.ADMOB_SKILL_MODE_REWARD_ITEM)throw new Error('admob_ssv_not_configured');
           const {url}=await request.json();
-          const result=await acceptVerifiedAdMobSsv(this.ctx.storage,url,{allowedAdUnitId:this.env.ADMOB_REWARDED_AD_UNIT_ID,expectedRewardItem:this.env.ADMOB_SKILL_MODE_REWARD_ITEM});
+          const result=await acceptVerifiedAdMobSsv(this.ctx.storage,url,{allowedAdUnitIds,expectedRewardItem:this.env.ADMOB_SKILL_MODE_REWARD_ITEM});
           return Response.json(result);
         }
         if(path==='/internal/active'){
@@ -1602,6 +1604,12 @@ export default {
     if(url.pathname.startsWith('/api/admin/'))
       return Response.json({error:'not_found'},{status:404});
 
+    const deletion=await profileDeletionCors(request,async source=>{
+      const stub=env.ONLINE_PLAYERS.get(env.ONLINE_PLAYERS.idFromName('profiles-v1'));
+      return stub.fetch(new Request('https://players/profile',{
+        method:'DELETE',headers:source.headers,body:await source.text()}));
+    });
+    if(deletion)return deletion;
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,

@@ -12,6 +12,7 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "currentEntitlements", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "unfinishedTransactions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "finishTransaction", returnType: CAPPluginReturnPromise)
     ]
     private var updatesTask: Task<Void, Never>?
@@ -26,6 +27,18 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     deinit { updatesTask?.cancel() }
+
+    @objc func unfinishedTransactions(_ call: CAPPluginCall) {
+        Task {
+            var transactions: [[String: Any]] = []
+            for await result in Transaction.unfinished {
+                if case .verified(let transaction) = result {
+                    transactions.append(transactionPayload(result, transaction: transaction))
+                }
+            }
+            call.resolve(["transactions": transactions])
+        }
+    }
 
     @objc func loadProducts(_ call: CAPPluginCall) {
         let ids = call.getArray("productIds", String.self) ?? []

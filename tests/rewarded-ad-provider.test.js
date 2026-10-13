@@ -19,6 +19,7 @@ test('広告ロード成功・reward callback・サーバー確認成功',async(
   const f=fixture(),result=await f.provider.showRewardedAd();
   assert.equal(result.rewarded,true);assert.equal(result.verified,true);assert.equal(f.getCompletions(),1);
   assert.equal(f.calls.find(value=>value[0]==='prepare')[1].ssv.customData,'ra_attempt_1');
+  assert.equal(f.calls.find(value=>value[0]==='prepare')[1].npa,true);
 });
 
 test('ロード失敗は加算せず利用不可',async()=>{

@@ -33,7 +33,10 @@
           const consent=await consentManager.ensure(plugin);
           if(!consent.canRequestAds){emit(STATES.UNAVAILABLE,{reason:'consentUnavailable',consent});return {available:false,reason:'consentUnavailable'};}
         }
-        await plugin.initialize({initializeForTesting:testing});
+        await plugin.initialize({initializeForTesting:testing,
+          ...(typeof config.tagForChildDirectedTreatment==='boolean'?{tagForChildDirectedTreatment:config.tagForChildDirectedTreatment}:{}),
+          ...(typeof config.tagForUnderAgeOfConsent==='boolean'?{tagForUnderAgeOfConsent:config.tagForUnderAgeOfConsent}:{}),
+          ...(config.maxAdContentRating?{maxAdContentRating:config.maxAdContentRating}:{})});
         initialized=true;emit(STATES.AVAILABLE);return {available:true};
       }
       catch(error){emit(STATES.UNAVAILABLE,{reason:'initializeFailed',error});return {available:false,error};}
@@ -50,7 +53,7 @@
         const listen=async(name,fn)=>{if(plugin.addListener)handles.push(await plugin.addListener(name,fn));};
         await listen('onRewardedVideoAdReward',()=>{rewarded=true;});
         await listen('onRewardedVideoAdDismissed',()=>{dismissed=true;});
-        await plugin.prepareRewardVideoAd({adId,isTesting:testing,ssv:{userId:attempt.playerId,customData:attempt.attemptId}});
+        await plugin.prepareRewardVideoAd({adId,isTesting:testing,npa:true,ssv:{userId:attempt.playerId,customData:attempt.attemptId}});
         emit(STATES.AVAILABLE);emit(STATES.VIEWING);
         await plugin.showRewardVideoAd();
         if(!rewarded)return {shown:true,rewarded:false,reason:dismissed?'cancelled':'rewardCallbackMissing'};
@@ -91,7 +94,7 @@
     };
   }
   const nativePlatform=root.Capacitor?.getPlatform?.()||'web';
-  const config={testing:root.NYAN_AD_CONFIG?.testing!==false,platform:nativePlatform,rewardedAdUnitId:root.NYAN_AD_CONFIG?.rewardedAdUnitIds?.[nativePlatform]||''};
+  const config={...root.NYAN_AD_CONFIG,testing:root.NYAN_AD_CONFIG?.testing!==false,platform:nativePlatform,rewardedAdUnitId:root.NYAN_AD_CONFIG?.rewardedAdUnitIds?.[nativePlatform]||''};
   const provider=createProvider({config,api:browserApi(),
     onState:detail=>root.dispatchEvent?.(new root.CustomEvent('nyan-rewarded-ad-state',{detail}))});
   return Object.freeze({REWARD_TYPE,STAMINA_REWARD_TYPE,DAILY_REWARD_TYPE,IOS_TEST_REWARDED_ID,ANDROID_TEST_REWARDED_ID,STATES,createProvider,nativePlugin,provider});

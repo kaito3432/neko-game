@@ -18,8 +18,20 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (System.getenv('NYAN_UPLOAD_KEYSTORE')) {
+                storeFile file(System.getenv('NYAN_UPLOAD_KEYSTORE'))
+                storePassword System.getenv('NYAN_UPLOAD_STORE_PASSWORD')
+                keyAlias System.getenv('NYAN_UPLOAD_KEY_ALIAS')
+                keyPassword System.getenv('NYAN_UPLOAD_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig signingConfigs.release
+            manifestPlaceholders = [admobAppId: project.findProperty('NYAN_ADMOB_APP_ID') ?: '']
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -45,9 +57,37 @@ dependencies {
     // Phase 8: one-time non-consumable products. Keep the version explicit.
     implementation "com.android.billingclient:billing:9.1.0"
     implementation "com.google.android.play:review:2.0.2"
+    // App-level privacy configuration uses the same SDK version as the AdMob plugin.
+    implementation "com.google.android.gms:play-services-ads:${rootProject.ext.has('playServicesAdsVersion') ? rootProject.ext.playServicesAdsVersion : '25.4.+'}"
 }
 
 apply from: 'capacitor.build.gradle'
+
+// Never accidentally submit sample advertising configuration or stale Web code.
+tasks.register('validateNyanRelease') {
+    doLast {
+        for (key in ['NYAN_UPLOAD_KEYSTORE','NYAN_UPLOAD_STORE_PASSWORD','NYAN_UPLOAD_KEY_ALIAS','NYAN_UPLOAD_KEY_PASSWORD']) {
+            if (!System.getenv(key)) throw new GradleException("Missing Release signing setting: ${key}")
+        }
+        def appId = project.findProperty('NYAN_ADMOB_APP_ID')?.toString()
+        def adConfig = file('src/main/assets/public/ad-config.js')
+        if (!appId || appId.contains('3940256099942544') || !adConfig.exists() ||
+            !adConfig.text.contains('"testing":false') || adConfig.text.contains('3940256099942544')) {
+            throw new GradleException('Prepare production Web assets and supply the real -PNYAN_ADMOB_APP_ID before Release.')
+        }
+        def rootWeb = rootProject.projectDir.parentFile
+        def nodeBinary = System.getenv('NYAN_NODE_BINARY') ?: 'node'
+        def integrity = new ProcessBuilder(nodeBinary, new File(rootWeb,'scripts/validate-generated-web.cjs').path,
+            file('src/main/assets/public').path).inheritIO().start()
+        if (integrity.waitFor() != 0) throw new GradleException('Release Web integrity validation failed.')
+        rootWeb.listFiles().findAll { it.name ==~ /.*\.(js|css)/ && !(it.name in ['ad-config.js','api-environment.sandbox.js']) }.each { source ->
+            def bundled = file("src/main/assets/public/${source.name}")
+            if (!bundled.exists() || !java.util.Arrays.equals(source.bytes,bundled.bytes))
+                throw new GradleException("Stale Web asset ${source.name}; copy Android again.")
+        }
+    }
+}
+tasks.configureEach { if (name == 'preReleaseBuild') dependsOn('validateNyanRelease') }
 
 try {
     def servicesJSON = file('google-services.json')

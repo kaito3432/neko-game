@@ -1,44 +1,31 @@
-const decode=value=>Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+
-  '='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));
-const json=value=>JSON.parse(new TextDecoder().decode(decode(value)));
-
-// Pin trusted Apple notification keys through a secret. Multiple keys allow
-// old/new overlap during rotation without changing the Worker bundle.
-export async function verifyAppleSignedPayload(signedPayload,{env={},now=Date.now()}={}){
+import {verifyAppleData} from './apple-signed-data.mjs';
+export async function verifyAppleSignedPayload(signedPayload,{env={},now=Date.now(),verifier}={}){
   if(!['sandbox','production'].includes(env.NYAN_ENVIRONMENT))
     throw new Error('apple_notification_environment_unavailable');
-  const parts=String(signedPayload||'').split('.');
-  if(parts.length!==3||parts.some(part=>!part))throw new Error('invalid_apple_notification');
-  const header=json(parts[0]);
-  if(header.alg!=='ES256')throw new Error('invalid_apple_notification_algorithm');
-  let pins={};
-  if(!env.APPLE_NOTIFICATION_PUBLIC_KEYS&&!env.APPLE_NOTIFICATION_PUBLIC_KEY_SPKI)
-    throw new Error('apple_notification_verifier_unavailable');
-  if(env.APPLE_NOTIFICATION_PUBLIC_KEYS){
-    try{pins=JSON.parse(env.APPLE_NOTIFICATION_PUBLIC_KEYS);}catch(_){throw new Error('apple_notification_keys_invalid');}
-    if(!pins||typeof pins!=='object'||Array.isArray(pins))
-      throw new Error('apple_notification_keys_invalid');
-  }
-  let keyId=typeof header.kid==='string'?header.kid:null;
-  if(!keyId&&Array.isArray(header.x5c)&&typeof header.x5c[0]==='string'){
-    const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',
-      Uint8Array.from(atob(header.x5c[0]),c=>c.charCodeAt(0))));
-    keyId=[...digest].map(byte=>byte.toString(16).padStart(2,'0')).join('');
-  }
-  const pin=keyId?pins[keyId]:env.APPLE_NOTIFICATION_PUBLIC_KEY_SPKI;
-  if(!pin||typeof pin!=='string')throw new Error('apple_notification_key_unknown');
-  const key=await crypto.subtle.importKey('spki',decode(pin),
-    {name:'ECDSA',namedCurve:'P-256'},false,['verify']);
-  const valid=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},key,
-    decode(parts[2]),new TextEncoder().encode(`${parts[0]}.${parts[1]}`));
-  if(!valid)throw new Error('invalid_apple_notification_signature');
-  const payload=json(parts[1]);
-  if(typeof payload.notificationUUID!=='string'||payload.notificationUUID.length>100||
+  const payload=await verifyAppleData(signedPayload,{env,kind:'notification',verifier});
+  if(typeof payload.notificationUUID!=='string'||!payload.notificationUUID.length||payload.notificationUUID.length>100||
+      typeof payload.notificationType!=='string'||
       !Number.isSafeInteger(payload.signedDate)||Math.abs(now-payload.signedDate)>7*86400000||
       payload.data?.bundleId!==(env.APPLE_BUNDLE_ID||'jp.nyanchase.game')||
-      payload.data?.environment!==(env.NYAN_ENVIRONMENT==='production'?'Production':'Sandbox'))
+      (payload.data?.environment==='Production'&&
+        payload.data?.appAppleId!==Number(env.APPLE_APP_ID||'6821995143'))||
+      !(payload.data?.environment===(env.NYAN_ENVIRONMENT==='production'?'Production':'Sandbox')||
+        env.NYAN_ENVIRONMENT==='production'&&payload.data?.environment==='Sandbox'))
     throw new Error('invalid_apple_notification_claims');
+  if(payload.data.signedTransactionInfo){
+    const transaction=await verifyAppleData(payload.data.signedTransactionInfo,{env,verifier});
+    if(transaction.environment!==payload.data.environment)throw new Error('store_environment_mismatch');
+  }
+  if(payload.data.signedRenewalInfo){
+    const renewal=await verifyAppleData(payload.data.signedRenewalInfo,{env,kind:'renewal',verifier});
+    if(renewal.environment!==payload.data.environment)throw new Error('store_environment_mismatch');
+  }
   return payload;
+}
+
+// Transactions and notifications share Apple's certificate-chain verifier.
+export async function verifyAppleJwsSignature(signedPayload,options={}){
+  return verifyAppleData(signedPayload,options);
 }
 
 // Google's tokeninfo endpoint validates the OIDC token signature. Its signed

@@ -42,9 +42,15 @@ export async function processAppleNotification({storage,payload,env={},now=Date.
     const oneTimeKey=`storekit:${claim.transactionId}`;
     const passKey=`pass-original:${environment.toLowerCase()}:${claim.originalTransactionId||claim.transactionId}`;
     const markerKey=await storage.get(oneTimeKey)?oneTimeKey:passKey;
-    if(!await storage.get(markerKey))return {ignored:true,reason:'unknown_purchase'};
+    const known=await storage.get(markerKey);
+    if(!known)return {ignored:true,reason:'unknown_purchase'};
+    if(known.environment&&String(known.environment).toLowerCase()!==environment.toLowerCase())
+      throw new Error('apple_notification_environment_mismatch');
+    if(env.NYAN_ENVIRONMENT==='production'&&environment==='Sandbox'&&!known.environment)
+      throw new Error('apple_notification_environment_mismatch');
     const verify=markerKey===oneTimeKey?async()=>{
-      const state=await verifyOneTime(String(claim.transactionId),environment,{env,now});
+      const record=await storage.get(markerKey);
+      const state=await verifyOneTime(String(claim.transactionId),environment,{env,now,playerId:record.playerId});
       return {...state,allowReactivation:type==='REFUND_REVERSED'&&state.status==='active'};
     }:async()=>{
       const receipt=await verifyPass({originalTransactionId:String(claim.originalTransactionId||claim.transactionId),env,now});

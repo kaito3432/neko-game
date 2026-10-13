@@ -3,6 +3,8 @@
   "name": "nyan-chase-online-sandbox",
   "main": "worker.mjs",
   "compatibility_date": "2026-08-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "alias": {"node-fetch": "./apple-node-fetch.mjs"},
   "triggers": {"crons": ["0 * * * *"]},
   "workers_dev": true,
   "vars": {

@@ -1,4 +1,5 @@
 import {STORE_PRODUCT_IDS} from './storekit-verification.mjs';
+import StoreIds from '../store-product-ids.js';
 import {applyVerifiedSkillEntitlement} from './skill-entitlements.mjs';
 
 const enc=value=>new TextEncoder().encode(value);
@@ -23,7 +24,7 @@ export async function verifyGooglePlayPurchase({purchaseToken,productId},{env={}
   const response=await fetchFn(`${base}/purchases/productsv2/tokens/${encodeURIComponent(purchaseToken)}`,{headers:{Authorization:`Bearer ${accessToken}`}});
   if(!response.ok)throw new Error('google_play_purchase_not_verified');const purchase=await response.json();
   const ids=(purchase.productLineItem||[]).map(item=>item.productId);
-  if(purchase.purchaseStateContext?.purchaseState!=='PURCHASED'||!ids.includes(productId))throw new Error('google_play_purchase_mismatch');
+  if(purchase.purchaseStateContext?.purchaseState!=='PURCHASED'||!ids.includes(StoreIds.toStore('android',productId)))throw new Error('google_play_purchase_mismatch');
   return {purchaseToken,productId,orderId:purchase.orderId||null,purchaseDate:Date.parse(purchase.purchaseCompletionTime)||now,
     acknowledgementState:purchase.acknowledgementState||null,obfuscatedExternalAccountId:purchase.obfuscatedExternalAccountId||null,packageName,accessToken};
 }
@@ -37,7 +38,7 @@ export async function verifyGooglePurchaseLifecycle({purchaseToken,productId},{e
   const response=await fetchFn(url,{headers:{Authorization:`Bearer ${accessToken}`}});
   if(!response.ok)throw new Error('google_purchase_status_unavailable');
   const purchase=await response.json();
-  if(!(purchase.productLineItem||[]).some(item=>item.productId===productId))
+  if(!(purchase.productLineItem||[]).some(item=>item.productId===StoreIds.toStore('android',productId)))
     throw new Error('google_purchase_product_mismatch');
   const state=purchase.purchaseStateContext?.purchaseState;
   if(!['PURCHASED','CANCELLED'].includes(state))throw new Error('google_purchase_state_unknown');
@@ -83,7 +84,9 @@ export async function applyVerifiedGooglePlayPurchase({storage,profileKey,profil
       const {purchaseToken:legacyToken,...safe}=existing;
       if(legacyToken)await tx.put(marker,safe);
       return {profile:await tx.get(profileKey)||profile,receipt:safe,duplicate:true};}
-    const current=await tx.get(profileKey)||profile,next=await applyVerifiedSkillEntitlement(current,{type:'product',productId},receipt,async()=>true);
+    const current=await tx.get(profileKey)||profile;
+    if(current.purchaseEnvironment==='Sandbox')throw new Error('store_profile_environment_conflict');
+    const next=await applyVerifiedSkillEntitlement(current,{type:'product',productId},receipt,async()=>true);
     const stored={playerId:profile.playerId,store:'google_play',productId,orderId:receipt.orderId,
       purchaseDate:receipt.purchaseDate,verification:'verified',verifiedAt:Date.now()};
     await tx.put({[profileKey]:next,[marker]:stored});return {profile:next,receipt:stored,duplicate:false};};
@@ -97,6 +100,6 @@ export async function applyVerifiedGooglePlayPurchase({storage,profileKey,profil
 export async function acknowledgeGooglePlayPurchase(receipt,{fetchFn=fetch}={}){
   if(receipt.acknowledgementState==='ACKNOWLEDGED')return true;
   const base=`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(receipt.packageName)}`;
-  const response=await fetchFn(`${base}/purchases/products/${encodeURIComponent(receipt.productId)}/tokens/${encodeURIComponent(receipt.purchaseToken)}:acknowledge`,{method:'POST',headers:{Authorization:`Bearer ${receipt.accessToken}`,'content-type':'application/json'},body:'{}'});
+  const response=await fetchFn(`${base}/purchases/products/${encodeURIComponent(StoreIds.toStore('android',receipt.productId))}/tokens/${encodeURIComponent(receipt.purchaseToken)}:acknowledge`,{method:'POST',headers:{Authorization:`Bearer ${receipt.accessToken}`,'content-type':'application/json'},body:'{}'});
   if(!response.ok)throw new Error('google_play_acknowledge_failed');return true;
 }
