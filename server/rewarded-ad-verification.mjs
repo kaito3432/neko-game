@@ -3,6 +3,7 @@ import {REWARDED_AD_REWARD_TYPES} from './skill-entitlements.mjs';
 export const ADMOB_VERIFIER_KEYS_URL='https://www.gstatic.com/admob/reward/verifier-keys.json';
 export const ADMOB_SSV_VERIFICATION_DATA='admob_ssv_verification';
 export const ADMOB_SSV_VERIFICATION_USER='admob_ssv_verification';
+export const ADMOB_SSV_VERIFICATION_AD_UNIT='1234567890';
 const ATTEMPT_TTL_MS=30*60*1000;
 
 const b64=value=>{let normalized=String(value).replace(/\s/g,'+').replace(/-/g,'+').replace(/_/g,'/');while(normalized.length%4)normalized+='=';return Uint8Array.from(atob(normalized),char=>char.charCodeAt(0));};
@@ -39,8 +40,16 @@ export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERI
   const userId=params.get('user_id'),rewardAmount=params.get('reward_amount'),rewardItem=params.get('reward_item');
   const adUnit=params.get('ad_unit');
   if(!transactionId||!attemptId||!userId||!rewardAmount||!rewardItem)throw new Error('invalid_ssv_payload');
-  if(allowedAdUnitId&&adUnit!==allowedAdUnitId)throw new Error('invalid_ad_unit');
-  if(allowedAdUnitIds.length&&!allowedAdUnitIds.includes(adUnit))throw new Error('invalid_ad_unit');
+  // Console's fixed test unit is isolated from the real reward allowlist.
+  // This only selects validation; Google signature verification still follows.
+  const consoleVerification=attemptId===ADMOB_SSV_VERIFICATION_DATA&&userId===ADMOB_SSV_VERIFICATION_USER&&adUnit===ADMOB_SSV_VERIFICATION_AD_UNIT;
+  if(consoleVerification){
+    if(rewardItem!=='skill_mode_unlock'||expectedRewardItem!=='skill_mode_unlock')throw new Error('invalid_reward_item');
+    if(rewardAmount!=='1')throw new Error('invalid_reward_amount');
+  }else{
+    if(allowedAdUnitId&&adUnit!==allowedAdUnitId)throw new Error('invalid_ad_unit');
+    if(allowedAdUnitIds.length&&!allowedAdUnitIds.includes(adUnit))throw new Error('invalid_ad_unit');
+  }
   if(expectedRewardItem&&rewardItem!==expectedRewardItem)throw new Error('invalid_reward_item');
   if(rewardAmount!==String(expectedRewardAmount))throw new Error('invalid_reward_amount');
   if(!/^\d+$/.test(params.get('timestamp')||''))throw new Error('invalid_ssv_timestamp');

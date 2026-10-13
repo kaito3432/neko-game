@@ -67,6 +67,7 @@ Apple署名証明からTestFlight/App Review担当者そのものは識別でき
 ### AdMob SSV Console URL verification
 
 - ConsoleのUser IDとCustom dataには、どちらも `admob_ssv_verification` を完全一致で入力する。
+- Console確認の固定 `ad_unit=1234567890` は上記identity一致時だけ別枠で許可する。通常SSVの実広告allowlistには追加しない。Google署名・公開鍵・timestamp・transaction ID・正式報酬の検証は必須。一時診断ログ・診断flagは正式versionから除去する。
 - 通常広告・確認用ともreward amountは `1`、reward itemは `skill_mode_unlock`。iOS/Androidで共通利用する。
 - Google公開鍵・ECDSA署名、許可広告unit、報酬item/amount、transaction ID、timestampを検証した場合のみ確認用リクエストを200で受理する。署名対象queryは並べ替え・再エンコードしない。
 - 確認用は署名検証後に即returnし、attempt照合・storage read/write・報酬receipt・プロフィール・コイン・スキル進捗に一切触れない。通常のserver-issued attemptとtransaction冪等処理は維持する。

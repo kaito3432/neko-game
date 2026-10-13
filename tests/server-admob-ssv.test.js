@@ -78,3 +78,44 @@ test('iOS/Androidの許可広告unitだけSSVを受け入れる',async()=>{
     await assert.rejects(()=>verifyAdMobSsvUrl(signed.url,{fetchFn:signed.fetchFn,allowedAdUnitIds:['foreign-unit']}),/invalid_ad_unit/);
   }
 });
+
+test('Production SSV does not emit diagnostic identifiers',async()=>{
+  const {verifyAdMobSsvUrl}=await modulePromise,signed=await signedUrl();
+  let called=false;
+  await verifyAdMobSsvUrl(signed.url,{fetchFn:signed.fetchFn,onDiagnostic(){called=true;}});
+  assert.equal(called,false);
+});
+
+test('Fixed Console ad unit is signed-only, reward-free and never a normal allowlist entry',async()=>{
+  const {acceptVerifiedAdMobSsv}=await modulePromise;
+  const identity={ad_unit:'1234567890',custom_data:'admob_ssv_verification',user_id:'admob_ssv_verification'};
+  const store={get(){throw Error('no verification storage reads');},put(){throw Error('no verification rewards or storage writes');}};
+  const options={allowedAdUnitIds:['ca-app-pub-6462457361541481/4339169364'],expectedRewardItem:'skill_mode_unlock'};
+  const signed=await signedUrl(identity);
+  const result=await acceptVerifiedAdMobSsv(store,signed.url,{...options,fetchFn:signed.fetchFn});
+  assert.deepEqual(result,{accepted:true,verificationOnly:true});assert.equal(Response.json(result).status,200);
+  for(const [overrides,error] of [
+    [{custom_data:'ra_attempt',user_id:'P1'},'invalid_ad_unit'],
+    [{user_id:'P1'},'invalid_ad_unit'],
+    [{custom_data:'wrong'},'invalid_ad_unit'],
+    [{reward_item:'coins'},'invalid_reward_item'],
+    [{reward_amount:'2'},'invalid_reward_amount'],
+    [{timestamp:'1'},'invalid_ssv_timestamp'],
+    [{transaction_id:''},'invalid_ssv_payload'],
+  ]){
+    const bad=await signedUrl({...identity,...overrides});
+    await assert.rejects(()=>acceptVerifiedAdMobSsv(store,bad.url,{...options,fetchFn:bad.fetchFn}),new RegExp(error));
+  }
+  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url.replace('transaction_id=tx-1','transaction_id=tx-2'),{...options,fetchFn:signed.fetchFn}),/invalid_ssv_signature/);
+  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url.split('&signature=')[0],options),/invalid_ssv_payload/);
+});
+
+test('Real production unit normal SSV remains verified and transaction-idempotent',async()=>{
+  const {acceptVerifiedAdMobSsv,verifyStoredRewardedAd}=await modulePromise,store=new Store(),now=Date.now();
+  await store.put('rewarded-ad-attempt:ra_attempt',{attemptId:'ra_attempt',playerId:'P1',rewardType:'SKILL_MODE_UNLOCK_PROGRESS',expiresAt:now+1800000});
+  const signed=await signedUrl({ad_unit:'ca-app-pub-6462457361541481/4339169364'});
+  const options={fetchFn:signed.fetchFn,allowedAdUnitIds:['ca-app-pub-6462457361541481/4339169364'],expectedRewardItem:'skill_mode_unlock',now};
+  assert.equal((await acceptVerifiedAdMobSsv(store,signed.url,options)).duplicate,false);
+  assert.equal(await verifyStoredRewardedAd(store,{playerId:'P1',rewardType:'SKILL_MODE_UNLOCK_PROGRESS',verificationId:'ra_attempt'}),true);
+  assert.equal((await acceptVerifiedAdMobSsv(store,signed.url,options)).duplicate,true);
+});
