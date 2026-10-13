@@ -1,6 +1,8 @@
 import {REWARDED_AD_REWARD_TYPES} from './skill-entitlements.mjs';
 
 export const ADMOB_VERIFIER_KEYS_URL='https://www.gstatic.com/admob/reward/verifier-keys.json';
+export const ADMOB_SSV_VERIFICATION_DATA='admob_ssv_verification';
+export const ADMOB_SSV_VERIFICATION_USER='admob_ssv_verification';
 const ATTEMPT_TTL_MS=30*60*1000;
 
 const b64=value=>{let normalized=String(value).replace(/\s/g,'+').replace(/-/g,'+').replace(/_/g,'/');while(normalized.length%4)normalized+='=';return Uint8Array.from(atob(normalized),char=>char.charCodeAt(0));};
@@ -27,7 +29,7 @@ async function importVerifierKey(pem){
   return crypto.subtle.importKey('spki',pemBytes(pem),{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
 }
 
-export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERIFIER_KEYS_URL,allowedAdUnitId='',allowedAdUnitIds=[],expectedRewardItem='',now=Date.now()}={}){
+export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERIFIER_KEYS_URL,allowedAdUnitId='',allowedAdUnitIds=[],expectedRewardItem='',expectedRewardAmount='1',now=Date.now()}={}){
   const url=new URL(rawUrl),query=url.search.slice(1),signatureAt=query.lastIndexOf('&signature=');
   if(signatureAt<1)throw new Error('invalid_ssv_payload');
   const signed=query.slice(0,signatureAt),tail=new URLSearchParams(query.slice(signatureAt+1));
@@ -40,7 +42,10 @@ export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERI
   if(allowedAdUnitId&&adUnit!==allowedAdUnitId)throw new Error('invalid_ad_unit');
   if(allowedAdUnitIds.length&&!allowedAdUnitIds.includes(adUnit))throw new Error('invalid_ad_unit');
   if(expectedRewardItem&&rewardItem!==expectedRewardItem)throw new Error('invalid_reward_item');
+  if(rewardAmount!==String(expectedRewardAmount))throw new Error('invalid_reward_amount');
+  if(!/^\d+$/.test(params.get('timestamp')||''))throw new Error('invalid_ssv_timestamp');
   const timestamp=Number(params.get('timestamp'));
+  if(!Number.isSafeInteger(timestamp))throw new Error('invalid_ssv_timestamp');
   if(Number.isFinite(timestamp)){
     const millis=timestamp>1e14?Math.floor(timestamp/1000):timestamp;
     if(millis>now+5*60*1000||millis<now-7*24*60*60*1000)throw new Error('invalid_ssv_timestamp');
@@ -54,7 +59,15 @@ export async function verifyAdMobSsvUrl(rawUrl,{fetchFn=fetch,keysUrl=ADMOB_VERI
 }
 
 export async function acceptVerifiedAdMobSsv(storage,rawUrl,options={}){
-  const receipt=await verifyAdMobSsvUrl(rawUrl,options),attemptKey=`rewarded-ad-attempt:${receipt.attemptId}`;
+  const receipt=await verifyAdMobSsvUrl(rawUrl,options);
+  // Console URL verification is signed by Google too. Never persist a receipt
+  // or touch a profile/reward ledger for this explicit, non-player identity.
+  if(receipt.attemptId===ADMOB_SSV_VERIFICATION_DATA){
+    if(receipt.userId!==ADMOB_SSV_VERIFICATION_USER)throw new Error('invalid_verification_user');
+    if(!(options.allowedAdUnitId||options.allowedAdUnitIds?.length)||!options.expectedRewardItem)throw new Error('admob_ssv_not_configured');
+    return {accepted:true,verificationOnly:true};
+  }
+  const attemptKey=`rewarded-ad-attempt:${receipt.attemptId}`;
   const attempt=await storage.get(attemptKey);
   if(!attempt||attempt.expiresAt<(options.now??Date.now()))throw new Error('reward_attempt_expired');
   if(attempt.playerId!==receipt.userId)throw new Error('reward_player_mismatch');

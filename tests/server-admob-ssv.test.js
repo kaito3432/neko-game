@@ -12,7 +12,7 @@ function rawToDer(raw){
 }
 async function signedUrl(overrides={}){
   const keys=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
-  const query=new URLSearchParams({ad_network:'5450213213286189855',ad_unit:'unit-1',custom_data:'ra_attempt',reward_amount:'1',reward_item:'skill',timestamp:String(Date.now()),transaction_id:'tx-1',user_id:'P1',...overrides}).toString();
+  const query=new URLSearchParams({ad_network:'5450213213286189855',ad_unit:'unit-1',custom_data:'ra_attempt',reward_amount:'1',reward_item:'skill_mode_unlock',timestamp:String(Date.now()),transaction_id:'tx-1',user_id:'P1',...overrides}).toString();
   const signature=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},keys.privateKey,new TextEncoder().encode(query));
   const spki=await crypto.subtle.exportKey('spki',keys.publicKey),der=rawToDer(new Uint8Array(signature));
   return {url:`https://example.test/api/ads/admob/ssv?${query}&signature=${encodeURIComponent(toB64Url(der))}&key_id=7`,fetchFn:async()=>Response.json({keys:[{keyId:7,pem:pem(spki)}]})};
@@ -31,9 +31,43 @@ test('改ざん署名・不一致player・不一致広告unitを拒否',async()=
   const {acceptVerifiedAdMobSsv}=await modulePromise,store=new Store(),now=Date.now();
   await store.put('rewarded-ad-attempt:ra_attempt',{attemptId:'ra_attempt',playerId:'P1',rewardType:'SKILL_MODE_UNLOCK_PROGRESS',expiresAt:now+10000});
   const signed=await signedUrl();
-  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url.replace('reward_amount=1','reward_amount=2'),{fetchFn:signed.fetchFn,now}),/invalid_ssv_signature/);
+  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url.replace('transaction_id=tx-1','transaction_id=tx-2'),{fetchFn:signed.fetchFn,now}),/invalid_ssv_signature/);
   await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url,{fetchFn:signed.fetchFn,allowedAdUnitId:'other',now}),/invalid_ad_unit/);
   const wrong=await signedUrl({user_id:'P2'});await assert.rejects(()=>acceptVerifiedAdMobSsv(store,wrong.url,{fetchFn:wrong.fetchFn,now}),/reward_player_mismatch/);
+});
+
+test('Console verification returns HTTP 200 without any storage reads or writes',async()=>{
+  const {acceptVerifiedAdMobSsv,ADMOB_SSV_VERIFICATION_DATA,ADMOB_SSV_VERIFICATION_USER}=await modulePromise;
+  const signed=await signedUrl({custom_data:ADMOB_SSV_VERIFICATION_DATA,user_id:ADMOB_SSV_VERIFICATION_USER});
+  const store={get(){throw new Error('verification must not read player/reward state');},put(){throw new Error('verification must not write progress, entitlement, coin or receipt');}};
+  const result=await acceptVerifiedAdMobSsv(store,signed.url,{fetchFn:signed.fetchFn,allowedAdUnitIds:['unit-1'],expectedRewardItem:'skill_mode_unlock'});
+  assert.deepEqual(result,{accepted:true,verificationOnly:true});
+  assert.equal(Response.json(result).status,200);
+});
+
+for(const [name,overrides,error] of [
+  ['wrong ad unit',{ad_unit:'other'},'invalid_ad_unit'],
+  ['wrong reward item',{reward_item:'coins'},'invalid_reward_item'],
+  ['wrong amount',{reward_amount:'2'},'invalid_reward_amount'],
+  ['expired timestamp',{timestamp:'1'},'invalid_ssv_timestamp'],
+  ['missing timestamp',{timestamp:''},'invalid_ssv_timestamp'],
+  ['wrong verification user',{user_id:'P1'},'invalid_verification_user'],
+  ['random custom data',{custom_data:'random'},'reward_attempt_expired'],
+])test(`Console verification rejects ${name}`,async()=>{
+  const {acceptVerifiedAdMobSsv,ADMOB_SSV_VERIFICATION_DATA,ADMOB_SSV_VERIFICATION_USER}=await modulePromise;
+  const signed=await signedUrl({custom_data:ADMOB_SSV_VERIFICATION_DATA,user_id:ADMOB_SSV_VERIFICATION_USER,...overrides}),store=new Store();
+  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url,{fetchFn:signed.fetchFn,allowedAdUnitIds:['unit-1'],expectedRewardItem:'skill_mode_unlock'}),new RegExp(error));
+  assert.equal(store.values.size,0);
+});
+
+test('Console verification cannot bypass a forged signature or unknown key',async()=>{
+  const {acceptVerifiedAdMobSsv,ADMOB_SSV_VERIFICATION_DATA,ADMOB_SSV_VERIFICATION_USER}=await modulePromise;
+  const signed=await signedUrl({custom_data:ADMOB_SSV_VERIFICATION_DATA,user_id:ADMOB_SSV_VERIFICATION_USER}),store=new Store();
+  const options={fetchFn:signed.fetchFn,allowedAdUnitIds:['unit-1'],expectedRewardItem:'skill_mode_unlock'};
+  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url.replace('transaction_id=tx-1','transaction_id=tx-2'),options),/invalid_ssv_signature/);
+  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,signed.url.replace('key_id=7','key_id=8'),options),/unknown_ssv_key/);
+  await assert.rejects(()=>acceptVerifiedAdMobSsv(store,'https://example.test/api/ads/admob/ssv',options),/invalid_ssv_payload/);
+  assert.equal(store.values.size,0);
 });
 
 test('iOS/Androidの許可広告unitだけSSVを受け入れる',async()=>{

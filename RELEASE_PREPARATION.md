@@ -62,7 +62,15 @@ Apple署名証明からTestFlight/App Review担当者そのものは識別でき
 | GOOGLE_PUBSUB_PUSH_EMAIL / GOOGLE_PUBSUB_PUSH_AUDIENCE | RTDN push認証の送信者/audience |
 | PURCHASE_REVOKE_RETENTION_DAYS | 失効記録の保持設定。公開Legal方針と人間が照合する |
 | ADMOB_REWARDED_AD_UNIT_IDS | iOS/Android両方の正式Rewarded Unit IDをカンマ区切りで許可する。単一旧設定も互換維持 |
-| ADMOB_SKILL_MODE_REWARD_ITEM | AdMob Consoleのreward itemと一致する値。報酬用途はサーバーattemptで判定 |
+| ADMOB_SKILL_MODE_REWARD_ITEM | 正式値 `skill_mode_unlock`。iOS/AndroidのAdMob Consoleのreward itemと一致させる。報酬用途はサーバーattemptで判定 |
+
+### AdMob SSV Console URL verification
+
+- ConsoleのUser IDとCustom dataには、どちらも `admob_ssv_verification` を完全一致で入力する。
+- 通常広告・確認用ともreward amountは `1`、reward itemは `skill_mode_unlock`。iOS/Androidで共通利用する。
+- Google公開鍵・ECDSA署名、許可広告unit、報酬item/amount、transaction ID、timestampを検証した場合のみ確認用リクエストを200で受理する。署名対象queryは並べ替え・再エンコードしない。
+- 確認用は署名検証後に即returnし、attempt照合・storage read/write・報酬receipt・プロフィール・コイン・スキル進捗に一切触れない。通常のserver-issued attemptとtransaction冪等処理は維持する。
+- Productionの実Ad Unit IDとreward item設定が未確定なら、仮IDやテストIDで埋めず、設定確定と明示的なdeploy承認を待つ。
 
 AdMob SSVはGoogleのECDSA公開鍵で検証する設計。架空の「SSV Secret」を追加する必要はない。
 AdMob ConsoleでSSV callbackを `https://nyan-chase-online.honda19990602.workers.dev/api/ads/admob/ssv` へ設定。
