@@ -18,7 +18,7 @@
   }
 
   function createProvider({plugin=nativePlugin(),api=null,config={},onState=()=>{},sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
-    let initialized=false,busy=false,state=plugin?STATES.INITIALIZING:STATES.UNAVAILABLE,activeRewardType=null;
+    let initialized=false,sdkInitialized=false,busy=false,state=plugin?STATES.INITIALIZING:STATES.UNAVAILABLE,activeRewardType=null;
     const platform=config.platform||root.Capacitor?.getPlatform?.()||'web';
     const testing=config.testing!==false,adId=testing?(platform==='android'?ANDROID_TEST_REWARDED_ID:IOS_TEST_REWARDED_ID):config.rewardedAdUnitId;
     const consentManager=config.consentManager||root.NyanAdConsent?.manager;
@@ -29,14 +29,19 @@
       if(!plugin||!adId){emit(STATES.UNAVAILABLE,{reason:plugin?'missingAdUnitId':'unsupportedPlatform'});return {available:false};}
       emit(STATES.INITIALIZING);
       try{
+        // AdMob plugin 8.1.0 wires the iOS UMP presenter in initialize().
+        // Initialize once, but never load a rewarded ad before canRequestAds.
+        if(!sdkInitialized){
+          await plugin.initialize({initializeForTesting:testing,
+            ...(typeof config.tagForChildDirectedTreatment==='boolean'?{tagForChildDirectedTreatment:config.tagForChildDirectedTreatment}:{}),
+            ...(typeof config.tagForUnderAgeOfConsent==='boolean'?{tagForUnderAgeOfConsent:config.tagForUnderAgeOfConsent}:{}),
+            ...(config.maxAdContentRating?{maxAdContentRating:config.maxAdContentRating}:{})});
+          sdkInitialized=true;
+        }
         if(consentManager){
           const consent=await consentManager.ensure(plugin);
           if(!consent.canRequestAds){emit(STATES.UNAVAILABLE,{reason:'consentUnavailable',consent});return {available:false,reason:'consentUnavailable'};}
         }
-        await plugin.initialize({initializeForTesting:testing,
-          ...(typeof config.tagForChildDirectedTreatment==='boolean'?{tagForChildDirectedTreatment:config.tagForChildDirectedTreatment}:{}),
-          ...(typeof config.tagForUnderAgeOfConsent==='boolean'?{tagForUnderAgeOfConsent:config.tagForUnderAgeOfConsent}:{}),
-          ...(config.maxAdContentRating?{maxAdContentRating:config.maxAdContentRating}:{})});
         initialized=true;emit(STATES.AVAILABLE);return {available:true};
       }
       catch(error){emit(STATES.UNAVAILABLE,{reason:'initializeFailed',error});return {available:false,error};}
