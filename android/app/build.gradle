@@ -78,7 +78,7 @@ tasks.register('validateNyanRelease') {
         def rootWeb = rootProject.projectDir.parentFile
         def nodeBinary = System.getenv('NYAN_NODE_BINARY') ?: 'node'
         def integrity = new ProcessBuilder(nodeBinary, new File(rootWeb,'scripts/validate-generated-web.cjs').path,
-            file('src/main/assets/public').path).inheritIO().start()
+            file('src/main/assets/public').path, 'android').inheritIO().start()
         if (integrity.waitFor() != 0) throw new GradleException('Release Web integrity validation failed.')
         rootWeb.listFiles().findAll { it.name ==~ /.*\.(js|css)/ && !(it.name in ['ad-config.js','api-environment.sandbox.js']) }.each { source ->
             def bundled = file("src/main/assets/public/${source.name}")

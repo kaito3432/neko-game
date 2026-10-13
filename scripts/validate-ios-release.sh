@@ -15,7 +15,7 @@ fi
 /usr/bin/grep -q "https://nyan-chase-online.honda19990602.workers.dev" "$assets/api-environment.js" || exit 1
 node_binary="${NYAN_NODE_BINARY:-$(command -v node || true)}"
 [ -n "$node_binary" ] || { echo 'error: Set NYAN_NODE_BINARY for the Release source-integrity check.'; exit 1; }
-"$node_binary" "$task_root/scripts/validate-generated-web.cjs" "$assets"
+"$node_binary" "$task_root/scripts/validate-generated-web.cjs" "$assets" ios
 for source in "$task_root"/*.js "$task_root"/*.css; do
   case "$source" in */ad-config.js|*/api-environment.sandbox.js) continue;; esac
   /usr/bin/cmp -s "$source" "$assets/$(basename "$source")" || { echo "error: stale Web asset $(basename "$source"); sync iOS again."; exit 1; }

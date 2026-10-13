@@ -82,6 +82,8 @@ Store Notification URL、Appleキーrotation、Google API権限、課金契約�
 
 本番IDを捏造せず、`node scripts/prepare-web-assets.cjs --release`で以下を必須入力にする。
 
+`--platform ios` / `--platform android` は対象OSの本番IDだけ必須。省略または `--platform both` は両OS必須。対象外OSのIDは生成しない。同期も `capacitor copy ios` / `capacitor copy android` で対象OSに限定し、未準備OSのassetsは上書きしない。各OSのRelease guardは対象OSのmanifest・本番IDを検証する。
+
 - NYAN_ADMOB_IOS_APP_ID / NYAN_ADMOB_ANDROID_APP_ID
 - NYAN_ADMOB_IOS_REWARDED_ID / NYAN_ADMOB_ANDROID_REWARDED_ID
 - NYAN_AD_CHILD_DIRECTED / NYAN_AD_UNDER_AGE: true/false。対象年齢に応じ人間が決定する。
