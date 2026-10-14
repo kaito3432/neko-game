@@ -30,6 +30,24 @@ export function applePurchaseEnvironmentAllowed(env,environment,playerId){
   return env.NYAN_ENVIRONMENT==='sandbox'&&environment==='Sandbox';
 }
 
+function sameRestoreTransaction(claim,authoritative){
+  // Compare only Apple-verified transaction identity, not JWS serialization,
+  // signing date, signature, or rotating certificate chains.
+  const fields=['transactionId','originalTransactionId','productId','bundleId','environment','type','purchaseDate'];
+  if(fields.some(field=>claim[field]!==authoritative[field]))return false;
+  for(const payload of [claim,authoritative]){
+    if(payload.originalPurchaseDate!==undefined&&
+        (!Number.isSafeInteger(payload.originalPurchaseDate)||payload.originalPurchaseDate<0))return false;
+  }
+  if(claim.originalPurchaseDate!==undefined&&authoritative.originalPurchaseDate!==undefined&&
+      claim.originalPurchaseDate!==authoritative.originalPurchaseDate)return false;
+  const token=value=>value===undefined?undefined:value.toLowerCase();
+  // UUID syntax is already checked by verifyAppleJwsSignature. Preserve the
+  // existing profile/deleted-marker binding checks below the verification layer.
+  return token(claim.appAccountToken)===token(authoritative.appAccountToken)&&
+    claim.inAppOwnershipType==='PURCHASED'&&authoritative.inAppOwnershipType==='PURCHASED';
+}
+
 export async function verifyStoreKitTransaction(signedTransaction,{env={},fetchFn=fetch,now=Date.now(),restoreProof=false,playerId,verifier}={}){
   const claim=await verifyAppleJwsSignature(signedTransaction,{env,verifier});
   if(claim.bundleId!==(env.APPLE_BUNDLE_ID||'jp.nyanchase.game'))throw new Error('apple_transaction_mismatch');
@@ -42,8 +60,10 @@ export async function verifyStoreKitTransaction(signedTransaction,{env={},fetchF
   const token=await createAppStoreServerToken(env,now),response=await fetchFn(`${base}/inApps/v1/transactions/${claim.transactionId}`,{headers:{Authorization:`Bearer ${token}`}});
   if(!response.ok)throw new Error('apple_transaction_not_verified');
   const signedFromStore=(await response.json()).signedTransactionInfo;
-  if(restoreProof&&signedTransaction!==signedFromStore)throw new Error('store_restore_proof_mismatch');
   const authoritative=await verifyAppleJwsSignature(signedFromStore,{env,verifier});
+  if(restoreProof&&!sameRestoreTransaction(claim,authoritative))throw new Error('store_restore_proof_mismatch');
+  if(restoreProof&&(authoritative.revocationDate!==undefined||authoritative.revocationReason!==undefined))
+    throw new Error('apple_transaction_mismatch');
   const bundleId=env.APPLE_BUNDLE_ID||'jp.nyanchase.game';
   if(String(authoritative.transactionId)!==String(claim.transactionId)||authoritative.productId!==claim.productId||authoritative.environment!==environment||authoritative.bundleId!==bundleId||authoritative.revocationDate||authoritative.inAppOwnershipType==='FAMILY_SHARED')throw new Error('apple_transaction_mismatch');
   if(env.NYAN_ENVIRONMENT==='production'&&environment==='Sandbox'){
