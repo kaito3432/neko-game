@@ -8,7 +8,7 @@ function transactionFields(value){
  if(!PRODUCTS.has(value.productId)||!/^[0-9]+$/.test(String(value.transactionId||''))||
     !/^[0-9]+$/.test(String(value.originalTransactionId||''))||
     !Number.isSafeInteger(value.signedDate)||!Number.isSafeInteger(value.purchaseDate)||
-    value.purchaseDate<0||value.purchaseDate>value.signedDate||value.signedDate>Date.now()+300000||
+    value.purchaseDate<0||value.signedDate>Date.now()+300000||
     value.inAppOwnershipType!=='PURCHASED'||value.type!=='Non-Consumable'||
     (value.appAccountToken!==undefined&&!/^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(value.appAccountToken))||
     (value.revocationDate!==undefined&&(!Number.isSafeInteger(value.revocationDate)||value.revocationDate<0))||

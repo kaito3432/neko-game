@@ -44,9 +44,20 @@ test('official OCSP network failure is retryable without removing purchase right
 test('signed transaction fields reject unknown product, malformed IDs/time/token and Family Sharing',async()=>{
  const f=fixture(),{verifyAppleData}=await modulePromise;
  for(const changes of [{productId:'UNKNOWN'},{transactionId:'bad'},{originalTransactionId:'bad'},
-  {purchaseDate:f.now+1000},{signedDate:undefined},{appAccountToken:'bad'},
+  {purchaseDate:-1},{purchaseDate:f.now+0.5},{signedDate:undefined},{appAccountToken:'bad'},
   {inAppOwnershipType:'FAMILY_SHARED'},{revocationReason:8}])
   await assert.rejects(()=>verifyAppleData(f.sign({...f.claim,...changes}),{verifier:f.verifier}));
  const revoked=await verifyAppleData(f.sign({...f.claim,revocationDate:f.now,revocationReason:0}),{verifier:f.verifier});
  assert.equal(revoked.revocationReason,0); // lifecycle consumes revocation; purchases reject it
 });
+for(const environment of ['Production','Sandbox']){
+ for(const [label,offset] of [['equal',0],['before',-1000],['61ms after',61]]){
+  test(`${environment} signed purchaseDate ${label} signedDate is accepted`,async()=>{
+   const f=fixture({environment}),{verifyAppleData}=await modulePromise;
+   const claim={...f.claim,signedDate:f.now,purchaseDate:f.now+offset};
+   const result=await verifyAppleData(f.sign(claim),{verifier:f.verifier});
+   assert.equal(result.purchaseDate,claim.purchaseDate);
+   assert.equal(result.signedDate,claim.signedDate);
+  });
+ }
+}
