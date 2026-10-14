@@ -14,7 +14,16 @@
         const verified=await submit(result.transaction);emit('purchased',{productId,verified});return {purchased:true,productId,...verified};
       }catch(error){emit('error',{error,productId});return {purchased:false,reason:error?.status?'serverVerificationFailed':'purchaseFailed',error};}finally{busy=false;}
     }
-    async function restorePurchases(){if(busy)return {restored:false,reason:'busy'};if(!plugin||!api)return {restored:false,reason:'unavailable'};busy=true;emit('restoring');try{await api.identity();const value=await plugin.restorePurchases(),verified=[];for(const transaction of value.transactions||[]){if(IDS.includes(transaction.productId))verified.push(await submit(transaction,true));}emit('available',{restored:true});return {restored:true,count:verified.length,transactions:verified};}catch(error){emit('error',{error});return {restored:false,reason:'restoreFailed',error};}finally{busy=false;}}
+    async function restorePurchases({forceSync=false}={}){
+      if(busy)return {restored:false,reason:'busy'};if(!plugin||!api)return {restored:false,reason:'unavailable'};
+      busy=true;emit('restoring');try{
+        await api.identity();const value=await plugin.restorePurchases({forceSync}),verified=[];
+        if(value.status==='cancelled'){emit('available',{cancelled:true});return {restored:false,reason:'cancelled'};}
+        for(const transaction of value.transactions||[])if(IDS.includes(transaction.productId))verified.push(await submit(transaction,true));
+        if(!verified.length){emit('available',{restored:false});return {restored:false,reason:'noPurchases',count:0};}
+        emit('available',{restored:true});return {restored:true,count:verified.length,transactions:verified};
+      }catch(error){emit('error',{error});return {restored:false,reason:'restoreFailed',error};}finally{busy=false;}
+    }
     plugin?.addListener?.('storeKitTransactionUpdated',async transaction=>{if(busy||!transaction?.signedTransaction||!IDS.includes(transaction.productId))return;try{await submit(transaction);emit('purchased',{productId:transaction.productId,updated:true});}catch(error){emit('error',{error});}});
     return Object.freeze({loadProducts,purchaseProduct,restorePurchases,getProducts:()=>products.map(p=>({...p})),isBusy:()=>busy});
   }

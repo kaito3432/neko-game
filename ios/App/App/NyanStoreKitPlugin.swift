@@ -82,16 +82,37 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    private func restorableTransactions() async -> [[String: Any]] {
+        let ids: Set<String> = ["SKILL_CAT_FAKE_PAW", "SKILL_POLICE_GROUP_SEARCH", "SKILL_POLICE_DASH", "SKILL_PACK_01", "REMOVE_ADS", "REMOVE_ADS_PLUS_SKILL_PACK_01"]
+        var transactions: [[String: Any]] = []
+        for await result in Transaction.currentEntitlements {
+            guard case .verified(let transaction) = result,
+                  ids.contains(transaction.productID), transaction.productType == .nonConsumable,
+                  transaction.revocationDate == nil, transaction.ownershipType == .purchased else { continue }
+            transactions.append(transactionPayload(result, transaction: transaction))
+        }
+        return transactions
+    }
+
     @objc func restorePurchases(_ call: CAPPluginCall) {
         Task {
+            let existing = await restorableTransactions()
+            // Explicit forceSync supports missing purchases without adding UI.
+            if !existing.isEmpty && !call.getBool("forceSync", false) {
+                call.resolve(["status": "available", "transactions": existing])
+                return
+            }
             do {
                 try await AppStore.sync()
-                var transactions: [[String: Any]] = []
-                for await result in Transaction.currentEntitlements {
-                    if case .verified(let transaction) = result { transactions.append(transactionPayload(result, transaction: transaction)) }
-                }
-                call.resolve(["transactions": transactions])
-            } catch { call.reject("RESTORE_FAILED", error.localizedDescription, error) }
+                let transactions = await restorableTransactions()
+                call.resolve(["status": transactions.isEmpty ? "noPurchases" : "available", "transactions": transactions])
+            } catch StoreKitError.userCancelled {
+                call.resolve(["status": "cancelled", "transactions": []])
+            } catch {
+                let nativeError = error as NSError
+                call.reject("購入の同期に失敗しました", "RESTORE_SYNC_FAILED", error,
+                            ["errorDomain": nativeError.domain, "errorCode": nativeError.code])
+            }
         }
     }
 

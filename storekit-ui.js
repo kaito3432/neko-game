@@ -129,7 +129,8 @@
   };
   restore.addEventListener('click',async()=>{
     activeProductId='restore';render();const value=await root.NyanPurchases.provider.restorePurchases();activeProductId=null;
-    status.textContent=value.restored?`購入を復元しました（${value.count}件）`:'購入を復元できませんでした';await load();
+    await load();
+    status.textContent=value.restored?`購入を復元しました（${value.count}件）`:value.reason==='cancelled'?'購入の復元をキャンセルしました':value.reason==='noPurchases'?'復元対象の購入が見つかりませんでした':'購入を復元できませんでした';
   });
   render();load();
 })(typeof globalThis!=='undefined'?globalThis:this);
