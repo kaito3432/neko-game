@@ -9,7 +9,7 @@
   const DAILY_REWARD_TYPE='DAILY_COIN_REWARD';
   const IOS_TEST_REWARDED_ID='ca-app-pub-3940256099942544/1712485313';
   const ANDROID_TEST_REWARDED_ID='ca-app-pub-3940256099942544/5224354917';
-  const STATES=Object.freeze({INITIALIZING:'initializing',LOADING:'loading',AVAILABLE:'available',UNAVAILABLE:'unavailable',VIEWING:'viewing',VERIFYING:'verifying',COMPLETED:'completed'});
+  const STATES=Object.freeze({INITIALIZING:'initializing',LOADING:'loading',AVAILABLE:'available',RETRYABLE:'retryable',UNAVAILABLE:'unavailable',VIEWING:'viewing',VERIFYING:'verifying',COMPLETED:'completed'});
 
   function nativePlugin(scope=root){
     const capacitor=scope?.Capacitor;
@@ -22,11 +22,15 @@
     const platform=config.platform||root.Capacitor?.getPlatform?.()||'web';
     const testing=config.testing!==false,adId=testing?(platform==='android'?ANDROID_TEST_REWARDED_ID:IOS_TEST_REWARDED_ID):config.rewardedAdUnitId;
     const consentManager=config.consentManager||root.NyanAdConsent?.manager;
-    const emit=(next,detail={})=>{state=next;onState({state,rewardType:activeRewardType,...detail});};
+    let stateDetail={};
+    const emit=(next,detail={})=>{state=next;stateDetail=detail;onState({state,rewardType:activeRewardType,...detail});};
+    const validAdId=()=>Boolean(adId)&&(!['ios','android'].includes(platform)||(/^ca-app-pub-\d{16}\/\d{10}$/.test(adId)&&(testing||!adId.includes('3940256099942544'))));
+    const canRequestAd=()=>!busy&&initialized&&sdkInitialized&&validAdId()&&(!consentManager||consentManager.canRequestAds())&&[STATES.AVAILABLE,STATES.RETRYABLE,STATES.COMPLETED].includes(state);
     const removeAll=async handles=>Promise.all(handles.map(handle=>handle?.remove?.()).filter(Boolean));
     async function initialize(){
       if(initialized)return {available:Boolean(plugin&&adId)};
       if(!plugin||!adId){emit(STATES.UNAVAILABLE,{reason:plugin?'missingAdUnitId':'unsupportedPlatform'});return {available:false};}
+      if(!validAdId()){emit(STATES.UNAVAILABLE,{reason:'invalidAdUnitId'});return {available:false};}
       emit(STATES.INITIALIZING);
       try{
         // AdMob plugin 8.1.0 wires the iOS UMP presenter in initialize().
@@ -51,7 +55,7 @@
       busy=true;activeRewardType=rewardType;let handles=[],rewarded=false,dismissed=false;
       try{
         if(!(await initialize()).available)return {shown:false,rewarded:false,reason:'unavailable'};
-        if(consentManager&&!consentManager.canRequestAds())return {shown:false,rewarded:false,reason:'consentUnavailable'};
+        if(consentManager&&!consentManager.canRequestAds()){emit(STATES.UNAVAILABLE,{reason:'consentUnavailable'});return {shown:false,rewarded:false,reason:'consentUnavailable'};}
         if(!api?.createAttempt||!api?.completeAttempt)return {shown:false,rewarded:false,reason:'serverUnavailable'};
         const attempt=await api.createAttempt(rewardType);
         emit(STATES.LOADING);
@@ -74,10 +78,20 @@
         return {shown:true,rewarded:true,verified:true,...completed};
       }catch(error){
         const reason=error?.status===403?'serverRejected':error?.status===503?'serverUnavailable':dismissed?'cancelled':state===STATES.LOADING?'loadFailed':'showFailed';
-        emit(STATES.UNAVAILABLE,{reason,error});return {shown:state===STATES.VIEWING||state===STATES.VERIFYING,rewarded:false,reason,error};
-      }finally{await removeAll(handles);busy=false;activeRewardType=null;}
+        const shown=state===STATES.VIEWING||state===STATES.VERIFYING;
+        // Only load failures are retryable; configuration/consent and SSV failures stay blocked.
+        const configurationError=/invalid.*(?:ad.?unit|app.?id|request)|missing.*(?:ad.?unit|app.?id)|application identifier/i.test(error?.message||'');
+        emit(reason==='loadFailed'&&!configurationError?STATES.RETRYABLE:STATES.UNAVAILABLE,{reason,error});
+        return {shown,rewarded:false,reason,error};
+      }finally{
+        try{await removeAll(handles);}finally{
+          busy=false;
+          // Notify after busy clears, not only from the failure callback while still busy.
+          emit(state,stateDetail);activeRewardType=null;
+        }
+      }
     }
-    return Object.freeze({initialize,showRewardedAd,getState:()=>state,isBusy:()=>busy,isTesting:()=>testing});
+    return Object.freeze({initialize,showRewardedAd,getState:()=>state,canRequestAd,isBusy:()=>busy,isTesting:()=>testing});
   }
 
   function browserApi(){
