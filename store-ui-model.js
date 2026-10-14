@@ -13,6 +13,11 @@
     {productId:IDS.REMOVE_ADS,name:'広告削除',description:'強制広告・インタースティシャル広告を削除',icon:'🚫',adsRemoved:true},
     {productId:IDS.REMOVE_ADS_PLUS_SKILL_PACK_01,name:'広告削除＋3点パック',description:'広告削除とスキル3点パックのセット',icon:'🌟',bundle:true}
   ]);
+  function packPurchaseReason(manager){
+    if(!manager)return 'ownershipUnavailable';
+    if(manager.isProductPurchased(IDS.SKILL_PACK_01)||manager.isSkillPackOwned(Skills.SKILL_PACK_IDS.SKILL_PACK_01))return 'packOwned';
+    return Skills.SKILL_PACKS[Skills.SKILL_PACK_IDS.SKILL_PACK_01].skillIds.some(id=>manager.isSkillOwned(id))?'individualSkillOwned':null;
+  }
   function build(manager,storeProducts=[],activeProductId=null){
     const byId=new Map(storeProducts.map(product=>[product.productId,product]));
     return DEFINITIONS.map(def=>{
@@ -21,11 +26,13 @@
       const packStatus=def.packId?manager.getSkillPackOwnershipStatus(def.packId):null;
       const owned=direct||included||Boolean(def.packId&&manager.isSkillPackOwned(def.packId))||Boolean(def.adsRemoved&&manager.hasRemovedAds());
       const purchasing=activeProductId===def.productId;
+      const purchaseBlockedReason=def.productId===IDS.SKILL_PACK_01?packPurchaseReason(manager):null;
       const status=purchasing?'購入中':direct?'購入済み':included?'パックに含まれる':owned?'購入済み':product?'未購入':'利用不可';
       const ownership=packStatus&&!owned?`${packStatus.ownedCount}個購入済み・残り${packStatus.missingCount}個`:'';
       return {...def,displayName:product?.displayName||def.name,storeDescription:product?.description||def.description,
-        displayPrice:product?.displayPrice||'',available:Boolean(product),owned,purchasing,status,ownership};
+        displayPrice:product?.displayPrice||'',available:Boolean(product)&&!purchaseBlockedReason,owned,purchasing,status,ownership,
+        purchaseBlockedReason,purchaseBlockedLabel:purchaseBlockedReason==='packOwned'?'所持済み':purchaseBlockedReason==='individualSkillOwned'?'単品スキルを所持しているため購入できません':''};
     });
   }
-  return Object.freeze({DEFINITIONS,build});
+  return Object.freeze({DEFINITIONS,build,packPurchaseReason});
 });

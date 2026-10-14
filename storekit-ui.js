@@ -23,6 +23,7 @@
     document.querySelectorAll('[data-skill-usage-ranked-scope]').forEach(node=>{node.textContent=usagePolicy.ranked.scope;});
   }
   async function buy(productId){
+    if(productId==='SKILL_PACK_01'&&root.NyanStoreUIModel.packPurchaseReason(root.NyanMonetization))return;
     if([root.NyanMonetizationProducts.PRODUCT_IDS.REMOVE_ADS,
       root.NyanMonetizationProducts.PRODUCT_IDS.REMOVE_ADS_PLUS_SKILL_PACK_01].includes(productId))return;
     activeProductId=productId;render();const result=await root.NyanPurchases.provider.purchaseProduct(productId);activeProductId=null;
@@ -36,10 +37,10 @@
     const icon=document.createElement('span');icon.className='store-product-icon';icon.textContent=view.icon;
     const copy=document.createElement('div');copy.className='store-product-copy';
     const title=document.createElement('strong');title.textContent=view.displayName;
-    const ownership=document.createElement('small');ownership.className='store-product-ownership';ownership.textContent=view.ownership;
-    copy.append(title);if(view.ownership)copy.append(ownership);
+    const ownership=document.createElement('small');ownership.className='store-product-ownership';ownership.textContent=view.purchaseBlockedReason==='individualSkillOwned'?view.purchaseBlockedLabel:view.ownership;
+    copy.append(title);if(ownership.textContent)copy.append(ownership);
     const action=document.createElement('div');action.className='store-product-action';
-    const button=document.createElement('button');button.type='button';button.textContent=view.purchasing?'購入中…':view.owned?view.status:(view.displayPrice||'利用不可');
+    const button=document.createElement('button');button.type='button';button.textContent=view.purchaseBlockedReason==='individualSkillOwned'?'購入不可':view.purchaseBlockedLabel|| (view.purchasing?'購入中…':view.owned?view.status:(view.displayPrice||'利用不可'));
     button.disabled=view.owned||!view.available||Boolean(activeProductId);button.addEventListener('click',()=>buy(view.productId));
     action.append(button);article.append(icon,copy,action);return article;
   }
