@@ -2,6 +2,7 @@ import Foundation
 import StoreKit
 import Capacitor
 import UIKit
+import WebKit
 
 @objc(NyanStoreKitPlugin)
 public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -157,7 +158,10 @@ public final class NyanReviewPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func getEnvironment(_ call: CAPPluginCall) {
         #if DEBUG
-        call.resolve(["debug": true])
+        call.resolve([
+            "debug": true,
+            "screenshotMode": ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1"
+        ])
         #else
         call.resolve(["debug": false])
         #endif
@@ -180,7 +184,31 @@ public final class NyanReviewPlugin: CAPPlugin, CAPBridgedPlugin {
 }
 
 final class NyanBridgeViewController: CAPBridgeViewController {
+    #if DEBUG
+    override func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {
+        let configuration = super.webViewConfiguration(for: instanceConfiguration)
+        if ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1" {
+            configuration.websiteDataStore = .nonPersistent()
+        }
+        return configuration
+    }
+    override func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
+        // Capacitor replaces the controller after webViewConfiguration(); inject after replacement.
+        if ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1" {
+            configuration.userContentController.addUserScript(WKUserScript(
+                source: "Object.defineProperty(window, '__nyanScreenshotIsolated', {value:true});",
+                injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
+        return super.webView(with: frame, configuration: configuration)
+    }
+    #endif
     override func capacitorDidLoad() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1" {
+            bridge?.registerPluginInstance(NyanReviewPlugin())
+            return
+        }
+        #endif
         bridge?.registerPluginInstance(NyanStoreKitPlugin())
         bridge?.registerPluginInstance(NyanReviewPlugin())
     }

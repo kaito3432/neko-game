@@ -63,6 +63,20 @@ test('設定画面の3リンクと認証済み削除導線は一元URL mapを使
   for(const page of pages)assert.ok(script.includes(page));
   assert.match(script,/PUBLIC_BASE_URL='https:\/\/kaito3432\.github\.io\/neko-game\/'/);
 });
+test('広告報告はSupportに集約し、削除入口と最終削除操作の見た目を分離する',()=>{
+  const html=read('index.html'),support=read('support.html'),css=read('style.css');
+  const settings=html.slice(html.indexOf('id="settingsOverlay"'),html.indexOf('id="legalPageOverlay"'));
+  assert.equal((settings.match(/data-legal-page="support"/g)||[]).length,1);
+  assert.doesNotMatch(settings,/不適切な広告を報告する/);
+  assert.match(support,/不適切な広告の報告/);
+  assert.match(support,/mailto:nyanchase@gmail.com\?subject=/);
+  assert.match(settings,/class="settings-data-management" role="group" aria-labelledby="settingsDataManagementTitle"/);
+  assert.match(settings,/id="onlineDataDeleteOpen"[^>]*aria-describedby="settingsDataManagementDescription"/);
+  assert.match(settings,/削除するデータと注意事項を確認してから進めます/);
+  assert.doesNotMatch(settings,/class="btn settings-delete-button"/);
+  assert.match(html,/class="btn settings-delete-button" id="onlineDataDeleteConfirm"[^>]*hidden/);
+  assert.match(css,/\.settings-data-management \.settings-delete-entry\{/);
+});
 test('公開URLはPagesのproject pathを使い、Nativeは同梱ページを開く',()=>{
   const base='https://kaito3432.github.io/neko-game/';
   function load(href,native){

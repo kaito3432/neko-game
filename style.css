@@ -9427,6 +9427,10 @@ body.sneak-mode .board-shell{
 .legal-page-modal #legalPageStatus{margin:0;color:#a33232}.legal-page-modal #legalPageStatus:empty{display:none}
 #legalPageOverlay[hidden]{display:none!important}
 .settings-delete-button{background:#6b3441;color:#fff}
+.settings-data-management{margin-top:16px;padding-top:14px;border-top:1px solid #d8c9bc;text-align:left}
+.settings-data-management h4{margin:0 0 6px;font-size:13px;color:#665348}
+.settings-data-management p{margin:0 0 10px;font-size:12px;line-height:1.5;color:#75675d}
+.settings-data-management .settings-delete-entry{display:block;width:100%;min-height:44px;height:auto;padding:10px 12px;background:#fffdf9;color:#823e49;border:1px solid #c7aaa9;box-shadow:none;font-size:13px;line-height:1.4;text-align:left}
 .online-delete-modal{box-sizing:border-box;width:min(94vw,430px);max-height:calc(100dvh - 32px - env(safe-area-inset-bottom));overflow-y:auto;overflow-x:hidden;padding:18px}
 .online-delete-modal p{font-size:13px;line-height:1.55;text-align:left}
 .online-delete-warning{font-weight:700;color:#9e2434}

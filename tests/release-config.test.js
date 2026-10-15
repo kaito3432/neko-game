@@ -60,6 +60,7 @@ test('初回ReleaseガードとSDK privacy resource参照が存在する',()=>{
  const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
  assert.match(read('ios/App/App.xcodeproj/project.pbxproj'),/PrivacyInfo.xcprivacy in Resources/);
  assert.match(read('android/app/build.gradle'),/preReleaseBuild/);
- assert.match(read('index.html'),/不適切な広告を報告する/);
+ assert.match(read('index.html'),/data-legal-page="support">サポート・お問い合わせ/);
+ assert.match(read('support.html'),/不適切な広告の報告/);
  for(const p of ['privacy.html','terms.html','support.html','data-deletion.html'])assert.doesNotMatch(read(p),/公開前の確認事項|TODO|localhost/);
 });

@@ -103,7 +103,11 @@
   async function load(){
     if(!platformAvailable){products=[];status.textContent='この環境では購入機能を利用できません';render();return;}
     status.textContent='商品を読み込み中';const value=await root.NyanPurchases.provider.loadProducts();products=value.products||[];
-    status.textContent=products.length===root.NyanPurchases.PRODUCT_IDS.length?'購入可能です':'現在商品を利用できません';render();
+    const availableIds=new Set(products.map(product=>product.productId));
+    const expectedIds=root.NyanStoreProductIds.initial;
+    status.textContent=expectedIds.every(id=>availableIds.has(id))?'購入可能です':
+      expectedIds.some(id=>availableIds.has(id))?'一部の商品を読み込めませんでした。時間をおいて再度お試しください':
+      '商品を読み込めませんでした。通信環境を確認して再度お試しください';render();
   }
   const purchaseState=event=>{
     const value=event.detail||{};if(value.state==='purchasing')activeProductId=value.productId;

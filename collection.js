@@ -313,35 +313,49 @@
     return validation;
   }
 
-  function createController({playerData,catalog=defaultCatalog,view={}}={}){
+  function createController({playerData,catalog=defaultCatalog,view={},
+    synchronize=root?.document&&root.NyanCoinWallet?()=>root.NyanCoinWallet.ensure():null,
+    onTiming=()=>{},now=()=>root.performance?.now?.()??Date.now()}={}){
     let currentData=null;
     let activeSection="cat";
     let selectedItem=null;
     let saving=false;
+    let pendingLoad=null;
 
     function render(){
       view.render?.({data:currentData,activeSection,selectedItem,saving});
     }
 
-    async function load(){
-      try{
-        let loaded=await playerData.load();
-        if(root?.document&&root.NyanCoinWallet){
-          try{await root.NyanCoinWallet.ensure();loaded=playerData.getSnapshot();}
-          catch(_){/* Offline inventory remains available; purchase fails closed. */}
-        }
-        const repaired=sanitizeCatalogEquipment(loaded,catalog);
-        currentData=repaired.changed
-          ? await playerData.save(repaired.data)
-          : loaded;
-        render();
-        return currentData;
-      }catch(error){
-        currentData=playerData.getSnapshot?.() || currentData;
-        view.showError?.("コレクションを読み込めませんでした");
-        render();
-        return currentData;
+    function load(){
+      // Re-entrant profile/progress events share the same synchronization, not a new request.
+      if(pendingLoad)return pendingLoad;
+      const openedAt=now(),timing=stage=>onTiming(stage,Math.max(0,now()-openedAt));
+      timing('open');
+      const cached=playerData.getSnapshot?.();
+      if(cached){
+        currentData=sanitizeCatalogEquipment(cached,catalog).data;
+        render();timing('local-render');
       }
+      const task=(async()=>{
+        try{
+          let loaded=await playerData.load();
+          if(!cached){currentData=sanitizeCatalogEquipment(loaded,catalog).data;render();timing('local-render');}
+          if(synchronize){
+            timing('sync-start');
+            try{await synchronize();loaded=playerData.getSnapshot?.()||loaded;timing('sync-complete');}
+            catch(_){timing('sync-failed');/* Cached inventory is display-only; purchases still verify on server. */}
+          }
+          const repaired=sanitizeCatalogEquipment(loaded,catalog);
+          currentData=repaired.changed?await playerData.save(repaired.data):loaded;
+          render();return currentData;
+        }catch(error){
+          currentData=playerData.getSnapshot?.()||currentData;
+          view.showError?.("コレクションを読み込めませんでした");render();return currentData;
+        }
+      })();
+      pendingLoad=task;
+      task.then(()=>{if(pendingLoad===task)pendingLoad=null;},()=>{if(pendingLoad===task)pendingLoad=null;});
+      return task;
     }
 
     function setSection(section){
@@ -873,7 +887,8 @@
       onFavorite(categoryId,itemId){controller?.setFavorite(categoryId,itemId);},
       onProfile(categoryId,itemId){controller?.setProfile(categoryId,itemId);}
     });
-    controller=createController({playerData:root.NyanBoardThemeQa?.collectionPlayerData||playerData,catalog,view});
+    controller=createController({playerData:root.NyanBoardThemeQa?.collectionPlayerData||playerData,catalog,view,
+      onTiming:(stage,ms)=>root.console?.debug?.(`[Collection] ${stage}: ${ms.toFixed(1)}ms`)});
     root.addEventListener("nyan-online-profile",event=>{
       if(!overlay.classList.contains("show"))return;
       view.setPassSummary(event.detail?.passSummary);
@@ -887,14 +902,8 @@
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden","false");
       view.setPassSummary(null);
-      await controller.load();
-      try{
-        const base=root.NyanOnline?.API_BASE;
-        if(base&&root.NyanOnlineIdentity){
-          await root.NyanOnlineIdentity.prepare(base);
-          await root.NyanOnlineIdentity.refreshSkillView(base);
-        }
-      }catch(_){/* Offline Collection stays usable; an unverified monthly preview stays hidden. */}
+      // load renders the local snapshot synchronously; one server sync continues in background.
+      void controller.load();
     });
 
     backButton.addEventListener("click",()=>{

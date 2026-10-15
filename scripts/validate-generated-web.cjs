@@ -10,6 +10,7 @@ function sourceFiles(root){
  walk('assets');return files.sort();
 }
 function validate(root,assets,platform){
+ if(fs.existsSync(path.join(assets,'debug')))throw new Error('QA directory in Release assets');
  const manifest=JSON.parse(fs.readFileSync(path.join(assets,'web-source-manifest.json'),'utf8'));
  if(manifest.production!==true)throw new Error('Release assets were not prepared in production mode');
  const platforms=platform?[platform]:(manifest.platforms||['ios','android']);
