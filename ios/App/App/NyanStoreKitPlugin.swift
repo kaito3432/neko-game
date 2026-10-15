@@ -8,17 +8,28 @@ import WebKit
 public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "NyanStoreKitPlugin"
     public let jsName = "NyanStoreKit"
-    public let pluginMethods: [CAPPluginMethod] = [
+    public var pluginMethods: [CAPPluginMethod] {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1" {
+            return [CAPPluginMethod(name: "loadProducts", returnType: CAPPluginReturnPromise)]
+        }
+        #endif
+        return [
         CAPPluginMethod(name: "loadProducts", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "currentEntitlements", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "unfinishedTransactions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "finishTransaction", returnType: CAPPluginReturnPromise)
-    ]
+        ]
+    }
     private var updatesTask: Task<Void, Never>?
 
     public override func load() {
+        #if DEBUG
+        // Capture sessions may read real product metadata, never observe/finish transactions.
+        if ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1" { return }
+        #endif
         updatesTask = Task { [weak self] in
             for await result in Transaction.updates {
                 guard case .verified(let transaction) = result else { continue }
@@ -50,6 +61,7 @@ public final class NyanStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
                     var item: [String: Any] = ["productId": product.id, "displayName": product.displayName,
                         "description": product.description, "displayPrice": product.displayPrice,
                         "currencyCode": product.priceFormatStyle.currencyCode,
+                        "priceNumber": NSDecimalNumber(decimal: product.price).doubleValue,
                         "productType": String(describing: product.type)]
                     if let subscription = product.subscription {
                         let period = subscription.subscriptionPeriod
@@ -205,6 +217,7 @@ final class NyanBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         #if DEBUG
         if ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1" {
+            bridge?.registerPluginInstance(NyanStoreKitPlugin())
             bridge?.registerPluginInstance(NyanReviewPlugin())
             return
         }

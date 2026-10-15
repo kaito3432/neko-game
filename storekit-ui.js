@@ -8,6 +8,7 @@
   const preview=document.getElementById('shopSkillPreview'),previewBuy=document.getElementById('shopPreviewPurchase');
   if(!panel||!list||!restore)return;
   let activeProductId=null,products=[],category='skills',role='cat',selectedSkillId=null;
+  let selectedPack=false;
   let onlineEffectiveSkillEntitlements=null;
   const platformAvailable=Boolean(root.NyanPurchases.nativePlugin());
   const skills=root.NyanSkillCatalog.SKILLS;
@@ -29,7 +30,7 @@
     activeProductId=productId;render();const result=await root.NyanPurchases.provider.purchaseProduct(productId);activeProductId=null;
     if(result.purchased)status.textContent='購入を確認しました';else if(result.pending)status.textContent='購入承認待ちです';
     else if(result.reason==='cancelled')status.textContent='購入をキャンセルしました';else status.textContent='購入を完了できませんでした';
-    await load();if(selectedSkillId)showPreview(selectedSkillId);
+    await load();if(selectedPack)showPackPreview();else if(selectedSkillId)showPreview(selectedSkillId);
   }
   function card(view){
     const article=document.createElement('article');article.className='store-product-card';article.dataset.productId=view.productId;
@@ -40,9 +41,25 @@
     const ownership=document.createElement('small');ownership.className='store-product-ownership';ownership.textContent=view.purchaseBlockedReason==='individualSkillOwned'?view.purchaseBlockedLabel:view.ownership;
     copy.append(title);if(ownership.textContent)copy.append(ownership);
     const action=document.createElement('div');action.className='store-product-action';
-    const button=document.createElement('button');button.type='button';button.textContent=view.purchaseBlockedReason==='individualSkillOwned'?'購入不可':view.purchaseBlockedLabel|| (view.purchasing?'購入中…':view.owned?view.status:(view.displayPrice||'利用不可'));
-    button.disabled=view.owned||!view.available||Boolean(activeProductId);button.addEventListener('click',()=>buy(view.productId));
-    action.append(button);article.append(icon,copy,action);return article;
+    if(view.packId){
+      article.classList.add('shop-pack-card');
+      const price=document.createElement('div');price.className='shop-pack-price-label';
+      const savings=root.NyanStoreUIModel.packSavings(products);
+      if(savings&&!view.owned){
+        const total=document.createElement('small');total.className='shop-pack-original-price';total.textContent=`単品合計 ${savings.total}`;
+        const badge=document.createElement('span');badge.className='shop-pack-saving-badge';badge.textContent=`${savings.saving} お得`;
+        price.append(total,badge);
+      }
+      const amount=document.createElement('strong');amount.className='shop-pack-price-amount';
+      amount.textContent=view.owned?'購入済み':view.displayPrice||'価格を確認中';price.append(amount);copy.append(price);
+      const detail=document.createElement('button');detail.type='button';detail.textContent='詳細を見る';
+      detail.className='shop-pack-detail-button';detail.addEventListener('click',showPackPreview);action.append(detail);
+    }else{
+      const button=document.createElement('button');button.type='button';button.textContent=view.purchaseBlockedReason==='individualSkillOwned'?'購入不可':view.purchaseBlockedLabel|| (view.purchasing?'購入中…':view.owned?view.status:(view.displayPrice||'利用不可'));
+      button.dataset.purchaseProduct=view.productId;
+      button.disabled=view.owned||!view.available||Boolean(activeProductId);button.addEventListener('click',()=>buy(view.productId));action.append(button);
+    }
+    article.append(icon,copy,action);return article;
   }
   function render(){
     const views=root.NyanStoreUIModel.build(root.NyanMonetization,products,activeProductId);
@@ -70,12 +87,13 @@
   }
   function showPreview(skillId){
     const skill=skills[skillId];if(!skill||!preview)return;
-    selectedSkillId=skillId;
+    selectedPack=false;selectedSkillId=skillId;
     const info=root.NyanHowToSkillDescriptions?.[skill.runtimeId==='fakePaw'?'fakepaw':skill.runtimeId==='doubleSearch'?'search':skill.runtimeId];
     document.getElementById('shopPreviewRole').textContent=skill.role==='cat'?'🐱 ネコのスキル':'🐕 警察のスキル';
     document.getElementById('shopPreviewName').textContent=skill.name;
     document.getElementById('shopPreviewDescription').textContent=info?.desc||'';
-    const image=document.getElementById('shopPreviewImage');image.src=info?.image||'';image.alt=skill.name;
+    const image=document.getElementById('shopPreviewImage');image.hidden=false;image.src=info?.image||'';image.alt=skill.name;
+    document.getElementById('shopPreviewVisual').classList.remove('shop-pack-contents');
     document.getElementById('shopPreviewVisual').innerHTML=info?.visual||'';
     document.getElementById('shopPreviewDetail').innerHTML=info?.detail||'';
     const owned=root.NyanMonetization.isSkillOwned(skillId),view=root.NyanStoreUIModel.build(root.NyanMonetization,products,activeProductId).find(item=>item.skillId===skillId);
@@ -91,13 +109,40 @@
     preview.querySelector('.shop-preview-body').scrollTop=0;
     preview.classList.add('show');preview.setAttribute('aria-hidden','false');
   }
-  previewBuy?.addEventListener('click',()=>{if(selectedSkillId)buy(skills[selectedSkillId].purchaseProductId);});
-  document.getElementById('shopPreviewClose')?.addEventListener('click',()=>{preview.classList.remove('show');preview.setAttribute('aria-hidden','true');selectedSkillId=null;});
-  document.getElementById('shopPreviewPackLink')?.addEventListener('click',()=>{
-    preview.classList.remove('show');preview.setAttribute('aria-hidden','true');selectedSkillId=null;
-    const heading=document.querySelector('.shop-pack-section h3');
-    heading?.scrollIntoView({block:'start'});heading?.focus({preventScroll:true});
-  });
+  function showPackPreview(){
+    const view=root.NyanStoreUIModel.build(root.NyanMonetization,products,activeProductId).find(v=>v.productId==='SKILL_PACK_01');
+    if(!view||!preview)return;
+    selectedSkillId=null;selectedPack=true;
+    document.getElementById('shopPreviewRole').textContent='🎁 3つの有料スキルをまとめて解放';
+    document.getElementById('shopPreviewName').textContent='スキル3点パック';
+    document.getElementById('shopPreviewDescription').textContent='ネコも警察も、まとめて楽しもう！';
+    const image=document.getElementById('shopPreviewImage');image.removeAttribute('src');image.alt='';image.hidden=true;
+    const ownership=document.getElementById('shopPreviewOwnership');ownership.hidden=false;
+    ownership.textContent=view.owned?'所有済み':'未所持';ownership.classList.toggle('is-owned',view.owned);
+    const visual=document.getElementById('shopPreviewVisual');visual.classList.add('shop-pack-contents');visual.replaceChildren();
+    for(const id of ['CAT_FAKE_PAW','POLICE_DASH','POLICE_GROUP_SEARCH']){
+      const skill=skills[id],runtime=skill.runtimeId==='fakePaw'?'fakepaw':skill.runtimeId==='doubleSearch'?'search':skill.runtimeId;
+      const info=root.NyanHowToSkillDescriptions?.[runtime];
+      const row=document.createElement('div');row.className='shop-pack-skill';
+      const art=document.createElement('img');art.src=info?.image||'';art.alt='';
+      const copy=document.createElement('div'),name=document.createElement('strong'),desc=document.createElement('small');
+      name.textContent=skill.name;desc.textContent=(skill.role==='cat'?'ネコ用：':'警察用：')+(info?.desc||'');
+      copy.append(name,desc);row.append(art,copy);visual.append(row);
+    }
+    const detail=document.getElementById('shopPreviewDetail');detail.replaceChildren();
+    const savings=root.NyanStoreUIModel.packSavings(products);
+    if(savings){const offer=document.createElement('strong');offer.className='shop-pack-savings';offer.textContent=`単品合計 ${savings.total} より ${savings.saving} お得！`;detail.append(offer);}
+    const note=document.createElement('p');note.textContent='買い切り・3スキルを永久解放。使用にはスキルモードの解放が別途必要です（リワード広告3回・報酬確認後）。対象スキルを単品で所持している場合は、重複購入を防ぐためパックを購入できません。';detail.append(note);
+    const price=document.getElementById('shopPreviewPrice');price.hidden=!view.displayPrice;price.textContent=view.displayPrice;
+    previewBuy.hidden=false;previewBuy.disabled=view.owned||!view.available||Boolean(activeProductId);
+    previewBuy.textContent=view.owned?'所持済み':view.purchaseBlockedLabel||(view.available?'パックを購入する':'現在購入できません');
+    document.getElementById('shopPreviewPack').hidden=true;
+    preview.querySelector('.shop-preview-body').scrollTop=0;
+    preview.classList.add('show');preview.setAttribute('aria-hidden','false');
+  }
+  previewBuy?.addEventListener('click',()=>{if(selectedPack)buy('SKILL_PACK_01');else if(selectedSkillId)buy(skills[selectedSkillId].purchaseProductId);});
+  document.getElementById('shopPreviewClose')?.addEventListener('click',()=>{preview.classList.remove('show');preview.setAttribute('aria-hidden','true');selectedSkillId=null;selectedPack=false;});
+  document.getElementById('shopPreviewPackLink')?.addEventListener('click',showPackPreview);
   document.querySelectorAll('[data-shop-category]').forEach(button=>button.addEventListener('click',()=>{category=button.dataset.shopCategory;selectedSkillId=null;preview?.classList.remove('show');preview?.setAttribute('aria-hidden','true');render();}));
   document.querySelectorAll('[data-shop-role]').forEach(button=>button.addEventListener('click',()=>{role=button.dataset.shopRole;render();}));
   async function load(){

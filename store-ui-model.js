@@ -23,16 +23,26 @@
     return DEFINITIONS.map(def=>{
       const product=byId.get(def.productId),direct=manager.isProductPurchased(def.productId);
       const included=Boolean(def.skillId&&!direct&&manager.isSkillOwned(def.skillId));
-      const packStatus=def.packId?manager.getSkillPackOwnershipStatus(def.packId):null;
       const owned=direct||included||Boolean(def.packId&&manager.isSkillPackOwned(def.packId))||Boolean(def.adsRemoved&&manager.hasRemovedAds());
       const purchasing=activeProductId===def.productId;
       const purchaseBlockedReason=def.productId===IDS.SKILL_PACK_01?packPurchaseReason(manager):null;
       const status=purchasing?'購入中':direct?'購入済み':included?'パックに含まれる':owned?'購入済み':product?'未購入':'利用不可';
-      const ownership=packStatus&&!owned?`${packStatus.ownedCount}個購入済み・残り${packStatus.missingCount}個`:'';
+      const ownership='';
       return {...def,displayName:product?.displayName||def.name,storeDescription:product?.description||def.description,
         displayPrice:product?.displayPrice||'',available:Boolean(product)&&!purchaseBlockedReason,owned,purchasing,status,ownership,
         purchaseBlockedReason,purchaseBlockedLabel:purchaseBlockedReason==='packOwned'?'所持済み':purchaseBlockedReason==='individualSkillOwned'?'単品スキルを所持しているため購入できません':''};
     });
   }
-  return Object.freeze({DEFINITIONS,build,packPurchaseReason});
+  function packSavings(products){
+    const ids=[IDS.SKILL_CAT_FAKE_PAW,IDS.SKILL_POLICE_GROUP_SEARCH,IDS.SKILL_POLICE_DASH,IDS.SKILL_PACK_01];
+    const items=ids.map(id=>products.find(p=>p.productId===id));
+    if(items.some(p=>!p||!Number.isFinite(p.priceNumber)||p.priceNumber<=0)||
+      !/^[A-Z]{3}$/.test(items[0].currencyCode||'')||items.some(p=>p.currencyCode!==items[0].currencyCode))return null;
+    const total=items.slice(0,3).reduce((sum,p)=>sum+p.priceNumber,0);
+    const saving=Math.round((total-items[3].priceNumber)*100)/100;
+    if(saving<=0)return null;
+    const money=n=>new Intl.NumberFormat(undefined,{style:'currency',currency:items[0].currencyCode}).format(n);
+    return {total:money(total),saving:money(saving)};
+  }
+  return Object.freeze({DEFINITIONS,build,packPurchaseReason,packSavings});
 });

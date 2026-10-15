@@ -5,6 +5,23 @@
   --road:#DED7D0;--box:#E8BC79;--box2:#F8DDAE;--box3:#B47D42;--disabled:#D9D6D2;
   --dog-red:#F6A6A0;--dog-blue:#9ED9F3;--dog-cream:#F4DDA4;--shadow:rgba(93,64,55,.16)
 }
+.shop-pack-skill{display:flex;align-items:center;gap:12px;text-align:left;margin:10px 0;padding:9px;border-radius:14px;background:#fff8ec;border:1px solid #e8c99c}
+.shop-pack-skill img{width:58px;height:58px;object-fit:contain;flex:none}
+.shop-pack-skill strong,.shop-pack-skill small{display:block}
+.shop-pack-skill small{font-size:12px;margin-top:4px}
+.shop-pack-savings{display:block;padding:12px;border-radius:14px;background:#fff0aa;color:#a6421b;text-align:center;font-size:18px}
+.shop-pack-detail-button{background:#fff8dd!important;color:#714a30!important}
+.shop-overlay .shop-pack-card{background:linear-gradient(120deg,#fffdf5,#fff3d4);border-color:#e8bd64;padding:13px}
+.shop-overlay .shop-pack-price-label{display:flex;flex-wrap:wrap;gap:4px 7px;align-items:baseline;margin-top:7px;text-align:left}
+.shop-overlay .shop-pack-price-label .shop-pack-original-price{font-size:10px;color:#8b7763;text-decoration:line-through}
+.shop-overlay .shop-pack-price-label .shop-pack-saving-badge{background:#ffe38c;color:#994116;border-radius:5px;padding:3px 6px;font-size:11px;font-weight:900}
+.shop-overlay .shop-pack-price-label .shop-pack-price-amount{flex-basis:100%;font-size:24px;line-height:1.2;color:#a64420;font-weight:900}
+.shop-overlay .shop-pack-card .shop-pack-detail-button{white-space:nowrap}
+.shop-overlay .shop-preview-overlay #shopPreviewImage[hidden]{display:none!important}
+.shop-overlay .shop-preview-overlay #shopPreviewVisual.shop-pack-contents{display:block;min-height:0;padding:6px}
+.shop-overlay .shop-preview-overlay #shopPreviewVisual .shop-pack-skill{display:flex;flex-direction:row;width:100%;gap:12px;align-items:center;justify-content:flex-start}
+.shop-overlay .shop-preview-overlay #shopPreviewVisual .shop-pack-skill>div{min-width:0;flex:1;text-align:left}
+.shop-overlay .shop-preview-overlay #shopPreviewVisual .shop-pack-skill img{width:58px;height:58px;flex:0 0 58px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:var(--ivory)}
 body{

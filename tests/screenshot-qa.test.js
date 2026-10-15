@@ -64,7 +64,14 @@ test('document-start isolation blocks Web and native writes/ads before app start
  assert.throws(()=>new root.WebSocket('wss://example.com'),/Offline/);assert.equal(root.navigator.sendBeacon(),false);
  for(const [plugin,method] of [['AdMob','initialize'],['AdMob','prepareRewardVideoAd'],['CapacitorHttp','request'],['NyanStoreKit','purchase'],['NyanReview','requestReview']])await assert.rejects(root.Capacitor.nativePromise(plugin,method),/Offline/);
  assert.equal(calls,0);assert.equal((await root.Capacitor.nativePromise('NyanReview','getEnvironment')).debug,true);
+ await root.Capacitor.nativePromise('NyanStoreKit','loadProducts',{productIds:['SKILL_PACK_01']});
+ const afterRead=calls;
+ for(const method of ['restorePurchases','currentEntitlements','unfinishedTransactions','finishTransaction','addListener'])
+   await assert.rejects(root.Capacitor.nativePromise('NyanStoreKit',method),/Offline/);
+ assert.equal(calls,afterRead);
  const normal={fetch,Capacitor:{getPlatform:()=> 'ios',nativePromise}};vm.runInNewContext(source,normal);assert.equal(normal.fetch,fetch);assert.equal(normal.Capacitor.nativePromise,nativePromise);
  const swift=fs.readFileSync(path.join(__dirname,'../ios/App/App/NyanStoreKitPlugin.swift'),'utf8');
  assert.match(swift,/#if DEBUG[\s\S]*configuration.websiteDataStore = .nonPersistent\(\)/);
+ assert.match(swift,/public var pluginMethods[\s\S]*?#if DEBUG[\s\S]*?return \[CAPPluginMethod\(name: "loadProducts", returnType: CAPPluginReturnPromise\)\]\s*\}\s*#endif/);
+ assert.match(swift,/public override func load\(\) \{\s*#if DEBUG[\s\S]*?NYAN_SCREENSHOT_MODE[\s\S]*?\{ return \}\s*#endif\s*updatesTask/);
 });

@@ -19,9 +19,9 @@ test('単品購入済みとパック付与を区別して表示',()=>{
   assert.equal(packed.find(view=>view.productId==='SKILL_POLICE_DASH').status,'パックに含まれる');
   assert.equal(packed.find(view=>view.productId==='SKILL_PACK_01').status,'購入済み');
 });
-test('3点パックは単品所有数と残数を表示',()=>{
+test('3点パックは購入数・残数を表示しない',()=>{
   const views=Model.build(manager({purchasedProductIds:['SKILL_CAT_FAKE_PAW','SKILL_POLICE_DASH']}),products);
-  assert.equal(views.find(view=>view.productId==='SKILL_PACK_01').ownership,'2個購入済み・残り1個');
+  assert.equal(views.find(view=>view.productId==='SKILL_PACK_01').ownership,'');
 });
 test('広告削除セットでも広告削除を購入済み表示',()=>{
   const views=Model.build(manager({purchasedProductIds:['REMOVE_ADS_PLUS_SKILL_PACK_01']}),products);

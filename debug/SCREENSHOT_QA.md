@@ -12,7 +12,7 @@
 
 Release資産生成は`debug/`と参照scriptを除去し、Release資産検証も`debug/`残存を拒否する。nativeの許可フラグは`#if DEBUG`内にしかなく、Releaseからは返らない。再度Release buildする際は既存の正式Release資産生成・検証手順を必ず行う。
 
-起動時から非永続WebView領域を使用し、外部通信とnative HTTP／StoreKit／広告呼び出しを遮断する。同じアプリbundle内の画像・WAV等のGET／HEADは許可し、通常のローカル効果音を再生できる。通常の保存領域・購入データは読み書きしない。DailyとCollectionは一時領域の初期データ表示となる。Onlineは「Online Room画面（通信なし）」で入口だけ表示し、作成・参加はしない。
+起動時から非永続WebView領域を使用し、外部Web通信とnative HTTP／広告呼び出しを遮断する。StoreKitは商品名・説明・実価格を取得するloadProductsだけ許可する。購入・復元・権利照会・未完了取引・取引完了処理は公開せず、Transaction.updatesの監視も開始しない。同じアプリbundle内の画像・WAV等のGET／HEADは許可し、通常のローカル効果音を再生できる。通常の保存領域・購入データは読み書きしない。DailyとCollectionは一時領域の初期データ表示となる。Onlineは「Online Room画面（通信なし）」で入口だけ表示し、作成・参加はしない。
 
 撮影時は「パネルを隠す」を使用し、3本指で画面をタップすると戻せる。カットイン固定は動作中の対戦ではなく停止中の画面で行う。
 

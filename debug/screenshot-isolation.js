@@ -40,12 +40,12 @@
   if(root.navigator?.sendBeacon)root.navigator.sendBeacon=()=>false;
   const meta=root.document.createElement('meta');meta.httpEquiv='Content-Security-Policy';
   meta.content="connect-src capacitor: file: app: asset: data: blob:; form-action 'none'; frame-src 'self'";root.document.head.append(meta);
-  // No native HTTP, StoreKit, UMP, review request, or ads during capture.
+  // Only read-only StoreKit product metadata is allowed; transactions remain blocked.
   const cap=root.Capacitor;
   for(const key of ['nativePromise','nativeCallback']){
     const original=cap[key];if(typeof original!=='function')continue;
     cap[key]=function(plugin,method,...args){
-      if(plugin==='NyanReview'&&method==='getEnvironment'||['Console','SystemBars','WebView'].includes(plugin))return original.call(cap,plugin,method,...args);
+      if(plugin==='NyanReview'&&method==='getEnvironment'||plugin==='NyanStoreKit'&&method==='loadProducts'||['Console','SystemBars','WebView'].includes(plugin))return original.call(cap,plugin,method,...args);
       blocked.native++;
       if(key==='nativePromise')return Promise.reject(denied());
       return undefined;

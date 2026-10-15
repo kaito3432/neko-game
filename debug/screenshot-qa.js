@@ -18,7 +18,7 @@
     const doc=root.document,original=root.NyanMonetization;
     if(!original||!root.NyanSkillCatalog)return;
     root.NyanMonetization=previewManager(original,root.NyanSkillCatalog);
-    const blocked='#createOnlineRoomBtn,#joinOnlineRoomBtn,#randomMatchOpenBtn,#rankedOpenBtn,#passOpenBtn,#giftBoxOpenBtn,#storeKitRestore,#shopPreviewPurchase,#shopPackProducts button,#skillModeAdButton,#dailyOverlay button:not(#dailyCloseBtn),#monetizationDevPanel button,#onlineDataDeleteOpen,#adPrivacyOptionsButton';
+    const blocked='#createOnlineRoomBtn,#joinOnlineRoomBtn,#randomMatchOpenBtn,#rankedOpenBtn,#passOpenBtn,#giftBoxOpenBtn,#storeKitRestore,#shopPreviewPurchase,#shopPackProducts [data-purchase-product],#skillModeAdButton,#dailyOverlay button:not(#dailyCloseBtn),#monetizationDevPanel button,#onlineDataDeleteOpen,#adPrivacyOptionsButton';
     // Capture before game handlers; do not start purchases, restore, ads or Online sessions.
     for(const event of ['click','pointerdown','touchstart','keydown'])doc.addEventListener(event,e=>{
       if(e.target.closest?.(blocked)){e.preventDefault();e.stopImmediatePropagation();}
@@ -26,6 +26,8 @@
     const style=doc.createElement('style');
     style.textContent=blocked+'{pointer-events:none!important;opacity:.45!important} #nyanScreenshotPanel{position:fixed;bottom:5px;left:5px;z-index:2147483647;background:#fff8e9;color:#543c30;padding:8px;border:1px solid;border-radius:8px;max-width:95vw;font-size:12px} #nyanScreenshotPanel button{margin:3px} body.nyan-shot-hold #skillCutin,body.nyan-shot-hold #skillCutin *{animation:none!important} body.nyan-shot-hold #skillCutin .skill-cutin-card{opacity:1!important;transform:none!important;filter:none!important}';
     doc.head.append(style);
+    // Show the actual storefront presentation while capture guards still consume all input.
+    style.textContent+=' #shopPreviewPurchase,#shopPackProducts button{opacity:1!important}';
     const panel=doc.createElement('details');panel.id='nyanScreenshotPanel';
     const summary=doc.createElement('summary');summary.textContent='撮影用（ローカル限定・権利変更なし）';panel.append(summary);
     const button=(label,action)=>{const b=doc.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',action);panel.append(b);};
