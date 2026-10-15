@@ -35,14 +35,17 @@ test('Release integrityは画像・音声などassets以下も対象にする',(
  assert(files.includes('rewarded-ad-provider.js'));
  assert(!files.includes('api-environment.sandbox.js'));
 });
-test('広告は常にNPA、ATT requestなし、first-party ID off、Android AD_ID removal',()=>{
+test('広告は常にNPA、iOS ATT完了待機、first-party ID off、Android AD_ID removal',()=>{
  const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
  assert.match(read('scripts/prepare-web-assets.cjs'),/result.npa=true/);
  assert.match(read('rewarded-ad-provider.js'),/isTesting:testing,npa:true/);
  const ios=read('ios/App/App/AppDelegate.swift');
  assert.match(ios,/setPublisherFirstPartyIDEnabled\(false\)/);
  assert.match(ios,/publisherPrivacyPersonalizationState = .disabled/);
- assert.doesNotMatch(ios,/requestTrackingAuthorization\(/);
+ assert.match(ios,/await ATTrackingManager.requestTrackingAuthorization\(\)/);
+ const provider=read('rewarded-ad-provider.js');
+ assert(provider.indexOf('await privacy.prepareAdvertising()')<provider.indexOf('await plugin.initialize('));
+ assert.match(read('ios/App/App/Info.plist'),/NSUserTrackingUsageDescription/);
  assert.match(read('android/app/src/main/java/jp/nyanchase/game/MainActivity.java'),/putPublisherFirstPartyIdEnabled\(false\)/);
  assert.match(read('android/app/src/main/AndroidManifest.xml'),/permission.AD_ID" tools:node="remove"/);
 });

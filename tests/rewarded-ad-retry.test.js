@@ -7,7 +7,7 @@ function fixture({error=null,initializeError=null,consent=true,id='ca-app-pub-64
   const api={createAttempt:async()=>{attempts++;return {playerId:'p',attemptId:'a'+attempts};},completeAttempt:async()=>{completions++;if(completeError)throw completeError;return {verified:true};}};
   const manager={ensure:async()=>({canRequestAds:consent}),canRequestAds:()=>consent};
   const root={document:{getElementById:id=>nodes[id],createElement:()=>({})},NyanMonetization:{getState:()=>({skillModeUnlocked:unlocked,skillModeUnlockAdViews:unlocked?3:0})},addEventListener:(name,fn)=>{events[name]=fn;}};
-  const provider=Ads.createProvider({plugin,api,config:{platform:'ios',testing:false,rewardedAdUnitId:id,consentManager:manager,verificationAttempts:1},onState:detail=>events['nyan-rewarded-ad-state']?.({detail})});
+  const provider=Ads.createProvider({plugin,api,config:{platform:'ios',privacyPlugin:{prepareAdvertising:async()=>({status:'denied',trackingAuthorized:false})},testing:false,rewardedAdUnitId:id,consentManager:manager,verificationAttempts:1},onState:detail=>events['nyan-rewarded-ad-state']?.({detail})});
   root.NyanRewardedAds={...Ads,provider};vm.runInNewContext(fs.readFileSync(require.resolve('../rewarded-ad-ui.js'),'utf8'),root);
   return {provider,button:nodes.skillModeAdButton,status:nodes.skillModeAdStatus,panel:nodes.skillModeUnlockPanel,ready:()=>new Promise(r=>setImmediate(r)),counts:()=>({loads,shows,attempts,completions})};
 }

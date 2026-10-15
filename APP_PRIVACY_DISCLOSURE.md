@@ -1,5 +1,15 @@
 # にゃんチェイス ストア申告作業資料（公開前ドラフト）
 
+## Build 15以降のATT対応（2026-10-15）
+
+- 実機検証結果・未確認事項は `ATT_RELEASE_VERIFICATION.md` に記録。iPhone authorized起動、iPad初回拒否、iPhone許可取り消し後を確認し、ユーザーはATT正式化を承認。以下の旧版記述より本節と検証記録を優先する。正式化はASC公開・審査提出の許可ではない。
+
+- Build 15実物のGoogle Mobile Ads ManifestとXcode Privacy ReportはDevice IDのTracking=YES。従来の下記「ATT要求なし／Tracking=No候補」の記述はBuild 15までの調査記録であり、新版の確定回答ではない。
+- 新版ではiOSの広告初期化前にNyanAdPrivacy.prepareAdvertisingでATTを確認する。未決定ならアプリがactiveになるまで待ってOSの許可画面を出し、未確定・エラーでは広告を開始しない。
+- 許可しない場合もゲーム・課金を制限しない。denied/restrictedではIDFA送信を抑止するGoogle SDKのATT対応に従い、npa=true、Publisher first-party ID OFF、publisher privacy personalization disabledを維持する。許可時もパーソナライズ広告は有効化しない。IDFAを自前で読み取らない。
+- UMPの地域別同意は別に取得し、canRequestAdsの確認を維持する。AdMob ConsoleのIDFAメッセージを別途新規公開する必要はない（ネイティブATTで要求する）。
+- App Store Connectはユーザー方針によりDevice IDのTracking=Yesとするが、実機で初回許可・拒否・再起動・設定変更後を確認するまで公開しない。SDK Manifestだけで実送信内容や審査通過を保証しない。
+
 この表は `online-beta` の実装と同梱文書を照合するための作業資料です。App Store Connect／Google Play Consoleへそのまま転記する確定回答ではありません。第三者SDK・広告設定、対象年齢、提供地域、運営体制を公開前に確認してください。
 
 ## 公開前に確定する情報

@@ -1,6 +1,7 @@
 import UIKit
 import Capacitor
 import GoogleMobileAds
+import AppTrackingTransparency
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -8,7 +9,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Configure before AdMob initialization; never request ATT authorization.
+        // Keep identifier-based personalization off, including before ATT is resolved.
         MobileAds.shared.requestConfiguration.setPublisherFirstPartyIDEnabled(false)
         MobileAds.shared.requestConfiguration.publisherPrivacyPersonalizationState = .disabled
         return true
@@ -43,5 +44,54 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                                           sessionRole: connectingSceneSession.role)
         config.delegateClass = SceneDelegate.self
         return config
+    }
+}
+
+// Resolve ATT before JS initializes advertising. Never read or return the IDFA.
+@objc(NyanAdPrivacyPlugin)
+public final class NyanAdPrivacyPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "NyanAdPrivacyPlugin"
+    public let jsName = "NyanAdPrivacy"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "prepareAdvertising", returnType: CAPPluginReturnPromise)
+    ]
+    private var pendingCalls: [CAPPluginCall] = []
+
+    @objc func prepareAdvertising(_ call: CAPPluginCall) {
+        Task { @MainActor in
+            self.pendingCalls.append(call)
+            guard self.pendingCalls.count == 1 else { return }
+            // ATT cannot display while inactive or another system prompt is visible.
+            for _ in 0..<100 {
+                if UIApplication.shared.applicationState == .active { break }
+                try? await Task.sleep(nanoseconds: 100_000_000)
+            }
+            guard UIApplication.shared.applicationState == .active else {
+                self.finish(nil); return
+            }
+            if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+                _ = await ATTrackingManager.requestTrackingAuthorization()
+                self.finish(ATTrackingManager.trackingAuthorizationStatus)
+            } else {
+                self.finish(ATTrackingManager.trackingAuthorizationStatus)
+            }
+        }
+    }
+
+    private func finish(_ status: ATTrackingManager.AuthorizationStatus?) {
+        let calls = pendingCalls
+        pendingCalls.removeAll()
+        // Fail closed if the OS could not present ATT. A later attempt may retry.
+        guard let status = status, status != .notDetermined else {
+            calls.forEach { $0.reject("ATT_NOT_RESOLVED") }; return
+        }
+        let name: String
+        switch status {
+        case .authorized: name = "authorized"
+        case .denied: name = "denied"
+        case .restricted: name = "restricted"
+        default: calls.forEach { $0.reject("ATT_UNKNOWN_STATUS") }; return
+        }
+        calls.forEach { $0.resolve(["status": name, "trackingAuthorized": status == .authorized]) }
     }
 }

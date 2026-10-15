@@ -215,6 +215,7 @@ final class NyanBridgeViewController: CAPBridgeViewController {
     }
     #endif
     override func capacitorDidLoad() {
+        bridge?.registerPluginInstance(NyanAdPrivacyPlugin())
         #if DEBUG
         if ProcessInfo.processInfo.environment["NYAN_SCREENSHOT_MODE"] == "1" {
             bridge?.registerPluginInstance(NyanStoreKitPlugin())

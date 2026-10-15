@@ -24,6 +24,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>GADApplicationIdentifier</key>
 	<string>$(NYAN_ADMOB_APP_ID)</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>広告の効果測定のため、広告パートナーが他社のアプリやWebサイトのデータと照合することを許可します。許可しなくてもゲームを利用できます。</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

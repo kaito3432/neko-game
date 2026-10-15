@@ -33,6 +33,12 @@
       if(!validAdId()){emit(STATES.UNAVAILABLE,{reason:'invalidAdUnitId'});return {available:false};}
       emit(STATES.INITIALIZING);
       try{
+        if(platform==='ios'){
+          const privacy=config.privacyPlugin||root.Capacitor?.Plugins?.NyanAdPrivacy||root.Capacitor?.registerPlugin?.('NyanAdPrivacy');
+          if(typeof privacy?.prepareAdvertising!=='function')throw new Error('att_bridge_unavailable');
+          const authorization=await privacy.prepareAdvertising();
+          if(!['authorized','denied','restricted'].includes(authorization?.status))throw new Error('att_not_resolved');
+        }
         // AdMob plugin 8.1.0 wires the iOS UMP presenter in initialize().
         // Initialize once, but never load a rewarded ad before canRequestAds.
         if(!sdkInitialized){
