@@ -1018,6 +1018,14 @@ function sendOnlineAbilityReveal(){
   tryShowOnlineAbilityReveal();
 }
 
+function showAbilityReveal(){
+  // Reset while visible so WebKit also resets descendant animation state on rematch.
+  abilityRevealOverlay.classList.remove("vs-animate");
+  abilityRevealOverlay.classList.add("show");
+  void abilityRevealOverlay.offsetWidth;
+  abilityRevealOverlay.classList.add("vs-animate");
+}
+
    function tryShowOnlineAbilityReveal(){
 
   if(!onlineSelfAbility) return;
@@ -1068,18 +1076,9 @@ confirmCatAbilityBtn.textContent="このスキルに決定";
 updateOnlineAbilityRevealCard();
 
 
-  // アニメーションを最初から
-  abilityRevealOverlay.classList.remove("vs-animate");
-
-  abilityRevealOverlay.classList.add("show");
+  showAbilityReveal();
 
   Audio.play("skillVs");
-
-  void abilityRevealOverlay.offsetWidth;
-
-  requestAnimationFrame(()=>{
-    abilityRevealOverlay.classList.add("vs-animate");
-  });
 
   setTimeout(()=>{
     Audio.haptic?.([18,25,30]);
@@ -1482,18 +1481,8 @@ if(p){
 }
 updateAbilityRevealCard();
 
-/* VSアニメーションを毎回最初から再生 */
-abilityRevealOverlay.classList.remove("vs-animate");
-
-abilityRevealOverlay.classList.add("show");
+showAbilityReveal();
       Audio.play("skillVs");
-
-/* Safariでも再アニメーションさせる */
-void abilityRevealOverlay.offsetWidth;
-
-requestAnimationFrame(()=>{
-  abilityRevealOverlay.classList.add("vs-animate");
-});
       setTimeout(()=>{
   Audio.haptic?.([18,25,30]);
 },600);

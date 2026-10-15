@@ -4837,31 +4837,15 @@ body.sneak-mode .board-shell{
    VSカード 登場アニメーション
 ======================================== */
 
-/* 初期状態 */
-#abilityRevealOverlay .cat-side{
-  opacity:0;
-  transform:translateX(-55px) scale(.96);
-}
-
-#abilityRevealOverlay .police-side{
-  opacity:0;
-  transform:translateX(55px) scale(.96);
-}
-
-#abilityRevealOverlay .ability-vs-mark{
-  opacity:0;
-  transform:scale(.25) rotate(-12deg);
-}
-
+/* Content and navigation must remain usable even if a replay animation is skipped. */
+#abilityRevealOverlay .cat-side,
+#abilityRevealOverlay .police-side,
+#abilityRevealOverlay .ability-vs-mark,
 #abilityRevealOverlay .ability-vs-title,
-#abilityRevealOverlay .ability-vs-kicker{
-  opacity:0;
-  transform:translateY(-8px);
-}
-
+#abilityRevealOverlay .ability-vs-kicker,
 #abilityRevealOverlay .ability-vs-start-btn{
-  opacity:0;
-  transform:translateY(12px);
+  opacity:1;
+  transform:none;
 }
 
 
@@ -4872,13 +4856,13 @@ body.sneak-mode .board-shell{
 #abilityRevealOverlay.vs-animate .ability-vs-kicker{
   animation:
     vsHeaderIn .25s ease-out
-    .08s forwards;
+    .08s both;
 }
 
 #abilityRevealOverlay.vs-animate .ability-vs-title{
   animation:
     vsHeaderIn .3s ease-out
-    .13s forwards;
+    .13s both;
 }
 
 
@@ -4887,7 +4871,7 @@ body.sneak-mode .board-shell{
   animation:
     vsCatIn .45s
     cubic-bezier(.2,.9,.3,1.15)
-    .22s forwards;
+    .22s both;
 }
 
 
@@ -4896,7 +4880,7 @@ body.sneak-mode .board-shell{
   animation:
     vsPoliceIn .45s
     cubic-bezier(.2,.9,.3,1.15)
-    .22s forwards;
+    .22s both;
 }
 
 
@@ -4905,7 +4889,7 @@ body.sneak-mode .board-shell{
   animation:
     vsMarkPop .34s
     cubic-bezier(.2,1.35,.4,1)
-    .60s forwards;
+    .60s both;
 }
 
 
@@ -4913,7 +4897,7 @@ body.sneak-mode .board-shell{
 #abilityRevealOverlay.vs-animate .ability-vs-start-btn{
   animation:
     vsStartButtonIn .3s ease-out
-    .88s forwards;
+    .88s both;
 }
 
 
@@ -9754,6 +9738,8 @@ body.sneak-mode .board-shell{
 
 @media (orientation:portrait) and (min-width:700px){
   .app{width:min(100%,900px)}
+  /* Two-digit current/max turns need more than the phone's fixed 104px column. */
+  .app > .game-topbar{grid-template-columns:132px minmax(0,1fr)}
   .app > .game-topbar .top-pill strong{font-size:clamp(18px,2dvh,24px)}
   .app > .guide .main{font-size:clamp(15px,1.5dvh,19px)!important}
   .app > .dog-row .dog-name{font-size:clamp(15px,1.5dvh,18px)!important}
