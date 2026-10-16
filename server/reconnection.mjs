@@ -48,6 +48,15 @@ export function lifecycleDeadlineResult(room,now){
   const turnAt=Math.min(...Object.values(room.turnClock?.deadlines||{}));
   return turnAt<disconnectAt?turn:disconnect;
 }
+// Cat paths become public only after an authoritative, valid win/loss.
+export function publicFinishedResult(room){
+  if(room.status!=='finished'||!['cat','police'].includes(room.result?.winner))return room.result||null;
+  const secret=room.secretCat||{};
+  return {...room.result,boardRuleId:room.boardRuleId||ONLINE_BOARD_RULE_ID,
+    route:(secret.history||[]).map(step=>({box:Number(step.box),turn:Number(step.turn)})),
+    routeSkills:{sneakBoxes:(secret.noTrackBoxes||[]).map(Number),
+      fakeTracks:(secret.fakeTracks||[]).map(step=>({box:Number(step.box),turn:Number(step.turn)}))}};
+}
 export function publicRecovery(room,seat){
   const role=room.roles?.[seat]||null,s=room.validationState||{};
   // Explicit allowlist, not spread/delete: police never receive hidden state.
@@ -72,5 +81,5 @@ export function publicRecovery(room,seat){
     profile:room.profiles?.[seat],rule:room.rule||null,abilities:room.abilities||{},ready:room.ready||{},
     ownAbility:room.privateAbilities?.[role]||null,abilityReady:room.abilityReady||{},
     status:room.status,hasStarted:hasStarted(room),...actorState(room),matchStartedAt:room.matchStartedAt||null,
-    result:room.result||null,disconnects:room.disconnects||{},turnClock:hasStarted(room)?room.turnClock:null,serverTime:Date.now(),state};
+    result:publicFinishedResult(room),disconnects:room.disconnects||{},turnClock:hasStarted(room)?room.turnClock:null,serverTime:Date.now(),state};
 }

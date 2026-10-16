@@ -5,7 +5,7 @@ import {canUseOnlineSkillMode,captureMatchSkillEntitlements,resolveEffectiveSkil
 import { matchmaking, ensureMatchRoom } from './matchmaking.mjs';
 import { acceptRandomAction,validateAbilityUse } from './random-game-validation.mjs';
 import { sessionEvent } from './session-events.mjs';
-import {disconnected,reconnected,lifecycleDeadlineResult,publicRecovery,terminal,serverInvalid} from './reconnection.mjs';
+import {disconnected,reconnected,lifecycleDeadlineResult,publicRecovery,publicFinishedResult,terminal,serverInvalid} from './reconnection.mjs';
 import {syncTurnClock,actorState} from './turn-clock.mjs';
 import {hasStarted,startIfReady} from './match-lifecycle.mjs';
 import {applyRankedResult,eligibleRankedResult,masterPeriods,publicRankedProfile} from './ranked-progression.mjs';
@@ -496,7 +496,7 @@ secretCat: {
   async markMatch(room, status, winner) {
     if (terminal(room)) return;
     room.status = status;
-    const result = winner ? withWinnerPlayerId(room,{winner, completedAt: Date.now()}) : null;
+    const result = winner ? publicFinishedResult({...room,result:withWinnerPlayerId(room,{winner, completedAt: Date.now()})}) : null;
     if (result) room.result = result;
     await this.ctx.storage.put('room', room);
     // Persist a retry alarm before cross-object I/O. A directory outage must not
@@ -547,6 +547,7 @@ secretCat: {
     if(!result)return;
     result=withWinnerPlayerId(room,result);
     room.status=result.status;room.result=result;
+    result=publicFinishedResult(room);room.result=result;
     await this.ctx.storage.put('room',room);
     await this.ctx.storage.setAlarm(Date.now()+5000);
     try{await this.publishMatchState(room);}catch(_){}

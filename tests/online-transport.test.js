@@ -1,10 +1,10 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const Visual=require('../online-appearance.js');
 const own=(dog='default')=>({playerId:'A',ownedCatSkins:['default'],ownedDogSkins:['default','dog_detective'],equippedAppearance:{catSkinId:'default',dogSkinId:dog}});
-async function transport({active=null,storage=new Map(),personal=null}={}){
+async function transport({active=null,storage=new Map(),personal=null,timers={}}={}){
  const events=[];
  class Socket{static OPEN=1;constructor(){this.readyState=1;this.events={};Socket.last=this;}addEventListener(k,fn){this.events[k]=fn;}close(){}send(){}emit(data){this.events.message({data:JSON.stringify(data)});}}
- const ctx={WebSocket:Socket,URL,AbortController,console,JSON,CustomEvent:class{constructor(type,init){this.type=type;this.detail=init?.detail;}},setTimeout,clearTimeout,setInterval,clearInterval,queueMicrotask:()=>{},
+ const ctx={WebSocket:Socket,URL,AbortController,console,JSON,CustomEvent:class{constructor(type,init){this.type=type;this.detail=init?.detail;}},setTimeout,clearTimeout,setInterval,clearInterval,...timers,queueMicrotask:()=>{},
   localStorage:{setItem:(key,value)=>storage.set(key,value),getItem:key=>storage.get(key)||null,removeItem:key=>storage.delete(key)},dispatchEvent:e=>events.push(e),
   NyanDailyMissions:{recordOnline(){}},
   NyanOnlineAppearance:Visual,NyanOnlineIdentity:{prepare:async()=>({profile:own(),headers:{}}),
@@ -35,6 +35,30 @@ test('存在しない、キャンセル済み、無効Roomは結果画面を出�
  }
 });
 async function enter(t,id){t.api.useReservation({matchId:id,roomCode:id,token:'ticket',player:'host'});await t.api.createRoom();t.api.connect();}
+test('socket再接続時の通常決着も復帰リザルトとして一度だけ通知する',async()=>{
+ const pending=[],active={...role(),roomCode:'123456',token:'ticket',status:'finished',
+   result:{winner:'cat',finishReason:'caught',status:'finished'}};
+ const t=await transport({active,timers:{setTimeout:(fn,ms)=>{if(ms===700)pending.push(fn);return 1;},clearTimeout(){}}});
+ await enter(t,'m1');t.Socket.last.emit(role());
+ t.Socket.last.events.close({});assert.equal(pending.length,1);
+ await pending.shift()();
+ const ended=t.events.filter(e=>e.type==='nyan-online-ended');
+ assert.equal(ended.length,1);assert.equal(ended[0].detail.recoveredResult,true);
+ assert.equal(ended[0].detail.winner,'cat');
+ t.Socket.last.events.close({});assert.equal(pending.length,0);
+ t.api.reset();
+});
+test('端末側の猶予経過後でもサーバーが対戦継続を認めれば再接続する',async()=>{
+ let now=1000;const pending=[];
+ const active={...role(),roomCode:'123456',token:'ticket',ticket:'resume-ticket',status:'playing'};
+ const t=await transport({active,timers:{Date:{now:()=>now},
+   setTimeout:(fn,ms)=>{if(ms===700)pending.push(fn);return 1;},clearTimeout(){}}});
+ await enter(t,'m1');const old=t.Socket.last;old.emit(role());old.events.close({});
+ now+=20000;await pending.shift()();
+ assert.notEqual(t.Socket.last,old);
+ assert.equal(t.events.some(e=>e.type==='nyan-online-connection'&&e.detail.status==='checking'),false);
+ t.api.reset();
+});
 test('サーバー操作担当判定で待機側切断はロックせず、操作担当不在で停止',async()=>{
  const t=await transport();await enter(t,'m1');t.Socket.last.emit(role());
  const status={type:'connectionState',matchId:'m1',status:'reconnecting',hasStarted:true,disconnects:{guest:{deadline:15000}},actorDisconnected:false};

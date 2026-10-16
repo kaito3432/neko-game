@@ -32,6 +32,20 @@ test('警察復元snapshotは秘密情報をallowlistで除外、選択犬は復
 test('正常終了後のcloseでは切断記録を開始しない',async()=>{
  const {disconnected}=await mod,r=room();r.status='finished';disconnected(r,'host',0);assert.equal(r.disconnects,undefined);
 });
+test('勝敗確定後の復帰でのみ両役割へ猫ルートとスキル使用場所を返す',async()=>{
+ const {publicRecovery}=await mod,r=room();
+ r.secretCat={pos:9,history:[{box:3,turn:1},{box:9,turn:2}],noTrackBoxes:[3],fakeTracks:[{box:8,turn:2}]};
+ for(const status of ['playing','reconnecting','invalid','cancelled']){
+   r.status=status;r.result=status==='invalid'?{status,finishReason:'serverInvalid'}:null;
+   assert.equal(publicRecovery(r,'host').result?.route,undefined);
+ }
+ r.status='finished';r.result={status:'finished',winner:'cat',finishReason:'disconnectForfeit'};
+ for(const seat of ['host','guest']){
+   const result=publicRecovery(r,seat).result;
+   assert.deepEqual(result.route,r.secretCat.history);
+   assert.deepEqual(result.routeSkills,{sneakBoxes:[3],fakeTracks:[{box:8,turn:2}]});
+ }
+});
 test('サーバー障害は勝敗・切断敗者を生成しない',async()=>{
  const {serverInvalid}=await mod,r=room();const result=serverInvalid(r,100);
  assert.equal(result.status,'invalid');assert.equal(result.winner,undefined);assert.equal(result.loser,undefined);

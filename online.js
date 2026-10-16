@@ -58,8 +58,7 @@ window.NyanOnline = (() => {
     try{
       const result=await resumeRequest();
       if(closed||generation!==sessionGeneration)return;
-      if(['finished','invalid','cancelled'].includes(result.status)){finishNotification({...result.result,matchId:result.matchId,status:result.status});return;}
-      if(Date.now()>reconnectUntil){connectionEvent({status:'checking'});return;}
+      if(['finished','invalid','cancelled'].includes(result.status)){finishNotification({...result.result,matchId:result.matchId,status:result.status,recoveredResult:true});return;}
       ticket=result.ticket;sessionProfile=result.profile;resuming=true;
       connect(callbacks);
     }catch(_){if(closed||generation!==sessionGeneration)return;if(Date.now()<reconnectUntil)retryTimer=setTimeout(retryConnection,1500);else connectionEvent({status:'checking'});}

@@ -2533,20 +2533,20 @@ if(
     game.actionLocked=true;
 if(playMode==="onlinePolice"){
 
-  // ★ 警察側でも探索開始SE
-  Audio.play("sniff");
-
-  window.NyanOnline.sendGame({
-    type:"search",
-    dogIndex:di,
-    box:bi
-  });
+  const searchGame=game,searchMatchId=window.NyanOnline.getSession().matchId;
 
   setMessage(
     `${E.DOGS[di].label} ${E.DOGS[di].name} がクンクン調査中…`
   );
 
   render();
+  Skins.showBoardEffect(board,bi,"box",Skins.effectSource(playerAppearance(),"dogSkin","found",{playMode}),"dog-search");
+  A.animateSniff(board,game.dogs[di],di,bi,motionStatus,()=>{
+    // A completed animation must never submit an action into a recovered/new match.
+    if(game!==searchGame||game.gameOver||playMode!=="onlinePolice"||
+       window.NyanOnline.getSession().matchId!==searchMatchId||window.NyanOnline.isPaused())return;
+    window.NyanOnline.sendGame({type:"search",dogIndex:di,box:bi});
+  });
   return;
 }
 
@@ -5961,7 +5961,21 @@ if(resultRouteNote){
     victoryCutinTimer=setTimeout(finish,1850);
   }
 
+  function restoreOnlineResultRoute(result){
+    if(!Array.isArray(result?.route))return;
+    selectBoardRule(result.boardRuleId||ONLINE_BOARD_RULE_ID);
+    cpuCatRoute=result.route.map(step=>({box:Number(step.box),turn:Number(step.turn)}))
+      .filter(step=>Number.isInteger(step.box)&&E.isValidBox(step.box)&&Number.isInteger(step.turn))
+      .sort((a,b)=>a.turn-b.turn);
+    game.catHistory=new Map(cpuCatRoute.map(step=>[step.box,step.turn]));
+    game.catPos=cpuCatRoute.at(-1)?.box??null;
+    game.noTrackBoxes=new Set(result.routeSkills?.sneakBoxes||[]);
+    game.fakeTracks=new Map((result.routeSkills?.fakeTracks||[]).map(step=>[Number(step.box),Number(step.turn)]));
+    saveResultRouteSkills(result.routeSkills);
+  }
+
   function endGame(winner,reason,officialResult=null){
+    if(['onlineCat','onlinePolice'].includes(playMode))restoreOnlineResultRoute(officialResult);
     // Capture the server-confirmed match selection before gameover hides the in-match skill UI.
     const catalog=window.NyanSkillCatalog;
     const opponentSkill=window.NyanMatchSkillInfo?.opponentShopSkill({
@@ -6434,8 +6448,7 @@ bindPress(
   closeOnlineRulePicker
 );
 
-   bindPress(createOnlineRoomBtn,async()=>{
-  if(createOnlineRoomBtn.disabled||onlineRoomMatched)return;
+async function connectOnlineRoom(){
   if(!window.NyanOnline){
     onlineStatus.textContent="オンライン機能を読み込めませんでした";
     return;
@@ -7535,6 +7548,10 @@ if(isNewTrack){
     onlineStatus.textContent="部屋を作れませんでした";
     createOnlineRoomBtn.disabled=false;
   }
+}
+bindPress(createOnlineRoomBtn,()=>{
+  if(createOnlineRoomBtn.disabled||onlineRoomMatched)return;
+  return connectOnlineRoom();
 });
 
    bindPress(joinOnlineRoomBtn,async()=>{
@@ -9368,7 +9385,9 @@ async function resumeOnLaunch(){
         if(active){
           window.NyanRoomReview?.recovered(active.matchId);
           resetOnlineState();window.NyanOnline.useReservation(active);
-          onlineOverlay.classList.add('show');createOnlineRoomBtn.disabled=false;createOnlineRoomBtn.click();
+          onlineOverlay.classList.add('show');
+          // Recovery is not a user click: reconnect overlays intentionally block clicks.
+          await connectOnlineRoom();
           return;
         }
         break;
@@ -9379,6 +9398,7 @@ async function resumeOnLaunch(){
   }finally{bootRecoveryRunning=false;if(!document.documentElement.classList.contains('online-boot'))clearTimeout(fallback);}
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')resumeOnLaunch();});
+window.addEventListener('online',resumeOnLaunch);
 queueMicrotask(resumeOnLaunch);
 initGame(true);
 })();
