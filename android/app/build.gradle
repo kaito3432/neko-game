@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Public Android identifiers only; signing credentials remain environment-only.
+def androidAdIds = new groovy.json.JsonSlurper().parse(file('../../config/admob.android.production.json'))
+def androidReleaseAdAppId = project.findProperty('NYAN_ADMOB_APP_ID') ?: androidAdIds.appId
+if (androidAdIds.packageId != 'jp.nyanchase.game' || androidReleaseAdAppId != androidAdIds.appId) {
+    throw new GradleException('Android AdMob App ID must match config/admob.android.production.json')
+}
+
 android {
     namespace = "jp.nyanchase.game"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -31,7 +38,7 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            manifestPlaceholders = [admobAppId: project.findProperty('NYAN_ADMOB_APP_ID') ?: '']
+            manifestPlaceholders = [admobAppId: androidReleaseAdAppId]
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -69,11 +76,11 @@ tasks.register('validateNyanRelease') {
         for (key in ['NYAN_UPLOAD_KEYSTORE','NYAN_UPLOAD_STORE_PASSWORD','NYAN_UPLOAD_KEY_ALIAS','NYAN_UPLOAD_KEY_PASSWORD']) {
             if (!System.getenv(key)) throw new GradleException("Missing Release signing setting: ${key}")
         }
-        def appId = project.findProperty('NYAN_ADMOB_APP_ID')?.toString()
+        def appId = androidReleaseAdAppId.toString()
         def adConfig = file('src/main/assets/public/ad-config.js')
         if (!appId || appId.contains('3940256099942544') || !adConfig.exists() ||
             !adConfig.text.contains('"testing":false') || adConfig.text.contains('3940256099942544')) {
-            throw new GradleException('Prepare production Web assets and supply the real -PNYAN_ADMOB_APP_ID before Release.')
+            throw new GradleException('Prepare production Android Web assets with the approved AdMob IDs before Release.')
         }
         def rootWeb = rootProject.projectDir.parentFile
         def nodeBinary = System.getenv('NYAN_NODE_BINARY') ?: 'node'

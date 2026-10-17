@@ -1,6 +1,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const ROOT=path.resolve(__dirname,'..');
+const androidAdIds=require('../config/admob.android.production.json');
 function releasePlatforms(platform='both'){
   if(!['ios','android','both'].includes(platform))throw new Error('Invalid Release platform');
   return platform==='both'?['ios','android']:[platform];
@@ -11,7 +12,11 @@ function productionConfig(env,platform='both'){
   for(const platform of platforms){
     const key=platform.toUpperCase();
     for(const [field,suffix,separator] of [['appIds','APP_ID','~'],['rewardedAdUnitIds','REWARDED_ID','/']]){
-      const value=env[`NYAN_ADMOB_${key}_${suffix}`];
+      const setting=`NYAN_ADMOB_${key}_${suffix}`;
+      const androidValue=suffix==='APP_ID'?androidAdIds.appId:androidAdIds.rewardedAdUnitId;
+      const value=env[setting]??(platform==='android'?androidValue:undefined);
+      if(platform==='android'&&(androidAdIds.packageId!=='jp.nyanchase.game'||value!==androidValue))
+        throw new Error(`Android production ${setting} must match config/admob.android.production.json`);
       if(!new RegExp(`^ca-app-pub-[0-9]{16}\\${separator}[0-9]{10}$`).test(value||'')||value.includes('3940256099942544'))throw new Error(`Missing/non-production NYAN_ADMOB_${key}_${suffix}`);
       result[field][platform]=value;
     }

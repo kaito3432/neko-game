@@ -1,11 +1,11 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {productionConfig}=require('../scripts/prepare-web-assets.cjs');
 const iosEnv={NYAN_ADMOB_IOS_APP_ID:'ca-app-pub-6462457361541481~4217995844',NYAN_ADMOB_IOS_REWARDED_ID:'ca-app-pub-6462457361541481/4339169364',NYAN_AD_CHILD_DIRECTED:'false',NYAN_AD_UNDER_AGE:'false',NYAN_AD_MAX_RATING:'Teen'};
-test('Release IDs are mandatory only for the selected OS; both remains strict',()=>{
+test('Android uses approved defaults; iOS IDs remain explicit and OS-scoped',()=>{
  const ios=productionConfig(iosEnv,'ios');assert.equal(ios.testing,false);assert.equal(ios.appIds.android,undefined);assert.equal(ios.maxAdContentRating,'Teen');
- assert.throws(()=>productionConfig(iosEnv,'both'),/ANDROID_APP_ID/);
- assert.throws(()=>productionConfig(iosEnv,'android'),/ANDROID_APP_ID/);
- const androidEnv={...iosEnv,NYAN_ADMOB_ANDROID_APP_ID:'ca-app-pub-1111111111111111~1111111111',NYAN_ADMOB_ANDROID_REWARDED_ID:'ca-app-pub-1111111111111111/1111111111'};
+ assert.equal(productionConfig(iosEnv,'both').appIds.android,'ca-app-pub-6462457361541481~9227823521');
+ assert.equal(productionConfig(iosEnv,'android').rewardedAdUnitIds.android,'ca-app-pub-6462457361541481/5638651041');
+ const androidEnv={...iosEnv,NYAN_ADMOB_ANDROID_APP_ID:'ca-app-pub-6462457361541481~9227823521',NYAN_ADMOB_ANDROID_REWARDED_ID:'ca-app-pub-6462457361541481/5638651041'};
  delete androidEnv.NYAN_ADMOB_IOS_APP_ID;delete androidEnv.NYAN_ADMOB_IOS_REWARDED_ID;
  assert.equal(productionConfig(androidEnv,'android').appIds.ios,undefined);
  assert.throws(()=>productionConfig(androidEnv,'both'),/IOS_APP_ID/);
@@ -15,7 +15,7 @@ test('Release IDs are mandatory only for the selected OS; both remains strict',(
   ['ios',iosEnv,'NYAN_ADMOB_IOS_REWARDED_ID','ca-app-pub-3940256099942544/1712485313'],
   ['android',androidEnv,'NYAN_ADMOB_ANDROID_APP_ID','ca-app-pub-3940256099942544~3347511713'],
   ['android',androidEnv,'NYAN_ADMOB_ANDROID_REWARDED_ID','ca-app-pub-3940256099942544/5224354917'],
- ])assert.throws(()=>productionConfig({...env,[key]:value},os),/non-production/);
+ ])assert.throws(()=>productionConfig({...env,[key]:value},os),/non-production|Android production/);
 });
 test('iOS-only generated assets cannot pass the Android Release validator',()=>{
  const os=require('node:os'),{prepare}=require('../scripts/prepare-web-assets.cjs'),{validate}=require('../scripts/validate-generated-web.cjs');

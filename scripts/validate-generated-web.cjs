@@ -1,5 +1,6 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const androidAdIds=require('../config/admob.android.production.json');
 function sourceFiles(root){
  const files=fs.readdirSync(root).filter(file=>/\.(html|css|js|webmanifest)$/.test(file)&&!['ad-config.js','api-environment.sandbox.js'].includes(file));
  const walk=dir=>{if(!fs.existsSync(path.join(root,dir)))return;
@@ -20,6 +21,7 @@ function validate(root,assets,platform){
  if(!config||config.testing!==false||config.npa!==true)throw new Error('Invalid Release ad configuration');
  for(const os of platforms){
   if(!['ios','android'].includes(os)||!manifest.platforms?.includes(os))throw new Error(`Release assets not prepared for ${os}`);
+  if(os==='android'&&(config.appIds?.android!==androidAdIds.appId||config.rewardedAdUnitIds?.android!==androidAdIds.rewardedAdUnitId))throw new Error('Android Release ad IDs do not match approved configuration');
   if(!/^ca-app-pub-\d{16}~\d{10}$/.test(config.appIds?.[os]||'')||!/^ca-app-pub-\d{16}\/\d{10}$/.test(config.rewardedAdUnitIds?.[os]||''))throw new Error(`Missing production ad IDs for ${os}`);
  }
  const digest=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');

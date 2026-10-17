@@ -80,7 +80,7 @@ Store Notification URL、Appleキーrotation、Google API権限、課金契約�
 
 ## 5. 広告とReleaseビルド
 
-本番IDを捏造せず、`node scripts/prepare-web-assets.cjs --release`で以下を必須入力にする。
+本番IDを捏造せず、`node scripts/prepare-web-assets.cjs --release`で以下を検証する。Android IDは末尾の確定設定を既定値とし、iOS IDは従来どおり明示入力する。
 
 `--platform ios` / `--platform android` は対象OSの本番IDだけ必須。省略または `--platform both` は両OS必須。対象外OSのIDは生成しない。同期も `capacitor copy ios` / `capacitor copy android` で対象OSに限定し、未準備OSのassetsは上書きしない。各OSのRelease guardは対象OSのmanifest・本番IDを検証する。
 
@@ -110,7 +110,7 @@ source/bundled SHA256 manifestで、HTML/CSS/JSの古い同期・改変を検出
 Release HTMLから開発モックUIとdebug scriptを除去。Release準備では生成www/debugのみ除去し、正式ソースのQA補助ファイルは削除しない。
 iOS build phase・Android preReleaseBuildがテスト広告/未同期資産を拒否する。
 NodeがXcodeから見えない場合はNYAN_NODE_BINARYを設定。
-本番ID未提供なので現時点ではRelease生成は意図的に停止する。Debug生成物は提出用ではない。
+未設定の対象OSの本番ID、年齢方針、署名設定があればRelease生成は意図的に停止する。Debug生成物は提出用ではない。
 
 ## 6. iOS / Androidネイティブ監査
 
@@ -332,3 +332,18 @@ APPLE_NOTIFICATION_PUBLIC_KEYS等は**現在コードでは必要だが、正式
 
 公式取得元: https://www.apple.com/certificateauthority/AppleRootCA-G3.cer
 公式検証実装: https://github.com/apple/app-store-server-library-node/blob/main/jws_verification.ts
+
+## Android本番広告ID（2026-10-18確定）
+
+`config/admob.android.production.json`に承認済みAndroid App ID / Rewarded IDを保持する。
+これは公開識別子であり、署名秘密情報は含めない。iOS設定は変更しない。
+
+- `scripts/prepare-web-assets.cjs --release --platform android` はAndroid IDをこのファイルから取得する。
+- `NYAN_ADMOB_ANDROID_APP_ID` / `NYAN_ADMOB_ANDROID_REWARDED_ID` でも供給可能だが、承認済み設定と異なる値は拒否する。
+- Android Gradle ReleaseのApp IDも同じファイルを読む。`-PNYAN_ADMOB_APP_ID` または `ORG_GRADLE_PROJECT_NYAN_ADMOB_APP_ID` を供給する場合も承認済みApp IDとの一致が必要。
+- Debug既定は従来どおりGoogleテストApp ID/テスト広告。Manifest検査で本番App IDを明示供給する場合も、実広告ロードは行わない。
+- `NYAN_AD_CHILD_DIRECTED` / `NYAN_AD_UNDER_AGE` / `NYAN_AD_MAX_RATING` は未確定。ID確定だけではRelease生成できず、既存の年齢・署名ガードを維持する。
+- NPA=true、AD_IDのmanifest除去、SSV署名/ユーザー/試行/広告ユニット/報酬検証、IAP保護は変更しない。
+- SSV callback: `https://nyan-chase-online.honda19990602.workers.dev/api/ads/admob/ssv`。AdMob側で設定済み。
+- Workerは `ADMOB_REWARDED_AD_UNIT_IDS`（カンマ区切り）を優先し、なければ単数 `ADMOB_REWARDED_AD_UNIT_ID` を参照する。本番設定へAndroid広告ユニットが未登録なら、iOS広告ユニットを残して両方を許可する設定が別途必要。今回Worker設定/deployは行わない。
+- `ADMOB_SKILL_MODE_REWARD_ITEM` はAdMob側の `skill_mode_unlock` と一致させる必要がある。SSV実検証まで報酬を付与しない。
