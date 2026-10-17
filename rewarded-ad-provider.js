@@ -43,9 +43,14 @@
         // Initialize once, but never load a rewarded ad before canRequestAds.
         if(!sdkInitialized){
           await plugin.initialize({initializeForTesting:testing,
-            ...(typeof config.tagForChildDirectedTreatment==='boolean'?{tagForChildDirectedTreatment:config.tagForChildDirectedTreatment}:{}),
-            ...(typeof config.tagForUnderAgeOfConsent==='boolean'?{tagForUnderAgeOfConsent:config.tagForUnderAgeOfConsent}:{}),
-            ...(config.maxAdContentRating?{maxAdContentRating:config.maxAdContentRating}:{})});
+            ...(platform!=='android'&&typeof config.tagForChildDirectedTreatment==='boolean'?{tagForChildDirectedTreatment:config.tagForChildDirectedTreatment}:{}),
+            ...(platform!=='android'&&typeof config.tagForUnderAgeOfConsent==='boolean'?{tagForUnderAgeOfConsent:config.tagForUnderAgeOfConsent}:{}),
+            ...(platform==='android'?{maxAdContentRating:'General'}:config.maxAdContentRating?{maxAdContentRating:config.maxAdContentRating}:{})});
+          if(platform==='android'){
+            const privacy=config.privacyPlugin||root.Capacitor?.Plugins?.NyanAdPrivacy||root.Capacitor?.registerPlugin?.('NyanAdPrivacy');
+            if(typeof privacy?.configureAdvertising!=='function')throw new Error('android_privacy_bridge_unavailable');
+            await privacy.configureAdvertising(config.androidPolicy||{ageRestrictedTreatment:'UNSPECIFIED',maxAdContentRating:'G'});
+          }
           sdkInitialized=true;
         }
         if(consentManager){

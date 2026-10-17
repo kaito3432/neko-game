@@ -8,7 +8,7 @@ function fixture(prepareAdvertising,platform='ios'){
   const plugin={initialize:async()=>calls.push('sdk'),addListener:async()=>({remove(){}}),
     prepareRewardVideoAd:async options=>{assert.equal(options.npa,true);calls.push('load');},showRewardVideoAd:async()=>({})};
   const provider=Ads.createProvider({plugin,config:{platform,testing:true,
-    privacyPlugin:{prepareAdvertising:async()=>{calls.push('att');return prepareAdvertising();}},
+    privacyPlugin:{configureAdvertising:async()=>calls.push('android-policy'),prepareAdvertising:async()=>{calls.push('att');return prepareAdvertising();}},
     consentManager:{ensure:async()=>{calls.push('ump');return {canRequestAds:true};},canRequestAds:()=>true}},
     api:{createAttempt:async()=>{calls.push('attempt');return {playerId:'p',attemptId:'a'};},completeAttempt:async()=>({})}});
   return {provider,calls};
@@ -34,7 +34,7 @@ test('ATT bridge rejection fails closed and may retry',async()=>{
 });
 test('Android never requests ATT',async()=>{
   const f=fixture(()=>{throw Error('must not call');},'android');
-  assert.equal((await f.provider.initialize()).available,true);assert.deepEqual(f.calls,['sdk','ump']);
+  assert.equal((await f.provider.initialize()).available,true);assert.deepEqual(f.calls,['sdk','android-policy','ump']);
 });
 test('Native ATT integration is registered and preserves privacy defaults',()=>{
   const read=name=>fs.readFileSync(require('node:path').join(__dirname,'../ios/App/App',name),'utf8');

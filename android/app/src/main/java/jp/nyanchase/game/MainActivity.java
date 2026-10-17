@@ -1,12 +1,13 @@
 package jp.nyanchase.game;
 
 import com.getcapacitor.BridgeActivity;
-import com.google.android.gms.ads.MobileAds;
+
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(android.os.Bundle savedInstanceState) {
-        MobileAds.putPublisherFirstPartyIdEnabled(false);
+        NyanAdPrivacyPlugin.applyRequestConfiguration();
+        registerPlugin(NyanAdPrivacyPlugin.class);
         registerPlugin(NyanGooglePlayPlugin.class);
         registerPlugin(NyanReviewPlugin.class);
         super.onCreate(savedInstanceState);

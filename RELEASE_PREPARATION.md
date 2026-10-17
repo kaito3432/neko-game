@@ -86,9 +86,9 @@ Store Notification URL、Appleキーrotation、Google API権限、課金契約�
 
 - NYAN_ADMOB_IOS_APP_ID / NYAN_ADMOB_ANDROID_APP_ID
 - NYAN_ADMOB_IOS_REWARDED_ID / NYAN_ADMOB_ANDROID_REWARDED_ID
-- NYAN_AD_CHILD_DIRECTED / NYAN_AD_UNDER_AGE: true/false。対象年齢に応じ人間が決定する。
+- NYAN_AD_CHILD_DIRECTED / NYAN_AD_UNDER_AGE: iOSのみ従来のtrue/false入力を維持。Androidでは使用・必須化しない。
 - NPAはRelease既定true。NYAN_AD_NPA=falseを拒否し、実広告リクエストもnpa=trueを強制。
-- NYAN_AD_MAX_RATING: General / ParentalGuidance / Teen / MatureAudience。人間が決定する。
+- NYAN_AD_MAX_RATING: AndroidはG（未指定時も承認設定のG）。iOSは従来のGeneral / ParentalGuidance / Teen / MatureAudience入力を維持。
 
 空欄/形式不正/Google sample publisherを拒否。環境変数はローカルシェル・CI secret管理で渡す。値をGitに保存しない。
 NPA指定だけではTracking=Noと断定しない。iOS起動前設定でPPT disabled・publisher first-party ID off、Androidはfirst-party ID off・AD_ID permissionをmanifest mergeで除去。
@@ -342,8 +342,20 @@ APPLE_NOTIFICATION_PUBLIC_KEYS等は**現在コードでは必要だが、正式
 - `NYAN_ADMOB_ANDROID_APP_ID` / `NYAN_ADMOB_ANDROID_REWARDED_ID` でも供給可能だが、承認済み設定と異なる値は拒否する。
 - Android Gradle ReleaseのApp IDも同じファイルを読む。`-PNYAN_ADMOB_APP_ID` または `ORG_GRADLE_PROJECT_NYAN_ADMOB_APP_ID` を供給する場合も承認済みApp IDとの一致が必要。
 - Debug既定は従来どおりGoogleテストApp ID/テスト広告。Manifest検査で本番App IDを明示供給する場合も、実広告ロードは行わない。
-- `NYAN_AD_CHILD_DIRECTED` / `NYAN_AD_UNDER_AGE` / `NYAN_AD_MAX_RATING` は未確定。ID確定だけではRelease生成できず、既存の年齢・署名ガードを維持する。
+- Android年齢方針は次節のUNSPECIFIED/G。旧フラグをfalseで埋めず、iOSだけ従来入力を維持する。Release署名ガードは維持する。
 - NPA=true、AD_IDのmanifest除去、SSV署名/ユーザー/試行/広告ユニット/報酬検証、IAP保護は変更しない。
 - SSV callback: `https://nyan-chase-online.honda19990602.workers.dev/api/ads/admob/ssv`。AdMob側で設定済み。
 - Workerは `ADMOB_REWARDED_AD_UNIT_IDS`（カンマ区切り）を優先し、なければ単数 `ADMOB_REWARDED_AD_UNIT_ID` を参照する。本番設定へAndroid広告ユニットが未登録なら、iOS広告ユニットを残して両方を許可する設定が別途必要。今回Worker設定/deployは行わない。
 - `ADMOB_SKILL_MODE_REWARD_ITEM` はAdMob側の `skill_mode_unlock` と一致させる必要がある。SSV実検証まで報酬を付与しない。
+
+## Android広告の年齢方針（2026-10-18）
+
+- 子ども専用ではなく対象は13–15 / 16–17 / 18+。年齢入力・年齢ゲートはない。
+- `config/admob.android.production.json` の `ageRestrictedTreatment=UNSPECIFIED` / `maxAdContentRating=G` を承認済み方針とする。
+- `NYAN_AD_AGE_RESTRICTED_TREATMENT` / `NYAN_AD_MAX_RATING` を明示供給する場合もUNSPECIFIED/Gだけを許可する。全員CHILD/TEEN、全員同意年齢以上とは扱わない。
+- Android専用生成では旧 `NYAN_AD_CHILD_DIRECTED` / `NYAN_AD_UNDER_AGE` を読取・出力しない。両OS生成時にiOS用の旧設定が含まれても、Android実行経路はそのbooleanをAdMobへ渡さない。
+- `MainActivity` でSDK初期化前に現行 `setAgeRestrictedTreatment(AgeRestrictedTreatment.UNSPECIFIED)` / Gを適用。community plugin初期化後にも `NyanAdPrivacyPlugin` で再適用し、最終RequestConfigurationへ確実に反映する。
+- community pluginの文字列表現はGeneralを使うが、実SDKの最終値はG。テスト端末設定は保持する。
+- first-party ID無効化はSDK初期化後に実行する（初期化前に呼ぶ旧実装の起動クラッシュを回避）。失敗時は広告ロードを止める。
+- UMPの同意取得/必要時フォーム/canRequestAds/privacy optionsは変更しない。UMPへ一律の同意年齢以上・未満フラグを追加しない。NPA=true、iOS ATT/既存iOS年齢設定、SSV/IAP保護も維持。
+- UNSPECIFIEDは年齢の申告ではなく不明という設定。これだけで各地域の未成年者規則への適合を保証するものではなく、公開対象地域と同意別の広告動作はRelease実物で確認する。

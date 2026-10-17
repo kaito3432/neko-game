@@ -1,5 +1,7 @@
 {
   "packageId": "jp.nyanchase.game",
   "appId": "ca-app-pub-6462457361541481~9227823521",
-  "rewardedAdUnitId": "ca-app-pub-6462457361541481/5638651041"
+  "rewardedAdUnitId": "ca-app-pub-6462457361541481/5638651041",
+  "ageRestrictedTreatment": "UNSPECIFIED",
+  "maxAdContentRating": "G"
 }

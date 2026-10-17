@@ -23,12 +23,21 @@ function productionConfig(env,platform='both'){
   }
   if(env.NYAN_AD_NPA&&env.NYAN_AD_NPA!=='true')throw new Error('Release requires non-personalized ads');
   result.npa=true;
-  for(const [field,key] of [['tagForChildDirectedTreatment','NYAN_AD_CHILD_DIRECTED'],['tagForUnderAgeOfConsent','NYAN_AD_UNDER_AGE']]){
-    if(!['true','false'].includes(env[key]))throw new Error(`Human policy decision required: ${key}`);
-    result[field]=env[key]==='true';
+  if(platforms.includes('android')){
+    const age=env.NYAN_AD_AGE_RESTRICTED_TREATMENT??androidAdIds.ageRestrictedTreatment;
+    const rating=platform==='android'?(env.NYAN_AD_MAX_RATING??androidAdIds.maxAdContentRating):androidAdIds.maxAdContentRating;
+    if(age!=='UNSPECIFIED'||rating!=='G')throw new Error('Android Release requires UNSPECIFIED age treatment and G ad content');
+    result.androidPolicy={ageRestrictedTreatment:age,maxAdContentRating:rating};
   }
-  if(!['General','ParentalGuidance','Teen','MatureAudience'].includes(env.NYAN_AD_MAX_RATING))throw new Error('Human policy decision required: NYAN_AD_MAX_RATING');
-  result.maxAdContentRating=env.NYAN_AD_MAX_RATING;
+  if(platforms.includes('ios')){
+    // Preserve the existing iOS policy inputs; Android does not consume them.
+    for(const [field,key] of [['tagForChildDirectedTreatment','NYAN_AD_CHILD_DIRECTED'],['tagForUnderAgeOfConsent','NYAN_AD_UNDER_AGE']]){
+      if(!['true','false'].includes(env[key]))throw new Error(`Human policy decision required: ${key}`);
+      result[field]=env[key]==='true';
+    }
+    if(!['General','ParentalGuidance','Teen','MatureAudience'].includes(env.NYAN_AD_MAX_RATING))throw new Error('Human policy decision required: NYAN_AD_MAX_RATING');
+    result.maxAdContentRating=env.NYAN_AD_MAX_RATING;
+  }
   return result;
 }
 function prepare({root=ROOT,release=false,env=process.env,platform='both'}={}){

@@ -65,6 +65,6 @@ test('adsRemoved状態でもリワードprovider自体は利用可能',async()=>
 });
 test('AndroidではGoogle公式テストRewarded Ad IDを使用',async()=>{
   let prepared;const plugin={initialize:async()=>{},addListener:async(name,fn)=>({remove:async()=>{}}),prepareRewardVideoAd:async value=>{prepared=value;},showRewardVideoAd:async()=>({type:'reward'})};
-  const provider=Ads.createProvider({plugin,config:{testing:true,platform:'android'},api:{createAttempt:async()=>({playerId:'p',attemptId:'a'}),completeAttempt:async()=>({profile:{}})}});
+  const provider=Ads.createProvider({plugin,config:{testing:true,platform:'android',privacyPlugin:{configureAdvertising:async()=>{}}},api:{createAttempt:async()=>({playerId:'p',attemptId:'a'}),completeAttempt:async()=>({profile:{}})}});
   await provider.showRewardedAd();assert.equal(prepared.adId,Ads.ANDROID_TEST_REWARDED_ID);assert.equal(prepared.isTesting,true);
 });

@@ -4,12 +4,12 @@ const iosEnv={NYAN_ADMOB_IOS_APP_ID:'ca-app-pub-6462457361541481~4217995844',NYA
 test('Android uses approved defaults; iOS IDs remain explicit and OS-scoped',()=>{
  const ios=productionConfig(iosEnv,'ios');assert.equal(ios.testing,false);assert.equal(ios.appIds.android,undefined);assert.equal(ios.maxAdContentRating,'Teen');
  assert.equal(productionConfig(iosEnv,'both').appIds.android,'ca-app-pub-6462457361541481~9227823521');
- assert.equal(productionConfig(iosEnv,'android').rewardedAdUnitIds.android,'ca-app-pub-6462457361541481/5638651041');
- const androidEnv={...iosEnv,NYAN_ADMOB_ANDROID_APP_ID:'ca-app-pub-6462457361541481~9227823521',NYAN_ADMOB_ANDROID_REWARDED_ID:'ca-app-pub-6462457361541481/5638651041'};
+ assert.equal(productionConfig({...iosEnv,NYAN_AD_MAX_RATING:'G'},'android').rewardedAdUnitIds.android,'ca-app-pub-6462457361541481/5638651041');
+ const androidEnv={...iosEnv,NYAN_AD_MAX_RATING:'G',NYAN_ADMOB_ANDROID_APP_ID:'ca-app-pub-6462457361541481~9227823521',NYAN_ADMOB_ANDROID_REWARDED_ID:'ca-app-pub-6462457361541481/5638651041'};
  delete androidEnv.NYAN_ADMOB_IOS_APP_ID;delete androidEnv.NYAN_ADMOB_IOS_REWARDED_ID;
  assert.equal(productionConfig(androidEnv,'android').appIds.ios,undefined);
  assert.throws(()=>productionConfig(androidEnv,'both'),/IOS_APP_ID/);
- assert.equal(Object.keys(productionConfig({...iosEnv,...androidEnv},'both').appIds).length,2);
+ assert.equal(Object.keys(productionConfig({...iosEnv,...androidEnv,NYAN_AD_MAX_RATING:'Teen'},'both').appIds).length,2);
  for(const [os,env,key,value] of [
   ['ios',iosEnv,'NYAN_ADMOB_IOS_APP_ID','ca-app-pub-3940256099942544~1458002511'],
   ['ios',iosEnv,'NYAN_ADMOB_IOS_REWARDED_ID','ca-app-pub-3940256099942544/1712485313'],
@@ -46,7 +46,8 @@ test('広告は常にNPA、iOS ATT完了待機、first-party ID off、Android AD
  const provider=read('rewarded-ad-provider.js');
  assert(provider.indexOf('await privacy.prepareAdvertising()')<provider.indexOf('await plugin.initialize('));
  assert.match(read('ios/App/App/Info.plist'),/NSUserTrackingUsageDescription/);
- assert.match(read('android/app/src/main/java/jp/nyanchase/game/MainActivity.java'),/putPublisherFirstPartyIdEnabled\(false\)/);
+ assert.doesNotMatch(read('android/app/src/main/java/jp/nyanchase/game/MainActivity.java'),/putPublisherFirstPartyIdEnabled/);
+ assert.match(read('android/app/src/main/java/jp/nyanchase/game/NyanAdPrivacyPlugin.java'),/putPublisherFirstPartyIdEnabled\(false\)/);
  assert.match(read('android/app/src/main/AndroidManifest.xml'),/permission.AD_ID" tools:node="remove"/);
 });
 test('Release HTMLは開発モックUIとQA scriptを含めない',()=>{

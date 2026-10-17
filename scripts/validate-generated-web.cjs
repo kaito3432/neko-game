@@ -22,6 +22,7 @@ function validate(root,assets,platform){
  for(const os of platforms){
   if(!['ios','android'].includes(os)||!manifest.platforms?.includes(os))throw new Error(`Release assets not prepared for ${os}`);
   if(os==='android'&&(config.appIds?.android!==androidAdIds.appId||config.rewardedAdUnitIds?.android!==androidAdIds.rewardedAdUnitId))throw new Error('Android Release ad IDs do not match approved configuration');
+  if(os==='android'&&(config.androidPolicy?.ageRestrictedTreatment!=='UNSPECIFIED'||config.androidPolicy?.maxAdContentRating!=='G'))throw new Error('Android Release ad policy must be UNSPECIFIED/G');
   if(!/^ca-app-pub-\d{16}~\d{10}$/.test(config.appIds?.[os]||'')||!/^ca-app-pub-\d{16}\/\d{10}$/.test(config.rewardedAdUnitIds?.[os]||''))throw new Error(`Missing production ad IDs for ${os}`);
  }
  const digest=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
