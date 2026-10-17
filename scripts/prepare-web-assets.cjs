@@ -54,7 +54,8 @@ function prepare({root=ROOT,release=false,env=process.env,platform='both'}={}){
     fs.writeFileSync(path.join(output,'index.html'),html);
     fs.writeFileSync(path.join(output,'ad-config.js'),`globalThis.NYAN_AD_CONFIG=Object.freeze(${JSON.stringify(config)});\n`);
   }
-  const files=require('./validate-generated-web.cjs').sourceFiles(root);
+  if(release&&platform==='android')fs.rmSync(path.join(output,'monetization-ui.js'),{force:true});
+  const files=require('./validate-generated-web.cjs').sourceFiles(root,release&&platform==='android'?'android':undefined);
   const digest=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
   fs.writeFileSync(path.join(output,'web-source-manifest.json'),JSON.stringify({production:release,platforms:release?releasePlatforms(platform):[],
     files:Object.fromEntries(files.map(file=>[file,{source:digest(path.join(root,file)),bundled:digest(path.join(output,file))}]))}));

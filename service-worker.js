@@ -1,4 +1,4 @@
-const CACHE_NAME = "nyan-chase-v86-review-preparation-20261013";
+const CACHE_NAME = "nyan-chase-v87-release-assets-20261018";
 const PRECACHE = [
   "./release-features.js",
   "./online-recovery-state.js",
@@ -124,7 +124,6 @@ const PRECACHE = [
   "./assets/images/rank/profile-frames/rank_master_frame.png",
   "./audio.js",
   "./collection-catalog.js",
-  "./debug/board-theme-qa.js",
   "./collection.js",
   "./engine.js",
   "./police-hard-ai.js",

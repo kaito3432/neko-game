@@ -14,3 +14,9 @@ artifacts/
 .dev.vars.*
 android/keystore.properties
 .wrangler/
+
+# Signing secrets remain outside the repository; also reject accidental copies.
+*.pfx
+*.dpapi
+*.dpapi.json
+android/signing.properties
