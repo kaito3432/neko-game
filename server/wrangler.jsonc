@@ -9,6 +9,7 @@
   "triggers": {"crons": ["0 * * * *"]},
   "vars": {
     "NYAN_ENVIRONMENT": "production",
+    "ADMOB_REWARDED_AD_UNIT_IDS": "ca-app-pub-6462457361541481/4339169364,ca-app-pub-6462457361541481/5638651041",
     "MASTER_REWARD_PERIODS": "{\"2026-09\":\"cat_master_s01_king\"}"
   },
 

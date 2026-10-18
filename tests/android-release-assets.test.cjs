@@ -7,7 +7,11 @@ test('Android Release removes the unused dev UI asset and rejects accidental rei
  try{
   fs.mkdirSync(path.join(root,'assets'));fs.writeFileSync(path.join(root,'index.html'),'<script src="./debug/board-theme-qa.js"></script>');
   fs.writeFileSync(path.join(root,'monetization-ui.js'),'// dev only');
+ fs.copyFileSync(path.join(__dirname,'../service-worker.js'),path.join(root,'service-worker.js'));
   const {output}=prepare({root,release:true,platform:'android',env:{}});
+ const precache=vm.runInNewContext(fs.readFileSync(path.join(output,'service-worker.js'),'utf8')+';PRECACHE',{self:{addEventListener(){}}});
+ assert.equal(precache.includes('./monetization-ui.js'),false);
+ assert.equal(precache.some(file=>file.startsWith('./debug/')),false);
   assert.equal(fs.existsSync(path.join(output,'monetization-ui.js')),false);
   validate(root,output,'android');
   fs.writeFileSync(path.join(output,'monetization-ui.js'),'// stale dev file');
