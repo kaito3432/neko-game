@@ -11,3 +11,15 @@ test('Developer API productV2の購入済み応答だけを検証',async()=>{con
   const result=await verifyGooglePlayPurchase({purchaseToken:'purchase-token-long',productId:'REMOVE_ADS'},{env,fetchFn});assert.equal(result.productId,'REMOVE_ADS');assert.match(calls[1].url,/productsv2\/tokens\/purchase-token-long$/);assert.match(calls[1].options.headers.Authorization,/^Bearer /);
 });
 test('単品所有後のPACK購入でもスキルを重複させない',async()=>{const {applyVerifiedGooglePlayPurchase}=await googleModule,{resolveServerOwnedSkillIds}=await import('../server/skill-entitlements.mjs'),f=await setup();let one=await applyVerifiedGooglePlayPurchase({...f,purchaseToken:'token-single-long',productId:'SKILL_CAT_FAKE_PAW',verify:async()=>receipt('SKILL_CAT_FAKE_PAW','token-single-long')});let pack=await applyVerifiedGooglePlayPurchase({...f,profile:one.profile,purchaseToken:'token-pack-long',productId:'SKILL_PACK_01',verify:async()=>receipt('SKILL_PACK_01','token-pack-long')});assert.equal(new Set(resolveServerOwnedSkillIds(pack.profile.skillEntitlements)).size,3);});
+
+test('Google ProductPurchaseV2 acknowledgement enum skips restored acknowledgements and retries pending ones',async()=>{
+  const {acknowledgeGooglePlayPurchase}=await googleModule;
+  const acknowledged={...receipt('SKILL_PACK_01'),acknowledgementState:'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED'};
+  assert.equal(await acknowledgeGooglePlayPurchase(acknowledged,{fetchFn:async()=>{throw new Error('already acknowledged purchase must not call Google again');}}),true);
+  const pending={...acknowledged,acknowledgementState:'ACKNOWLEDGEMENT_STATE_PENDING'},calls=[];
+  const fetchFn=async(url,options)=>{calls.push({url,options});return {ok:true};};
+  assert.equal(await acknowledgeGooglePlayPurchase(pending,{fetchFn}),true);
+  assert.match(calls[0].url,/\/applications\/jp\.nyanchase\.game\/purchases\/products\/skill_pack_01\/tokens\/purchase-token-1:acknowledge$/);
+  assert.equal(calls[0].options.method,'POST');
+  await assert.rejects(()=>acknowledgeGooglePlayPurchase(pending,{fetchFn:async()=>({ok:false})}),/google_play_acknowledge_failed/);
+});

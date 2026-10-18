@@ -98,7 +98,7 @@ export async function applyVerifiedGooglePlayPurchase({storage,profileKey,profil
 }
 
 export async function acknowledgeGooglePlayPurchase(receipt,{fetchFn=fetch}={}){
-  if(receipt.acknowledgementState==='ACKNOWLEDGED')return true;
+  if(receipt.acknowledgementState==='ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED')return true;
   const base=`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(receipt.packageName)}`;
   const response=await fetchFn(`${base}/purchases/products/${encodeURIComponent(StoreIds.toStore('android',receipt.productId))}/tokens/${encodeURIComponent(receipt.purchaseToken)}:acknowledge`,{method:'POST',headers:{Authorization:`Bearer ${receipt.accessToken}`,'content-type':'application/json'},body:'{}'});
   if(!response.ok)throw new Error('google_play_acknowledge_failed');return true;
