@@ -18,10 +18,11 @@ test('Room match disables both entry buttons and reset enables both',()=>{
   }
 });
 test('Room create handler rejects disabled or matched entry before network work',async()=>{
-  const start=source.indexOf('bindPress(createOnlineRoomBtn,async()=>{');
-  const body=source.slice(start+'bindPress(createOnlineRoomBtn,async()=>{'.length,source.indexOf('  createOnlineRoomBtn.disabled=true;',start));
+  const match=source.match(/bindPress\(createOnlineRoomBtn,\(\)=>\{([\s\S]*?)\n\}\);/);
+  assert.ok(match,'Room create handler must be found');
+  const body=match[1];
   for(const state of [{disabled:true,matched:false},{disabled:false,matched:true}]){
-    const context={createOnlineRoomBtn:{disabled:state.disabled},onlineRoomMatched:state.matched};
+    const context={createOnlineRoomBtn:{disabled:state.disabled},onlineRoomMatched:state.matched,connectOnlineRoom(){throw new Error('guard allowed network work');}};
     vm.createContext(context);
     await vm.runInContext('(async()=>{'+body+'throw new Error("guard did not return");})()',context);
   }
