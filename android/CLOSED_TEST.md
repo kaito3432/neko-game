@@ -43,3 +43,23 @@ by that path. Tests verify byte-identical iOS inputs and original Shop routes.
 
 Service Worker uses an Android-only cache name. When replacing an earlier QA
 build with cached assets, allow SW activation and restart; do not erase server data.
+
+## Permanent Android / iOS separation rules
+
+1. Treat android/closed-test-v2 as an Android-only branch and use a dedicated worktree.
+2. Never automatically merge or merge without explicit authorization into online-beta; Android work does not authorize pushing online-beta.
+3. Do not modify the iOS native project during Android work.
+4. Do not modify or regenerate iOS web assets during Android work, including the approved Apple Version 1.0 / Build 17 assets and archives.
+5. Do not change Apple IAP, ATT, UMP or iOS AdMob settings for Android requirements.
+6. Do not modify or deploy the Production Worker solely for Android requirements.
+7. If shared source changes are necessary, tests must prove that existing iOS presentation and behavior remain identical.
+8. Before and after every Android change, compare hashes of protected iOS files and generated assets against a preserved baseline. Preserve that baseline outside tracked release assets.
+9. If any iOS difference or protected hash mismatch is detected, stop and report it before continuing.
+10. iOS asset sync, build, archive and upload require explicit instructions; otherwise they are prohibited.
+11. Manage Android versionCode independently of the iOS Build number. Android versionCode changes must not change iOS CFBundleVersion.
+12. Gate Android-only features through platform checks or Android-only asset generation; never disable a shared feature globally for Android.
+
+For each Android change, review both tracked iOS/Worker differences and protected
+file hashes, preserve existing uncommitted work and stashes, and report the results.
+These are operating rules, not GitHub branch protection: no merge, push, deploy or
+store upload is authorized by this document itself.
