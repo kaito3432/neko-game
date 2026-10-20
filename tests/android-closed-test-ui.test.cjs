@@ -55,7 +55,7 @@ test('Android rejects guest Skill Mode rules using existing reset and leaves nor
 });
 test('Android packaging fails closed if shared UI anchors change',()=>{
  assert.throws(()=>transform('storekit-ui.js','upstream changed','android'),/anchor changed/);
- assert.throws(()=>transform('game.js','upstream changed','android'),/receivers changed/);
+ assert.throws(()=>transform('game.js','upstream changed','android'),/anchor changed|receivers changed/);
 });
 test('Android Release guard rejects ordinary assets and stale UI packaging',()=>{
  const os=require('node:os'),{generate,check}=require('../scripts/prepare-android-closed-test.cjs');
@@ -77,4 +77,13 @@ test('Android Release guard rejects ordinary assets and stale UI packaging',()=>
   fs.writeFileSync(manifestFile,JSON.stringify(forged));
   assert.throws(()=>check(fixture,output),/Unexpected Android asset transformation/);
  }finally{fs.rmSync(fixture,{recursive:true,force:true});}
+});
+test('Android hides all Shop routes while iOS keeps the original Home opener',()=>{
+ const source=transform('game.js',read('game.js'),'android');
+ for(const id of ['#shopOpenBtn','#shopOverlay','#shopSkillPreview','#resultOpponentSkillShop'])assert(CSS.includes(id));
+ assert(source.includes('bindPress(shopOpenBtn,()=>{});'));
+ assert(source.includes('bindPress(resultOpponentSkillShop,()=>{ return;'));
+ assert(transform('index.html',read('index.html'),'android').includes('shop:false'));
+ assert(transform('game.js',read('game.js'),'ios').includes('bindPress(shopOpenBtn,()=>{shopOverlay.hidden=false;'));
+ assert(transform('service-worker.js',read('service-worker.js'),'android').includes('closed-test-v2-no-shop'));
 });

@@ -20,8 +20,9 @@ The dedicated generator calls the existing production Android asset generator,
 then transforms Android www only. Root index.html, game.js, storekit-ui.js,
 style.css, release-features.js and every iOS file remain untouched.
 
-Android outputs contain NYAN_ANDROID_CLOSED_TEST={skillMode:false,paidSkills:false}
-and scoped CSS/entry guards. Shop retains free skill descriptions. Paid skills,
+Android outputs contain NYAN_ANDROID_CLOSED_TEST={skillMode:false,paidSkills:false,shop:false}
+and scoped CSS/entry guards. The entire Shop and Home/result entry routes are hidden and guarded.
+The underlying Shop and free skill descriptions remain intact. Paid skills,
 Pack, purchase/restore controls, Skill Mode and its ad-unlock entry are unavailable.
 Billing and Rewarded implementations, credentials, ownership and effects remain intact.
 Daily rewarded ads are not disabled by this policy.
