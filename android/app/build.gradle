@@ -14,7 +14,7 @@ android {
         applicationId "jp.nyanchase.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode 2
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // Official test App ID by default. CI/release may inject -PNYAN_ADMOB_APP_ID.
@@ -87,11 +87,9 @@ tasks.register('validateNyanRelease') {
         def integrity = new ProcessBuilder(nodeBinary, new File(rootWeb,'scripts/validate-generated-web.cjs').path,
             file('src/main/assets/public').path, 'android').inheritIO().start()
         if (integrity.waitFor() != 0) throw new GradleException('Release Web integrity validation failed.')
-        rootWeb.listFiles().findAll { it.name ==~ /.*\.(js|css)/ && !(it.name in ['ad-config.js','api-environment.sandbox.js','monetization-ui.js']) }.each { source ->
-            def bundled = file("src/main/assets/public/${source.name}")
-            if (!bundled.exists() || !java.util.Arrays.equals(source.bytes,bundled.bytes))
-                throw new GradleException("Stale Web asset ${source.name}; copy Android again.")
-        }
+        def closedTest = new ProcessBuilder(nodeBinary, new File(rootWeb,'scripts/prepare-android-closed-test.cjs').path,
+            '--check', file('src/main/assets/public').path).inheritIO().start()
+        if (closedTest.waitFor() != 0) throw new GradleException('Android closed-test UI policy validation failed.')
     }
 }
 tasks.configureEach { if (name == 'preReleaseBuild') dependsOn('validateNyanRelease') }
