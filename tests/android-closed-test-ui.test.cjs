@@ -62,12 +62,13 @@ test('Android Release guard rejects ordinary assets and stale UI packaging',()=>
  const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'nyan-android-policy-'));
  try{
   fs.mkdirSync(path.join(fixture,'assets'));
+  fs.mkdirSync(path.join(fixture,'android/web'),{recursive:true});fs.copyFileSync(path.join(root,'android/web/interstitial.js'),path.join(fixture,'android/web/interstitial.js'));
   fs.writeFileSync(path.join(fixture,'unchanged.js'),'// preserved');
   for(const file of FILES)fs.writeFileSync(path.join(fixture,file),read(file));
   const output=generate({root:fixture,env:{}});assert.equal(check(fixture,output),true);
   const manifestFile=path.join(output,'web-source-manifest.json'),manifest=JSON.parse(fs.readFileSync(manifestFile));
   delete manifest.androidClosedTest;fs.writeFileSync(manifestFile,JSON.stringify(manifest));
-  assert.throws(()=>check(fixture,output),/closed-test v2 assets/);
+  assert.throws(()=>check(fixture,output),/closed-test v3 assets/);
   generate({root:fixture,env:{}});fs.appendFileSync(path.join(output,'storekit-ui.js'),'\n// stale');
   assert.throws(()=>check(fixture,output),/Stale or modified Web asset/);
   generate({root:fixture,env:{}});
@@ -85,5 +86,5 @@ test('Android hides all Shop routes while iOS keeps the original Home opener',()
  assert(source.includes('bindPress(resultOpponentSkillShop,()=>{ return;'));
  assert(transform('index.html',read('index.html'),'android').includes('shop:false'));
  assert(transform('game.js',read('game.js'),'ios').includes('bindPress(shopOpenBtn,()=>{shopOverlay.hidden=false;'));
- assert(transform('service-worker.js',read('service-worker.js'),'android').includes('closed-test-v2-no-shop'));
+ assert(transform('service-worker.js',read('service-worker.js'),'android').includes('closed-test-v3-interstitial'));
 });

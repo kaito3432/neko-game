@@ -4,6 +4,8 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const {prepare}=require('./prepare-web-assets.cjs');
 const {validate}=require('./validate-generated-web.cjs');
 const ROOT=path.resolve(__dirname,'..');
+const EXTRA='android/web/interstitial.js';
+const INTERSTITIAL_ID='ca-app-pub-6462457361541481/5028330850';
 const FILES=['index.html','style.css','game.js','storekit-ui.js','service-worker.js'];
 const CSS=`
 /* Android closed-test presentation policy; absent from every iOS bundle. */
@@ -36,9 +38,9 @@ function once(source,before,after){
 function transform(file,input,platform){
  if(platform!=='android')return input;
  let s=input.replace(/\r\n/g,'\n');
- if(file==='index.html')return once(s,'<head>','<head>\n<script>globalThis.NYAN_ANDROID_CLOSED_TEST=Object.freeze({skillMode:false,paidSkills:false,shop:false});document.documentElement.classList.add("android-closed-test");</script>');
+ if(file==='index.html'){s=once(s,'<script src="./game.js?v=3.4.battle-style-13t"></script>','<script>globalThis.NYAN_ANDROID_INTERSTITIAL_ID="'+INTERSTITIAL_ID+'";</script>\n<script src="./'+EXTRA+'"></script>\n<script src="./game.js?v=3.4.battle-style-13t"></script>');return once(s,'<head>','<head>\n<script>globalThis.NYAN_ANDROID_CLOSED_TEST=Object.freeze({skillMode:false,paidSkills:false,shop:false});document.documentElement.classList.add("android-closed-test");</script>');}
  if(file==='style.css')return s+CSS;
- if(file==='service-worker.js')return once(s,'nyan-chase-v88-release-assets-20261018','nyan-chase-v88-android-closed-test-v2-no-shop');
+ if(file==='service-worker.js')return once(s,'nyan-chase-v88-release-assets-20261018','nyan-chase-v88-android-closed-test-v3-interstitial');
  if(file==='storekit-ui.js'){
   s=once(s,'async function buy(productId){','async function buy(productId){ return; // Android closed-test: no paid UI actions');
   s=once(s,'packs?.replaceChildren(...views.filter(view=>Boolean(view.packId)).map(card));','packs?.replaceChildren();');
@@ -51,6 +53,12 @@ function transform(file,input,platform){
   return s;
  }
  if(file==='game.js'){
+  s=once(s,'    dailyBattle=showMode ? null : window.NyanDailyMissions?.beginBattle(playMode,cpuDifficulty);','    dailyBattle=showMode ? null : window.NyanDailyMissions?.beginBattle(playMode,cpuDifficulty);\n    if(!showMode)window.NyanAndroidInterstitial.begin();');
+  s=once(s,'  function endGame(winner,reason,officialResult=null){','  function endGame(winner,reason,officialResult=null){\n    window.NyanAndroidInterstitial.completed({playMode,alreadyOver:game.gameOver});');
+  s=once(s,'bindPress(resultHomeBtn,()=>{','bindPress(resultHomeBtn,window.NyanAndroidInterstitial.wrap(()=>{');
+  s=once(s,'if(reviewAfterHome)requestAnimationFrame(()=>window.NyanRoomReview?.resultClosed());\n});','if(reviewAfterHome)requestAnimationFrame(()=>window.NyanRoomReview?.resultClosed());\n}));');
+  s=once(s,'bindPress(againBtn,()=>{','bindPress(againBtn,window.NyanAndroidInterstitial.wrap(()=>{');
+  s=once(s,'   }); \n\nlet bootRecoveryRunning=false;','   })); \n\nlet bootRecoveryRunning=false;');
   s=once(s,'bindPress(shopOpenBtn,()=>{shopOverlay.hidden=false;shopOverlay.setAttribute("aria-hidden","false");window.NyanShopRefresh?.();});','bindPress(shopOpenBtn,()=>{}); // Android closed-test: Shop unavailable');
   s=once(s,'bindPress(resultOpponentSkillShop,()=>{','bindPress(resultOpponentSkillShop,()=>{ return; // Android closed-test: Shop unavailable');
   const ruleAnchor='  const rule=data.payload.rule;';
@@ -76,8 +84,8 @@ const digest=value=>crypto.createHash('sha256').update(value).digest('hex');
 function check(root=ROOT,output=path.join(root,'android/app/src/main/assets/public')){
  validate(root,output,'android');
  const manifest=JSON.parse(fs.readFileSync(path.join(output,'web-source-manifest.json'),'utf8'));
- if(manifest.androidClosedTest?.skillMode!==false||manifest.androidClosedTest?.paidSkills!==false||manifest.androidClosedTest?.shop!==false||manifest.androidClosedTest?.versionCode!==2)
-  throw new Error('Prepare Android closed-test v2 assets explicitly');
+ if(manifest.androidClosedTest?.skillMode!==false||manifest.androidClosedTest?.paidSkills!==false||manifest.androidClosedTest?.shop!==false||manifest.androidClosedTest?.versionCode!==3)
+  throw new Error('Prepare Android closed-test v3 assets explicitly');
  for(const [file,hashes] of Object.entries(manifest.files)){
   if(!FILES.includes(file)&&hashes.source!==hashes.bundled)throw new Error('Unexpected Android asset transformation: '+file);
  }
@@ -86,10 +94,12 @@ function check(root=ROOT,output=path.join(root,'android/app/src/main/assets/publ
   const input=file==='index.html'?require('./prepare-web-assets.cjs').releaseHtml(source):source;
   if(fs.readFileSync(path.join(output,file),'utf8')!==transform(file,input,'android'))throw new Error('Android UI policy missing/stale: '+file);
  }
+ if(!manifest.files[EXTRA]||fs.readFileSync(path.join(output,EXTRA),'utf8')!==fs.readFileSync(path.join(root,EXTRA),'utf8'))throw new Error('Android Interstitial runtime missing/stale');
  return true;
 }
 function generate({root=ROOT,env=process.env}={}){
  const {output}=prepare({root,release:true,platform:'android',env});
+ fs.mkdirSync(path.join(output,'android/web'),{recursive:true});fs.copyFileSync(path.join(root,EXTRA),path.join(output,EXTRA));
  const manifestPath=path.join(output,'web-source-manifest.json');
  const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
  for(const file of FILES){
@@ -97,7 +107,8 @@ function generate({root=ROOT,env=process.env}={}){
   const value=transform(file,input,'android');fs.writeFileSync(target,value);
   manifest.files[file].bundled=digest(value);
  }
- manifest.androidClosedTest={skillMode:false,paidSkills:false,shop:false,versionCode:2};
+ manifest.files[EXTRA]={source:digest(fs.readFileSync(path.join(root,EXTRA))),bundled:digest(fs.readFileSync(path.join(output,EXTRA)))};
+ manifest.androidClosedTest={skillMode:false,paidSkills:false,shop:false,versionCode:3};
  fs.writeFileSync(manifestPath,JSON.stringify(manifest));check(root,output);return output;
 }
 if(require.main===module){try{

@@ -1,7 +1,7 @@
 # Android closed-test v2 packaging
 
 Base: online-beta / 2db30c230757db700a8f9374b7939627fb22f622.
-Android only: jp.nyanchase.game / versionName 1.0 / versionCode 2.
+Android only: jp.nyanchase.game / versionName 1.0 / versionCode 3.
 
 ## Generate and build
 
@@ -33,7 +33,7 @@ and all iOS/Worker code remain unchanged.
 
 The Android Gradle release gate checks both source/bundled hashes and exact
 Android policy transformations. Running the ordinary generator alone is not
-sufficient for versionCode 2: the Release build fails instead of exposing paid UI.
+sufficient for versionCode 3: the Release build fails instead of exposing paid UI.
 Changed upstream anchors also fail packaging for review rather than silently
 reintroducing a hidden route.
 
@@ -63,3 +63,37 @@ For each Android change, review both tracked iOS/Worker differences and protecte
 file hashes, preserve existing uncommitted work and stashes, and report the results.
 These are operating rules, not GitHub branch protection: no merge, push, deploy or
 store upload is authorized by this document itself.
+
+## Android Interstitial (versionCode 3)
+
+Android AdMob unit: NyanChase Android Interstitial,
+ca-app-pub-6462457361541481/5028330850. App ID and Rewarded ID remain unchanged.
+The Android generator alone copies android/web/interstitial.js and injects its
+script/configuration and result-button hooks. iOS generation never includes it.
+
+The existing endGame outcome path records completed CPU/local games once per
+game instance. Online counting uses the existing nyan-online-ended server event
+(the local predicted endGame never counts an online result) and Room review exclusions
+(invalid/cancelled results and finishReason are excluded), with matchId deduplication.
+No Room protocol or Worker changes are required. An Android-only localStorage
+key, nyanAndroidInterstitialV1, persists the completion count and recent match IDs.
+Every third completion is eligible, but nothing shows on result presentation.
+Only Home/rematch result actions consume the opportunity and may display the
+already-preloaded ad; no load is awaited. Missing/failed ads continue immediately.
+Dismissal or show failure continues the original handler once. The plugin's
+show promise resolves at display start, so it is not used as a dismissal signal.
+
+Preload uses the existing Rewarded provider initialization and Android UMP
+canRequestAds gate, NPA=true and the existing UNSPECIFIED/G native policy.
+No automatic retry loop is used. A new game or ad dismissal may preload the next
+ad; requests are coalesced and ready ads expire after 55 minutes.
+The underlying Billing, Rewarded and ownership implementations remain intact.
+No SDK dependency is added. Existing advertising data categories/purposes must
+remain disclosed. Unlike optional Rewarded playback, Interstitial preload is automatic
+after consent eligibility: if the current Android Data Safety answers describe all
+advertising collection as optional, re-evaluate required/optional before release.
+This implementation does not alter any Console privacy declaration or shared policy.
+
+VersionCode 2 is preserved in the ignored local audit artifacts before rebuilding.
+Use Google test ads for development display testing; the production AAB must
+contain only the approved Interstitial configuration, not a test ID override.

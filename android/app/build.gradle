@@ -14,7 +14,7 @@ android {
         applicationId "jp.nyanchase.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
+        versionCode 3
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // Official test App ID by default. CI/release may inject -PNYAN_ADMOB_APP_ID.
